@@ -1,0 +1,134 @@
+<!doctype html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang=""> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ticket-Dashboard</title>
+    <meta name="description" content="Cloud palaayan">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="apple-icon.png">
+    <link rel="shortcut icon" href="favicon.ico">
+
+    <link rel="stylesheet" href="../static/assets/css/normalize.css">
+    <link rel="stylesheet" href="../static/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/assets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../static/assets/css/themify-icons.css">
+    <link rel="stylesheet" href="../static/assets/css/flag-icon.min.css">
+    <link rel="stylesheet" href="../static/assets/css/cs-skin-elastic.css">
+    <!-- <link rel="stylesheet" href="assets/css/bootstrap-select.less"> -->
+    <link rel="stylesheet" href="../static/assets/scss/style.css">
+    <link rel="stylesheet" href="../static/assets/css/style.css">
+    <link href="../static/assets/css/lib/vector-map/jqvmap.min.css" rel="stylesheet">
+
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
+
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js"></script> -->
+
+</head>
+<body>
+<div id="right-panel" class="right-panel">
+
+
+        <!-- Header-->
+<!-- Header-->
+        <header id="header" class="header">
+
+            <div class="header-menu">
+
+                <div class="col-sm-7">
+
+                    <div class="header-left">
+
+                        <div class="dropdown for-message" id="quote" >
+
+
+                        </div>
+                        <span id="author" class="text-dark display-12"></span>
+                    </div>
+                </div>
+                <div class="col-sm-5">
+                </div>
+            </div>
+        </header>
+                <div class="content mt-3">
+            <div class="animated fadeIn">
+                <div class="row">
+                    <div class="col-xs-6 col-sm-6">
+                        <div class="card" style="height: 50em">
+                            <div class="card-header">
+                                <form>
+                                <strong><input id='discover' type="button" class="btn btn-primary" value="Discover"></strong> <small> Press the button to start discovery</small>
+                                    <strong><a href="/blueprint" id='blueprint' class="btn btn-success pull-right">Blueprint</a></strong>
+                                    </form>
+                            </div>
+                            <div class="card-body bg-dark text-success card-block" id="output">
+                                <== Hit discovery button once you added all your server ips to inventory ==>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-6 col-sm-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <strong><input id='Add' type="button" class="btn btn-primary" value="Add servers"></strong>
+                                <small> Add IP's of your servers to be migrated</small>
+                            </div>
+                            <div class="card-body card-block">
+                                <div class="row form-group">
+                                    <div class="col col-md-3"><label for="textarea-input" class=" form-control-label">Server IP's</label></div>
+                                    <div class="col-12 col-md-9"><textarea name="textarea-input" id="textarea-input" rows="9" placeholder="IP adress of servers in comma seperated form" class="form-control"></textarea></div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col col-md-3"><label for="text-input" class=" form-control-label">User name</label></div>
+                                    <div class="col-12 col-md-9"><input type="text" id="text-input" name="text-input" placeholder="Text" class="form-control"><small class="form-text text-muted">User should have sudo access</small></div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col col-md-3"><label for="password-input" class=" form-control-label">Password</label></div>
+                                    <div class="col-12 col-md-9"><input type="password" id="password-input" name="password-input" placeholder="Password" class="form-control"><small class="help-block form-text">Please enter the password to be used</small></div>
+                                </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+<script src="../static/assets/js/vendor/jquery-2.1.4.min.js"></script>
+<script>
+    var output = document.getElementById('output');
+
+ jQuery('#discover').click(function() {
+     jQuery.ajax({
+         url: "/discover",
+         method: "GET",
+         success: function (res) {
+             if (res.status == "Success") {
+                 alert("Completed discovery");
+             }
+             else {
+                 alert("Some error occurred");
+             }
+         }
+     });
+ });
+
+ function doPoll() {
+     jQuery.ajax({
+         url: "/stream",
+         method: "GET",
+         success: function (res) {
+             line = res.line;
+             jQuery('#output').text(line);
+         }
+     });
+
+ }
+ setInterval(doPoll,5000);
+</script>
+
+
+</div>
+
+</body>
+</html>

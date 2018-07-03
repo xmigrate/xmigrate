@@ -1,0 +1,9 @@
+
+PLAY [Configure aws-cli and required packages and deploy and execute the payload] ***
+
+TASK [Download get-pip file] ***************************************************
+fatal: [18.218.210.6]: UNREACHABLE! => {"changed": false, "msg": "ERROR! SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue", "unreachable": true}
+
+PLAY RECAP *********************************************************************
+18.218.210.6               : ok=0    changed=0    unreachable=1    failed=0   
+

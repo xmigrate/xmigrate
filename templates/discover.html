@@ -1,0 +1,183 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang=""> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Migration-Tool</title>
+
+    <meta name="description" content="Ticketing dashboard">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="apple-icon.png">
+    <link rel="shortcut icon" href="favicon.ico">
+
+    <link rel="stylesheet" href="../static/assets/css/normalize.css">
+    <link rel="stylesheet" href="../static/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/assets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../static/assets/css/themify-icons.css">
+    <link rel="stylesheet" href="../static/assets/css/flag-icon.min.css">
+    <link rel="stylesheet" href="../static/assets/css/cs-skin-elastic.css">
+    <!-- <link rel="stylesheet" href="assets/css/bootstrap-select.less"> -->
+    <link rel="stylesheet" href="../static/assets/scss/style.css">
+    <link rel="stylesheet" href="../static/assets/css/style.css">
+    <link href="../static/assets/css/lib/vector-map/jqvmap.min.css" rel="stylesheet">
+
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
+
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js"></script> -->
+
+</head>
+<body>
+<audio id="over_music">
+    <source src="{{ url_for('static', filename='beepbeep.mp3') }}">
+</audio>
+<audio id="high">
+    <source src="{{ url_for('static', filename='high.mp3') }}">
+</audio>
+
+    <!-- Right Panel -->
+
+    <div id="right-panel" class="right-panel">
+
+
+        <!-- Header-->
+<!-- Header-->
+        <header id="header" class="header">
+
+            <div class="header-menu">
+
+                <div class="col-sm-7">
+                 
+                    <div class="header-left">
+
+                        <div class="dropdown for-message" id="quote" >
+
+                          
+                        </div>
+                        <span id="author" class="text-dark display-12"></span>
+                    </div>
+                </div>
+
+                <div class="col-sm-5">
+                   
+
+
+                </div>
+            </div>
+
+        </header><!-- /header -->
+        <!-- Header-->
+        <div class="content mt-3">
+            <div class="animated fadeIn">
+                <div class="row">
+
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="mb-3">Discovered hosts</h4>
+                        <div class="card-body">
+                            <table class="table">
+                              <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Hostname</th>
+                                    <th scope="col">IP</th>
+                                    <th scope="col">Subnet</th>
+                                    <th scope="col">Network</th>
+                                    <th scope="col">OS</th>
+                                    <th scope="col">CPU</th>
+                                    <th scope="col">RAM</th>
+
+                              </tr>
+                          </thead>
+                          <tbody id="changes">
+                          {% for i in range(result|length) %}
+                            <tr>
+                                <th scope="row">{{ i }}</th>
+                                <td>{{ result[i]['host'] }}</td>
+                                <td>{{ result[i]['ip'] }}</td>
+                                <td>{{ result[i]['subnet'] }}</td>
+                                <td>{{ result[i]['network'] }}</td>
+                                <td>{{ result[i]['os'] }}</td>
+                                <td>{{ result[i]['cpu'] }}</td>
+                                <td>{{ result[i]['ram'] }}</td>
+                          </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+                        </div>
+
+                    </div>
+                </div>
+
+                                </div>
+                        <!-- /# column -->
+        </div>
+         <div class="row">
+
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="mb-3">Blueprint</h4>
+                                    <button type="button" class="btn btn-success">Start Migration</button>
+                                    <button type="button" class="btn btn-danger">Stop Migration</button>
+                        <div class="card-body">
+                            <table class="table">
+                              <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">VPC</th>
+                                    <th scope="col">Subnet</th>
+                                    <th scope="col">Servers</th>
+                              </tr>
+                          </thead>
+                          <tbody id="changes">
+                          {% for i in range(result|length) %}
+                            <tr>
+                                <th scope="row">{{ i }}</th>
+                                <td>{{ result[i]['vpc'] }}</td>
+                                <td>{{ result[i]['subnets'] }}</td>
+                                <td>{{ result[i]['servers'] }}</td>
+                          </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+                        </div>
+
+                    </div>
+                </div>
+
+                                </div>
+                        <!-- /# column -->
+
+        </div>
+
+    </div><!-- /#right-panel -->
+
+    <!-- Right Panel -->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+   <script type="text/javascript">
+       function parseQuote(response)
+       {
+        document.getElementById("quote").innerHTML = response.quoteText;
+        document.getElementById("author").innerHTML = response.quoteAuthor;
+       }
+   </script>
+
+   <script type="text/javascript" src="http://api.forismatic.com/api/1.0/?method=getQuote&amp;format=jsonp&amp;lang=en&amp;jsonp=parseQuote" async></script>
+
+
+    <script src="../static/assets/js/popper.min.js"></script>
+    <script src="../static/assets/js/plugins.js"></script>
+    <script src="../static/assets/js/main.js"></script>
+        <!--  Chart js -->
+    <script src="../static/assets/js/my.js"></script>
+
+    
+</body>
+</html>

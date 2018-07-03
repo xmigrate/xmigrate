@@ -1,0 +1,19 @@
+Converting  .img to vhd
+------------------------
+qemu-img convert os-image.img  -O vmdk os-image.vmdk
+
+
+Taking disk image using dd
+---------------------------
+sudo dd if=/dev/sdb bs=64M status=progress | aws s3 cp - s3://my-bucket/sdb_backup.img --sse AES256 --storage-class STANDARD_IA
+
+
+testcases
+----------
+
+1) One network and different subbnets
+2) Multiple networks and different subnets
+
+
+
+db.createUser({user: "migrationuser",pwd:"mygrationtool",roles:[{role:"readWrite",db:"migration"}]})
