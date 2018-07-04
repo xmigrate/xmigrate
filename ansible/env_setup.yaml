@@ -2,7 +2,7 @@
   become: true
   remote_user: ec2-user
   become_method: sudo
-  hosts: tool
+  hosts: nodes
   gather_facts: no
   force_handlers: True
   tasks:

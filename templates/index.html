@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ticket-Dashboard</title>
+    <title>Cloud Migration</title>
     <meta name="description" content="Cloud palaayan">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -65,7 +65,7 @@
                                     <strong><a href="/blueprint" id='blueprint' class="btn btn-success pull-right">Blueprint</a></strong>
                                     </form>
                             </div>
-                            <div class="card-body bg-dark text-success card-block" id="output">
+                            <div class="card-body bg-dark text-success card-block" id="output" style="overflow:auto;white-space:pre-wrap;">
                                 <== Hit discovery button once you added all your server ips to inventory ==>
                             </div>
                         </div>
@@ -119,6 +119,7 @@
          method: "GET",
          success: function (res) {
              line = res.line;
+             
              jQuery('#output').text(line);
          }
      });
