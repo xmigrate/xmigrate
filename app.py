@@ -24,6 +24,10 @@ class Post(Document):
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
     ports = ListField()
+    cores = StringField(max_length=2)
+    cpu_model = StringField(required=True, max_length=150)
+    ram = StringField(required=True, max_length=50)
+
 
 
 def ec2_type():
@@ -66,7 +70,8 @@ def discover():
 
 @app.route('/blueprint')
 def blueprint():
-    return render_template('discover.html')
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    return render_template('discover.html',machines=Post.objects)
 
 
 

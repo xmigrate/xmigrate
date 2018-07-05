@@ -87,11 +87,11 @@ class Post(Document):
 
 
 def main():
-    con = connect(host="mongodb://migrationuser:mygrationtool@18.218.210.6:27017/migration?authSource=admin")
+    con = connect(host="mongodb://migrationuser:mygrationtool@34.217.74.168:27017/migration?authSource=admin")
     result = network_info()
     result['ports'] = ports_info()
-    cores = len(cpuinfo().keys())
-    cpu_model = cpuinfo()['model name']
+    cores = str(len(cpuinfo().keys()))
+    cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
     post1 = Post(host=result['host'], ip=result['ip'], subnet=result['subnet'], network=result['network'],
                  ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram)

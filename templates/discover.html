@@ -87,23 +87,23 @@
                                     <th scope="col">IP</th>
                                     <th scope="col">Subnet</th>
                                     <th scope="col">Network</th>
-                                    <th scope="col">OS</th>
-                                    <th scope="col">CPU</th>
+                                    <th scope="col">CPU Model</th>
+                                    <th scope="col">CPU cores</th>
                                     <th scope="col">RAM</th>
 
                               </tr>
                           </thead>
                           <tbody id="changes">
-                          {% for i in range(result|length) %}
+                          {% for i in range(machines|length) %}
                             <tr>
                                 <th scope="row">{{ i }}</th>
-                                <td>{{ result[i]['host'] }}</td>
-                                <td>{{ result[i]['ip'] }}</td>
-                                <td>{{ result[i]['subnet'] }}</td>
-                                <td>{{ result[i]['network'] }}</td>
-                                <td>{{ result[i]['os'] }}</td>
-                                <td>{{ result[i]['cpu'] }}</td>
-                                <td>{{ result[i]['ram'] }}</td>
+                                <td>{{ machines[i].host }}</td>
+                                <td>{{ machines[i].ip }}</td>
+                                <td>{{ machines[i].subnet }}</td>
+                                <td>{{ machines[i].network }}</td>
+                                <td>{{ machines[i].cpu_model }}</td>
+                                <td>{{ machines[i].cores }}</td>
+                                <td>{{ machines[i].ram }}</td>
                           </tr>
                           {% endfor %}
                       </tbody>

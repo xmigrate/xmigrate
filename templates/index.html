@@ -61,8 +61,8 @@
                         <div class="card" style="height: 50em">
                             <div class="card-header">
                                 <form>
-                                <strong><input id='discover' type="button" class="btn btn-primary" value="Discover"></strong> <small> Press the button to start discovery</small>
-                                    <strong><a href="/blueprint" id='blueprint' class="btn btn-success pull-right">Blueprint</a></strong>
+                                <strong><input id='discover' type="button" onclick="this.disabled = 'disabled';" class="btn btn-primary" value="Discover"></strong> <small> Press the button to start discovery</small>
+                                    <strong><a href="/blueprint" onclick='return false' id='blueprint' class="btn btn-success pull-right">Blueprint</a></strong>
                                     </form>
                             </div>
                             <div class="card-body bg-dark text-success card-block" id="output" style="overflow:auto;white-space:pre-wrap;">
@@ -105,6 +105,8 @@
          success: function (res) {
              if (res.status == "Success") {
                  alert("Completed discovery");
+                 var anch = document.getElementById("blueprint");
+                 anch.onclick = '';
              }
              else {
                  alert("Some error occurred");

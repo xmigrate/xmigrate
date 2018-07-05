@@ -30,10 +30,37 @@ TASK [Create .aws directory] ***************************************************
 ok: [34.219.149.227]
 
 TASK [Configure awscli credentials] ************************************************************************************************************************************
-An exception occurred during task execution. To see the full traceback, use -vvv. The error was: If you are using a module and expect the file to exist on the remote, see the remote_src option
-fatal: [34.219.149.227]: FAILED! => {"changed": false, "msg": "Could not find or access '~/.aws/credentials' on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option"}
-	to retry, use: --limit @/home/ubuntu/cloud-migration/ansible/env_setup.retry
+ok: [34.219.149.227]
+
+TASK [Configure aws region] ********************************************************************************************************************************************
+ok: [34.219.149.227]
+
+TASK [<==Deploy payload==>] ********************************************************************************************************************************************
+ok: [34.219.149.227]
+
+TASK [<==Executing payload==>] *****************************************************************************************************************************************
+changed: [34.219.149.227]
+
+TASK [Debug] ***********************************************************************************************************************************************************
+ok: [34.219.149.227] => {
+    "st": {
+        "changed": true, 
+        "cmd": "python /tmp/footprint.py", 
+        "delta": "0:00:00.744189", 
+        "end": "2018-07-05 12:13:13.077724", 
+        "failed": false, 
+        "rc": 0, 
+        "start": "2018-07-05 12:13:12.333535", 
+        "stderr": "", 
+        "stderr_lines": [], 
+        "stdout": "Boss you have to see this!!\nTried to save duplicate unique keys (E11000 duplicate key error collection: migration.post index: host_1 dup key: { : \"ip-172-31-24-58.us-west-2.compute.internal\" })", 
+        "stdout_lines": [
+            "Boss you have to see this!!", 
+            "Tried to save duplicate unique keys (E11000 duplicate key error collection: migration.post index: host_1 dup key: { : \"ip-172-31-24-58.us-west-2.compute.internal\" })"
+        ]
+    }
+}
 
 PLAY RECAP *************************************************************************************************************************************************************
-34.219.149.227             : ok=7    changed=4    unreachable=0    failed=2   
+34.219.149.227             : ok=12   changed=5    unreachable=0    failed=1   
 
