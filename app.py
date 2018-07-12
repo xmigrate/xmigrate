@@ -2,6 +2,7 @@ from mongoengine import *
 from flask import render_template,Flask,jsonify, flash
 from ansible.playbook import Playbook
 import ast
+import json
 import os
 from pygtail import Pygtail
 
@@ -73,6 +74,17 @@ def blueprint():
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     return render_template('discover.html',machines=Post.objects)
 
+
+@app.route('/createblueprint')
+def create_blueprint():
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    machines = json.loads(Post.objects.to_json())
+    networks = []
+    for machine in machines:
+      networks.append(machine['network'])
+    network_count = len(list(set(networks)))
+    networks = list(set(networks))
+    return render_template('discover.html',machines=Post.objects)
 
 
 @app.route('/stream')
