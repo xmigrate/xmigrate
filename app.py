@@ -29,30 +29,86 @@ class Post(Document):
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
 
+def compu(name,core,ram):
+    if name=='GeneralPurpose':
+        if core==1 and ram==0.5:
+            return('t2.nano')
+        elif core==1 and ram==1:
+            return('t2.micro')
+        elif core==1 and ram==2:
+            return('t2.small')
+        elif core==2 and ram==4:
+            return('t2.medium')
+        elif core==2 and ram==8:
+            return('t2.large')
+        elif core==4 and ram==16:
+            return('t2.namelarge')
+        elif core==8 and ram==32:
+            return('t2.2namelarge')
+        elif core==2 and ram==38:
+            return('m5.large')
+        elif core==4 and ram==16:
+            return('m5.namelarge')
+        elif core==8 and ram==32:
+            return('m5.2namelarge') 
+        elif core==16 and ram==64:
+            return('m5.4namelarge')     
+        elif core==48 and ram==192:
+            return('m5.12namelarge')
+        elif core==96 and ram==384:
+            return('m5.24namelarge')
+        elif core==2 and ram==8:
+            return('m5d.large')
+        elif core==4 and ram==16:
+            return('m5d.namelarge')
+        elif core==8 and ram==32:
+            return('m5d.2namelarge')
+        elif core==8 and ram==32:
+            return('m5d.2namelarge')
+        elif core==16 and ram==64:
+            return('m5d.4namelarge')   
+        elif core==48 and ram==192:
+            return('m5d.12namelarge')
+        elif core==96 and ram==384:
+            return('m5d.24namelarge')
+        else:
+            return("No machines found")            
+    elif name=='ComputeOptimizes':
+        if core==2 and ram==4:
+            return('c5.large')
+        elif core==4 and ram==8:
+            return('c5.namelarge')
+        elif core==8 and ram==16:
+            return('c5.2namelarge')
+        elif core==16 and ram==32:
+            return('c5.4namelarge')  
+        elif core==72 and ram==144:
+            return('c5.18namelarge')
+        elif core==2 and ram==4:
+            return('c5d.large')
+        elif core==4 and ram==8:
+            return('c5d.namelarge')
+        elif core==8 and ram==32:
+            return('c5d.2namelarge')
+        elif core==16 and ram==64:
+            return('c5d.4namelarge')
+        elif core==32 and ram==72:
+            return('c5d.9namelarge')
+        elif core==72 and ram==144:
+            return('c5d.18namelarge')
+        elif core==2 and ram==3.75:
+            return('c4.large')
+        elif core==4 and ram==7.5:
+            return('c4.namelarge')
+        elif core==8 and ram==15:
+            return('c4.2namelarge')
+        elif core==16 and ram==30:
+            return('c4.4namelarge')
+        elif core==36 and ram==60:
+            return('c4.8namelarge')
+        else:
+            return("No machines found")
 
-
-def ec2_type():
-    general = []
-    general.append({'name': 't2.nano', 'cores': 1, 'ram': 0.5})
-    general.append({'name': 't2.micro', 'cores': 1, 'ram': 1})
-    general.append({'name': 't2.small', 'cores': 1, 'ram': 2})
-    general.append({'name': 't2.medium', 'cores': 2, 'ram': 4})
-    general.append({'name': 't2.large', 'cores': 2, 'ram': 8})
-    general.append({'name': 't2.xlarge', 'cores': 4, 'ram': 16})
-    general.append({'name': 't2.2xlarge', 'cores': 8, 'ram': 32})
-    compute = []
-    compute.append({'name': 'c5.large', 'cores': 2, 'ram': 4})
-    compute.append({'name': 'c5.xlarge', 'cores': 4, 'ram': 8})
-    compute.append({'name': 'c5.2xlarge', 'cores': 8, 'ram': 16})
-    compute.append({'name': 'c5.4xlarge', 'cores': 16, 'ram': 32})
-    compute.append({'name': 'c5.9xlarge', 'cores': 36, 'ram': 72})
-    compute.append({'name': 'c5.18xlarge', 'cores': 72, 'ram': 144})
-    compute.append({'name': 'c5d.large', 'cores': 2, 'ram': 4})
-    compute.append({'name': 'c5d.xlarge', 'cores': 4, 'ram': 8})
-    compute.append({'name': 'c5d.2xlarge', 'cores': 8, 'ram': 16})
-    compute.append({'name': 'c5d.4xlarge', 'cores': 16, 'ram': 32})
-    compute.append({'name': 'c5d.9xlarge', 'cores': 32, 'ram': 72})
-    compute.append({'name': 'c5d.18xlarge', 'cores': 72, 'ram': 144})
 
 @app.route('/')
 @app.route('/index')
