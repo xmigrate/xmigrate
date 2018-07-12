@@ -122,8 +122,24 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h4 class="mb-3">Blueprint</h4>
-                                    <button type="button" class="btn btn-success">Start Migration</button>
-                                    <button type="button" class="btn btn-danger">Stop Migration</button>
+				    <div class="col-4 col-md-4">
+                                    <select name="vpc" id="vpc" class="form-control">
+                                      <option value="0" disabled selected>Select VPC CIDR</option>
+                                      <option value="1">10.0.0.0 - 10.255.255.255 (10/8 prefix)</option>
+                                      <option value="2">172.16.0.0 - 172.31.255.255 (172.16/12 prefix)</option>
+                                      <option value="3">192.168.0.0 - 192.168.255.255 (192.168/16 prefix)</option>
+                                    </select>
+                                    </div>
+                                    <div class="col-4 col-md-4">
+                                    <select name="machine" id="machine" class="form-control">
+                                      <option value="0" disabled selected>Select machine type</option>
+                                      <option value="1">General purpose</option>
+                                      <option value="2">Compute optimized</option>
+                                      <option value="3">Accelerated computing</option>
+                                    </select>
+                                    </div>
+                                    <button type="button" class="btn btn-success">Create blueprint</button>
+                                    
                         <div class="card-body">
                             <table class="table">
                               <thead>
@@ -131,7 +147,8 @@
                                     <th scope="col">#</th>
                                     <th scope="col">VPC</th>
                                     <th scope="col">Subnet</th>
-                                    <th scope="col">Servers</th>
+                                    <th scope="col">Hostname</th>
+				    <th scope="col">Machine type</th>
                               </tr>
                           </thead>
                           <tbody id="changes">
@@ -140,7 +157,8 @@
                                 <th scope="row">{{ i }}</th>
                                 <td>{{ result[i]['vpc'] }}</td>
                                 <td>{{ result[i]['subnets'] }}</td>
-                                <td>{{ result[i]['servers'] }}</td>
+                                <td>{{ result[i]['hostname'] }}</td>
+                                <td>{{ result[i]['machinetype'] }}</td>
                           </tr>
                           {% endfor %}
                       </tbody>
