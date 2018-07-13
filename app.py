@@ -1,5 +1,5 @@
 from mongoengine import *
-from flask import render_template,Flask,jsonify, flash
+from flask import render_template,Flask,jsonify, flash, request
 from ansible.playbook import Playbook
 import ast
 import json
@@ -131,8 +131,21 @@ def blueprint():
     return render_template('discover.html',machines=Post.objects)
 
 
-@app.route('/createblueprint')
+@app.route('/createblueprint', methods=['POST'])
 def create_blueprint():
+    if request.method == 'POST':  #this block is only entered when the form is submitted
+        vpc = request.form.get('vpc')
+        machine = request.form['machine']
+        if vpc == 1:
+          cidr = '10.0.0.0.0'
+        elif vpc == 2:
+          cidr = '172.16.0.0'
+        elif vpc == 3:
+          cidr = '192.168.0.0'
+        if machine == 1:
+          machine_type = 'general'
+        else:
+          machine_type = 'compute'
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     machines = json.loads(Post.objects.to_json())
     networks = []
