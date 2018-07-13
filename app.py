@@ -5,19 +5,16 @@ import ast
 import json
 import os
 from pygtail import Pygtail
-
-
+from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = 'Vishnu123456'
-
 
 def start_discovery():
     l = ''
     f = open('./ansible/log.txt','r')
     l = f.read()
     return l
-
 
 class Post(Document):
     host = StringField(required=True, max_length=200, unique=True)
@@ -153,6 +150,16 @@ def create_blueprint():
       networks.append(machine['network'])
     network_count = len(list(set(networks)))
     networks = list(set(networks))
+    vpc_cidr = defaultdict(list)
+    for i in machines:
+      vpc_cidr[i['network']].append(i['subnet'])
+    for i in vpc_cidr.keys():
+      subnet_prefixes = []
+      subnet_prefix = 0
+      for j in vpc_cidr[i]:
+        subnet_prefixes.append(int(j.split('/')[-1]))
+        subnet_prefix = min(subnet_prefixes)
+    print subnet_prefix
     return render_template('discover.html',machines=Post.objects)
 
 
