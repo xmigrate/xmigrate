@@ -26,8 +26,19 @@ class Post(Document):
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
 
+class BluePrint(Document):
+    host = StringField(required=True, max_length=200, unique=True)
+    ip = StringField(required=True, unique=True)
+    subnet = StringField(required=True, max_length=50)
+    network = StringField(required=True, max_length=50)
+    ports = ListField()
+    cores = StringField(max_length=2)
+    cpu_model = StringField(required=True, max_length=150)
+    ram = StringField(required=True, max_length=50)
+    machine_type = StringField(required=True, max_length=150)
+
 def compu(name,core,ram):
-    if name=='GeneralPurpose':
+    if name=='general':
         if core==1 and ram==0.5:
             return('t2.nano')
         elif core==1 and ram==1:
@@ -70,7 +81,7 @@ def compu(name,core,ram):
             return('m5d.24namelarge')
         else:
             return("No machines found")            
-    elif name=='ComputeOptimizes':
+    elif name=='compute':
         if core==2 and ram==4:
             return('c5.large')
         elif core==4 and ram==8:
@@ -130,16 +141,18 @@ def blueprint():
 
 @app.route('/createblueprint', methods=['POST'])
 def create_blueprint():
+    cidr = ''
+    machine_type = ''
     if request.method == 'POST':  #this block is only entered when the form is submitted
         vpc = request.form.get('vpc')
         machine = request.form['machine']
-        if vpc == 1:
-          cidr = '10.0.0.0.0'
-        elif vpc == 2:
+        if vpc == '1':
+          cidr = '10.0.0.0'
+        elif vpc == '2':
           cidr = '172.16.0.0'
-        elif vpc == 3:
+        elif vpc == '3':
           cidr = '192.168.0.0'
-        if machine == 1:
+        if machine == '1':
           machine_type = 'general'
         else:
           machine_type = 'compute'
@@ -151,6 +164,8 @@ def create_blueprint():
     network_count = len(list(set(networks)))
     networks = list(set(networks))
     vpc_cidr = defaultdict(list)
+    subnet_machines = defaultdict(list)
+    vpcs = defaultdict(list)
     for i in machines:
       vpc_cidr[i['network']].append(i['subnet'])
     for i in vpc_cidr.keys():
@@ -159,7 +174,66 @@ def create_blueprint():
       for j in vpc_cidr[i]:
         subnet_prefixes.append(int(j.split('/')[-1]))
         subnet_prefix = min(subnet_prefixes)
-    print subnet_prefix
+        vp = i+'/'+str(subnet_prefix-2)
+        vpcs[vp].append(j)
+    print vpcs
+    machines = json.loads(Post.objects.to_json())
+    if cidr == '10.0.0.0':
+      for machine in machines:
+        if machine['network'].split('.')[0] == '10':
+          continue
+        machine['ip'] = machine['ip'].split('.')
+        machine['ip'][0] = '10'
+        machine['ip'] = '.'.join(machine['ip'])
+        machine['network'] = machine['network'].split('.')
+        machine['network'][0] = '10'
+        machine['network'] = '.'.join(machine['network'])
+        machine['subnet'] = machine['subnet'].split('.')
+        machine['subnet'][0] = '10'
+        machine['subnet'] = '.'.join(machine['subnet'])
+        print machine
+    elif cidr == '172.16.0.0':
+      for machine in machines:
+        if machine['network'].split('.')[0] == '172':
+          continue
+        machine['ip'] = machine['ip'].split('.')
+        machine['ip'][0] = '172'
+        machine['ip'][1] = '16'
+        machine['ip'] = '.'.join(machine['ip'])
+        machine['network'] = machine['network'].split('.')
+        machine['network'][0] = '172'
+        machine['network'][1] = '16'
+        machine['network'] = '.'.join(machine['network'])
+        machine['subnet'] = machine['subnet'].split('.')
+        machine['subnet'][0] = '172'
+        machine['subnet'][1] = '16'
+        machine['subnet'] = '.'.join(machine['subnet'])
+        print machine
+    elif cidr == '192.168.0.0':
+      for machine in machines:
+        if machine['network'].split('.')[0] == '192':
+          continue
+        machine['ip'] = machine['ip'].split('.')
+        machine['ip'][0] = '192'
+        machine['ip'][1] = '168'
+        machine['ip'] = '.'.join(machine['ip'])
+        machine['network'] = machine['network'].split('.')
+        machine['network'][0] = '192'
+        machine['network'][1] = '168'
+        machine['network'] = '.'.join(machine['network'])
+        machine['subnet'] = machine['subnet'].split('.')
+        machine['subnet'][0] = '192'
+        machine['subnet'][1] = '168'
+        machine['subnet'] = '.'.join(machine['subnet'])
+        print machine
+    def conv_KB(kb):
+      gb = int(kb)/1000000
+      return gb
+    for machine in machines:
+      ram = conv_KB(machine['ram'].split(' ')[0])
+      machine['machine_type'] = compu(machine_type,int(machine['cores']),ram)
+      #print compu(machine_type,int(machine['cores']),ram)
+    print machine
     return render_template('discover.html',machines=Post.objects)
 
 
