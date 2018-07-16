@@ -90,6 +90,7 @@
                                     <th scope="col">CPU Model</th>
                                     <th scope="col">CPU cores</th>
                                     <th scope="col">RAM</th>
+				    <th scope="col">Disk</th>
 
                               </tr>
                           </thead>
@@ -104,6 +105,7 @@
                                 <td>{{ machines[i].cpu_model }}</td>
                                 <td>{{ machines[i].cores }}</td>
                                 <td>{{ machines[i].ram }}</td>
+                                <td>{{ machines[i].disk }}</td>
                           </tr>
                           {% endfor %}
                       </tbody>

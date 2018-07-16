@@ -27,6 +27,14 @@ def network_info():
     return resp
 
 
+def disk_info():
+  root_disk =''
+  for i in psutil.disk_partitions():
+    if i.mountpoint == '/':
+      root_disk = i.device.rstrip('1234567890')
+  return root_disk
+
+
 def ports_info():
     rows = []
     lc = psutil.net_connections('inet')
@@ -84,17 +92,18 @@ class Post(Document):
     cores = StringField(max_length=2)
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
-
+    disk = StringField(required=True, max_length=50)
 
 def main():
     con = connect(host="mongodb://migrationuser:mygrationtool@34.217.74.168:27017/migration?authSource=admin")
     result = network_info()
     result['ports'] = ports_info()
     cores = str(len(cpuinfo().keys()))
+    disk = disk_info()
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
     post1 = Post(host=result['host'], ip=result['ip'], subnet=result['subnet'], network=result['network'],
-                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram)
+                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info())
     try:
         post1.save()
     except Exception as e:
