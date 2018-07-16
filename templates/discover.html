@@ -139,9 +139,8 @@
                                       <option value="3">Accelerated computing</option>
                                     </select>
                                     </div>
-                                    <input type="submit" class="btn btn-success">Create blueprint</button>
+                                    <input type="submit" class="btn btn-success" value="Create blueprint"></button>
 				    </form>
-                                    
                         <div class="card-body">
                             <table class="table">
                               <thead>
@@ -157,14 +156,17 @@
                           {% for i in range(result|length) %}
                             <tr>
                                 <th scope="row">{{ i }}</th>
-                                <td>{{ result[i]['vpc'] }}</td>
-                                <td>{{ result[i]['subnets'] }}</td>
-                                <td>{{ result[i]['hostname'] }}</td>
-                                <td>{{ result[i]['machinetype'] }}</td>
+                                <td>{{ result[i]['network'] }}</td>
+                                <td>{{ result[i]['subnet'] }}</td>
+                                <td>{{ result[i]['host'] }}</td>
+                                <td>{{ result[i]['machine_type'] }}</td>
                           </tr>
                           {% endfor %}
                       </tbody>
                   </table>
+			 <form action="/start" method='post'>
+                                      <input id="start" type="submit" class="btn btn-success" value="Start migration" disabled></button>
+                         </form>
                         </div>
 
                     </div>
@@ -187,6 +189,11 @@
         document.getElementById("quote").innerHTML = response.quoteText;
         document.getElementById("author").innerHTML = response.quoteAuthor;
        }
+    if (window.location.pathname == '/createblueprint'){
+       var x = document.getElementById("start");
+       x.disabled=false;
+    }
+       
    </script>
 
    <script type="text/javascript" src="http://api.forismatic.com/api/1.0/?method=getQuote&amp;format=jsonp&amp;lang=en&amp;jsonp=parseQuote" async></script>

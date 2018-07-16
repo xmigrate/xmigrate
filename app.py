@@ -233,8 +233,16 @@ def create_blueprint():
       ram = conv_KB(machine['ram'].split(' ')[0])
       machine['machine_type'] = compu(machine_type,int(machine['cores']),ram)
       #print compu(machine_type,int(machine['cores']),ram)
-    print machine
-    return render_template('discover.html',machines=Post.objects)
+      post = BluePrint(host=machine['host'], ip=machine['ip'], subnet=machine['subnet'], network=machine['network'],
+                 ports=machine['ports'], cores=machine['cores'], cpu_model=machine['cpu_model'], ram=machine['ram'],machine_type=machine['machine_type'])
+      try:
+        post.save()
+      except Exception as e:
+        print("Boss you have to see this!!")
+        print(e)
+      finally:
+        con.close()
+    return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
 
 
 @app.route('/stream')
