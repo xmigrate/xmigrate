@@ -133,6 +133,11 @@ def discover():
     os.popen('ansible-playbook ./ansible/env_setup.yaml > ./ansible/log.txt')
     return jsonify({'status': 'Success'})
 
+@app.route('/start', methods=['POST'])
+def start_migration():
+    os.popen('ansible-playbook ./ansible/start_migration.yaml > ./ansible/migration_log.txt')
+    return jsonify({'status': 'Success'})
+
 
 @app.route('/blueprint')
 def blueprint():

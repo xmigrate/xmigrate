@@ -1,0 +1,17 @@
+- name : Starting migration
+  become: true
+  remote_user: ec2-user
+  become_method: sudo
+  hosts: nodes
+  gather_facts: no
+  force_handlers: True
+  tasks:
+  - name: Download get-pip file
+    shell: '/bin/sh sudo dd if=/dev/xvda bs=64M status=progress | aws s3 cp - s3://my-bucket/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA'
+    async: 900
+    poll: 5
+    register: out
+
+  - name: Output
+    debug:
+      msg: out
