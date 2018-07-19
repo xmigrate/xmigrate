@@ -6,12 +6,17 @@
   gather_facts: no
   force_handlers: True
   tasks:
-  - name: Download get-pip file
-    shell: '/bin/sh sudo dd if=/dev/xvda bs=64M status=progress | aws s3 cp - s3://my-bucket/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA'
-    async: 900
-    poll: 5
-    register: out
-
-  - name: Output
+  - name: <== Deploy payload ==>
+    copy: 
+      src: "./start_dd.py"
+      dest: "/tmp/start.py"
+  - name: <== Executing payload ==>
+    shell: "python /tmp/start.py"
+    register: st
+    become: True
+  - name: Message
     debug:
-      msg: out
+      var: st
+
+    
+      

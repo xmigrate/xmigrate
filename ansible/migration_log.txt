@@ -1,0 +1,10 @@
+
+PLAY [Starting migration] **********************************************************************************************************************************************
+
+TASK [Try pushing] *****************************************************************************************************************************************************
+fatal: [34.219.149.227]: FAILED! => {"ansible_job_id": "470920990117.342", "changed": true, "cmd": "sudo dd if=/dev/xvda bs=64M status=progress | aws s3 cp - s3://my-bucket/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA", "delta": "0:00:00.065028", "end": "2018-07-17 11:02:19.512551", "finished": 1, "msg": "non-zero return code", "rc": 127, "start": "2018-07-17 11:02:19.447523", "stderr": "/bin/bash: aws: command not found\ndd: error writing ‘standard output’: Broken pipe\n1+0 records in\n0+0 records out\n0 bytes (0 B) copied, 0.0422721 s, 0.0 kB/s", "stderr_lines": ["/bin/bash: aws: command not found", "dd: error writing ‘standard output’: Broken pipe", "1+0 records in", "0+0 records out", "0 bytes (0 B) copied, 0.0422721 s, 0.0 kB/s"], "stdout": "", "stdout_lines": []}
+	to retry, use: --limit @/home/ubuntu/cloud-migration/ansible/start_migration.retry
+
+PLAY RECAP *************************************************************************************************************************************************************
+34.219.149.227             : ok=0    changed=0    unreachable=0    failed=1   
+

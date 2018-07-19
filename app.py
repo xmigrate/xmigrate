@@ -37,6 +37,7 @@ class BluePrint(Document):
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
     machine_type = StringField(required=True, max_length=150)
+    status = StringField(required=False, max_length=100)
 
 def compu(name,core,ram):
     if name=='general':
@@ -240,7 +241,7 @@ def create_blueprint():
       machine['machine_type'] = compu(machine_type,int(machine['cores']),ram)
       #print compu(machine_type,int(machine['cores']),ram)
       post = BluePrint(host=machine['host'], ip=machine['ip'], subnet=machine['subnet'], network=machine['network'],
-                 ports=machine['ports'], cores=machine['cores'], cpu_model=machine['cpu_model'], ram=machine['ram'],machine_type=machine['machine_type'])
+                 ports=machine['ports'], cores=machine['cores'], cpu_model=machine['cpu_model'], ram=machine['ram'],machine_type=machine['machine_type'],status='Not started')
       try:
         post.save()
       except Exception as e:

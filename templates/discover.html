@@ -152,6 +152,7 @@
                                     <th scope="col">Subnet</th>
                                     <th scope="col">Hostname</th>
 				    <th scope="col">Machine type</th>
+                                    <th scope="col">Status</th>
                               </tr>
                           </thead>
                           <tbody id="changes">
@@ -162,6 +163,7 @@
                                 <td>{{ result[i]['subnet'] }}</td>
                                 <td>{{ result[i]['host'] }}</td>
                                 <td>{{ result[i]['machine_type'] }}</td>
+                                <td>{{ result[i]['status'] }}</td>
                           </tr>
                           {% endfor %}
                       </tbody>
