@@ -92,13 +92,12 @@ def start_ami_creation(bucket_name,nsg_filename):
         if progress_start in progress_output:
             progress = (progress_output.split(progress_start))[1].split('"')[0]
             print '    The progress on importing the image to EC2 is: "'+progress+'%"'
-
+            print progress_output
         if "completed" in progress_output:
             output = "success"
-
     print '***********************************************************'
     print '***     Image has been successfully imported to EC2     ***'
     print '***********************************************************'
-
+    print ami_id
 
 start_ami_creation('migrationdata2','ip-172-31-24-58.us-west-2.compute.internal.img')
