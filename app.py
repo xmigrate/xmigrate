@@ -134,10 +134,10 @@ def discover():
     os.popen('ansible-playbook ./ansible/env_setup.yaml > ./ansible/log.txt')
     return jsonify({'status': 'Success'})
 
-@app.route('/start', methods=['POST'])
+@app.route('/start', methods=['POST','GET'])
 def start_migration():
     os.popen('ansible-playbook ./ansible/start_migration.yaml > ./ansible/migration_log.txt')
-    return jsonify({'status': 'Success'})
+    return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
 
 
 @app.route('/blueprint')
@@ -164,6 +164,10 @@ def create_blueprint():
         else:
           machine_type = 'compute'
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    try:
+      BluePrint.objects.delete()
+    except Exception as e:
+      print "See the error:"+ str(e)      
     machines = json.loads(Post.objects.to_json())
     networks = []
     for machine in machines:

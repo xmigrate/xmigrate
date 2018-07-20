@@ -1,9 +1,0 @@
-[
-  {
-    "Description": "Windows 2008 OVA",
-    "Format": "raw",
-    "UserBucket": {
-        "S3Bucket": "migrationdata2",
-        "S3Key": "ip-172-31-24-58.us-west-2.compute.internal.img"
-    }
-}]
