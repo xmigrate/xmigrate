@@ -141,6 +141,13 @@
                                       <option value="3">Accelerated computing</option>
                                     </select>
                                     </div>
+                                    <div class="col-2 col-md-2">
+                                    <select name="public" id="public" class="form-control">
+                                      <option value="0" disabled selected>Select one option</option>
+                                      <option value="1">True</option>
+                                      <option value="2">False</option>
+                                    </select>
+                                    </div>
                                     <input type="submit" class="btn btn-success" value="Create blueprint"></button>
 				    </form>
                         <div class="card-body">
@@ -152,7 +159,10 @@
                                     <th scope="col">Subnet</th>
                                     <th scope="col">Hostname</th>
 				    <th scope="col">Machine type</th>
-                                    <th scope="col">AMI-Id</th>
+                                    <th scope="col">AMI-ID</th>
+                                    <th scope="col">Instance_ID</th>
+                                    <th scope="col">Subnet_ID</th>
+                                    <th scope="col">VPC_ID</th>
 				    <th scope="col">Status</th>
                               </tr>
                           </thead>
@@ -165,6 +175,9 @@
                                 <td>{{ result[i]['host'] }}</td>
                                 <td>{{ result[i]['machine_type'] }}</td>
 				<td>{{ result[i]['ami_id'] }}</td>
+                                <td>{{ result[i]['instance_id'] }}</td>
+                                <td>{{ result[i]['subnet_id'] }}</td>
+                                <td>{{ result[i]['vpc_id'] }}</td>
 				<td>{{ result[i]['status'] }}</td>
                           </tr>
                           {% endfor %}

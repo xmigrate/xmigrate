@@ -1,66 +1,63 @@
 
-PLAY [Configure aws-cli and required packages and deploy and execute the payload] ***
+PLAY [Configure aws-cli and required packages and deploy and execute the payload] **********************************************************************************************************************************
 
-TASK [Download get-pip file] ***************************************************
+TASK [Download get-pip file] ***************************************************************************************************************************************************************************************
 ok: [34.219.149.227]
 
-TASK [Install Python-devl] *****************************************************
+TASK [Install Python-devl] *****************************************************************************************************************************************************************************************
 fatal: [34.219.149.227]: FAILED! => {"changed": false, "msg": "Repo rhui-REGION-client-config-server-7 forced skip_if_unavailable=True due to: /etc/pki/rhui/cdn.redhat.com-chain.crt\nRepo rhui-REGION-client-config-server-7 forced skip_if_unavailable=True due to: /etc/pki/rhui/product/rhui-client-config-server-7.crt\nRepo rhui-REGION-client-config-server-7 forced skip_if_unavailable=True due to: /etc/pki/rhui/rhui-client-config-server-7.key\nRepo rhui-REGION-rhel-server-releases forced skip_if_unavailable=True due to: /etc/pki/rhui/cdn.redhat.com-chain.crt\nRepo rhui-REGION-rhel-server-releases forced skip_if_unavailable=True due to: /etc/pki/rhui/product/content-rhel7.crt\nRepo rhui-REGION-rhel-server-releases forced skip_if_unavailable=True due to: /etc/pki/rhui/content-rhel7.key\nRepo rhui-REGION-rhel-server-rh-common forced skip_if_unavailable=True due to: /etc/pki/rhui/cdn.redhat.com-chain.crt\nRepo rhui-REGION-rhel-server-rh-common forced skip_if_unavailable=True due to: /etc/pki/rhui/product/content-rhel7.crt\nRepo rhui-REGION-rhel-server-rh-common forced skip_if_unavailable=True due to: /etc/pki/rhui/content-rhel7.key\n\n\nCould not contact any CDS load balancers: rhui2-cds01.us-west-2.aws.ce.redhat.com, rhui2-cds02.us-west-2.aws.ce.redhat.com.\n", "rc": 1, "results": []}
 
-TASK [Update yum.. older way] **************************************************
+TASK [Update yum.. older way] **************************************************************************************************************************************************************************************
 changed: [34.219.149.227]
 
-TASK [Install Python-devel.. older way] ****************************************
+TASK [Install Python-devel.. older way] ****************************************************************************************************************************************************************************
 changed: [34.219.149.227]
 
-TASK [Install GCC .. older way] ************************************************
+TASK [Install GCC .. older way] ************************************************************************************************************************************************************************************
 changed: [34.219.149.227]
 
-TASK [Install pip] *************************************************************
+TASK [Install pip] *************************************************************************************************************************************************************************************************
 changed: [34.219.149.227]
 
-TASK [Install Python packages] *************************************************
+TASK [Install Python packages] *************************************************************************************************************************************************************************************
 ok: [34.219.149.227] => (item=awscli)
 ok: [34.219.149.227] => (item=netifaces)
 ok: [34.219.149.227] => (item=netaddr)
 ok: [34.219.149.227] => (item=mongoengine)
 ok: [34.219.149.227] => (item=psutil)
 
-TASK [Create .aws directory] ***************************************************
+TASK [Create .aws directory] ***************************************************************************************************************************************************************************************
 ok: [34.219.149.227]
 
-TASK [Configure awscli credentials] ********************************************
+TASK [Configure awscli credentials] ********************************************************************************************************************************************************************************
 ok: [34.219.149.227]
 
-TASK [Configure aws region] ****************************************************
+TASK [Configure aws region] ****************************************************************************************************************************************************************************************
 ok: [34.219.149.227]
 
-TASK [<==Deploy payload==>] ****************************************************
+TASK [<==Deploy payload==>] ****************************************************************************************************************************************************************************************
 ok: [34.219.149.227]
 
-TASK [<==Executing payload==>] *************************************************
+TASK [<==Executing payload==>] *************************************************************************************************************************************************************************************
 changed: [34.219.149.227]
 
-TASK [Debug] *******************************************************************
+TASK [Debug] *******************************************************************************************************************************************************************************************************
 ok: [34.219.149.227] => {
     "st": {
         "changed": true, 
         "cmd": "python /tmp/footprint.py", 
-        "delta": "0:00:00.751707", 
-        "end": "2018-07-20 09:43:59.568692", 
+        "delta": "0:00:00.742290", 
+        "end": "2018-07-21 18:39:47.451939", 
         "failed": false, 
         "rc": 0, 
-        "start": "2018-07-20 09:43:58.816985", 
+        "start": "2018-07-21 18:39:46.709649", 
         "stderr": "", 
         "stderr_lines": [], 
-        "stdout": "Boss you have to see this!!\nTried to save duplicate unique keys (E11000 duplicate key error collection: migration.post index: host_1 dup key: { : \"ip-172-31-24-58.us-west-2.compute.internal\" })", 
-        "stdout_lines": [
-            "Boss you have to see this!!", 
-            "Tried to save duplicate unique keys (E11000 duplicate key error collection: migration.post index: host_1 dup key: { : \"ip-172-31-24-58.us-west-2.compute.internal\" })"
-        ]
+        "stdout": "", 
+        "stdout_lines": []
     }
 }
 
-PLAY RECAP *********************************************************************
+PLAY RECAP *********************************************************************************************************************************************************************************************************
 34.219.149.227             : ok=12   changed=5    unreachable=0    failed=1   
 

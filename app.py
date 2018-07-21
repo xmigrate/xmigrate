@@ -6,15 +6,19 @@ import json
 import os
 from pygtail import Pygtail
 from collections import defaultdict
-
+import boto3
+from create_ami import start_ami_creation
 app = Flask(__name__)
 app.secret_key = 'Vishnu123456'
+
+bucket_name = 'migrationdata2'
 
 def start_discovery():
     l = ''
     f = open('./ansible/log.txt','r')
     l = f.read()
     return l
+
 
 class Post(Document):
     host = StringField(required=True, max_length=200, unique=True)
@@ -40,7 +44,45 @@ class BluePrint(Document):
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
     ami_id = StringField(required=False, max_length=100)
+    vpc_id = StringField(required=False, max_length=100)
+    subnet_id = StringField(required=False, max_length=100)
+    public_route = BooleanField(required=False)
+    ig_id = StringField(required=False, max_length=100)
+    route_table = StringField(required=False, max_length=100)
+    instance_id = StringField(required=False, max_length=100)
 
+
+def build_vpc(cidr,public_route):
+  ec2 = boto3.resource('ec2')
+  vpc = ec2.create_vpc(CidrBlock=cidr)
+  #vpc.create_tags(Tags=[{"Key": "Name", "Value": "default_vpc"}])
+  vpc.wait_until_available()
+  con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+  BluePrint.objects(network=cidr).update(vpc_id = vpc.id)
+  if public_route:
+    ig = ec2.create_internet_gateway()
+    vpc.attach_internet_gateway(InternetGatewayId=ig.id)
+    BluePrint.objects(network=cidr).update(ig_id=ig.id)
+    route_table = vpc.create_route_table()
+    route = route_table.create_route(DestinationCidrBlock='0.0.0.0/0',GatewayId=ig.id)
+    BluePrint.objects(network=cidr).update(route_table=route_table.id)
+  con.close()
+
+def build_subnet(cidr,vpcid,route):
+    ec2 = boto3.resource('ec2')
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    route_table = ec2.RouteTable(route)
+    subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
+    BluePrint.objects(subnet=subnet).update(subnet_id=subnet.id)
+    route_table.associate_with_subnet(SubnetId=subnet.id)
+    con.close()
+
+def create_machine(subnet_id,ami_id,machine_type):
+    instances = ec2.create_instances(ImageId=ami_id, InstanceType=machine_type, MaxCount=1, MinCount=1, NetworkInterfaces=[{'SubnetId': subnet_id, 'DeviceIndex': 0, 'AssociatePublicIpAddress': True}])
+    instances[0].wait_until_running()
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    BluePrint.objects(ami_id=ami_id).update(instance_id=instances[0].id)
+    con.close()
 
 def compu(name,core,ram):
     if name=='general':
@@ -130,11 +172,15 @@ def index():
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     result = Post.objects.exclude('id').to_json()
     result = ast.literal_eval(result)
+    con.close()
     return render_template('index.html', title='Home')
 
 
 @app.route('/discover')
 def discover():
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    Post.objects.delete()
+    con.close()
     os.popen('ansible-playbook ./ansible/env_setup.yaml > ./ansible/log.txt')
     return jsonify({'status': 'Success'})
 
@@ -161,30 +207,41 @@ def start_conversion():
 def start_building():
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     machines = json.loads(BluePrint.objects.to_json())
+    vpcs = []
+    subnets = []
     for machine in machines:
       vpc = machine['network']
       subnet = machine['subnet']
       ami_id = machine['ami_id']
       hostname = machine['host']
-      vpcs = []
-      subnets = [] 
+      public_route = machine['public_route']
       if vpc not in  vpcs:
         try:
-          build_vpc()
+          build_vpc(vpc,public_route)
           vpcs.append(vpc)
           BluePrint.objects(network=vpc).update(status='VPC created')
         except Exception as e:
           print("Something went wrong while creating vpc: "+str(e))
+    machines = json.loads(BluePrint.objects.to_json())
+    for machine in machines:
+      subnet = machine['subnet']
+      vpcid = machine['vpc_id']
+      route = machine['route_table']
       if subnet not in subnets:
         try:
-          build_subnet()
+          build_subnet(subnet,vpcid,route)
           subnets.append(subnet)
           BluePrint.objects(subnet=subnet).update(status='Subnet created')
         except Exception as e:
           print("Something went wrong while creating subnet: "+str(e))
+    machines = json.loads(BluePrint.objects.to_json())
+    for machine in machines:
+      subnet_id = machine['subnet_id']
+      ami_id = machine['ami_id']
+      machine_type = machine['machine_type']
       if subnet in subnets and vpc in vpcs:
        try:
-         createmachine(vpc,subnet,ami_id)
+         createmachine(subnet_id,ami_id,machine_type)
          BluePrint.objects(host=hostname).update(status='Completed build')
        except Exception as e:
          print("Something went wrong while building the machine "+hostname+' '+str(e)) 
@@ -207,9 +264,11 @@ def blueprint():
 def create_blueprint():
     cidr = ''
     machine_type = ''
+    pubr = ''
     if request.method == 'POST':  #this block is only entered when the form is submitted
         vpc = request.form.get('vpc')
         machine = request.form['machine']
+        pub = request.form['public']
         if vpc == '1':
           cidr = '10.0.0.0'
         elif vpc == '2':
@@ -220,6 +279,10 @@ def create_blueprint():
           machine_type = 'general'
         else:
           machine_type = 'compute'
+        if pub == '1':
+           pubr = True
+        else:
+           pubr = False
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     try:
       BluePrint.objects.delete()
@@ -243,7 +306,8 @@ def create_blueprint():
         subnet_prefixes.append(int(j.split('/')[-1]))
         subnet_prefix = min(subnet_prefixes)
         vp = i+'/'+str(subnet_prefix-2)
-        vpcs[vp].append(j)
+        if '/' not in i:
+          Post.objects(network=i).update(network=vp)
     print vpcs
     machines = json.loads(Post.objects.to_json())
     if cidr == '10.0.0.0':
@@ -259,7 +323,7 @@ def create_blueprint():
         machine['subnet'] = machine['subnet'].split('.')
         machine['subnet'][0] = '10'
         machine['subnet'] = '.'.join(machine['subnet'])
-        print machine
+       # print machine
     elif cidr == '172.16.0.0':
       for machine in machines:
         if machine['network'].split('.')[0] == '172':
@@ -276,7 +340,7 @@ def create_blueprint():
         machine['subnet'][0] = '172'
         machine['subnet'][1] = '16'
         machine['subnet'] = '.'.join(machine['subnet'])
-        print machine
+        #print machine
     elif cidr == '192.168.0.0':
       for machine in machines:
         if machine['network'].split('.')[0] == '192':
@@ -293,7 +357,7 @@ def create_blueprint():
         machine['subnet'][0] = '192'
         machine['subnet'][1] = '168'
         machine['subnet'] = '.'.join(machine['subnet'])
-        print machine
+        #print machine
     def conv_KB(kb):
       gb = int(kb)/1000000
       return gb
@@ -302,7 +366,7 @@ def create_blueprint():
       machine['machine_type'] = compu(machine_type,int(machine['cores']),ram)
       #print compu(machine_type,int(machine['cores']),ram)
       post = BluePrint(host=machine['host'], ip=machine['ip'], subnet=machine['subnet'], network=machine['network'],
-                 ports=machine['ports'], cores=machine['cores'], cpu_model=machine['cpu_model'], ram=machine['ram'],machine_type=machine['machine_type'],status='Not started')
+                 ports=machine['ports'], cores=machine['cores'], public_route=pubr, cpu_model=machine['cpu_model'], ram=machine['ram'],machine_type=machine['machine_type'],status='Not started')
       try:
         post.save()
       except Exception as e:

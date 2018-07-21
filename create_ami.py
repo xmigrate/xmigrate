@@ -13,6 +13,11 @@ class BluePrint(Document):
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
     ami_id = StringField(required=False, max_length=100)
+    vpc_id = StringField(required=False, max_length=100)
+    subnet_id = StringField(required=False, max_length=100)
+    public_route = BooleanField(required=False)
+    ig_id = StringField(required=False, max_length=100)
+    route_table = StringField(required=False, max_length=100)
 
 
 def start_ami_creation(bucket_name,nsg_filename):
