@@ -38,7 +38,7 @@ class BluePrint(Document):
     ram = StringField(required=True, max_length=50)
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
-
+    ami_id = StringField(required=False, max_length=100)
 def compu(name,core,ram):
     if name=='general':
         if core==1 and ram==0.5:
@@ -134,10 +134,36 @@ def discover():
     os.popen('ansible-playbook ./ansible/env_setup.yaml > ./ansible/log.txt')
     return jsonify({'status': 'Success'})
 
-@app.route('/start', methods=['POST','GET'])
+
+@app.route('/start/cloning', methods=['POST','GET'])
 def start_migration():
     os.popen('ansible-playbook ./ansible/start_migration.yaml > ./ansible/migration_log.txt')
     return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
+
+
+@app.route('/start/conversion', methods=['POST','GET'])
+def start_conversion():
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    machines = json.loads(Post.objects.to_json())
+    for machine in machines:
+      img_name = machine['host']+'.img'
+      try:
+        start_ami_creation(bucket_name,img_name)
+      except Exception as e:
+        print("Boss you have to see this error: "+str(e))
+    return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
+
+
+@app.route('/start/building', methods=['POST','GET'])
+def start_building():
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    machines = json.loads(BluePrint.objects.to_json())
+    for machine in machines:
+      vpc = machine['network']
+      subnet = machine['subnet']
+      ami_id = machine['ami_id']
+      hostname = machine['host']
+      flag = 0 
 
 
 @app.route('/blueprint')

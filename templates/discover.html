@@ -153,6 +153,7 @@
                                     <th scope="col">Hostname</th>
 				    <th scope="col">Machine type</th>
                                     <th scope="col">Status</th>
+                                    <th scope="col">AMI-Id</th>
                               </tr>
                           </thead>
                           <tbody id="changes">
@@ -164,6 +165,7 @@
                                 <td>{{ result[i]['host'] }}</td>
                                 <td>{{ result[i]['machine_type'] }}</td>
                                 <td>{{ result[i]['status'] }}</td>
+				<td>{{ result[i]['ami_id'] }}</td>
                           </tr>
                           {% endfor %}
                       </tbody>

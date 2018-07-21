@@ -15,9 +15,10 @@ class BluePrint(Document):
     ram = StringField(required=True, max_length=50)
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
+    ami_id = StringField(required=False, max_length=100)
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Started')
+BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Started cloning')
 os.system('sudo dd if=/dev/xvda bs=64M status=progress | aws s3 cp - s3://migrationdata2/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA')
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Completed')
+BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Completed cloning')
 con.close()
