@@ -177,7 +177,11 @@ def start_building():
           subnets.append(subnet)
         except Exception as e:
           print("Something went wrong while creating subnet: "+str(e))
-      
+     if subnet in subnets and vpc in vpcs:
+       try:
+         createmachine(vpc,subnet,ami_id)
+       except Exception as e:
+         print("Something went wrong while building the machine "+hostname+' '+str(e)) 
 
 @app.route('/blueprint')
 def blueprint():
