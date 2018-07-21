@@ -152,8 +152,8 @@
                                     <th scope="col">Subnet</th>
                                     <th scope="col">Hostname</th>
 				    <th scope="col">Machine type</th>
-                                    <th scope="col">Status</th>
                                     <th scope="col">AMI-Id</th>
+				    <th scope="col">Status</th>
                               </tr>
                           </thead>
                           <tbody id="changes">
@@ -164,15 +164,20 @@
                                 <td>{{ result[i]['subnet'] }}</td>
                                 <td>{{ result[i]['host'] }}</td>
                                 <td>{{ result[i]['machine_type'] }}</td>
-                                <td>{{ result[i]['status'] }}</td>
 				<td>{{ result[i]['ami_id'] }}</td>
+				<td>{{ result[i]['status'] }}</td>
                           </tr>
                           {% endfor %}
                       </tbody>
                   </table>
-			 <form action="/start" method='post'>
-                                      <input id="start" type="submit" class="btn btn-success" value="Start migration" disabled></button>
-                         </form>
+                        <button id="start" type="submit" class="btn btn-warning" disabled> Start cloning</button>
+                         
+			
+                        <button id="conversion" type="submit" class="btn btn-primary" disabled>Start conversion</button>
+                         
+                       
+                        <button id="building" type="submit" class="btn btn-success" disabled>Start build</button>
+                         
                         </div>
 
                     </div>

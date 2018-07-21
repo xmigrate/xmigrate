@@ -169,19 +169,23 @@ def start_building():
         try:
           build_vpc()
           vpcs.append(vpc)
+          BluePrint.objects(network=vpc).update(status='VPC created')
         except Exception as e:
           print("Something went wrong while creating vpc: "+str(e))
       if subnet not in subnets:
         try:
           build_subnet()
           subnets.append(subnet)
+          BluePrint.objects(subnet=subnet).update(status='Subnet created')
         except Exception as e:
           print("Something went wrong while creating subnet: "+str(e))
-     if subnet in subnets and vpc in vpcs:
+      if subnet in subnets and vpc in vpcs:
        try:
          createmachine(vpc,subnet,ami_id)
+         BluePrint.objects(host=hostname).update(status='Completed build')
        except Exception as e:
          print("Something went wrong while building the machine "+hostname+' '+str(e)) 
+    return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
 
 @app.route('/blueprint')
 def blueprint():
