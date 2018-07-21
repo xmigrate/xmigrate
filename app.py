@@ -27,6 +27,7 @@ class Post(Document):
     ram = StringField(required=True, max_length=50)
     disk = StringField(required=True, max_length=50)
 
+
 class BluePrint(Document):
     host = StringField(required=True, max_length=200, unique=True)
     ip = StringField(required=True, unique=True)
@@ -39,6 +40,8 @@ class BluePrint(Document):
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
     ami_id = StringField(required=False, max_length=100)
+
+
 def compu(name,core,ram):
     if name=='general':
         if core==1 and ram==0.5:
@@ -120,6 +123,7 @@ def compu(name,core,ram):
             return("No machines found")
 
 
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -138,8 +142,7 @@ def discover():
 @app.route('/start/cloning', methods=['POST','GET'])
 def start_migration():
     os.popen('ansible-playbook ./ansible/start_migration.yaml > ./ansible/migration_log.txt')
-    return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
-
+    return jsonify({'status': 'Success'})
 
 @app.route('/start/conversion', methods=['POST','GET'])
 def start_conversion():
@@ -151,7 +154,7 @@ def start_conversion():
         start_ami_creation(bucket_name,img_name)
       except Exception as e:
         print("Boss you have to see this error: "+str(e))
-    return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
+    return jsonify({'status': 'Success'})
 
 
 @app.route('/start/building', methods=['POST','GET'])
@@ -185,7 +188,14 @@ def start_building():
          BluePrint.objects(host=hostname).update(status='Completed build')
        except Exception as e:
          print("Something went wrong while building the machine "+hostname+' '+str(e)) 
-    return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
+    return jsonify({'status': 'Success'})
+
+
+@app.route('/migration/status')
+def migration_status():
+    con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
+    machines = json.loads(BluePrint.objects.to_json())
+    return jsonify(machines)
 
 @app.route('/blueprint')
 def blueprint():
@@ -301,6 +311,7 @@ def create_blueprint():
       finally:
         con.close()
     return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)
+
 
 
 @app.route('/stream')

@@ -204,6 +204,59 @@
        var x = document.getElementById("start");
        x.disabled=false;
     }
+
+    jQuery('#start').click(function() {
+     jQuery.ajax({
+         url: "/start/cloning",
+         method: "GET",
+         success: function (res) {
+             if (res.status == "Success") {
+                 alert("Completed cloning");
+                 var x = document.getElementById("start");
+                 x.disabled=true;
+                 var y = document.getElementById("conversion");
+                 y.disabled=false;
+             }
+             else {
+                 alert("Some error occurred");
+             }
+         }
+     });
+   });
+   jQuery('#conversion').click(function() {
+     jQuery.ajax({
+         url: "/start/conversion",
+         method: "GET",
+         success: function (res) {
+             if (res.status == "Success") {
+                 alert("Completed conversion");
+                 var x = document.getElementById("conversion");
+                 x.disabled=true;
+                 var y = document.getElementById("building");
+                 y.disabled=false;
+             }
+             else {
+                 alert("Some error occurred");
+             }
+         }
+     });
+   });
+   jQuery('#building').click(function() {
+     jQuery.ajax({
+         url: "/start/building",
+         method: "GET",
+         success: function (res) {
+             if (res.status == "Success") {
+                 alert("Completed Building");
+                 var x = document.getElementById("building");
+                 x.disabled=true;
+             }
+             else {
+                 alert("Some error occurred");
+             }
+         }
+     });
+   });
        
    </script>
 
