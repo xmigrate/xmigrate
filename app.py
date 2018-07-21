@@ -163,8 +163,21 @@ def start_building():
       subnet = machine['subnet']
       ami_id = machine['ami_id']
       hostname = machine['host']
-      flag = 0 
-
+      vpcs = []
+      subnets = [] 
+      if vpc not in  vpcs:
+        try:
+          build_vpc()
+          vpcs.append(vpc)
+        except Exception as e:
+          print("Something went wrong while creating vpc: "+str(e))
+      if subnet not in subnets:
+        try:
+          build_subnet()
+          subnets.append(subnet)
+        except Exception as e:
+          print("Something went wrong while creating subnet: "+str(e))
+      
 
 @app.route('/blueprint')
 def blueprint():
