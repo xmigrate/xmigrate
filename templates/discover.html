@@ -166,7 +166,7 @@
 				    <th scope="col">Status</th>
                               </tr>
                           </thead>
-                          <tbody id="changes">
+                          <tbody id="blueprint_table">
                           {% for i in range(result|length) %}
                             <tr>
                                 <th scope="row">{{ i }}</th>
@@ -217,8 +217,49 @@
        var x = document.getElementById("start");
        x.disabled=false;
     }
+    function doPoll() {
+     jQuery.ajax({
+         url: "/migration/status",
+         method: "GET",
+         success: function (res) {
+             for(var i in res){
+               var cores = res[i]['cores'];
+               var cpu_model = res[i]['cpu_model'];
+               var host = res[i]['host'];
+               var ip = res[i]['ip'];
+               var machine_type = res[i]['cpu_model'];
+               var network = res[i]['cpu_model'];
+               var ram = res[i]['cpu_model'];
+               var status = res[i]['cpu_model'];
+               var subnet = res[i]['subnet'];
+               if(res[i]['ami_id']){
+                 var ami_id = res[i]['ami_id'];
+               }else{
+                 var ami_id = 'Null';
+               }
+               if(res[i]['instance_id']){
+                 var instance_id = res[i]['instance_id'];
+               }else{
+                 var instance_id = 'Null';
+               }
+               if(res[i]['subnet_id']){
+                 var subnet_id = res[i]['subnet_id'];
+               }else{
+                 var subnet_id = 'Null';
+               }
+               if(res[i]['vpc_id']){
+                 var vpc_id = res[i]['vpc_id'];
+               }else{
+                 var vpc_id = 'Null';
+               }
+               c+='<tr> <th scope="row">+' i'+ </th><td>+'network'+</td><td>+'subnet'+</td><td>+'host'+</td><td>+'machine_type'+</td><td>+'ami_id'+</td><td>+'instance_id'+</td><td>+'subnet_id'+</td><td>+'vpc_id'+</td><td>+'status'+</td></tr>';
+              }jQuery('#blueprint_table').html(c);
+         }
+     });
+     }
 
     jQuery('#start').click(function() {
+     setInterval(doPoll, 2000);
      jQuery.ajax({
          url: "/start/cloning",
          method: "GET",
@@ -255,6 +296,7 @@
      });
    });
    jQuery('#building').click(function() {
+     setInterval(doPoll, 2000);
      jQuery.ajax({
          url: "/start/building",
          method: "GET",
