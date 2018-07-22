@@ -8,6 +8,8 @@ from pygtail import Pygtail
 from collections import defaultdict
 import boto3
 from create_ami import start_ami_creation
+import pexpect
+
 app = Flask(__name__)
 app.secret_key = 'Vishnu123456'
 
@@ -53,12 +55,12 @@ class BluePrint(Document):
 
 
 def add_nodes(nodes,user,password):
-  host_file = open('./ansible/host','w')
+  host_file = open('./ansible/hosts','w')
   nodes = '\n'.join(nodes)
   s='[nodes]'+'\n'+nodes+'\n'+'[all:vars]'+'\n'+'ansible_ssh_pass = '+password
   host_file.write(s)
   host_file.close()
-  cfg_file = open('./ansible/ansible1.cfg','w')
+  cfg_file = open('./ansible/ansible.cfg','w')
   s='[defaults]\nremote_user ='+user+'\n'+'inventory      = ./hosts\n'+'sudo_user      = '+user+'\n'+'host_key_checking = false\n\n'+'[privilege_escalation]\nbecome=True\nbecome_method=sudo\nbecome_user='+user
   cfg_file.write(s)
   cfg_file.close()
@@ -79,6 +81,7 @@ def build_vpc(cidr,public_route):
     BluePrint.objects(network=cidr).update(route_table=route_table.id)
   con.close()
 
+
 def build_subnet(cidr,vpcid,route):
     ec2 = boto3.resource('ec2')
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
@@ -87,6 +90,7 @@ def build_subnet(cidr,vpcid,route):
     BluePrint.objects(subnet=cidr).update(subnet_id=subnet.id)
     route_table.associate_with_subnet(SubnetId=subnet.id)
     con.close()
+
 
 def create_machine(subnet_id,ami_id,machine_type):
     ec2 = boto3.resource('ec2')
@@ -101,6 +105,7 @@ def create_machine(subnet_id,ami_id,machine_type):
     BluePrint.objects(ami_id=amiid).update(instance_id=instances[0].id)
     BluePrint.objects(ami_id=amiid).update(status='Build completed')
     con.close()
+
 
 def compu(name,core,ram):
     if name=='general':
@@ -187,6 +192,7 @@ def compu(name,core,ram):
 @app.route('/')
 @app.route('/index')
 def index():
+    pexpect.run('rm ansible/log.txt')
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     result = Post.objects.exclude('id').to_json()
     result = ast.literal_eval(result)
