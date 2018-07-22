@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Migration-Tool</title>
+    <title>BlueThroat Migration-Tool</title>
 
     <meta name="description" content="Ticketing dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -52,12 +52,13 @@
                 <div class="col-sm-7">
                  
                     <div class="header-left">
-
-                        <div class="dropdown for-message" id="quote" >
+		<h2>Migration Tool</h2>
+                   
+                        <div class="pull-right for-message" id="quote" >
 
                           
                         </div>
-                        <span id="author" class="text-dark display-12"></span>
+                        <span id="author" class="text-dark pull-right"></span>
                     </div>
                 </div>
 
@@ -217,11 +218,13 @@
        var x = document.getElementById("start");
        x.disabled=false;
     }
+
     function doPoll() {
      jQuery.ajax({
          url: "/migration/status",
          method: "GET",
          success: function (res) {
+             var c = ''
              for(var i in res){
                var cores = res[i]['cores'];
                var cpu_model = res[i]['cpu_model'];
@@ -252,7 +255,7 @@
                }else{
                  var vpc_id = 'Null';
                }
-               c+='<tr> <th scope="row">+' i'+ </th><td>+'network'+</td><td>+'subnet'+</td><td>+'host'+</td><td>+'machine_type'+</td><td>+'ami_id'+</td><td>+'instance_id'+</td><td>+'subnet_id'+</td><td>+'vpc_id'+</td><td>+'status'+</td></tr>';
+               c+='<tr> <th scope="row">'+i+'</th><td>'+network+'</td><td>'+subnet+'</td><td>'+host+'</td><td>'+machine_type+'</td><td>'+ami_id+'</td><td>'+instance_id+'</td><td>'+subnet_id+'</td><td>'+vpc_id+'</td><td>'+status+'</td></tr>';
               }jQuery('#blueprint_table').html(c);
          }
      });
