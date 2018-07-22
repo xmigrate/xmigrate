@@ -52,6 +52,17 @@ class BluePrint(Document):
     instance_id = StringField(required=False, max_length=100)
 
 
+def add_nodes(nodes,user,password):
+  host_file = open('./ansible/host','w')
+  nodes = '\n'.join(nodes)
+  s='[nodes]'+'\n'+nodes+'\n'+'[all:vars]'+'\n'+'ansible_ssh_pass = '+password
+  host_file.write(s)
+  host_file.close()
+  cfg_file = open('./ansible/ansible1.cfg','w')
+  s='[defaults]\nremote_user ='+user+'\n'+'inventory      = ./hosts\n'+'sudo_user      = '+user+'\n'+'host_key_checking = false\n\n'+'[privilege_escalation]\nbecome=True\nbecome_method=sudo\nbecome_user='+user
+  cfg_file.write(s)
+  cfg_file.close()
+
 def build_vpc(cidr,public_route):
   ec2 = boto3.resource('ec2')
   vpc = ec2.create_vpc(CidrBlock=cidr)
@@ -266,6 +277,19 @@ def blueprint():
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     return render_template('discover.html',machines=Post.objects)
 
+
+@app.route('/add/servers', methods=['POST'])
+def add_servers():
+  if request.method == 'POST':
+    ips = request.form['ips']
+    user = request.form['user']
+    password = request.form['password']
+    nodes = ips.split(',')
+    try:
+      add_nodes(nodes,user,password)
+    except Exception as e:
+      print(e)
+  return render_template('index.html', title='Home')
 
 @app.route('/createblueprint', methods=['POST'])
 def create_blueprint():
