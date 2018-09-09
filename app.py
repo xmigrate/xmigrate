@@ -13,7 +13,7 @@ import pexpect
 app = Flask(__name__)
 app.secret_key = 'Vishnu123456'
 
-bucket_name = 'migrationdata2'
+bucket_name = 'migrationdata3'
 
 def start_discovery():
     l = ''
@@ -193,6 +193,7 @@ def compu(name,core,ram):
 @app.route('/index')
 def index():
     pexpect.run('rm ansible/log.txt')
+    pexpect.run('touch ansible/log.txt')
     con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
     result = Post.objects.exclude('id').to_json()
     result = ast.literal_eval(result)
@@ -265,7 +266,7 @@ def start_building():
       machine_type = machine['machine_type']
       if subnet in subnets and vpc in vpcs:
        try:
-         createmachine(subnet_id,ami_id,machine_type)
+         create_machine(subnet_id,ami_id,machine_type)
          BluePrint.objects(host=hostname).update(status='Completed build')
        except Exception as e:
          print("Something went wrong while building the machine "+hostname+' '+str(e)) 

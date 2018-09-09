@@ -1,6 +1,5 @@
 - name : Configure aws-cli and required packages and deploy and execute the payload
   become: true
-  remote_user: ec2-user
   become_method: sudo
   hosts: nodes
   gather_facts: no
@@ -34,16 +33,26 @@
 
   - name: Install pip
     shell: "sudo python /tmp/get-pip.py"
-
-  - name: Install Python packages
-    pip:
-      name: "{{ item }}"
-    with_items:
-      - awscli
-      - netifaces
-      - netaddr
-      - mongoengine
-      - psutil
+  
+  - block:
+    - name: Install Python packages
+      pip:
+        name: "{{ item }}"
+      with_items:
+        - awscli
+        - netifaces
+        - netaddr
+        - mongoengine
+        - psutil
+    rescue:
+    - name: Install python packages
+      shell: "sudo pip install {{ item }}"
+      with_items:
+        - awscli
+        - netifaces
+        - netaddr
+        - mongoengine
+        - psutil
 
   - name: Create .aws directory
     file:

@@ -95,7 +95,7 @@ class Post(Document):
     disk = StringField(required=True, max_length=50)
 
 def main():
-    con = connect(host="mongodb://migrationuser:mygrationtool@34.217.74.168:27017/migration?authSource=admin")
+    con = connect(host="mongodb://migrationuser:mygrationtool@13.232.38.205:27017/migration?authSource=admin")
     result = network_info()
     result['ports'] = ports_info()
     cores = str(len(cpuinfo().keys()))

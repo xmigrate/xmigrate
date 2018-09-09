@@ -1,7 +1,7 @@
 import os
 from mongoengine import *
 import socket
-con = connect(host="mongodb://migrationuser:mygrationtool@34.217.74.168:27017/migration?authSource=admin")
+con = connect(host="mongodb://migrationuser:mygrationtool@13.232.38.205:27017/migration?authSource=admin")
 
 
 class BluePrint(Document):
@@ -18,7 +18,7 @@ class BluePrint(Document):
     ami_id = StringField(required=False, max_length=100)
 
 BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Started cloning')
-os.system('sudo dd if=/dev/xvda bs=64M status=progress | aws s3 cp - s3://migrationdata2/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA')
+os.system('sudo dd if=/dev/xvda bs=64M status=progress | aws s3 cp - s3://migrationdata3/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA')
 
 BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Completed cloning')
 con.close()
