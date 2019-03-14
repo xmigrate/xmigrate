@@ -1,4 +1,4 @@
 [nodes]
 52.66.183.151
 [all:vars]
-ansible_ssh_pass = nivya@123
+ansible_ssh_pass = *******
