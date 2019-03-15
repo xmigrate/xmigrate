@@ -1,6 +1,7 @@
 
 ## What is Bluethroat - An opensource cloud migration tool?
-BlueThroat project is an opensource solution for migrating your infrastructure. Migration can be from DC to DC, DC to cloud, Cloud to DC, Cloud to Cloud.
+BlueThroat project is an opensource solution for migrating your infrastructure. 
+Migration can be from DC to DC, DC to cloud, Cloud to DC, Cloud to Cloud.
 
 It's a swiss army knife for infrastructure migration. There are similar tools available in the market like Cloudendure and zerto.
 
