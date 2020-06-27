@@ -7,3 +7,4 @@ ansible
 pygtail
 boto3
 pexpect
+python-dotenv

@@ -42,7 +42,7 @@ def start_ami_creation(bucket_name,nsg_filename):
     }'''
     file_trust_policy.write(s)
     file_trust_policy.close()
-    pexpect.run('aws iam create-role --role-name vmimport --assume-role-policy-document file://trust-policy.json') 
+    pexpect.run('aws iam create-role --role-name vmimport --assume-role-policy-document file://trust-policy.json')
     file_role_policy = open('role-policy.json', 'w')
     s='''{
        "Version":"2012-10-17",
@@ -97,14 +97,14 @@ def start_ami_creation(bucket_name,nsg_filename):
     try:
         amiid = (output.split(start))[1].split('"')[0]
     except:
-        print output
-        print start
+        print(output)
+        print(start)
     print '1) Remove the temp files (trust-policy.json, role-policy.json, containers.json)'
     pexpect.run('rm trust-policy.json')
     pexpect.run('rm role-policy.json')
     pexpect.run('rm containers.json')
 
-    print '2) Check the status of loading the AMI image to your EC2. This usually takes 20-30 minutes'
+    print('2) Check the status of loading the AMI image to your EC2. This usually takes 20-30 minutes')
     while not "success" in output:
         progress_output = pexpect.run('aws ec2 describe-import-image-tasks --import-task-ids %s' % amiid)
         con = connect(host="mongodb://migrationuser:mygrationtool@localhost:27017/migration?authSource=admin")
@@ -114,16 +114,14 @@ def start_ami_creation(bucket_name,nsg_filename):
         if progress_start in progress_output:
             progress = (progress_output.split(progress_start))[1].split('"')[0]
             BluePrint.objects(host=nsg_filename.replace('.img','')).update(status=progress)
-            print '    The progress on importing the image to EC2 is: "'+progress+'%"'
-            print progress_output
+            print('    The progress on importing the image to EC2 is: "'+progress+'%"')
+            print(progress_output)
         if "completed" in progress_output:
             output = "success"
             BluePrint.objects(host=nsg_filename.replace('.img','')).update(status='Completed conversion')
-    print '***********************************************************'
-    print '***     Image has been successfully imported to EC2     ***'
-    print '***********************************************************'
-    print amiid
+    print('***********************************************************')
+    print('***     Image has been successfully imported to EC2     ***')
+    print('***********************************************************')
+    print(amiid)
     BluePrint.objects(host=nsg_filename.replace('.img','')).update(ami_id=amiid)
     con.close()
-
-

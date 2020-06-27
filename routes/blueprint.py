@@ -36,7 +36,7 @@ def create_blueprint():
     try:
       BluePrint.objects.delete()
     except Exception as e:
-      print "See the error:"+ str(e)
+      print("See the error:"+ str(e))
     machines = json.loads(Post.objects.to_json())
     networks = []
     for machine in machines:
@@ -57,7 +57,7 @@ def create_blueprint():
         vp = i+'/'+str(subnet_prefix-2)
         if '/' not in i:
           Post.objects(network=i).update(network=vp)
-    print vpcs
+    print(vpcs)
     machines = json.loads(Post.objects.to_json())
     if cidr == '10.0.0.0':
       for machine in machines:
@@ -113,7 +113,6 @@ def create_blueprint():
     for machine in machines:
       ram = conv_KB(machine['ram'].split(' ')[0])
       machine['machine_type'] = compu(machine_type,int(machine['cores']),ram)
-      #print compu(machine_type,int(machine['cores']),ram)
       post = BluePrint(host=machine['host'], ip=machine['ip'], subnet=machine['subnet'], network=machine['network'],
                  ports=machine['ports'], cores=machine['cores'], public_route=pubr, cpu_model=machine['cpu_model'], ram=machine['ram'],machine_type=machine['machine_type'],status='Not started')
       try:
