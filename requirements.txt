@@ -3,3 +3,7 @@ netaddr
 psutil
 mongoengine
 flask
+ansible
+pygtail
+boto3
+pexpect
