@@ -1,0 +1,162 @@
+body {
+  font-size: 1rem;
+}
+/* You can add global styles to this file, and also import other style files */
+body, html {
+  font-family: Ubuntu !important;
+  font-style: normal;
+  font-weight: normal;
+      height: 100%;
+      background: #E5E5E5 !important;
+      
+    }
+    html
+    {
+      scroll-behavior: smooth; 
+    }
+h1,
+  h6 {
+    font-family: Ubuntu;
+    font-style: normal;
+    font-weight: normal !important;
+    font-size: 30px;
+  }
+  h1,
+  h5{
+    font-weight: normal;
+  }
+  .btn{
+    font-weight: bold;
+  }
+
+/*
+ * Sidebar
+ */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 48px 0 0; /* Height of navbar */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+@media (max-width: 767.98px) {
+  .sidebar {
+    top: 5rem;
+  }
+}
+
+.sidebar-sticky {
+  position: relative;
+  top: 0;
+  height: calc(100vh - 48px);
+  padding-top: .5rem;
+  overflow-x: hidden;
+  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+}
+
+@supports ((position: -webkit-sticky) or (position: sticky)) {
+  .sidebar-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+}
+
+.sidebar .nav-link {
+  color: #333;
+  line-height: 3;
+  padding-left: 2rem !important;
+}
+
+.sidebar .nav-link .feather {
+  margin-right: 1rem;
+  color: #999;
+}
+
+.sidebar .nav-link.active {
+  color: #1DA1F2;
+}
+
+.sidebar .nav-link:hover .feather,
+.sidebar .nav-link.active .feather {
+  color: #1DA1F2;
+}
+.sidebar .nav-item:hover{
+  background-color: rgba(22, 101, 216, 0.08);
+}
+.sidebar .nav-link:hover ,
+.sidebar .nav-link.active {
+  color: #1DA1F2;
+}
+
+
+/*
+ * Navbar
+ */
+
+.navbar-brand {
+  padding-top: .75rem;
+  padding-bottom: .75rem;
+  font-size: 1.40rem;
+  border-right: .1rem solid #EAEDF3;
+  border-bottom: .1rem solid #EAEDF3;
+  color: #1DA1F2 !important;
+  padding-left: 2rem;
+}
+
+.navbar .navbar-toggler {
+  top: .25rem;
+  right: 1rem;
+}
+
+
+.right-style{
+  border-left: .1rem solid #EAEDF3;
+  padding-left: 1rem;
+}
+.feather-12{
+  width: 30px;
+  height: 30px;
+}
+.bottombar{
+  position: absolute;
+	bottom: 0;
+  left: 0;
+
+  width: 100%;
+}
+.bottomSettings{
+  border-top: .1rem solid #EAEDF3;
+}
+.txtin{
+  padding-left: 1rem;
+  font-size: .9rem;
+  color: rgba(0,0,0,.5);
+}
+.bluelink{
+  color: #1DA1F2;
+  text-decoration: underline;
+}
+.terminal{
+  background-color: #333;
+  height: 29rem;
+}
+.btnnavlink{
+  background-color: rgba(22, 101, 216, 0.08);
+  border-radius: 1rem;
+  color: #1DA1F2 !important;
+}
+
+.btngrid{
+  background: #1DA1F2;
+  border-radius: 50%;
+  color:white;
+}
+.feathersmall{
+  width: 1rem;
+  height: 1rem;
+  color:white;
+}
