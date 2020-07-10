@@ -116,3 +116,40 @@ az disk grant-access -n testubuntu4 -g ritvick-aks --access-level Write --durati
 az disk revoke-access -n testubuntu4 -g ritvick-aks
 
 az vm create --resource-group ritvick-aks --location westeurope --name testubuntu4 --os-type linux --attach-os-disk testubuntu4
+
+
+
+## Discover button
+-------------------
+send below json
+
+{
+  hosts:["1.1.1.1","2.2.2.2","3.3.3.3"],
+  username:"ubuntu",
+  password:"testpassword",
+  provider:"azure"
+}
+expect below response
+{
+  'status': '200'
+}
+
+## Generate blueprint button
+send post request
+
+expect response
+
+Discovered objects json
+
+
+## Create blueprint button
+----------------------------
+1)blueprint/network/create
+{
+cidr:"192.168.0.0/16"
+}
+
+2)blueprint/create
+{
+
+}

@@ -1,6 +1,6 @@
 from mongoengine import *
 
-class Post(Document):
+class Discover(Document):
     host = StringField(required=True, max_length=200, unique=True)
     ip = StringField(required=True, unique=True)
     subnet = StringField(required=True, max_length=50)

@@ -72,7 +72,7 @@
 
   - name: <==Deploy payload==>
     copy:
-      src: "./footprint.py"
+      src: "../payloads/footprint.py"
       dest: "/tmp/footprint.py"
     tags:
       - deploy
