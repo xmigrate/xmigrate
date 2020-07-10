@@ -17,3 +17,102 @@ testcases
 
 
 db.createUser({user: "migrationuser",pwd:"mygrationtool",roles:[{role:"readWrite",db:"migration"}]})
+
+
+Azure VM migration scripts
+--------------------------
+
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
+sudo sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/azure\.archive\.ubuntu\.com\/ubuntu\//g' /etc/apt/sources.list
+sudo sed -i 's/http:\/\/[a-z][a-z]\.archive\.ubuntu\.com\/ubuntu\//http:\/\/azure\.archive\.ubuntu\.com\/ubuntu\//g' /etc/apt/sources.list
+sudo apt-get update
+
+sudo apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure -y
+sudo pip install pyasn1
+sudo apt full-upgrade
+
+sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash"
+' /etc/default/grub
+
+sudo apt install cloud-init netplan.io walinuxagent && sudo systemctl stop walinuxagent
+
+sudo rm -f /etc/cloud/cloud.cfg.d/50-curtin-networking.cfg /etc/cloud/cloud.cfg.d/curtin-preserve-sources.cfg
+sudo rm -f /etc/cloud/ds-identify.cfg
+sudo rm -f /etc/netplan/*.yaml
+
+sudo cat > /etc/cloud/cloud.cfg.d/90_dpkg.cfg << EOF
+datasource_list: [ Azure ]
+EOF
+
+sudo touch /etc/cloud/cloud.cfg.d/90-azure.cfg
+
+cat > /etc/cloud/cloud.cfg.d/90-azure.cfg << EOF
+system_info:
+   package_mirrors:
+     - arches: [i386, amd64]
+       failsafe:
+         primary: http://archive.ubuntu.com/ubuntu
+         security: http://security.ubuntu.com/ubuntu
+       search:
+         primary:
+           - http://azure.archive.ubuntu.com/ubuntu/
+         security: []
+     - arches: [armhf, armel, default]
+       failsafe:
+         primary: http://ports.ubuntu.com/ubuntu-ports
+         security: http://ports.ubuntu.com/ubuntu-ports
+EOF
+
+sudo cat > /etc/cloud/cloud.cfg.d/10-azure-kvp.cfg << EOF
+reporting:
+  logging:
+    type: log
+  telemetry:
+    type: hyperv
+EOF
+
+sudo sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf
+sudo sed -i 's/Provisioning.UseCloudInit=n/Provisioning.UseCloudInit=y/g' /etc/waagent.conf
+sudo sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf
+sudo sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf
+
+sudo cat >> /etc/waagent.conf << EOF
+# For Azure Linux agent version >= 2.2.45, this is the option to configure,
+# enable, or disable the provisioning behavior of the Linux agent.
+# Accepted values are auto (default), waagent, cloud-init, or disabled.
+# A value of auto means that the agent will rely on cloud-init to handle
+# provisioning if it is installed and enabled, which in this case it will.
+Provisioning.Agent=auto
+EOF
+
+
+sudo cloud-init clean --logs --seed
+sudo rm -rf /var/lib/cloud/
+sudo systemctl stop walinuxagent.service
+sudo rm -rf /var/lib/waagent/
+sudo rm -f /var/log/waagent.log
+
+sudo waagent -force -deprovision
+rm -f ~/.bash_history
+export HISTSIZE=0
+# logout
+
+sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://vishnuks/xvda_backup6.raw --sse AES256 --storage-class STANDARD_IA
+
+sudo dd if=/dev/xvda bs=1M status=progress | azbak - /osdisks/$HOSTNAME.raw --storage-account testdatat --access-key Ng4N1x696CwdgozfDk7ezq4xfluw9nCXSvz+Bh8pUa8XfxqmxEPTk2eGdwV1LG4zN5fC2GdfZAm9IIl2KAf+Wg==
+
+
+qemu-img convert -f raw -o subformat=fixed -O vpc MyLinuxVM.raw MyLinuxVM.vhd
+
+
+az disk create -n testubuntu4 -g ritvick-aks -l westeurope --for-upload --upload-size-bytes 8589935104 --sku standardssd_lrs
+
+az disk grant-access -n testubuntu4 -g ritvick-aks --access-level Write --duration-in-seconds 86400
+
+
+./azcopy copy "./MyLinuxVM.vhd"  "https://md-impexp-hdqzc5vpnkqq.blob.core.windows.net/vvtr3zlkrvgs/abcd?sv=2017-04-17&sr=b&si=0da5fef1-64b2-47ac-b2af-7f9d528d1036&sig=9q8brtU0qMlDxuGH0hFGvXtSxPaNXBva0reUZKuaFIw%3D" --blob-type PageBlob
+--from-to LocalBlob
+
+az disk revoke-access -n testubuntu4 -g ritvick-aks
+
+az vm create --resource-group ritvick-aks --location westeurope --name testubuntu4 --os-type linux --attach-os-disk testubuntu4
