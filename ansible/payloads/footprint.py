@@ -2,17 +2,16 @@ import netifaces
 import netaddr
 import socket
 import psutil
-from mongoengine import *
-from collections import OrderedDict
 from dotenv import load_dotenv
 from os import getenv
+from mongoengine import *
+from collections import OrderedDict
+
+niface = 'eth0'
 
 load_dotenv()
 
 db_con_string = getenv("DB")
-
-niface = 'eth0'
-
 
 def network_info():
     ifaces = netifaces.interfaces()
@@ -99,6 +98,7 @@ class Post(Document):
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
     disk = StringField(required=True, max_length=50)
+
 
 def main():
     con = connect(host=db_con_string)

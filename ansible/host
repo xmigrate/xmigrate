@@ -1,4 +1,5 @@
 [nodes]
-34.219.149.227
+54.149.227.26
 [all:vars]
-ansible_ssh_pass = 
+ansible_ssh_pass = Redhat@12345
+ansible_user = ubuntu

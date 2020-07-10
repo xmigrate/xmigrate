@@ -1,0 +1,20 @@
+from mongoengine import *
+
+class BluePrint(Document):
+    host = StringField(required=True, max_length=200, unique=True)
+    ip = StringField(required=True, unique=True)
+    subnet = StringField(required=True, max_length=50)
+    network = StringField(required=True, max_length=50)
+    ports = ListField()
+    cores = StringField(max_length=2)
+    cpu_model = StringField(required=True, max_length=150)
+    ram = StringField(required=True, max_length=50)
+    machine_type = StringField(required=True, max_length=150)
+    status = StringField(required=False, max_length=100)
+    ami_id = StringField(required=False, max_length=100)
+    vpc_id = StringField(required=False, max_length=100)
+    subnet_id = StringField(required=False, max_length=100)
+    public_route = BooleanField(required=False)
+    ig_id = StringField(required=False, max_length=100)
+    route_table = StringField(required=False, max_length=100)
+    instance_id = StringField(required=False, max_length=100)

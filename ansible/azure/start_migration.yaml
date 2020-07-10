@@ -1,6 +1,6 @@
 - name : Starting migration
   become: true
-  remote_user: ec2-user
+  remote_user: ubuntu
   become_method: sudo
   hosts: nodes
   gather_facts: no
@@ -8,7 +8,7 @@
   tasks:
   - name: <== Deploy payload ==>
     copy:
-      src: "./start_dd_aws.py"
+      src: "../payloads/start_dd_azure.py"
       dest: "/tmp/start.py"
   - name: <== Executing payload ==>
     shell: "python /tmp/start.py"

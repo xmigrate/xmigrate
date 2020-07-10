@@ -1,0 +1,187 @@
+- name : Preparing the VM to be migrated to Azure
+  become: true
+  become_method: sudo
+  hosts: nodes
+  gather_facts: no
+  force_handlers: True
+  tasks:
+    - name: Backup sources list
+      shell: "cp /etc/apt/sources.list /etc/apt/sources.list.bak"
+    - name: Copy sources.sh
+      copy:
+        src: "./sources.sh"
+        dest: "/tmp/sources.sh"
+    - name: Update azure archives
+      shell: "sh /tmp/sources.sh"
+      become_user: root
+      become_method: sudo
+    - block:
+      - name: Installing azure tools and python
+        apt:
+          pkg:
+          - python
+          - python-pip
+          - linux-azure
+          - linux-image-azure
+          - linux-headers-azure
+          - linux-tools-common
+          - linux-cloud-tools-common
+          - linux-tools-azure
+          - linux-cloud-tools-azure
+          - npm
+          update_cache: yes
+        become: true
+      rescue:
+      - name: Update Accepted
+        shell: "apt update -y"
+        become: true
+      - name: Failback installation "Installing azure tools and python"
+        shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure -y"
+        become: true
+
+    - name: Update grub entry
+      shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"
+      ' /etc/default/grub"
+      become: true
+
+    - block:
+      - name: Install cloud init, netplan.io and walinuxagent
+        apt:
+          pkg:
+          - cloud-init
+          - netplan.io
+          - walinuxagent
+          update_cache: yes
+      - name: Stopping walinuxagent
+        systemd:
+          name: walinuxagent
+          state: stopped
+      rescue:
+      - name: Update apt.. older way
+        shell: "apt update -y"
+      - name: Install cloud init, netplan.io and walinuxagent.. older way
+        shell: "apt install cloud-init netplan.io walinuxagent -y"
+      - name: Stopping walinuxagent .. older way
+        shell: "systemctl stop walinuxagent"
+      tags:
+        - devel
+    - name: Remove cloud configuration files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /etc/cloud/cloud.cfg.d/50-curtin-networking.cfg
+        - /etc/cloud/cloud.cfg.d/curtin-preserve-sources.cfg
+        - /etc/cloud/ds-identify.cfg
+        - /etc/netplan/*.yaml
+
+    - name: Copy configurations 1
+      copy:
+        src: "./{{ item }}"
+        dest: "/tmp/{{ item }}"
+      with_items:
+        - config1.sh
+        - config2.sh
+        - config3.sh
+
+    - name: Update datasource_list file
+      shell: "sh /tmp/{{ item }}"
+      with_items:
+        - config1.sh
+        - config2.sh
+        - config3.sh
+
+    - name: Update walinuxagent config
+      shell: |
+        sudo sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf;
+        sudo sed -i 's/Provisioning.UseCloudInit=n/Provisioning.UseCloudInit=y/g' /etc/waagent.conf;
+        sudo sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf;
+        sudo sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf;
+        sudo cat >> /etc/waagent.conf << EOF
+        # For Azure Linux agent version >= 2.2.45, this is the option to configure,
+        # enable, or disable the provisioning behavior of the Linux agent.
+        # Accepted values are auto (default), waagent, cloud-init, or disabled.
+        # A value of auto means that the agent will rely on cloud-init to handle
+        # provisioning if it is installed and enabled, which in this case it will.
+        Provisioning.Agent=auto
+        EOF
+
+    - name: Cloud init clean
+      shell: "cloud-init clean --logs --seed"
+    - name: Remove stale files
+      file:
+        path: /var/lib/cloud/
+        state: absent
+    - name: stop walinuxagent
+      systemd:
+        name: walinuxagent
+        state: stopped
+    - name: Removing wagent logs and files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /var/lib/waagent/
+        - /var/log/waagent.log
+    - name: Deproviosn waagent
+      shell: |
+        sudo waagent -force -deprovision
+        rm -f ~/.bash_history
+        export HISTSIZE=0
+
+    - block:
+      - name: Install Python packages
+        pip:
+          name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1']
+      rescue:
+      - name: Install python packages
+        shell: "sudo pip install {{ item }}"
+        with_items:
+          - awscli
+          - netifaces
+          - netaddr
+          - mongoengine
+          - psutil
+          - pyasn1
+
+    - name: Create .aws directory
+      file:
+        path: "~/.aws/"
+        state: directory
+        mode: 0755
+
+    - name: Configure awscli credentials
+      copy:
+        src: "~/.aws/credentials"
+        dest: "~/.aws/credentials"
+
+    - name: Configure aws region
+      copy:
+        src: "~/.aws/config"
+        dest: "~/.aws/config"
+
+    - name: <==Deploy payload==>
+      copy:
+        src: "../payloads/footprint.py"
+        dest: "/tmp/footprint.py"
+      tags:
+        - deploy
+    - name: <==Upload env file==>
+      copy:
+        src: "../payloads/.env"
+        dest: "/tmp/.env"
+      tags:
+        - deploy
+
+    - name: <==Executing payload==>
+      shell: "python /tmp/footprint.py"
+      register: st
+      become: True
+      tags:
+        - exec
+
+    - name: Debug
+      debug:
+        var: st
+      tags:
+        - msg

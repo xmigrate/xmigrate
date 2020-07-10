@@ -1,0 +1,7 @@
+*.DS_Store
+logs/*
+id_rsa*
+github
+github.pub
+*.env
+*.pyc
