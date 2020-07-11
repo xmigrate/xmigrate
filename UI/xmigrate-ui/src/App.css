@@ -1,0 +1,40 @@
+#root{
+    height: 100%;
+}
+.w-80{
+    width: 80%;
+}
+.w-60{
+    width: 60%;
+}
+
+.mr-40px{
+    margin-right: 40px;
+}
+
+.flex-2{
+    flex: 2;
+}
+.flex-3{
+    flex: 3;
+}
+.flex-4{
+    flex: 4;
+}
+
+.font-16{
+    font-size: 16px;
+}
+.font-18{
+    font-size: 18px;
+}
+.font-20{
+    font-size: 20px;
+}
+.font-24{
+    font-size: 24px;
+}
+
+.background-primary{
+    background-color: #eeecec;
+}
