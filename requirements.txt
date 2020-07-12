@@ -3,8 +3,12 @@ netaddr
 psutil
 mongoengine
 flask
-ansible
+#ansible
 pygtail
 boto3
 pexpect
 python-dotenv
+azure-mgmt-resource
+azure-mgmt-network
+azure-mgmt-compute
+azure-cli-core
