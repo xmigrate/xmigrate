@@ -1,6 +1,10 @@
 import React, { Component } from 'react'
 import { Container, Row, Col, Form, Button } from 'react-bootstrap'
+import Tags from "@yaireo/tagify/dist/react.tagify.js";
 import "./Discover.scss"
+import PostService from '../../services/PostService';
+import { DISCOVERURL } from '../../services/Services';
+
 export default class Discover extends Component {
 
 
@@ -9,9 +13,37 @@ export default class Discover extends Component {
         this.state = {
             showDiscoverMenu: true,
             showDiscoverMenuEdit: false,
-        }
+            tags: [],
+        };
+        this.onChange = this.onChange.bind(this)
+        this.editDiscover = this.editDiscover.bind(this)
     }
+    onChange(e) {
+        // e.persist()
+        this.setState({ tags: e.target.value })
+        console.log("CHANGED:", e.target.value)
+    }
+    editDiscover() {
+        this.setState({
+            showDiscoverMenu: true,
+            showDiscoverMenuEdit: false,
+        })
+    }
+
+    submitDiscover() {
+        var data = {
+            "hosts":["1.1.1.1","2.2.2.2","3.3.3.3"],
+            "username":"ubuntu",
+            "password":"testpassword",
+            "provider":"azure"
+        }
+        PostService(DISCOVERURL, data).then((data)=>{
+            console.log(data)
+        })
+    }
+
     render() {
+
         return (
             <div className="Discover media-body background-primary ">
                 <Container className="py-5 ">
@@ -28,8 +60,10 @@ export default class Discover extends Component {
                                     <h5>
                                         Server IP's
                                     </h5>
-                                    <input type="textarea" name="" id="" />
 
+                                    {/* <input type="textarea" name="" id="" /> */}
+                                    {/* <Tags mode='textarea' settings={settings} value={value} showDropdown={showDropdown} /> */}
+                                    <Tags mode='textarea' onChange={this.onChange} />
                                     <Form className="py-4">
                                         <Form.Group controlId="formBasicEmail">
                                             <Form.Label>Username</Form.Label>
@@ -39,7 +73,7 @@ export default class Discover extends Component {
                                             <Form.Label>Password</Form.Label>
                                             <Form.Control type="password" placeholder="Enter the password to be used" />
                                         </Form.Group>
-                                        <Button variant="primary" type="button" className="w-100">
+                                        <Button variant="primary" type="button" className="w-100" onClick={this.submitDiscover.bind(this)}>
                                             Submit
                                         </Button>
                                     </Form>
@@ -55,7 +89,7 @@ export default class Discover extends Component {
                                         </Button>
 
                                         <p className=" text-center pt-3">
-                                            <span className="btn text-primary"> <u> Edit Discovery</u>  </span>
+                                            <span className="btn text-primary" onClick={this.editDiscover}> <u> Edit Discovery</u>  </span>
                                         </p>
                                     </div>
 
