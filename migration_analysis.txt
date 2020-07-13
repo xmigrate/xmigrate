@@ -150,7 +150,6 @@ expect response
     disk: "500gb"
 }]
 
-Discovered objects json
 
 
 ## Create blueprint button
@@ -184,6 +183,34 @@ response
 ]
 
 2)blueprint/create
+request
 {
+  provider: "azure",
+  location: "uswest",
+  machines:[
+                {
+                  host :"xmigrate.cloud",
+                  ip :"172.16.5.4",
+                  subnet :"172.16.5.0/24",
+                  network :"172.16.0.0/16",
+                  ports :[22,80,443],
+                  cores :"2",
+                  cpu_model :"intel",
+                  ram :"8"
+                  machine_type :"t2.micro",
+                  status :"started",
+                  ami_id :"eee",
+                  vpc_id :"eee",
+                  subnet_id :"eee",
+                  public_route : False,
+                  ig_id :"rrr",
+                  route_table :"rrr",
+                  instance_id :"rrr"
+                }
+            ]
+}
 
+Response
+{
+status:"200"
 }
