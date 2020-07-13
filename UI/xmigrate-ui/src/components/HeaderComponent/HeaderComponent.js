@@ -7,7 +7,7 @@ export default class HeaderComponent extends Component {
         return (
             <div className="HeaderComponent">
                 <nav className="navbar navbar-expand-lg navbar-light sticky-top bg-light flex-md-nowrap p-0 ">
-                    <Link className="navbar-brand col-md-3 col-lg-2" href="">
+                    <Link className="navbar-brand col-md-3 col-lg-2" to="">
                         <img className="w-60" src="/Assets/images/logo/logo.png" alt="xmigrate"/>
                     </Link>
                     <button className="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse"
@@ -16,19 +16,19 @@ export default class HeaderComponent extends Component {
                     </button>
                     <ul className="navbar-nav mr-auto pl-4">
                         <li className="nav-item dropdown">
-                            <Link className="nav-link dropdown-toggle btnnavlink px-3 py-1" href="" id="navbarDropdown" role="button"
+                            <Link className="nav-link dropdown-toggle btnnavlink px-3 py-1" to="" id="navbarDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 ProjectSeOps   </Link>
 
                             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <Link className="dropdown-item" href="">Action</Link>
-                                <Link className="dropdown-item" href="">Another action</Link>
+                                <Link className="dropdown-item" to="">Action</Link>
+                                <Link className="dropdown-item" to="">Another action</Link>
                                 <div className="dropdown-divider"></div>
-                                <Link className="dropdown-item" href="">Something else here</Link>
+                                <Link className="dropdown-item" to="">Something else here</Link>
                             </div>
                         </li>
                         <li className="nav-item pl-2">
-                            <Link className="nav-link btngrid px-2 py-1 text-white " href="">
+                            <Link className="nav-link btngrid px-2 py-1 text-white " to="">
                                 <icon.FiMenu />
                             </Link>
                         </li>
@@ -36,12 +36,12 @@ export default class HeaderComponent extends Component {
                     <form className="form-inline my-2 my-lg-0">
                         <ul className="navbar-nav">
                             <li className="pr-4">
-                                <Link href="">
+                                <Link to="">
                                     <icon.FiMessageSquare />
                                 </Link>
                             </li>
                             <li className="pr-4">
-                                <Link href="">
+                                <Link to="">
                                     <icon.FiBell />
                                 </Link>
                             </li>
@@ -50,7 +50,7 @@ export default class HeaderComponent extends Component {
                         <div className="right-style">
                             <ul className="navbar-nav">
                                 <li className="nav-item dropdown">
-                                    <Link className="nav-link dropdown-toggle" href="" id="navbarDropdownMenuLink" role="button"
+                                    <Link className="nav-link dropdown-toggle" to="" id="navbarDropdownMenuLink" role="button"
                                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
                                         <icon.FaUserAstronaut />
@@ -60,9 +60,9 @@ export default class HeaderComponent extends Component {
 
 
                                     <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                                        <Link className="dropdown-item listitemscol" href="">Dashboard</Link>
-                                        <Link className="dropdown-item listitemscol" href="">Edit Profile</Link>
-                                        <Link className="dropdown-item listitemscol" href="">Log Out</Link>
+                                        <Link className="dropdown-item listitemscol" to="">Dashboard</Link>
+                                        <Link className="dropdown-item listitemscol" to="">Edit Profile</Link>
+                                        <Link className="dropdown-item listitemscol" to="">Log Out</Link>
                                     </div>
                                 </li>
                             </ul>
