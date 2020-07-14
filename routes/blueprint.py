@@ -5,12 +5,12 @@ from model.discover import *
 from pkg.azure import *
 from pkg.common import *
 from flask import render_template, Flask, jsonify, flash, request
-
+import json
 
 @app.route('/blueprint')
 def blueprint():
     con = create_db_con()
-    return jsonify(Discover.objects.to_json())
+    return '{'+Discover.objects.to_json()+'}'
 
 
 @app.route('/blueprint/network/create', methods=['POST'])

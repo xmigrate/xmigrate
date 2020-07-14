@@ -122,12 +122,12 @@ az vm create --resource-group ritvick-aks --location westeurope --name testubunt
 ## Discover button
 -------------------
 send below json
-
+/discover/
 {
-  hosts:["1.1.1.1","2.2.2.2","3.3.3.3"],
-  username:"ubuntu",
-  password:"testpassword",
-  provider:"azure"
+  "hosts":["1.1.1.1","2.2.2.2","3.3.3.3"],
+  "username":"ubuntu",
+  "password":"testpassword",
+  "provider":"azure"
 }
 expect below response
 {

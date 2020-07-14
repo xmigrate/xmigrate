@@ -10,3 +10,4 @@ class Discover(Document):
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
     disk = StringField(required=True, max_length=50)
+    project = StringField(required=True, max_length=50)

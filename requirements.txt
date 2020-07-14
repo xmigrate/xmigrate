@@ -3,7 +3,7 @@ netaddr
 psutil
 mongoengine
 flask
-#ansible
+ansible
 pygtail
 boto3
 pexpect

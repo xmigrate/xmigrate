@@ -6,12 +6,11 @@ from dotenv import load_dotenv
 from os import getenv
 from mongoengine import *
 from collections import OrderedDict
+import sys
 
 niface = 'eth0'
 
-load_dotenv()
 
-db_con_string = getenv("DB")
 
 def network_info():
     ifaces = netifaces.interfaces()
@@ -98,9 +97,13 @@ class Discover(Document):
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
     disk = StringField(required=True, max_length=50)
+    project = StringField(required=True, max_length=50)
 
 
 def main():
+    load_dotenv()
+    db_con_string = getenv("MONGO_DB")
+    project = sys.argv[1]
     con = connect(host=db_con_string)
     result = network_info()
     result['ports'] = ports_info()
@@ -108,8 +111,8 @@ def main():
     disk = disk_info()
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
-    post1 = Post(host=result['host'], ip=result['ip'], subnet=result['subnet'], network=result['network'],
-                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info())
+    post1 = Discover(host=result['host'], ip=result['ip'], subnet=result['subnet'], network=result['network'],
+                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info(),project=project)
     try:
         post1.save()
     except Exception as e:

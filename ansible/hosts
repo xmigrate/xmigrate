@@ -1,5 +1,4 @@
 [nodes]
-54.149.227.26
+13.127.35.169
 [all:vars]
-ansible_ssh_pass = Redhat@12345
-ansible_user = ubuntu
+ansible_ssh_pass = Xmigrate@1234
