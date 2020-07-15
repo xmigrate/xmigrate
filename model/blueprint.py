@@ -18,4 +18,4 @@ class BluePrint(Document):
     ig_id = StringField(required=False, max_length=100)
     route_table = StringField(required=False, max_length=100)
     instance_id = StringField(required=False, max_length=100)
-    project = StringField(required=True, max_length=50)
+    project = StringField(required=True, max_length=50,unique=True)

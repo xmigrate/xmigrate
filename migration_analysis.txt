@@ -134,21 +134,15 @@ expect below response
   'status': '200'
 }
 
+/stream get request
+get you logs
+
 ## go to blueprint button
 send post request
 /blueprint
 expect response
-[{
-    host: "xmigrate.cloud",
-    ip: "172.16.5.4",
-    subnet: "172.16.5.0/24",
-    network: "172.16.0.0./16",
-    ports: [80,443,22],
-    cores: "2",
-    cpu_model: "intel",
-    ram: "8gb",
-    disk: "500gb"
-}]
+{[{"project": "testproject", "ram": "1002304 kB", "ip": "172.31.34.216", "disk": "/dev/xvda", "cores": "1", "host": "ip6-localhost", "subnet": "172.31.34.216/20", "_id": {"$oid": "5f0ed1d7ceef8258fc88a7d0"}, "cpu_model": "Intel(R) Xeon(R) CPU E5-2676 v3 @ 2.40GHz", "network": "172.31.32.0", "ports": [{"name": "python", "type": "tcp", "port": 22}, {"name": "python", "type": "tcp", "port": 22}]}]}
+
 
 
 
@@ -156,31 +150,15 @@ expect response
 ----------------------------
 1)blueprint/network/create
 {
-cidr:"192.168.0.0/16"
+    "cidr":"192.168.0.0",
+    "project": "testproject"
 }
 
 response
-[
 {
-    host :"xmigrate.cloud",
-    ip :"172.16.5.4",
-    subnet :"172.16.5.0/24",
-    network :"172.16.0.0/16",
-    ports :[22,80,443],
-    cores :"2",
-    cpu_model :"intel",
-    ram :"8"
-    machine_type :"t2.micro",
-    status :"started",
-    ami_id :"eee",
-    vpc_id :"eee",
-    subnet_id :"eee",
-    public_route : False,
-    ig_id :"rrr",
-    route_table :"rrr",
-    instance_id :"rrr"
+  "blueprint": "[{\"cores\": \"1\", \"project\": \"testproject\", \"network\": \"192.168.32.0/18\", \"public_route\": true, \"host\": \"ip6-localhost\", \"status\": \"Not started\", \"subnet\": \"192.168.34.216/20\", \"_id\": {\"$oid\": \"5f0eda06c9c505383f073da9\"}, \"ports\": [{\"port\": 22, \"type\": \"tcp\", \"name\": \"python\"}, {\"port\": 22, \"type\": \"tcp\", \"name\": \"python\"}], \"machine_type\": \"\", \"ram\": \"1002304 kB\", \"cpu_model\": \"Intel(R) Xeon(R) CPU E5-2676 v3 @ 2.40GHz\", \"ip\": \"192.168.34.216\"}]",
+  "status": "200"
 }
-]
 
 2)blueprint/create
 request

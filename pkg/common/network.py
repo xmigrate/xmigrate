@@ -2,12 +2,13 @@ from utils.dbconn import *
 from utils.converter import *
 from model.discover import *
 from model.blueprint import *
+import json
+from collections import defaultdict
 
-
-def update_nw_cidr():
-    con = create_db_con()
-    machines = json.loads(Discover.objects.to_json())
+def update_nw_cidr(p):
+    machines = json.loads(Discover.objects(project=p).to_json())
     networks = []
+    print("trying to update network")
     for machine in machines:
         networks.append(machine['network'])
     network_count = len(list(set(networks)))
@@ -25,16 +26,21 @@ def update_nw_cidr():
             subnet_prefix = min(subnet_prefixes)
             vp = i+'/'+str(subnet_prefix-2)
             if '/' not in i:
-                Discover.objects(network=i).update(network=vp)
-                con.close()
-                return True
-    con.close()
-    return False
+                try:
+                    con = create_db_con()
+                    Discover.objects(network=i,project=p).update(network=vp)
+                    print(Discover.objects.to_json())
+                except:
+                    print("Failed upating network")
+                finally:
+                    con.close()
+    return True
 
 
-def update_subnet(cidr):
+def update_subnet(cidr,p):
     con = create_db_con()
-    machines = json.loads(Discover.objects.to_json())
+    print("trying t update subnet")
+    machines = json.loads(Discover.objects(project=p).to_json())
     if cidr == '10.0.0.0':
         for machine in machines:
             if machine['network'].split('.')[0] == '10':
@@ -83,36 +89,44 @@ def update_subnet(cidr):
             machine['subnet'][1] = '168'
             machine['subnet'] = '.'.join(machine['subnet'])
             # print machine
+    else:
+        return machines, False
     con.close()
-    return machines
+    return machines, True
 
 
-def update_blueprint(machines):
+def update_blueprint(machines,p):
     con = create_db_con()
     for machine in machines:
         ram = conv_KB(machine['ram'].split(' ')[0])
-        machine['machine_type'] = compu(
-            machine_type, int(machine['cores']), ram)
-        post = BluePrint(host=machine['host'], ip=machine['ip'], subnet=machine['subnet'], network=machine['network'],
+        machine['machine_type'] = ''#compu( machine_type, int(machine['cores']), ram)
+        post = BluePrint(host=machine['host'], ip=machine['ip'], subnet=machine['subnet'], network=machine['network'], project=p,
                          ports=machine['ports'], cores=machine['cores'], public_route=True, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='Not started')
         try:
             post.save()
         except Exception as e:
             print("Boss you have to see this!!")
             print(e)
+            return False
         finally:
             con.close()
     return True
 
 
-def create_nw_layout(cidr):
+def create_nw_layout(cidr,p):
     con = create_db_con()
+    blueprint_updated = True
     try:
-        BluePrint.objects.delete()
+        BluePrint.objects(project=p).delete()
+        print("Deleted objects")
     except Exception as e:
         print("See the error:" + str(e))
-    network_cidr_updated = update_nw_cidr()
+    network_cidr_updated = update_nw_cidr(p)
     if network_cidr_updated:
-        machines = update_subnet(cidr)
-        blueprint_updated = update_blueprint(machines)
+        machines, subnet_updated = update_subnet(cidr,p)
+        if subnet_updated:
+            blueprint_updated = update_blueprint(machines,p)
+        else:
+            print("subnet not updated")
+            return subnet_updated
     return blueprint_updated

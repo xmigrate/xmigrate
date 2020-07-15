@@ -3,14 +3,15 @@ from mongoengine import *
 import socket
 from dotenv import load_dotenv
 from os import getenv
+import sys
 
 load_dotenv()
 
-db_con_string = getenv("DB")
+db_con_string = getenv("MONGO_DB")
 
 con = connect(host=db_con_string)
-storage_accnt = getenv("STORAGE")
-access_key = getenv("ACCESS_KEY")
+storage_accnt = sys.argv[1]
+access_key = sys.argv[2]
 
 class BluePrint(Document):
     host = StringField(required=True, max_length=200, unique=True)
