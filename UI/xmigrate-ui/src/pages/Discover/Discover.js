@@ -20,7 +20,9 @@ export default class Discover extends Component {
             provider: "azure",
             project: "testproject",
             message: "",
-            disableGoToBlueprint: true
+            disableGoToBlueprint: true,
+            streamming: false,
+            parsedTags: []
         };
         this.onChange = this.onChange.bind(this)
         this.editDiscover = this.editDiscover.bind(this)
@@ -28,7 +30,9 @@ export default class Discover extends Component {
     }
     onChange(e) {
         // e.persist()
-        this.setState({ tags: e.target.value })
+        var parsed = JSON.parse(e.target.value).map((data) => data.value)
+        this.setState({ tags: e.target.value, parsedTags: parsed })
+
     }
     setUsername(e) {
         this.setState({ username: e.target.value })
@@ -45,9 +49,7 @@ export default class Discover extends Component {
 
     submitDiscover() {
         var hosts = []
-        JSON.parse(this.state.tags).map((data) => {
-            hosts.push(data.value)
-        })
+        JSON.parse(this.state.tags).map((data) => hosts.push(data.value))
         console.log(hosts);
         var data = {
             "hosts": hosts,
@@ -59,7 +61,7 @@ export default class Discover extends Component {
         PostService(DISCOVERURL, data).then((data) => {
             console.log(data)
             var intervalId = setInterval(this.getStream, 3000);
-            this.setState({ intervalId: intervalId });
+            this.setState({ intervalId: intervalId, streamming: true, showDiscoverMenu: false, showDiscoverMenuEdit: true });
         })
     }
 
@@ -68,10 +70,14 @@ export default class Discover extends Component {
             console.log(data);
             if (data.data.offset === "EOF") {
                 clearInterval(this.state.intervalId);
+                this.setState({
+                    streamming: false
+                })
             }
             if (data.data.blueprint_status === "success") {
                 this.setState({
-                    disableGoToBlueprint: false
+                    disableGoToBlueprint: false,
+                    streamming: false
                 })
             }
 
@@ -79,9 +85,6 @@ export default class Discover extends Component {
                 message: data.data.line
             })
         })
-    }
-    stopStream() {
-        clearInterval(this.state.intervalId);
     }
     render() {
 
@@ -125,9 +128,12 @@ export default class Discover extends Component {
                                         Server IP's
                                     </h5>
                                     <div className="pt-4">
-                                        <Button variant="success" type="button" disabled className="w-100">
-                                            IP-23345-34R35-4545-23R342-2432
-                                        </Button>
+                                        {this.state.parsedTags.map((data, index) =>
+                                            <Button variant="success" key={index} type="button" disabled className="w-100">
+                                                {data}
+                                            </Button>
+                                        )}
+
 
                                         <p className=" text-center pt-3">
                                             <span className="btn text-primary" onClick={this.editDiscover}> <u> Edit Discovery</u>  </span>
@@ -140,11 +146,44 @@ export default class Discover extends Component {
                         <Col md={{ span: 6, offset: 1 }} className="shadow-sm rounded bg-white d-flex flex-column p-0">
                             <div className="p-3 d-flex justify-content-between">
                                 <span>
-                                    Lorem Ipsum Dollar
+                                    {this.state.disableGoToBlueprint ?
+                                        this.state.streamming ? "Gathering Informations" : "Discover"
+                                        : "Done"
+                                    }
+
                                 </span>
-                                <Button variant="secondary" disabled={this.state.disableGoToBlueprint} >
-                                    Go to Blueprint
+                                {this.state.disableGoToBlueprint ?
+                                    this.state.streamming ?
+                                        <Button variant="secondary" disabled>
+                                            Download Blueprint
+                                        </Button>
+                                        :
+                                        <Button variant="secondary" disabled>
+                                            Discover
+                                    </Button>
+                                    :
+                                    <Button variant="success" >
+                                        Go to Blueprint
+                                    </Button>
+                                }
+
+
+                                {/* {this.state.streamming ?
+                                    <Button variant="secondary" disabled>
+                                        Download Blueprint
+                                    </Button>
+                                    : ""}
+
+                                {this.state.disableGoToBlueprint ?
+                                    <Button variant="secondary" disabled>
+                                        Discover
+                                    </Button>
+                                    :
+                                    <Button variant="success" >
+                                        Go to Blueprint
                                 </Button>
+                                } */}
+
                             </div>
 
                             <div className="background-primary media-body p-3 discover-logs" >

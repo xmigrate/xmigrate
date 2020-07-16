@@ -1,5 +1,5 @@
 import Axios from 'axios';
-import {  LOGINURL } from './Services';
+// import {  LOGINURL } from './Services';
 
 
 export default function GetService(API) {
