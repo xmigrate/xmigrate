@@ -7,6 +7,11 @@ def stream():
     line = ''
     line = read_logs()
     offset= ''
+    blueprint_status = ''
     if "PLAY RECAP" in line:
         offset = "EOF"
-    return jsonify({'line':line,'offset':offset})
+        if "unreachable=0 failed=0" in line:
+            blueprint_status = "success"
+        else:
+            blueprint_status = "failure" 
+    return jsonify({'line':line,'offset':offset, 'blueprint_status':blueprint_status})
