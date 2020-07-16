@@ -4,7 +4,7 @@ import { LOGINURL } from './Services';
 export default function PostService(API, data) {
     let config = {
         withCredentials: true,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/json" },
         params: data
     }
     let response = Axios.post(API, data, config);

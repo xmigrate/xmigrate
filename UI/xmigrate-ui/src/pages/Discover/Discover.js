@@ -3,7 +3,8 @@ import { Container, Row, Col, Form, Button } from 'react-bootstrap'
 import Tags from "@yaireo/tagify/dist/react.tagify.js";
 import "./Discover.scss"
 import PostService from '../../services/PostService';
-import { DISCOVERURL } from '../../services/Services';
+import GetService from '../../services/GetService';
+import { DISCOVERURL,STREAMURL } from '../../services/Services';
 
 export default class Discover extends Component {
 
@@ -14,14 +15,25 @@ export default class Discover extends Component {
             showDiscoverMenu: true,
             showDiscoverMenuEdit: false,
             tags: [],
+            email: "",
+            password: "",
+            provider: "azure",
+            project: "testproject",
+            message: ""
         };
         this.onChange = this.onChange.bind(this)
         this.editDiscover = this.editDiscover.bind(this)
+        this.getStream = this.getStream.bind(this)
     }
     onChange(e) {
         // e.persist()
         this.setState({ tags: e.target.value })
-        console.log("CHANGED:", e.target.value)
+    }
+    setUsername(e) {
+        this.setState({ username: e.target.value })
+    }
+    setPassword(e) {
+        this.setState({ password: e.target.value })
     }
     editDiscover() {
         this.setState({
@@ -31,21 +43,41 @@ export default class Discover extends Component {
     }
 
     submitDiscover() {
+        var hosts = []
+        JSON.parse(this.state.tags).map((data) => {
+            hosts.push(data.value)
+        })
+        console.log(hosts);
         var data = {
-            "hosts":["1.1.1.1","2.2.2.2","3.3.3.3"],
-            "username":"ubuntu",
-            "password":"testpassword",
-            "provider":"azure"
+            "hosts": hosts,
+            "username": this.state.username,
+            "password": this.state.password,
+            "provider": this.state.provider,
+            "project": this.state.project
         }
-        PostService(DISCOVERURL, data).then((data)=>{
+        PostService(DISCOVERURL, data).then((data) => {
             console.log(data)
+            var intervalId = setInterval(this.getStream, 3000);
+            this.setState({ intervalId: intervalId });
         })
     }
 
+    getStream() {
+       GetService(STREAMURL).then((data)=>{
+           console.log(data);
+           this.setState({
+               message: data.data.line
+           })
+       })
+    }
+    stopStream(){
+        clearInterval(this.state.intervalId);
+    }
     render() {
 
         return (
             <div className="Discover media-body background-primary ">
+                <button onClick={this.stopStream.bind(this)}>stop stream</button>
                 <Container className="py-5 ">
                     <h4 className="p-0 m-0">
                         Add IP’s of your servers to be migrated
@@ -65,11 +97,11 @@ export default class Discover extends Component {
                                     {/* <Tags mode='textarea' settings={settings} value={value} showDropdown={showDropdown} /> */}
                                     <Tags mode='textarea' onChange={this.onChange} />
                                     <Form className="py-4">
-                                        <Form.Group controlId="formBasicEmail">
+                                        <Form.Group controlId="formBasicEmail" onChange={this.setUsername.bind(this)}>
                                             <Form.Label>Username</Form.Label>
                                             <Form.Control type="text" placeholder="User shouls have sudo access" />
                                         </Form.Group>
-                                        <Form.Group controlId="formBasicPassword">
+                                        <Form.Group controlId="formBasicPassword" onChange={this.setPassword.bind(this)}>
                                             <Form.Label>Password</Form.Label>
                                             <Form.Control type="password" placeholder="Enter the password to be used" />
                                         </Form.Group>
@@ -106,8 +138,8 @@ export default class Discover extends Component {
                                 </Button>
                             </div>
 
-                            <div className="background-primary media-body p-3 discover-logs">
-
+                            <div className="background-primary media-body p-3 discover-logs" >
+                                {this.state.message}
                             </div>
                         </Col>
                     </Row>
