@@ -1,13 +1,3 @@
-*.DS_Store
-logs/*
-id_rsa*
-github
-github.pub
-*.env
-*.pyc
-
-
-# react
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
