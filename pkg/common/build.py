@@ -1,17 +1,30 @@
 import os
 from model.blueprint import *
 from model.project import *
-
+from utils.log_reader import *
+import sleep
 
 
 def start_cloning(project):
+    con = create_db_con()
     if Project.objects(project=project).to_json['provider'] == "azure":
         storage = Storage.objects(project=project).to_json()['storage']
         accesskey = Storage.objects(project=project).to_json()['accesskey']
         os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage="'+storage+'" accesskey='+accesskey+'"> ./logs/ansible/migration_log.txt')
+        while "PLAY RECAP" not in read_migration_logs():
+            st = 0
+            BluePrint.objects(project=project).update(status=str(st))
+            st = st+3
+            time.sleep(60)
+        if "unreachable=0" in read_migration_logs():
+            if "failed=0" in read_migration_logs():    
+                BluePrint.objects(project=project).update(status='30')
+                return True
+    return False
+
+#def create_disk(project):
+
      
-
-
 
 def start_build(project):
     project = Project.objects(project=project).to_json()
