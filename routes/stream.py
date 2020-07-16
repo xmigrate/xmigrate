@@ -6,4 +6,7 @@ from utils.log_reader import *
 def stream():
     line = ''
     line = read_logs()
-    return jsonify({'line':line})
+    offset= ''
+    if "PLAY RECAP" in line:
+        offset = "EOF"
+    return jsonify({'line':line,'offset':offset})
