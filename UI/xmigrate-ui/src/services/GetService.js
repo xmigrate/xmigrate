@@ -3,7 +3,7 @@ import {  LOGINURL } from './Services';
 
 
 export default function GetService(API) {
-    let response = Axios.get(API, { withCredentials: true,headers: { "Content-Type": "application/json" }} )
+    let response = Axios.get(API, { withCredentials: false,headers: { "Content-Type": "application/json" }} )
     response.then({}).catch(err => {
         // window.location.replace(LOGINURL);
         console.error(err)
@@ -13,7 +13,7 @@ export default function GetService(API) {
 
 export function GetServiceWithData(API, data) {
     let config = {
-        withCredentials: true,
+        withCredentials: false,
         headers: { "Content-Type": "application/json" },
         params: data
     }

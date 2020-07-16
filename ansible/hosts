@@ -1,4 +1,4 @@
 [nodes]
-13.127.35.169
+asbabhjsb
 [all:vars]
-ansible_ssh_pass = Xmigrate@1234
+ansible_ssh_pass = asasas

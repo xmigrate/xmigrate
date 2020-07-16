@@ -4,7 +4,7 @@ import Tags from "@yaireo/tagify/dist/react.tagify.js";
 import "./Discover.scss"
 import PostService from '../../services/PostService';
 import GetService from '../../services/GetService';
-import { DISCOVERURL,STREAMURL } from '../../services/Services';
+import { DISCOVERURL, STREAMURL } from '../../services/Services';
 
 export default class Discover extends Component {
 
@@ -19,7 +19,8 @@ export default class Discover extends Component {
             password: "",
             provider: "azure",
             project: "testproject",
-            message: ""
+            message: "",
+            disableGoToBlueprint: true
         };
         this.onChange = this.onChange.bind(this)
         this.editDiscover = this.editDiscover.bind(this)
@@ -63,21 +64,29 @@ export default class Discover extends Component {
     }
 
     getStream() {
-       GetService(STREAMURL).then((data)=>{
-           console.log(data);
-           this.setState({
-               message: data.data.line
-           })
-       })
+        GetService(STREAMURL).then((data) => {
+            console.log(data);
+            if (data.data.offset === "EOF") {
+                clearInterval(this.state.intervalId);
+            }
+            if (data.data.blueprint_status === "success") {
+                this.setState({
+                    disableGoToBlueprint: false
+                })
+            }
+
+            this.setState({
+                message: data.data.line
+            })
+        })
     }
-    stopStream(){
+    stopStream() {
         clearInterval(this.state.intervalId);
     }
     render() {
 
         return (
             <div className="Discover media-body background-primary ">
-                <button onClick={this.stopStream.bind(this)}>stop stream</button>
                 <Container className="py-5 ">
                     <h4 className="p-0 m-0">
                         Add IP’s of your servers to be migrated
@@ -133,7 +142,7 @@ export default class Discover extends Component {
                                 <span>
                                     Lorem Ipsum Dollar
                                 </span>
-                                <Button variant="secondary" disabled>
+                                <Button variant="secondary" disabled={this.state.disableGoToBlueprint} >
                                     Go to Blueprint
                                 </Button>
                             </div>

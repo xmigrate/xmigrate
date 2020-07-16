@@ -8,7 +8,7 @@ from pygtail import Pygtail
 from collections import defaultdict
 import boto3
 from flask import Flask
-
+from flask_cors import CORS
 import sys
 
 sys.path.append('./')
@@ -17,6 +17,9 @@ load_dotenv()
 
 
 app = Flask(__name__)
+# CORS()
+CORS(app, resources={r"/*": {"origins": "*"}}, send_wildcard=True)
+
 
 app.secret_key = getenv("SECRET")
 

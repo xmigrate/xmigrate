@@ -3,7 +3,7 @@ import { LOGINURL } from './Services';
 
 export default function PostService(API, data) {
     let config = {
-        withCredentials: true,
+        withCredentials: false,
         headers: { "Content-Type": "application/json" },
         params: data
     }
