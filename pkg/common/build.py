@@ -4,7 +4,7 @@ from model.project import *
 from utils.log_reader import *
 import sleep
 
-
+#cloning should do conversion also
 def start_cloning(project):
     con = create_db_con()
     if Project.objects(project=project).to_json['provider'] == "azure":
