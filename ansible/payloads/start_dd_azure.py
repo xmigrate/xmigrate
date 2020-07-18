@@ -25,9 +25,16 @@ class BluePrint(Document):
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
     ami_id = StringField(required=False, max_length=100)
+    vpc_id = StringField(required=False, max_length=100)
+    subnet_id = StringField(required=False, max_length=100)
+    public_route = BooleanField(required=False)
+    ig_id = StringField(required=False, max_length=100)
+    route_table = StringField(required=False, max_length=100)
+    instance_id = StringField(required=False, max_length=100)
+    project = StringField(required=True, max_length=50,unique=True)
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Started cloning')
+BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='10')
 os.system('sudo dd if=/dev/xvda bs=1M status=progress | azbak - /osdisks/$HOSTNAME.raw --storage-account '+storage_accnt+' --access-key '+access_key)
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Completed cloning')
+BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='25')
 con.close()
