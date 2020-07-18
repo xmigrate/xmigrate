@@ -5,6 +5,7 @@ import "./Discover.scss"
 import PostService from '../../services/PostService';
 import GetService from '../../services/GetService';
 import { DISCOVERURL, STREAMURL } from '../../services/Services';
+import { Link } from 'react-router-dom';
 
 export default class Discover extends Component {
 
@@ -41,10 +42,15 @@ export default class Discover extends Component {
         this.setState({ password: e.target.value })
     }
     editDiscover() {
-        this.setState({
-            showDiscoverMenu: true,
-            showDiscoverMenuEdit: false,
-        })
+        if (this.state.streamming) {
+            alert("data processing...");
+        } else {
+            this.setState({
+                showDiscoverMenu: true,
+                showDiscoverMenuEdit: false,
+            })
+        }
+
     }
 
     submitDiscover() {
@@ -162,30 +168,13 @@ export default class Discover extends Component {
                                             Discover
                                     </Button>
                                     :
-                                    <Button variant="success" >
-                                        Go to Blueprint
-                                    </Button>
+                                    <Link to="/blue-print">
+                                        <Button variant="success" >
+                                            Go to Blueprint
+                                        </Button>
+                                    </Link>
                                 }
-
-
-                                {/* {this.state.streamming ?
-                                    <Button variant="secondary" disabled>
-                                        Download Blueprint
-                                    </Button>
-                                    : ""}
-
-                                {this.state.disableGoToBlueprint ?
-                                    <Button variant="secondary" disabled>
-                                        Discover
-                                    </Button>
-                                    :
-                                    <Button variant="success" >
-                                        Go to Blueprint
-                                </Button>
-                                } */}
-
                             </div>
-
                             <div className="background-primary media-body p-3 discover-logs" >
                                 {this.state.message}
                             </div>

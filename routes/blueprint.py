@@ -12,7 +12,7 @@ import json
 @app.route('/blueprint')
 def blueprint():
     con = create_db_con()
-    return '{'+Discover.objects.to_json()+'}'
+    return Discover.objects.to_json()
 
 
 @app.route('/blueprint/network/create', methods=['POST'])

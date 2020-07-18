@@ -2,7 +2,7 @@ import os
 from model.blueprint import *
 from model.project import *
 from utils.log_reader import *
-import sleep
+import time
 
 #cloning should do conversion also
 def start_cloning(project):
