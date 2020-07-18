@@ -99,7 +99,7 @@ export HISTSIZE=0
 
 sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://vishnuks/xvda_backup6.raw --sse AES256 --storage-class STANDARD_IA
 
-sudo dd if=/dev/xvda bs=1M status=progress | azbak - /osdisks/$HOSTNAME.raw --storage-account testdatat --access-key Ng4N1x696CwdgozfDk7ezq4xfluw9nCXSvz+Bh8pUa8XfxqmxEPTk2eGdwV1LG4zN5fC2GdfZAm9IIl2KAf+Wg==
+sudo dd if=/dev/xvda bs=1M status=progress | azbak - /osdisks/$HOSTNAME.raw --storage-account xmigrate --access-key XhWzZKVlzOpDPXzneYBT4oVVnYPaXdp0wsd4ZgLjIpH0BwHR4HmKrnQqdyawGV/Un2a2vGMW/PE+/N2t5b8a7g==
 
 
 qemu-img convert -f raw -o subformat=fixed -O vpc MyLinuxVM.raw MyLinuxVM.vhd
