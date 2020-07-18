@@ -1,22 +1,52 @@
 import React, { Component } from 'react'
 import './BluePrint.scss'
-import { Container, Table, Card, Button, Dropdown, Form, Row, Col } from 'react-bootstrap'
+import { Container, Table, Card, Button, Form, Row, Col } from 'react-bootstrap'
 import * as icon from 'react-icons/all'
+import GetService from '../../services/GetService'
+import { BLUEPRINT_URL } from '../../services/Services'
 export default class BluePrint extends Component {
 
     constructor(props) {
         super(props)
         this.state = {
             hosts: [
-                { id: 1, hostname: "Hostname1", ip: "10.170.20.13", subnet: "10.10.0.0/24", network: "10.10.10.0/24", cpu: "inter(R)", core: "1", ram: "10GB", disk: "/dev/xvda" }
+                // { id: 1, _id: {$oid:"dummy"},hostname: "Hostname1", ip: "10.170.20.13", subnet: "10.10.0.0/24", network: "10.10.10.0/24", cpu: "inter(R)", core: "1", ram: "10GB", disk: "/dev/xvda" }
             ]
         }
+    }
+
+    componentDidMount() {
+        GetService(BLUEPRINT_URL).then((res) => {
+            console.log(res.data);
+
+            res.data.map((data, index) => {
+                this.state.hosts.push({
+                    id: index,
+                    _id:data._id,
+                    hostname: data.host,
+                    ip: data.ip,
+                    subnet: data.subnet,
+                    network: data.network,
+                    cpu: data.cpu_model,
+                    core: data.cores,
+                    ram: data.ram,
+                    disk: data.disk,
+                })
+            })
+
+            // Forcefully rerender component
+            this.setState({ state: this.state });
+        })
+    }
+
+    _createBluePrint(){
+
     }
 
     render() {
         return (
             <div className="BluePrint media-body background-primary">
-                <Container className="py-5 ">
+                <Container  className="py-5 ">
                     <h4 className="p-0 m-0">
                         Blueprint
                     </h4>
@@ -72,44 +102,21 @@ export default class BluePrint extends Component {
 
                     <Card className="mt-4 p-2">
                         <Card.Header className="bg-white d-flex">
+                            <Form className="mr-40px flex-2 w-100">
+                                <Form.Group controlId="select-type">
+                                    <Form.Control className="" defaultValue="defa" as="select"  custom>
+                                        <option value="defa" disabled>Select VPC CIDR</option>
+                                        <option value="172.16.0.0">172.16.0.0</option>
+                                        <option value="10.0.0.0">10.0.0.0</option>
+                                    </Form.Control>
+                                </Form.Group>
+                            </Form>
 
-                            <Dropdown className="mr-40px media-body">
-                                <Dropdown.Toggle variant="outline-dark" >
-                                    Dropdown Button
-                                    </Dropdown.Toggle>
-                                <Dropdown.Menu className="mr-40px">
-                                    <Dropdown.Item href="#/action-1">Action</Dropdown.Item>
-                                    <Dropdown.Item href="#/action-2">Another action</Dropdown.Item>
-                                    <Dropdown.Item href="#/action-3">Something else</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
-
-                            <Dropdown className="mr-40px media-body ">
-                                <Dropdown.Toggle variant="outline-dark" >
-                                    Dropdown Button
-                                    </Dropdown.Toggle>
-                                <Dropdown.Menu>
-                                    <Dropdown.Item href="#/action-1">Action</Dropdown.Item>
-                                    <Dropdown.Item href="#/action-2">Another action</Dropdown.Item>
-                                    <Dropdown.Item href="#/action-3">Something else</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
-
-                            <Dropdown className="mr-40px media-body">
-                                <Dropdown.Toggle variant="outline-dark" >
-                                    Select Machine Type
-                                    </Dropdown.Toggle>
-                                <Dropdown.Menu>
-                                    <Dropdown.Item href="#/action-1">Action</Dropdown.Item>
-                                    <Dropdown.Item href="#/action-2">Another action</Dropdown.Item>
-                                    <Dropdown.Item href="#/action-3">Something else</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
-                            <div className=" d-flex flex-2">
-                                <Button className="mr-40px flex-3" variant="success" size="sm">
+                            <div className=" d-flex media-body ">
+                                <Button className="mr-40px media-body" variant="success" onClick={this._createBluePrint.bind(this)}>
                                     Create Blueprint
                                 </Button>
-                                <Button className="flex-3" variant="secondary" >
+                                <Button className="media-body" variant="secondary" disabled >
                                     Start <icon.BsArrowRight />
                                 </Button>
                             </div>
@@ -258,95 +265,3 @@ export default class BluePrint extends Component {
     }
 }
 
-
-
-// <Table responsive borderless className="create-layout-table">
-//                                 <thead>
-//                                     <tr>
-//                                         <th>
-//                                             {/* # */}
-//                                         </th>
-//                                         <th>Network</th>
-//                                         <th>CIDR</th>
-//                                         <th>
-//                                             {/* # */}
-//                                         </th>
-
-//                                     </tr>
-//                                 </thead>
-//                                 <tbody >
-
-//                                     <tr data-toggle="collapse" data-target="#accordion" className="clickable">
-//                                         <td>
-//                                             <icon.AiOutlineArrowRight className="text-dark text-decoration-none" />
-//                                         </td>
-//                                         <td >
-//                                             Network-1
-//                                         </td>
-//                                         <td>
-//                                             192.168.0.0/16
-//                                         </td>
-//                                         <td>
-//                                             {/* # */}
-//                                         </td>
-
-//                                     </tr>
-//                                     <tr>
-//                                         <td colSpan="4">
-//                                             <Table responsive borderless id="accordion" className="collapse">
-//                                                 <thead>
-//                                                     <tr>
-//                                                         <th>
-//                                                             {/* # */}
-//                                                         </th>
-//                                                         <th>
-//                                                             SUBNET
-//                                                         </th>
-//                                                         <th>CIDR</th>
-//                                                         <th>TYPE</th>
-//                                                     </tr>
-//                                                 </thead>
-//                                                 {/* <tbody>
-//                                                     <tr data-toggle="collapse" data-target="#accordion-inner" className="clickable">
-//                                                         <td>
-//                                                             <icon.AiOutlineArrowRight className="text-dark text-decoration-none" />
-//                                                         </td>
-//                                                         <td >
-//                                                             Subnet-1
-//                                                         </td>
-//                                                         <td>
-//                                                             192.168.1.0/24
-//                                                         </td>
-//                                                         <td>
-//                                                             <Form.Group controlId="exampleForm.ControlSelect1">
-//                                                                 <Form.Control as="select">
-//                                                                     <option>1</option>
-//                                                                     <option>2</option>
-//                                                                     <option>3</option>
-//                                                                     <option>4</option>
-//                                                                     <option>5</option>
-//                                                                 </Form.Control>
-//                                                             </Form.Group>
-//                                                         </td>
-//                                                     </tr>
-//                                                     <tr id="accordion-inner" className="collapse">
-//                                                         <td>
-//                                                             inner
-//                                                         </td>
-//                                                         <td>
-//                                                             inner
-//                                                         </td>
-//                                                         <td>
-//                                                             inner
-//                                                         </td>
-//                                                         <td>
-//                                                             inner
-//                                                         </td>
-//                                                     </tr>
-//                                                 </tbody> */}
-//                                             </Table>
-//                                         </td>
-//                                     </tr>
-
-//                                 </tbody>
-//                             </Table>
