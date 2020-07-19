@@ -3,12 +3,15 @@ import './BluePrint.scss'
 import { Container, Table, Card, Button, Form, Row, Col } from 'react-bootstrap'
 import * as icon from 'react-icons/all'
 import GetService from '../../services/GetService'
-import { BLUEPRINT_URL } from '../../services/Services'
+import { BLUEPRINT_URL, BLUEPRINTNET_NETWORK_CREATE_URL } from '../../services/Services'
+import PostService from '../../services/PostService'
 export default class BluePrint extends Component {
 
     constructor(props) {
         super(props)
         this.state = {
+            cidr: "defa",
+            project: "testproject",
             hosts: [
                 // { id: 1, _id: {$oid:"dummy"},hostname: "Hostname1", ip: "10.170.20.13", subnet: "10.10.0.0/24", network: "10.10.10.0/24", cpu: "inter(R)", core: "1", ram: "10GB", disk: "/dev/xvda" }
             ]
@@ -22,7 +25,7 @@ export default class BluePrint extends Component {
             res.data.map((data, index) => {
                 this.state.hosts.push({
                     id: index,
-                    _id:data._id,
+                    _id: data._id,
                     hostname: data.host,
                     ip: data.ip,
                     subnet: data.subnet,
@@ -39,14 +42,28 @@ export default class BluePrint extends Component {
         })
     }
 
-    _createBluePrint(){
-
+    _createBluePrint() {
+        if (this.state.cidr === "defa") {
+            alert("Please Select a valid CIDR")
+        } else {
+            var data = {
+                cidr: this.state.cidr,
+                project: this.state.project
+            }
+            PostService(BLUEPRINTNET_NETWORK_CREATE_URL, data).then((res) => {
+                console.log(res.data);
+            })
+        }
     }
-
+    _setCIDR(e) {
+        this.setState({
+            cidr: e.target.value
+        })
+    }
     render() {
         return (
             <div className="BluePrint media-body background-primary">
-                <Container  className="py-5 ">
+                <Container className="py-5 ">
                     <h4 className="p-0 m-0">
                         Blueprint
                     </h4>
@@ -104,7 +121,7 @@ export default class BluePrint extends Component {
                         <Card.Header className="bg-white d-flex">
                             <Form className="mr-40px flex-2 w-100">
                                 <Form.Group controlId="select-type">
-                                    <Form.Control className="" defaultValue="defa" as="select"  custom>
+                                    <Form.Control className="" defaultValue="defa" as="select" onChange={this._setCIDR.bind(this)} custom>
                                         <option value="defa" disabled>Select VPC CIDR</option>
                                         <option value="172.16.0.0">172.16.0.0</option>
                                         <option value="10.0.0.0">10.0.0.0</option>
