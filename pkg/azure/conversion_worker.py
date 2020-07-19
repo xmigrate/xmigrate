@@ -16,9 +16,9 @@ async def conversion_worker(osdisk_raw,project,host):
         osdisk_vhd = osdisk_raw.replace(".raw.000",".vhd")
         os.popen("qemu-img convert -f raw -o subformat=fixed -O vpc ./osdisks/"+osdisk_raw+" ./osdisks/"+osdisk_vhd)
         BluePrint.objects(project=project,host=host).update(status='34')
-        os.popen("az storage blob upload --account-name "+account_name+" --container-name "+container_name+" --file ./osdisks/"+osdisk_vhd+" --name "+osdisk_vhd+" --account-key "+access_key")
+        os.popen("az storage blob upload --account-name "+account_name+" --container-name "+container_name+" --file ./osdisks/"+osdisk_vhd+" --name "+osdisk_vhd+" --account-key "+access_key)
         BluePrint.objects(project=project,host=host).update(status='36')
-        post = Disk.objects(host=host],vhd=osdisk_vhd),file_size=file_size,project=project)
+        post = Disk.objects(host=host,vhd=osdisk_vhd,file_size=file_size,project=project)
         post.save()
     except:
         file_size = '0'

@@ -1,10 +1,10 @@
 from azure.mgmt.compute.models import DiskCreateOption
 from azure.mgmt.compute import ComputeManagementClient
 from utils import dbconn
-from models.project import *
-from models.disk import *
-from models.storage import *
-from models.blueprint import *
+from model.project import *
+from model.disk import *
+from model.storage import *
+from model.blueprint import *
 from pkg.azure import conversion_worker as cw
 import asyncio
 

@@ -2,7 +2,7 @@
 # is installed automatically with the other libraries.
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.compute import ComputeManagementClient
-from model.import blueprint, project
+from model import blueprint, project
 from utils import dbconn
 
 
@@ -10,7 +10,7 @@ from utils import dbconn
 async def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name):
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     print(
-        f"Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
+        "Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
     poller = compute_client.virtual_machines.create_or_update(rg_name, vm_name,
                                                               {
                                                                   "location": location,
@@ -36,7 +36,7 @@ async def create_vm_worker(rg_name, vm_name, location, username, password, vm_ty
                                                               )
 
     vm_result = poller.result()
-    print(f"Provisioned virtual machine {vm_result.name}")
+    print("Provisioned virtual machine")
     try:
         BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status=100)
     except:
