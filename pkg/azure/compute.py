@@ -2,9 +2,12 @@
 # is installed automatically with the other libraries.
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.compute import ComputeManagementClient
+from model.import blueprint, project
+from utils import dbconn
 
 
-def create_vm(rg_name, vm_name, location, username, password, vm_type, nic_result, subscription_id, image_name):
+
+async def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name):
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     print(
         f"Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
@@ -26,7 +29,7 @@ def create_vm(rg_name, vm_name, location, username, password, vm_type, nic_resul
                                                                   },
                                                                   "network_profile": {
                                                                       "network_interfaces": [{
-                                                                          "id": nic_result.id,
+                                                                          "id": nic_id,
                                                                       }]
                                                                   }
                                                               }
@@ -34,4 +37,26 @@ def create_vm(rg_name, vm_name, location, username, password, vm_type, nic_resul
 
     vm_result = poller.result()
     print(f"Provisioned virtual machine {vm_result.name}")
-    return True
+    try:
+        BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status=100)
+    except:
+        print("disk creation updation failed")
+    finally:
+        con.close()
+
+
+async def create_vm(project):
+    con = dbconn()
+    rg_name = Project.objects(project=project).to_json()['resource_group']
+    location = Project.objects(project=project).to_json()['location']
+    subscription_id = Project.objects(project=project).to_json()['subscription_id']
+    username = "xmigrate"
+    password = "xmigrate"
+    machines = BluePrint.objects.to_json()
+    for machine in machines:
+        vm_name = machine['host']
+        vm_type = machine['machine_type']
+        nic_id = machine['nic_id']
+        image_name = machine['image_id']
+        await(asyncio.create_task(create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name)))
+    con.close()

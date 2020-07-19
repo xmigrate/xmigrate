@@ -43,7 +43,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
     return True
 
 
-def create_publicIP(rg_name, ip_name, location):
+async def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     print(f"Provisioning a public IP...some operations might take a minute or two.")
     network_client = get_client_from_cli_profile(NetworkManagementClient)
     poller = network_client.public_ip_addresses.create_or_update(rg_name, ip_name,
@@ -58,19 +58,22 @@ def create_publicIP(rg_name, ip_name, location):
     ip_address_result = poller.result()
     print(
         f"Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
-    return ip_address_result, True
-
-
-def create_nw_interface(rg_name, nic_name, location, ip_config_name, subnet_result, ip_address_result):
+    try:
+        con = dbconn()
+        BluePrint.objects(project=project).update(status='50')
+    except:
+        print("Public IP creation failed")
+    finally:
+        con.close()
+        
     print(f"Provisioning a public NIC ...some operations might take a minute or two.")
-    network_client = get_client_from_cli_profile(NetworkManagementClient)
     poller = network_client.network_interfaces.create_or_update(rg_name,
                                                                 nic_name,
                                                                 {
                                                                     "location": location,
                                                                     "ip_configurations": [{
                                                                         "name": ip_config_name,
-                                                                        "subnet": {"id": subnet_result.id},
+                                                                        "subnet": {"id": subnet_id},
                                                                         "public_ip_address": {"id": ip_address_result.id}
                                                                     }]
                                                                 }
@@ -78,8 +81,14 @@ def create_nw_interface(rg_name, nic_name, location, ip_config_name, subnet_resu
 
     nic_result = poller.result()
     print(f"Provisioned network interface client {nic_result.name}")
-    return nic_result, True
-
+    try:
+        con = dbconn()
+        BluePrint.objects(project=project,host=host).update(status='53', nic_id=nic_result.id)
+    except:
+        print("Nework interface creation failed")
+    finally:
+        con.close()
+   
 
 async def create_nw(project):
     con = dbconn()
@@ -106,4 +115,11 @@ async def create_nw(project):
             subnet_name = project+"subnet"+str(c)
             subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i)
         if True in subnet_created:
-
+            machines = BluePrint.objects(project=project).to_json()
+            for machine in machines:
+                ip_name = machine['host']
+                subnet_id = machine['subnet_id'] 
+                await(asyncio.create_task(create_publicIP(project, rg_name, ip_name, location, subnet_id,machine['host'])))
+    con.close()
+    return True
+    
