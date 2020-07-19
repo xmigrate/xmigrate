@@ -2,9 +2,14 @@
 # is installed automatically with the other libraries.
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.network import NetworkManagementClient
+from utils import dbconn
+from models import BluePrint
+from models import Project
+import random
 
 
 def create_vnet(rg_name, vnet_name, cidr, location):
+    con = dbconn()
     print(f"Provisioning a vnet...some operations might take a minute or two.")
     network_client = get_client_from_cli_profile(NetworkManagementClient)
     poller = network_client.virtual_networks.create_or_update(rg_name, vnet_name, {
@@ -12,6 +17,12 @@ def create_vnet(rg_name, vnet_name, cidr, location):
     vnet_result = poller.result()
     print(
         f"Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
+    try:
+        BluePrint.objects(network=cidr).update(vpc_id=vnet_result.name,status='43')
+    except:
+        print("Vnet creation failed to save")
+    finally:
+        con.close()
     return True
 
 
@@ -23,7 +34,13 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
     subnet_result = poller.result()
     print(
         f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
-    return subnet_result, True
+    try:
+        BluePrint.objects(subnet=cidr).update(subnet_id=subnet_result.id,status='47')
+    except:
+        print("Subnet creation failed to save")
+    finally:
+        con.close()
+    return True
 
 
 def create_publicIP(rg_name, ip_name, location):
@@ -62,3 +79,31 @@ def create_nw_interface(rg_name, nic_name, location, ip_config_name, subnet_resu
     nic_result = poller.result()
     print(f"Provisioned network interface client {nic_result.name}")
     return nic_result, True
+
+
+async def create_nw(project):
+    con = dbconn()
+    rg_name = Project.objects(project=project).to_json()["resource_group"]
+    location = Project.objects(project=project).to_json()["location"]
+    machines = BluePrint.objects(project=project).to_json()
+    cidr = []
+    subnet = []
+    for machine in machines:
+        cidr.append(machine['network'])
+        subnet.append(machine['subnet'])
+    cidr = list(set(cidr))
+    vnet_created = []
+    c = 0
+    for i in cidr:
+        vnet_name = project+"vnet"+str(c)
+        vnet_created.append(create_vnet(rg_name, vnet_name, i, location))
+        c = c+1
+    c = 0
+    if True in vnet_created:
+        subnet = list(set(subnet))
+        subnet_created = []
+        for i in subnet:
+            subnet_name = project+"subnet"+str(c)
+            subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i)
+        if True in subnet_created:
+
