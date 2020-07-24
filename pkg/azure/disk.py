@@ -1,6 +1,6 @@
 from azure.mgmt.compute.models import DiskCreateOption
 from azure.mgmt.compute import ComputeManagementClient
-from utils import dbconn
+from utils.dbconn import *
 from model.project import *
 from model.disk import *
 from model.storage import *
@@ -22,13 +22,12 @@ async def start_conversion(project):
         return True
     con.close()
 
-
-
+#
 def start_cloning(project):
     con = create_db_con()
-    if Project.objects(project=project).to_json['provider'] == "azure":
-        storage = Storage.objects(project=project).to_json()['storage']
-        accesskey = Storage.objects(project=project).to_json()['accesskey']
+    if Project.objects(name=project)[0]['provider'] == "azure":
+        storage = Storage.objects(project=project)[0]['storage']
+        accesskey = Storage.objects(project=project)[0]['accesskey']
         os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage="'+storage+'" accesskey='+accesskey+'"> ./logs/ansible/migration_log.txt')
         while "PLAY RECAP" not in read_migration_logs():
             st = 0

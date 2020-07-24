@@ -163,12 +163,12 @@ response
 2)blueprint/create
 request
 {
-  project: "testproject",
-  machines:[
+  "project": "testproject",
+  "machines":[
                 {
-                  host :"xmigrate.cloud",
-                  machine_type :"t2.micro",
-                  public_route : False
+                  "host" :"ip6-localhost",
+                  "machine_type" :"B2S",
+                  "public_route": "False"
                 }
             ]
 }
@@ -178,3 +178,29 @@ Response
 status:"200"
 }
 
+3)Migration status
+
+migration/status
+
+4) Build
+/blueprint/build
+
+{
+  "project" : "testproject"
+}
+
+
+5)/project/create
+{
+  "provider":"azure",
+  "location":"westeurope",
+  "name":"testproject",
+  "resource_group":"xmigrate",
+  "subscription_id":"xxxx"
+}
+
+6)/project/get?name=<all/projectname>
+
+response 
+
+"[{\"_id\": {\"$oid\": \"5f1b2f7df5aa1684cb7c1c81\"}, \"provider\": \"azure\", \"location\": \"westeurope\", \"name\": \"testproject\", \"resource_group\": \"xmigrate\", \"subscription_id\": \"xxxx\"}]"
