@@ -54,9 +54,7 @@ async def build_blueprint():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
-        await make_push_promise(jsonify({"msg":"Build started","status":200}))
         task = asyncio.create_task(build.start_build(project))
-        await task
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})
