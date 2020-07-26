@@ -41,7 +41,9 @@ def start_cloning(project):
         if "unreachable=0" in read_migration_logs():
             if "failed=0" in read_migration_logs():    
                 BluePrint.objects(project=project).update(status='30')
+                con.close()
                 return True
+    con.close()
     return False
 
 def create_disk_worker(rg_name,uri,disk_name):

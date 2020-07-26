@@ -7,18 +7,16 @@ import os
 from pygtail import Pygtail
 from collections import defaultdict
 import boto3
-from flask import Flask
-from flask_cors import CORS
 import sys
+from quart import Quart, g, request
+
 
 sys.path.append('./')
 
 load_dotenv()
 
 
-app = Flask(__name__)
-# CORS()
-CORS(app, resources={r"/*": {"origins": "*"}}, send_wildcard=True)
+app = Quart(__name__)
 
 
 app.secret_key = getenv("SECRET")

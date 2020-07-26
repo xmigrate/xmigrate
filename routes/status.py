@@ -6,7 +6,7 @@ from flask import jsonify
 
 @app.route('/migration/status')
 def migration_status():
-    con = dbconn()
+    con = create_db_conn()
     machines = json.loads(BluePrint.objects.to_json())
     con.close()
     return jsonify(machines)
