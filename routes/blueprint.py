@@ -1,5 +1,5 @@
 from __main__ import app
-from utils import dbconn
+from utils.dbconn import *
 from utils.converter import *
 from model.discover import *
 from model.blueprint import *
@@ -35,7 +35,7 @@ def create_blueprint():
     if request.method == 'POST':
         project = request.get_json()['project']
         machines = request.get_json()['machines']
-        con = dbconn.create_db_con()
+        con = create_db_con()
         for machine in machines:
             print(machine)
             BluePrint.objects(host=machine['host']).update(machine_type=machine['machine_type'],public_route=bool(machine['public_route']))
@@ -46,10 +46,10 @@ def create_blueprint():
 
 
 @app.route('/blueprint/build', methods=['POST'])
-def build_blueprint():
+async def build_blueprint():
     if request.method == 'POST':
         project = request.get_json()['project']
-        build_completed = asyncio.run(build.start_build(project))
+        await(asyncio.create_task((build.start_build(project))))
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})

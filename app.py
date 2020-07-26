@@ -34,6 +34,7 @@ from routes.cloning import *
 from routes.build import *
 from routes.blueprint import *
 from routes.project import *
+from routes.storage import *
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

@@ -21,29 +21,29 @@ async def start_build(project):
         if p[0]['provider'] == "azure":
             cloning_completed = disk.start_cloning(project)
             if cloning_completed:
-                converted = asyncio.run(disk.start_conversion(project))
+                converted = disk.start_conversion(project)
                 if converted:
                     rg_created = resource_group.create_rg(project)
                     if rg_created:
-                        disk_created = asyncio.run(disk.create_disk(project))
+                        disk_created = disk.create_disk(project)
                         if disk_created:
-                            network_created = asyncio.run(nw.create_network(project))
+                            network_created = nw.create_network(project)
                             if network_created:
-                                vm_created = asyncio.run(compute.create_vm(project))
+                                vm_created = compute.create_vm(project)
                                 if vm_created:
-                                    return "VM created", True    
+                                    print("VM created")     
                                 else:
-                                    return "VM creation failed", True
+                                    print("VM creation failed")
                             else:
-                                return "Network creation failed", True
+                                print("Network creation failed")
                         else:
-                            return "Disk creation failed", True
+                            print("Disk creation failed")
                     else:
-                        return "Resource group creation failed", True
+                        print("Resource group creation failed")
                 else:
-                    return "Disk conversion failed", True
+                    print("Disk conversion failed")
             else:
-                return "Disk cloning failed", True
+                print("Disk cloning failed")
         elif project['provider'] == "aws":
             print("Build failed")
     else:

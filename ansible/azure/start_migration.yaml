@@ -8,10 +8,10 @@
   tasks:
   - name: <== Deploy payload ==>
     copy:
-      src: "../payloads/start_dd_azure.py {{ storage }} {{ accesskey }}"
+      src: "../payloads/start_dd_azure.py"
       dest: "/tmp/start.py"
   - name: <== Executing payload ==>
-    shell: "python /tmp/start.py"
+    shell: "python /tmp/start.py {{ storage }} {{ accesskey }} {{ container }}"
     register: st
     become: True
   - name: Message

@@ -204,3 +204,12 @@ migration/status
 response 
 
 "[{\"_id\": {\"$oid\": \"5f1b2f7df5aa1684cb7c1c81\"}, \"provider\": \"azure\", \"location\": \"westeurope\", \"name\": \"testproject\", \"resource_group\": \"xmigrate\", \"subscription_id\": \"xxxx\"}]"
+
+7) storage
+/storage/create
+{
+  "project" : "testproject",
+  "storage" : "xmigrate",
+  "container": "osdisk",
+  "access_key": "XhWzZKVlzOpDPXzneYBT4oVVnYPaXdp0wsd4ZgLjIpH0BwHR4HmKrnQqdyawGV/Un2a2vGMW/PE+/N2t5b8a7g=="
+}
