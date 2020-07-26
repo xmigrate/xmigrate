@@ -211,5 +211,5 @@ response
   "project" : "testproject",
   "storage" : "xmigrate",
   "container": "osdisk",
-  "access_key": "XhWzZKVlzOpDPXzneYBT4oVVnYPaXdp0wsd4ZgLjIpH0BwHR4HmKrnQqdyawGV/Un2a2vGMW/PE+/N2t5b8a7g=="
+  "access_key": "/Un2a2vGMW/PE+/N2t5b8a7g=="
 }

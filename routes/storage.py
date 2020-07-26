@@ -34,7 +34,7 @@ async def storage_update():
         container = data['container']
         access_key = data['access_key']
         storage_updated = st.update_storage(project, storage, container, access_key)
-        if project_updated:
+        if storage_updated:
             return jsonify({'status': '200'})
         else:
             return jsonify({'status': '500'})
