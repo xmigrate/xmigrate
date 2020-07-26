@@ -19,6 +19,10 @@
       shell: "sh /tmp/sources.sh"
       become_user: root
       become_method: sudo
+    - name: Install azbak 
+      shell: "sudo npm install --global azbak"
+      become_user: root
+      become_method: sudo
     - block:
       - name: Installing azure tools and python
         apt:

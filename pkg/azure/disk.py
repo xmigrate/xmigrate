@@ -24,16 +24,19 @@ def start_conversion(project):
         return True
     con.close()
 
-#
+
 def start_cloning(project):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         storage = Storage.objects(project=project)[0]['storage']
         accesskey = Storage.objects(project=project)[0]['access_key']
         container = Storage.objects(project=project)[0]['container']
+        os.popen('echo null > ./logs/ansible/migration_log.txt')
         print('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
         os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
-        while "PLAY RECAP" not in read_migration_logs():
+        while True:
+            if "PLAY RECAP" in read_migration_logs():
+                break
             st = 0
             BluePrint.objects(project=project).update(status=str(st))
             st = st+3

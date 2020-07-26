@@ -2,7 +2,7 @@ from model.storage import *
 from utils import dbconn
 import os
 
-async def conversion_worker(osdisk_raw,project,host):
+def conversion_worker(osdisk_raw,project,host):
     con = dbconn()
     account_name = Storage.objects(project=project).to_json()['storage']
     container_name = Storage.objects(project=project).to_json()['container']
