@@ -1,16 +1,17 @@
 from __main__ import app
 import os
-from flask import jsonify, request
+from quart import jsonify, request
 from pkg.azure import storage as st
 
 
 @app.route('/storage/create', methods=['POST'])
-def storage_create():
+async def storage_create():
     if request.method == 'POST':
-        project  = request.get_json()['project']
-        storage = request.get_json()['storage']
-        container = request.get_json()['container']
-        access_key = request.get_json()['access_key']
+        data = await request.get_json()
+        project  = data['project']
+        storage = data['storage']
+        container = data['container']
+        access_key = data['access_key']
         storage_created = st.create_storage(project, storage, container, access_key)
         if storage_created:
             return jsonify({'status': '200'})
@@ -25,12 +26,13 @@ def storage_get():
 
 
 @app.route('/storage/update', methods=['POST'])
-def storage_update():
+async def storage_update():
     if request.method == 'POST':
-        project  = request.get_json()['project']
-        storage = request.get_json()['storage']
-        container = request.get_json()['container']
-        access_key = request.get_json()['access_key']
+        data = await request.get_json()
+        project  = data['project']
+        storage = data['storage']
+        container = data['container']
+        access_key = data['access_key']
         storage_updated = st.update_storage(project, storage, container, access_key)
         if project_updated:
             return jsonify({'status': '200'})
