@@ -11,7 +11,9 @@ from pkg.azure import resource_group
 from pkg.azure import compute
 import asyncio
 
-     
+async def call_start_build(project):
+    await start_build(project)
+
 async def start_build(project):
     con = create_db_con()
     print(project)
@@ -19,7 +21,7 @@ async def start_build(project):
     print(p)
     if len(p) > 0:
         if p[0]['provider'] == "azure":
-            cloning_completed = disk.start_cloning(project)
+            cloning_completed = await asyncio.create_task(disk.start_cloning(project))
             if cloning_completed:
                 converted = disk.start_conversion(project)
                 if converted:

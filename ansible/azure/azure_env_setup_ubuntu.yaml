@@ -19,10 +19,6 @@
       shell: "sh /tmp/sources.sh"
       become_user: root
       become_method: sudo
-    - name: Install azbak 
-      shell: "sudo npm install --global azbak"
-      become_user: root
-      become_method: sudo
     - block:
       - name: Installing azure tools and python
         apt:
@@ -47,6 +43,11 @@
       - name: Failback installation "Installing azure tools and python"
         shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure -y"
         become: true
+        
+    - name: Install azbak 
+      shell: "sudo npm install --global azbak"
+      become_user: root
+      become_method: sudo
 
     - name: Update grub entry
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"

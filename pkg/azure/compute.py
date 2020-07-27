@@ -7,7 +7,7 @@ from utils import dbconn
 
 
 
-async def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name):
+def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name):
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     print(
         "Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
@@ -45,7 +45,7 @@ async def create_vm_worker(rg_name, vm_name, location, username, password, vm_ty
         con.close()
 
 
-async def create_vm(project):
+def create_vm(project):
     con = dbconn()
     rg_name = Project.objects(project=project).to_json()['resource_group']
     location = Project.objects(project=project).to_json()['location']
@@ -58,5 +58,5 @@ async def create_vm(project):
         vm_type = machine['machine_type']
         nic_id = machine['nic_id']
         image_name = machine['image_id']
-        await(asyncio.create_task(create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name)))
+        create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name)
     con.close()

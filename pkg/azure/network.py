@@ -43,7 +43,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
     return True
 
 
-async def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
+def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     print("Provisioning a public IP...some operations might take a minute or two.")
     network_client = get_client_from_cli_profile(NetworkManagementClient)
     poller = network_client.public_ip_addresses.create_or_update(rg_name, ip_name,
@@ -90,7 +90,7 @@ async def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
         con.close()
    
 
-async def create_nw(project):
+def create_nw(project):
     con = dbconn()
     rg_name = Project.objects(project=project).to_json()["resource_group"]
     location = Project.objects(project=project).to_json()["location"]
@@ -119,7 +119,7 @@ async def create_nw(project):
             for machine in machines:
                 ip_name = machine['host']
                 subnet_id = machine['subnet_id'] 
-                await(asyncio.create_task(create_publicIP(project, rg_name, ip_name, location, subnet_id,machine['host'])))
+                create_publicIP(project, rg_name, ip_name, location, subnet_id,machine['host'])
     con.close()
     return True
 

@@ -9,7 +9,7 @@ from model.blueprint import *
 from pkg.azure import conversion_worker as cw
 import asyncio
 import os
-import time
+import asyncio
 
 def start_conversion(project):
     con = create_db_con()
@@ -25,7 +25,7 @@ def start_conversion(project):
     con.close()
 
 
-def start_cloning(project):
+async def start_cloning(project):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         storage = Storage.objects(project=project)[0]['storage']
@@ -34,13 +34,13 @@ def start_cloning(project):
         os.popen('echo null > ./logs/ansible/migration_log.txt')
         print('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
         os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
+        st = 0
         while True:
             if "PLAY RECAP" in read_migration_logs():
                 break
-            st = 0
             BluePrint.objects(project=project).update(status=str(st))
-            st = st+3
-            time.sleep(60)
+            st = st+0.2
+            await asyncio.sleep(60)
         if "unreachable=0" in read_migration_logs():
             if "failed=0" in read_migration_logs():    
                 BluePrint.objects(project=project).update(status='30')
