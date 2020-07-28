@@ -1,5 +1,5 @@
 from __main__ import app
-from flask import jsonify
+from quart import jsonify
 from utils.log_reader import *
 
 @app.route('/stream')

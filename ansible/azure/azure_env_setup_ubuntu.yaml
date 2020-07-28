@@ -175,6 +175,7 @@
           - mongoengine
           - psutil
           - pyasn1
+          - python-dotenv
         become: true
         become_user: root
 

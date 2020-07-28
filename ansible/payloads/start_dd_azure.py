@@ -12,7 +12,8 @@ db_con_string = getenv("MONGO_DB")
 con = connect(host=db_con_string)
 storage_accnt = sys.argv[1]
 access_key = sys.argv[2]
-
+container = sys.argv[3]
+hostname = socket.gethostname()
 class BluePrint(Document):
     host = StringField(required=True, max_length=200, unique=True)
     ip = StringField(required=True, unique=True)
@@ -33,8 +34,8 @@ class BluePrint(Document):
     instance_id = StringField(required=False, max_length=100)
     project = StringField(required=True, max_length=50,unique=True)
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='10')
-os.system('sudo dd if=/dev/xvda bs=1M status=progress | azbak - /osdisks/$HOSTNAME.raw --storage-account '+storage_accnt+' --access-key '+access_key)
+BluePrint.objects(host=hostname).update(status='10')
+os.system('sudo dd if=/dev/xvda bs=1M status=progress | azbak - /'+container+'/'+hostname+'.raw --storage-account '+storage_accnt+' --access-key '+access_key)
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='25')
+BluePrint.objects(host=hostname).update(status='25')
 con.close()

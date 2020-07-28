@@ -1,35 +1,38 @@
 from azure.mgmt.compute.models import DiskCreateOption
 from azure.mgmt.compute import ComputeManagementClient
-from utils import dbconn
+from utils.dbconn import *
+from utils.log_reader import *
 from model.project import *
 from model.disk import *
 from model.storage import *
 from model.blueprint import *
 from pkg.azure import conversion_worker as cw
 import asyncio
+import os
+import time
 
-
-async def start_conversion(project):
+def start_conversion(project):
     con = create_db_con()
-    if Project.objects(project=project).to_json['provider'] == "azure":
-        machines = BluePrint.object(project=project).to_json()
+    if Project.objects(name=project)[0]['provider'] == "azure":
+        machines = BluePrint.objects(project=project)
         for machine in machines:
             osdisk_raw = machine['host']+".raw"+".000"
             try:
-                await(asyncio.create_task(cw.conversion_worker(osdisk_raw,project,machine['host'])))       
+                cw.conversion_worker(osdisk_raw,project,machine['host'])  
             except:
                 print("Conversion failed for "+osdisk_raw)
         return True
     con.close()
 
-
-
+#
 def start_cloning(project):
     con = create_db_con()
-    if Project.objects(project=project).to_json['provider'] == "azure":
-        storage = Storage.objects(project=project).to_json()['storage']
-        accesskey = Storage.objects(project=project).to_json()['accesskey']
-        os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage="'+storage+'" accesskey='+accesskey+'"> ./logs/ansible/migration_log.txt')
+    if Project.objects(name=project)[0]['provider'] == "azure":
+        storage = Storage.objects(project=project)[0]['storage']
+        accesskey = Storage.objects(project=project)[0]['access_key']
+        container = Storage.objects(project=project)[0]['container']
+        print('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
+        os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
         while "PLAY RECAP" not in read_migration_logs():
             st = 0
             BluePrint.objects(project=project).update(status=str(st))
@@ -38,10 +41,12 @@ def start_cloning(project):
         if "unreachable=0" in read_migration_logs():
             if "failed=0" in read_migration_logs():    
                 BluePrint.objects(project=project).update(status='30')
+                con.close()
                 return True
+    con.close()
     return False
 
-async def create_disk_worker(rg_name,uri,disk_name):
+def create_disk_worker(rg_name,uri,disk_name):
     con = dbconn()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     async_creation = compute_client.images.create_or_update(
@@ -67,7 +72,7 @@ async def create_disk_worker(rg_name,uri,disk_name):
     finally:
         con.close()
 
-async def create_disk(project):
+def create_disk(project):
     con = dbconn()
     rg_name = Project.objects(project=project).to_json()['resource_group']
     location = Project.objects(project=project).to_json()['location']
@@ -77,7 +82,7 @@ async def create_disk(project):
     for disk in disks:
         vhd = Disks.objects(project=project).to_json()['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
-        await(asyncio.create_task(create_disk_worker(rg_name,uri,vhd.replace(".vhd",""))))
+        create_disk_worker(rg_name,uri,vhd.replace(".vhd",""))
     return True
         
     

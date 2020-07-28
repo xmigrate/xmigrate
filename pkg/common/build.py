@@ -3,6 +3,7 @@ from model.blueprint import *
 from model.project import *
 from model.disk import *
 from utils.log_reader import *
+from utils.dbconn import *
 import time
 from pkg.azure import network as nw
 from pkg.azure import disk
@@ -11,33 +12,39 @@ from pkg.azure import compute
 import asyncio
 
      
-def start_build(project):
-    project = Project.objects(project=project).to_json()
-    if project['provider'] == "azure":
-        cloning_completed = disk.start_cloning(project)
-        if cloning_completed:
-            converted = asyncio.run(disk.start_conversion(project))
-            if converted:
-                rg_created = resource_group.create_rg(project)
-                if rg_created:
-                    disk_created = asyncio.run(disk.create_disk(project))
-                    if disk_created:
-                        network_created = asyncio.run(nw.create_network(project))
-                        if network_created:
-                            vm_created = asyncio.run(compute.create_vm(project))
-                            if vm_created:
-                                return "VM created", True    
+async def start_build(project):
+    con = create_db_con()
+    print(project)
+    p = Project.objects(name=project)
+    print(p)
+    if len(p) > 0:
+        if p[0]['provider'] == "azure":
+            cloning_completed = disk.start_cloning(project)
+            if cloning_completed:
+                converted = disk.start_conversion(project)
+                if converted:
+                    rg_created = resource_group.create_rg(project)
+                    if rg_created:
+                        disk_created = disk.create_disk(project)
+                        if disk_created:
+                            network_created = nw.create_network(project)
+                            if network_created:
+                                vm_created = compute.create_vm(project)
+                                if vm_created:
+                                    print("VM created")     
+                                else:
+                                    print("VM creation failed")
                             else:
-                                return "VM creation failed", True
+                                print("Network creation failed")
                         else:
-                            return "Network creation failed", True
+                            print("Disk creation failed")
                     else:
-                        return "Disk creation failed", True
+                        print("Resource group creation failed")
                 else:
-                    return "Resource group creation failed", True
+                    print("Disk conversion failed")
             else:
-                return "Disk conversion failed", True
-        else:
-            return "Disk cloning failed", True
-    elif project['provider'] == "aws":
-        print("Build failed")
+                print("Disk cloning failed")
+        elif project['provider'] == "aws":
+            print("Build failed")
+    else:
+        print("No such project")

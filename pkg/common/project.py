@@ -10,9 +10,9 @@ def get_project(name):
         return Project.objects(name=name).to_json()
 
 
-def create_project(provider, location, name):
+def create_project(provider, location, name, rg, subid):
     con = create_db_con()
-    post = Project(name=name, provider=provider, location=location)
+    post = Project(name=name, provider=provider, location=location, resource_group=rg, subscription_id=subid)
     try:
         post.save()
         return True
@@ -24,11 +24,11 @@ def create_project(provider, location, name):
         con.close()
 
 
-def update_project(provider, location, name):
+def update_project(provider, location, name, rg, subid):
     con = create_db_con()
     try:
         Project.objects(name=name).update(
-            provider=provider, location=location)
+            provider=provider, location=location, resource_group=rg, subscription_id=subid)
         return True
     except Exception as e:
         print("Boss you have to see this!!")

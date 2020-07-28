@@ -2,14 +2,14 @@
 # is installed automatically with the other libraries.
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.resource import ResourceManagementClient
-from utils import dbconn
+from utils.dbconn import *
 from model.project import Project
 import string, random
 
 # Provision the resource group.
 def create_rg(project):
-    con = dbconn()
-    rg_location = Project.objects(project=project).to_json()['location']
+    con = create_db_con()
+    rg_location = Project.objects(name=project)[0]['location']
     rg_name =''.join(random.choices(string.ascii_uppercase +
                              string.digits, k = 8))
     rg_name = rg_name + "_xmigrate" 
