@@ -51,7 +51,7 @@ async def start_cloning(project):
     con.close()
     return False
 
-def create_disk_worker(rg_name,uri,disk_name):
+def create_disk_worker(rg_name,uri,disk_name,location):
     con = create_db_con()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     async_creation = compute_client.images.create_or_update(
@@ -64,7 +64,7 @@ def create_disk_worker(rg_name,uri,disk_name):
                 'os_type': 'Linux',
                 'os_state': "Generalized",
                 'blob_uri': uri,
-                'caching': "ReadWrite",
+                'caching': "ReadWrite"
             }
             }
         }
@@ -84,10 +84,14 @@ def create_disk(project):
     disks = Disk.objects(project=project)
     storage_account = Storage.objects(project=project)[0]['storage']
     container = Storage.objects(project=project)[0]['container']
+    print(disks)
     for disk in disks:
         vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
-        create_disk_worker(rg_name,uri,vhd.replace(".vhd",""))
+        print(disk)
+        create_disk_worker(rg_name,uri,vhd.replace(".vhd",""),location)
     return True
         
     
+
+ 

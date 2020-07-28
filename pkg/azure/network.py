@@ -2,14 +2,14 @@
 # is installed automatically with the other libraries.
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.network import NetworkManagementClient
-from utils import dbconn
+from utils.dbconn import *
 from model.blueprint import BluePrint
 from model.project import Project
 import random
 
 
 def create_vnet(rg_name, vnet_name, cidr, location):
-    con = dbconn()
+    con = create_db_con()
     print("Provisioning a vnet...some operations might take a minute or two.")
     network_client = get_client_from_cli_profile(NetworkManagementClient)
     poller = network_client.virtual_networks.create_or_update(rg_name, vnet_name, {
@@ -35,6 +35,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
     print(
         "Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
     try:
+        con = create_db_con()
         BluePrint.objects(subnet=cidr).update(subnet_id=subnet_result.id,status='47')
     except:
         print("Subnet creation failed to save")
@@ -59,7 +60,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     print(
         "Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
     try:
-        con = dbconn()
+        con = create_db_con()
         BluePrint.objects(project=project).update(status='50')
     except:
         print("Public IP creation failed")
@@ -82,7 +83,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     nic_result = poller.result()
     print("Provisioned network interface client {nic_result.name}")
     try:
-        con = dbconn()
+        con = create_db_con()
         BluePrint.objects(project=project,host=host).update(status='53', nic_id=nic_result.id)
     except:
         print("Nework interface creation failed")
@@ -91,10 +92,10 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
    
 
 def create_nw(project):
-    con = dbconn()
-    rg_name = Project.objects(project=project).to_json()["resource_group"]
-    location = Project.objects(project=project).to_json()["location"]
-    machines = BluePrint.objects(project=project).to_json()
+    con = create_db_con()
+    rg_name = Project.objects(name=project)[0]["resource_group"]
+    location = Project.objects(name=project)[0]]["location"]
+    machines = BluePrint.objects(project=project)
     cidr = []
     subnet = []
     for machine in machines:

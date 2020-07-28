@@ -3,7 +3,7 @@
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.compute import ComputeManagementClient
 from model import blueprint, project
-from utils import dbconn
+from utils.dbconn import *
 
 
 
@@ -38,6 +38,7 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
     vm_result = poller.result()
     print("Provisioned virtual machine")
     try:
+        con = create_db_con()
         BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status=100)
     except:
         print("disk creation updation failed")
@@ -46,13 +47,13 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
 
 
 def create_vm(project):
-    con = dbconn()
-    rg_name = Project.objects(project=project).to_json()['resource_group']
-    location = Project.objects(project=project).to_json()['location']
-    subscription_id = Project.objects(project=project).to_json()['subscription_id']
+    con = create_db_con()
+    rg_name = Project.objects(name=project)[0]['resource_group']
+    location = Project.objects(name=project)[0]['location']
+    subscription_id = Project.objects(name=project)[0]['subscription_id']
     username = "xmigrate"
     password = "xmigrate"
-    machines = BluePrint.objects.to_json()
+    machines = BluePrint.objects(project=project)
     for machine in machines:
         vm_name = machine['host']
         vm_type = machine['machine_type']
