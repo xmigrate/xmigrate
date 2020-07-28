@@ -19,8 +19,9 @@ def create_rg(project):
         rg_result = resource_client.resource_groups.create_or_update(
             rg_name, {"location": rg_location})
         print(
-            "Provisioned resource group {rg_result.name} in the {rg_result.location} region")
-        Project.objects(name=project).update(resoure_group=rg_result.name)
+            "Provisioned resource group"+ rg_result.name+" in the "+rg_result.location+" region")
+        Project.objects(name=project).update(resource_group=rg_result.name)
         return True
-    except:
+    except Exception as e:
+        print("Resource group creation failed "+str(e))
         return False

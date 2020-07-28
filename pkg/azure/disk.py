@@ -19,8 +19,10 @@ def start_conversion(project):
             osdisk_raw = machine['host']+".raw"+".000"
             try:
                 cw.conversion_worker(osdisk_raw,project,machine['host'])  
-            except:
+            except Exception as e:
                 print("Conversion failed for "+osdisk_raw)
+                print(str(e))
+                return False
         return True
     con.close()
 
@@ -50,7 +52,7 @@ async def start_cloning(project):
     return False
 
 def create_disk_worker(rg_name,uri,disk_name):
-    con = dbconn()
+    con = create_db_con()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     async_creation = compute_client.images.create_or_update(
         rg_name,
@@ -76,14 +78,14 @@ def create_disk_worker(rg_name,uri,disk_name):
         con.close()
 
 def create_disk(project):
-    con = dbconn()
-    rg_name = Project.objects(project=project).to_json()['resource_group']
-    location = Project.objects(project=project).to_json()['location']
-    disks = Disk.objects(project=project).to_json()
-    storage_account = Storage.objects(project=project).to_json()['storage']
-    container = Storage.objects(project=project).to_json()['container']
+    con = create_db_con()
+    rg_name = Project.objects(name=project)[0]['resource_group']
+    location = Project.objects(name=project)[0]['location']
+    disks = Disk.objects(project=project)
+    storage_account = Storage.objects(project=project)[0]['storage']
+    container = Storage.objects(project=project)[0]['container']
     for disk in disks:
-        vhd = Disks.objects(project=project).to_json()['vhd']
+        vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
         create_disk_worker(rg_name,uri,vhd.replace(".vhd",""))
     return True
