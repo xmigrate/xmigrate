@@ -44,6 +44,24 @@ export default class BluePrint extends Component {
           subnet: "172.31.34.216/20",
           _id: { $oid: "5f1ae6b29196da32154b53c4" },
         },
+        {
+          cores: "1",
+          cpu_model: "Intel(R) Xeon(R) CPU E5-2676 v3 @ 2.40GHz",
+          host: "ip6-localhost",
+          ip: "172.31.34.216",
+          machine_type: "",
+          network: "172.31.32.0/18",
+          ports: [
+            { type: "tcp", name: "python", port: 22 },
+            { type: "tcp", name: "python", port: 22 },
+          ],
+          project: "testproject",
+          public_route: true,
+          ram: "1002304 kB",
+          status: "Not started",
+          subnet: "172.31.34.216/20",
+          _id: { $oid: "5f1ae6b29196da32154b53c4" },
+        },
       ],
     };
   }
@@ -83,6 +101,9 @@ export default class BluePrint extends Component {
         console.log(res.data);
         console.log(res.data.blueprint);
         console.log(JSON.parse(res.data.blueprint));
+
+
+
       });
     }
   }
