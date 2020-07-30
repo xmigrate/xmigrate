@@ -39,10 +39,12 @@ async def start_cloning(project):
         while True:
             machines = BluePrint.objects(project=project)
             machine_count = len(machines)
+            print("machine count: "+str(machine_count))
             status_count = 0
             for machine in machines:
                 if machine['status']>='25':
                     status_count = status_count + 1
+            print("status count: "+str(status_count))
             if status_count == machine_count:
                 break
             elif "PLAY RECAP" in read_migration_logs():
