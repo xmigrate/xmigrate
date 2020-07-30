@@ -46,13 +46,14 @@ async def start_cloning(project):
                     status_count = status_count + 1
             print("status count: "+str(status_count))
             if status_count == machine_count:
-                break
-            elif "PLAY RECAP" in read_migration_logs():
-                break
-            await asyncio.sleep(60)
-        if "unreachable=0" in read_migration_logs():
-            if "failed=0" in read_migration_logs():    
                 return True
+            elif "PLAY RECAP" in read_migration_logs():
+                if "unreachable=0" in read_migration_logs():
+                    if "failed=0" in read_migration_logs():    
+                        return True
+                    else:
+                        break
+            await asyncio.sleep(60)        
     con.close()
     return False
 
