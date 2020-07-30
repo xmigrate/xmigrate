@@ -36,17 +36,20 @@ async def start_cloning(project):
         os.popen('echo null > ./logs/ansible/migration_log.txt')
         print('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
         os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
-        st = 0
         while True:
-            if "PLAY RECAP" in read_migration_logs():
+            machines = BluePrint.objects(project=project)
+            machine_count = len(machines)
+            status_count = 0
+            for machine in machines:
+                if machine['status']>='25':
+                    status_count = status_count + 1
+            if status_count == machine_count:
                 break
-            BluePrint.objects(project=project).update(status=str(st))
-            st = st+0.2
+            elif "PLAY RECAP" in read_migration_logs():
+                break
             await asyncio.sleep(60)
         if "unreachable=0" in read_migration_logs():
             if "failed=0" in read_migration_logs():    
-                BluePrint.objects(project=project).update(status='30')
-                con.close()
                 return True
     con.close()
     return False
