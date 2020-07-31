@@ -100,7 +100,7 @@ def create_disk(project):
         
     
 
- async def adhoc_image_conversion(project):
+async def adhoc_image_conversion(project):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
