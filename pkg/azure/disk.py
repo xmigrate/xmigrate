@@ -100,4 +100,15 @@ def create_disk(project):
         
     
 
- 
+ async def adhoc_image_conversion(project):
+    con = create_db_con()
+    if Project.objects(name=project)[0]['provider'] == "azure":
+        machines = BluePrint.objects(project=project)
+        for machine in machines:
+            osdisk_raw = machine['host']+".raw"+".000"
+            try:
+                cw.conversion_worker(osdisk_raw,project,machine['host'])  
+            except Exception as e:
+                print("Conversion failed for "+osdisk_raw)
+                print(str(e))
+    con.close()

@@ -59,3 +59,23 @@ async def build_blueprint():
     else:
         return jsonify({"msg":"cannot read project name","status":500})
 
+
+@app.route('/blueprint/image/convert', methods=['POST'])
+async def image_convert():
+    if request.method == 'POST':
+        project = await request.get_json()
+        project = project['project']
+        asyncio.create_task(disk.adhoc_image_conversion(project))
+        return jsonify({"msg":"Build started","status":200})
+    else:
+        return jsonify({"msg":"cannot read project name","status":500})
+
+@app.route('/blueprint/infra/all', methods=['POST'])
+async def infra_build():
+    if request.method == 'POST':
+        project = await request.get_json()
+        project = project['project']
+        asyncio.create_task(build.start_infra_build(project))
+        return jsonify({"msg":"Build started","status":200})
+    else:
+        return jsonify({"msg":"cannot read project name","status":500})

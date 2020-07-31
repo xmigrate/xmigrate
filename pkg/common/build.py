@@ -14,6 +14,25 @@ import asyncio
 async def call_start_build(project):
     await start_build(project)
 
+async def start_infra_build(project):
+    rg_created = resource_group.create_rg(project)
+    if rg_created:
+        disk_created = disk.create_disk(project)
+        if disk_created:
+            network_created = nw.create_network(project)
+            if network_created:
+                vm_created = compute.create_vm(project)
+                if vm_created:
+                    print("VM created")     
+                else:
+                    print("VM creation failed")
+            else:
+                print("Network creation failed")
+        else:
+            print("Disk creation failed")
+    else:
+        print("Resource group creation failed")
+
 async def start_build(project):
     con = create_db_con()
     print(project)
