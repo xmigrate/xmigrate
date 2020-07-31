@@ -1,5 +1,5 @@
 from model.storage import *
-frpm model.disk import *
+from model.disk import *
 from model.blueprint import * 
 from utils.dbconn import *
 import os
