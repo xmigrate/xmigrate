@@ -9,6 +9,7 @@ from pkg.common import build as build
 from quart import jsonify, request, make_push_promise
 import json
 import asyncio
+from pkg.azure import disk
 from concurrent.futures import ProcessPoolExecutor
 executor = ProcessPoolExecutor(max_workers=5)
 
