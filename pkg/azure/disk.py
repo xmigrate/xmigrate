@@ -1,5 +1,6 @@
 from azure.mgmt.compute.models import DiskCreateOption
 from azure.mgmt.compute import ComputeManagementClient
+from azure.common.client_factory import get_client_from_cli_profile
 from utils.dbconn import *
 from utils.log_reader import *
 from model.project import *
