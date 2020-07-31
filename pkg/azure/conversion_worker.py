@@ -4,9 +4,9 @@ import os
 
 def conversion_worker(osdisk_raw,project,host):
     con = create_db_con()
-    account_name = Storage.objects(project=project).to_json()['storage']
-    container_name = Storage.objects(project=project).to_json()['container']
-    access_key = Storage.objects(project=project).to_json()['access_key']
+    account_name = Storage.objects(project=project)[0]['storage']
+    container_name = Storage.objects(project=project)[0]['container']
+    access_key = Storage.objects(project=project)[0]['access_key']
     pipe_result = ''
     file_size = '0'
     try:
