@@ -7,7 +7,7 @@ WORKDIR /app
 COPY requirements.txt ./
 
 RUN pip install -r requirements.txt
-RUN apt install sshpass
+RUN apt install sshpass, qemu-utils
 
 # Bundle app source
 COPY . /app
