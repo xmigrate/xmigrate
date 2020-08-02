@@ -90,7 +90,7 @@ def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
     print(com)
     os.popen(com)
     try:
-        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status=40)
+        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
     except Exception as e:
         print("disk creation updation failed "+str(e))
     finally:
