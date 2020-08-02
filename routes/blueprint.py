@@ -6,9 +6,12 @@ from model.blueprint import *
 from pkg.azure import *
 from pkg.common import network as netutils
 from pkg.common import build as build
-from quart import jsonify, request
+from quart import jsonify, request, make_push_promise
 import json
 import asyncio
+from pkg.azure import disk
+from concurrent.futures import ProcessPoolExecutor
+executor = ProcessPoolExecutor(max_workers=5)
 
 @app.route('/blueprint')
 def blueprint():
@@ -52,8 +55,28 @@ async def build_blueprint():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
-        await asyncio.create_task(build.start_build(project))
+        asyncio.create_task(build.call_start_build(project))
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})
 
+
+@app.route('/blueprint/image/convert', methods=['POST'])
+async def image_convert():
+    if request.method == 'POST':
+        project = await request.get_json()
+        project = project['project']
+        asyncio.create_task(disk.adhoc_image_conversion(project))
+        return jsonify({"msg":"Build started","status":200})
+    else:
+        return jsonify({"msg":"cannot read project name","status":500})
+
+@app.route('/blueprint/infra/all', methods=['POST'])
+async def infra_build():
+    if request.method == 'POST':
+        project = await request.get_json()
+        project = project['project']
+        asyncio.create_task(build.start_infra_build(project))
+        return jsonify({"msg":"Build started","status":200})
+    else:
+        return jsonify({"msg":"cannot read project name","status":500})

@@ -111,7 +111,7 @@ def main():
     disk = disk_info()
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
-    post1 = Discover(host=result['host'], ip=result['ip'], subnet=result['subnet'], network=result['network'],
+    post1 = Discover(host=socket.gethostname(), ip=result['ip'], subnet=result['subnet'], network=result['network'],
                  ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info(),project=project)
     try:
         post1.save()
