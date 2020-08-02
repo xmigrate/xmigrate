@@ -17,7 +17,7 @@ async def call_start_build(project):
 async def start_infra_build(project):
     rg_created = resource_group.create_rg(project)
     if rg_created:
-        disk_created = disk.create_disk(project)
+        disk_created = await disk.create_disk(project)
         if disk_created:
             network_created = nw.create_network(project)
             if network_created:
