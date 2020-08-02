@@ -84,7 +84,7 @@ async def start_cloning(project):
     finally:
         con.close()'''
 
-def create_disk_worker(rg_name,uri,disk_name,location, file_size):
+def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
     con = create_db_con()
     com = f'az disk create -n {disk_name} -g {rg_name} -l {location} --size-gb 10 --sku standardssd_lrs --source {uri}'
     print(com)
@@ -108,7 +108,7 @@ def create_disk(project):
         vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
         print(disk)
-        create_disk_worker(rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'])
+        create_disk_worker(project,rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'])
     return True
         
     
