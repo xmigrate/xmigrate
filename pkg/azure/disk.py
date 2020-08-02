@@ -10,7 +10,7 @@ from model.blueprint import *
 from pkg.azure import conversion_worker as cw
 import asyncio
 import os
-import asyncio
+import asyncio, json
 
 def start_conversion(project):
     con = create_db_con()
@@ -58,7 +58,7 @@ async def start_cloning(project):
     con.close()
     return False
 
-def create_disk_worker(rg_name,uri,disk_name,location):
+'''def create_disk_worker(rg_name,uri,disk_name,location):
     con = create_db_con()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     async_creation = compute_client.images.create_or_update(
@@ -82,9 +82,29 @@ def create_disk_worker(rg_name,uri,disk_name,location):
     except:
         print("disk creation updation failed")
     finally:
+        con.close()'''
+
+async def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
+    con = create_db_con()
+    com1 = f'az disk create -n {disk_name} -g {rg_name} -l {location} --for-upload --upload-size-bytes {file_size} --sku standardssd_lrs'
+    com2 = f'az disk grant-access -n {disk_name} -g {rg_name} --access-level Write --duration-in-seconds 86400'
+    print(com1)
+    os.popen(com1).read()
+    print(com2)
+    sas_uri = os.popen(com2).read()
+    sas_uri = json.loads(sas_uri)
+    sas_uri = sas_uri['accessSas']
+    com3 = f'azcopy copy "./osdisks/{disk_name}.vhd"  "{sas_uri}" --blob-type PageBlob --from-to LocalBlob'
+    print(com3)
+    os.popen(com3).read()
+    try:
+        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
+    except Exception as e:
+        print("disk creation updation failed "+str(e))
+    finally:
         con.close()
 
-def create_disk(project):
+async def create_disk(project):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]['resource_group']
     location = Project.objects(name=project)[0]['location']
@@ -96,7 +116,7 @@ def create_disk(project):
         vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
         print(disk)
-        create_disk_worker(rg_name,uri,vhd.replace(".vhd",""),location)
+        await create_disk_worker(project,rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'])
     return True
         
     
