@@ -58,7 +58,7 @@ async def start_cloning(project):
     con.close()
     return False
 
-def create_disk_worker(rg_name,uri,disk_name,location):
+'''def create_disk_worker(rg_name,uri,disk_name,location):
     con = create_db_con()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     async_creation = compute_client.images.create_or_update(
@@ -82,6 +82,17 @@ def create_disk_worker(rg_name,uri,disk_name,location):
     except:
         print("disk creation updation failed")
     finally:
+        con.close()'''
+
+def create_disk_worker(rg_name,uri,disk_name,location, file_size):
+    con = create_db_con()
+    com = f'az disk create -n {disk_name} -g {rg_name} -l {location} --size-bytes {file_size} --sku standardssd_lrs --source {uri}'
+    os.popen(com)
+    try:
+        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status=40)
+    except:
+        print("disk creation updation failed")
+    finally:
         con.close()
 
 def create_disk(project):
@@ -96,7 +107,7 @@ def create_disk(project):
         vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
         print(disk)
-        create_disk_worker(rg_name,uri,vhd.replace(".vhd",""),location)
+        create_disk_worker(rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'])
     return True
         
     
