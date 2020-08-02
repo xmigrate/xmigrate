@@ -86,7 +86,7 @@ async def start_cloning(project):
 
 def create_disk_worker(rg_name,uri,disk_name,location, file_size):
     con = create_db_con()
-    com = f'az disk create -n {disk_name} -g {rg_name} -l {location} --size-bytes {file_size} --sku standardssd_lrs --source {uri}'
+    com = f'az disk create -n {disk_name} -g {rg_name} -l {location} --size-gb 10 --sku standardssd_lrs --source {uri}'
     os.popen(com)
     try:
         BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status=40)
