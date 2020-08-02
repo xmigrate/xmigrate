@@ -88,8 +88,7 @@ def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
     con = create_db_con()
     com1 = f'az disk create -n {disk_name} -g {rg_name} -l {location} --for-upload --upload-size-bytes {file_size} --sku standardssd_lrs'
     com2 = f'az disk grant-access -n {disk_name} -g {rg_name} --access-level Write --duration-in-seconds 86400'
-    com3 = f'azcopy copy "./osdisks/{disk_name}.vhd"  "https://md-impexp-hdqzc5vpnkqq.blob.core.windows.net/vvtr3zlkrvgs/abcd?sv=2017-04-17&sr=b&si=0da5fef1-64b2-47ac-b2af-7f9d528d1036&sig=9q8brtU0qMlDxuGH0hFGvXtSxPaNXBva0reUZKuaFIw%3D" --blob-type PageBlob
---from-to LocalBlob'
+    com3 = f'azcopy copy "./osdisks/{disk_name}.vhd"  "https://md-impexp-hdqzc5vpnkqq.blob.core.windows.net/vvtr3zlkrvgs/abcd?sv=2017-04-17&sr=b&si=0da5fef1-64b2-47ac-b2af-7f9d528d1036&sig=9q8brtU0qMlDxuGH0hFGvXtSxPaNXBva0reUZKuaFIw%3D" --blob-type PageBlob --from-to LocalBlob'
     print(com1)
     os.popen(com1)
     print(com2)
