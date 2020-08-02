@@ -102,7 +102,7 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
     finally:
         con.close()
 
-def create_disk(project):
+async def create_disk(project):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]['resource_group']
     location = Project.objects(name=project)[0]['location']
