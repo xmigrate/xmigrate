@@ -17,7 +17,7 @@ def conversion_worker(osdisk_raw,project,host):
         if not os.path.exists(path):
             os.popen("az storage blob download --account-name "+account_name+" --container-name "+container_name+" --file ./osdisks/"+osdisk_raw+" --name "+osdisk_raw+" --account-key "+access_key)
         file_size = os.popen("ls -la ./osdisks/"+osdisk_raw).readline().split()[4]
-        file_size = int(file_size) +512
+        file_size = str(int(file_size) +512)
         BluePrint.objects(project=project,host=host).update(status='32')
         os.popen("qemu-img convert -f raw -o subformat=fixed -O vpc ./osdisks/"+osdisk_raw+" ./osdisks/"+osdisk_vhd)
         BluePrint.objects(project=project,host=host).update(status='34')
