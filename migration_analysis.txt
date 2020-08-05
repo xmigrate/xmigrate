@@ -213,3 +213,23 @@ response
   "container": "osdisk",
   "access_key": "/Un2a2vGMW/PE+/N2t5b8a7g=="
 }
+
+8)/blueprint/network/create
+
+{
+  
+  "project" : "testproject",
+  "cidr" : "192.168.0.0/16"
+  "name" : "network-1"
+}
+
+
+9)/blueprint/subnet/create
+{
+  
+  "project" : "testproject",
+  "cidr" : "192.168.1.0/24",
+  "nw_name": "network-1",
+  "nw_type": "public",
+  "name": "subnet-1"
+}
