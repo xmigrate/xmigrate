@@ -9,7 +9,7 @@ from collections import defaultdict
 import boto3
 import sys
 from quart import Quart, g, request
-
+from quart_cors import cors
 
 sys.path.append('./')
 
@@ -18,6 +18,7 @@ load_dotenv()
 
 app = Quart(__name__)
 
+app = cors(app, allow_origin="*")
 
 app.secret_key = getenv("SECRET")
 
