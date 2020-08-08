@@ -20,18 +20,34 @@ def blueprint():
 
 
 @app.route('/blueprint/network/create', methods=['POST'])
-async def update_blueprint_nw():
+async def create_nw():
     if request.method == 'POST':
         data = await request.get_json()
         network = data['cidr']
         project = data['project']
-        print(project)
-        network_layout_created = netutils.create_nw_layout(network,project)
+        name = data['name']
+        network_layout_created = netutils.create_nw(network,project,name)
         if network_layout_created:
-            return  jsonify({'status': '200', 'blueprint': BluePrint.objects(project=project).to_json()})
+            return  jsonify({'status': '200')
         else:
-            return jsonify({'status': '500', 'msg': 'Network layout creation failed'})
-    return  jsonify({'status': '500', 'msg': 'Update blueprint network failed'})
+            return jsonify({'status': '500', 'msg': 'Network  creation failed'})
+    return  jsonify({'status': '500', 'msg': 'Network creation failed'})
+
+@app.route('/blueprint/subnet/create', methods=['POST'])
+async def create_subnet():
+    if request.method == 'POST':
+        data = await request.get_json()
+        network = data['cidr']
+        project = data['project']
+        nw_name = data['nw_name']
+        nw_type = data['nw_type']
+        name = data['name']
+        network_layout_created = netutils.create_subnet(network,nw_name,project,nw_type,name)
+        if network_layout_created:
+            return  jsonify({'status': '200')
+        else:
+            return jsonify({'status': '500', 'msg': 'Subnet  creation failed'})
+    return  jsonify({'status': '500', 'msg': 'Subnet creation failed'})
 
 
 @app.route('/blueprint/create', methods=['POST'])

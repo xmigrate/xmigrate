@@ -130,3 +130,26 @@ def create_nw_layout(cidr,p):
             print("subnet not updated")
             return subnet_updated
     return blueprint_updated
+
+
+def create_nw(cidr,project,name):
+    con = create_db_con()
+    try:
+        Network.objects(project=project).update(cidr=cidr,nw_name=name,upsert=True)
+        con.close()
+        return True
+    except Exception as e:
+        con.close()
+        return False
+
+def create_subnet(cidr,nw_name,project,subnet_type,name):
+    con = create_db_con()
+    try:
+        name = ''.join(random.choices(string.ascii_uppercase +
+                             string.digits, k = 8))
+        Subnet.objects(project=project).update(cidr=cidr,nw_name=nw_name,subnet_name=name,subnet_type=subnet_type,upsert=True)
+        con.close()
+        return True
+    except Exception as e:
+        con.close()
+        return False
