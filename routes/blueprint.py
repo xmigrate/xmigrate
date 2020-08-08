@@ -74,6 +74,19 @@ async def get_hosts():
         return jsonify(host.fetch_hosts(project))
 
 
+@app.route('/blueprint/update', methods=['POST'])
+async def update_blueprint():
+    if request.method == 'POST':
+        data = await request.get_json()
+        project = data['project']
+        machines = data['machines']
+        blueprint_updated = update_hosts(project,machines)
+        if blueprint_updated:
+            return jsonify({"msg":"Succesfully updated","status":200})
+        else:
+            return jsonify({"msg":"Cpouldn't update Blueprint","status":500})
+
+
 @app.route('/blueprint/create', methods=['POST'])
 async def create_blueprint():
     if request.method == 'POST':
