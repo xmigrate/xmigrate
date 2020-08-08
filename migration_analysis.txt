@@ -248,3 +248,9 @@ response
 {
   "project":"testproject"
 }
+
+13)/blueprint/update POST
+{
+  "project": "testproject",
+  "machines": [{"hostname":"localhost", "type":"public", "subnet":"192.168.1.0/24",}]
+}
