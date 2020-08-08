@@ -15,3 +15,4 @@ azure-mgmt-network
 azure-mgmt-compute
 azure-cli-core
 flask_cors
+keyrings.alt 

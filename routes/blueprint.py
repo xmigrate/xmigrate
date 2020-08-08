@@ -29,7 +29,7 @@ async def create_nw():
         name = data['name']
         network_layout_created = netutils.create_nw(network,project,name)
         if network_layout_created:
-            return  jsonify({'status': '200')
+            return  jsonify({'status': '200'})
         else:
             return jsonify({'status': '500', 'msg': 'Network  creation failed'})
     return  jsonify({'status': '500', 'msg': 'Network creation failed'})
@@ -60,7 +60,7 @@ async def create_subnet():
         name = data['name']
         network_layout_created = netutils.create_subnet(network,nw_name,project,nw_type,name)
         if network_layout_created:
-            return  jsonify({'status': '200')
+            return  jsonify({'status': '200'})
         else:
             return jsonify({'status': '500', 'msg': 'Subnet  creation failed'})
     return  jsonify({'status': '500', 'msg': 'Subnet creation failed'})
