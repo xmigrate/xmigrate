@@ -94,7 +94,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
 def create_nw(project):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]["resource_group"]
-    location = Project.objects(name=project)[0]]["location"]
+    location = Project.objects(name=project)[0]["location"]
     machines = BluePrint.objects(project=project)
     cidr = []
     subnet = []
