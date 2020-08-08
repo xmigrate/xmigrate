@@ -6,6 +6,7 @@ from model.blueprint import *
 from pkg.azure import *
 from pkg.common import network as netutils
 from pkg.common import build as build
+from pkg.common import hosts as host
 from quart import jsonify, request, make_push_promise
 import json
 import asyncio
@@ -63,6 +64,14 @@ async def create_subnet():
         else:
             return jsonify({'status': '500', 'msg': 'Subnet  creation failed'})
     return  jsonify({'status': '500', 'msg': 'Subnet creation failed'})
+
+
+@app.route('/blueprint/hosts/get', methods=['GET'])
+async def get_hosts():
+    if request.method == 'GET':
+        data = await request.get_json()
+        project = data['project']
+        return jsonify(host.fetch_hosts(project))
 
 
 @app.route('/blueprint/create', methods=['POST'])

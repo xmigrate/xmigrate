@@ -243,3 +243,8 @@ response
   "project": "testproject",
   "network" : "network-1"
 }
+
+12)/blueprint/hosts/get GET
+{
+  "project":"testproject"
+}

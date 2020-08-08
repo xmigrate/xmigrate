@@ -170,11 +170,23 @@ def fetch_subnet(project,network):
 def create_subnet(cidr,nw_name,project,subnet_type,name):
     con = create_db_con()
     try:
-        name = ''.join(random.choices(string.ascii_uppercase +
-                             string.digits, k = 8))
         Subnet.objects(project=project).update(cidr=cidr,nw_name=nw_name,subnet_name=name,subnet_type=subnet_type,upsert=True)
-        con.close()
-        return True
+        if len(Subnet.objects(project=project)) == 1:
+            nw = Network.objects(project=project, nw_name=nw_name)
+            machines = Discover.objects(project=project)
+            for machine in machines:
+                try:
+                    BluePrint.objects(project=project).update(host=machine['host'], ip='Not created', subnet=cidr, network=nw['cidr'],
+                         ports=machine['ports'], cores=machine['cores'], public_route=True, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='Not started', upsert=True)
+                    con.close()
+                    return True
+                except Exception as e:
+                    print("Error while updating BluePrint: "+str(e))
+                    con.close()
+                    return False
+        else:
+            return True
     except Exception as e:
+        print("Error while updating Subnet: "+str(e))
         con.close()
         return False
