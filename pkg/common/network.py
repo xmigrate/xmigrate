@@ -142,6 +142,31 @@ def create_nw(cidr,project,name):
         con.close()
         return False
 
+
+def fetch_nw(project):
+    con = create_db_con()
+    try:
+        result = Network.objects(project=project)
+        con.close()
+        return result
+    except Exception as e:
+        con.close()
+        result = {"msg":"Failed to retrieve network details"}
+        return result
+
+
+def fetch_subnet(project,network):
+    con = create_db_con()
+    try:
+        result = Subnet.objects(project=project, nw_name=network)
+        con.close()
+        return result
+    except Exception as e:
+        con.close()
+        result = {"msg":"Failed to retrieve network details"}
+        return result
+
+
 def create_subnet(cidr,nw_name,project,subnet_type,name):
     con = create_db_con()
     try:

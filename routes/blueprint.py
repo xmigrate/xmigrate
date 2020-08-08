@@ -33,6 +33,21 @@ async def create_nw():
             return jsonify({'status': '500', 'msg': 'Network  creation failed'})
     return  jsonify({'status': '500', 'msg': 'Network creation failed'})
 
+@app.route('/blueprint/network/get', methods=['GET'])
+async def get_nw():
+    if request.method == 'GET':
+        data = await request.get_json()
+        project = data['project']
+        return  jsonify(netutils.fetch_nw(project))
+
+@app.route('/blueprint/subnet/get', methods=['GET'])
+async def get_subnet():
+    if request.method == 'GET':
+        data = await request.get_json()
+        network = data['network']
+        project = data['project']
+        return  jsonify(netutils.fetch_subnet(project,network))
+
 @app.route('/blueprint/subnet/create', methods=['POST'])
 async def create_subnet():
     if request.method == 'POST':
