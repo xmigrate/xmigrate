@@ -214,7 +214,7 @@ response
   "access_key": "/Un2a2vGMW/PE+/N2t5b8a7g=="
 }
 
-8)/blueprint/network/create
+8)/blueprint/network/create POST
 
 {
   
@@ -223,8 +223,12 @@ response
   "name" : "network-1"
 }
 
+9)/blueprint/network/get GET 
+{
+  "project":"testproject"
+}
 
-9)/blueprint/subnet/create
+10)/blueprint/subnet/create POST
 {
   
   "project" : "testproject",
@@ -232,4 +236,10 @@ response
   "nw_name": "network-1",
   "nw_type": "public",
   "name": "subnet-1"
+}
+
+11)/blueprint/subnet/get GET
+{
+  "project": "testproject",
+  "network" : "network-1"
 }
