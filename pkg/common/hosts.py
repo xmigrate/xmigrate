@@ -22,3 +22,15 @@ def fetch_hosts(project):
         return {"msg":"Failed fetching details"}
 
 
+def update_hosts(project,machines):
+    try:
+        con = create_db_con()
+        for machine in machines:
+            subnet = Subnet.objects(project=project, cidr = machine['subnet'])
+            network = Network.objects(project=project, nw_name = subnet[0]['nw_name'])
+            BluePrint.objects(host=machine['hostname'],project=project).update(machine_type=machine['machine_type'],public_route=machine['type'],subnet=machine['subnet'],network=network[0]['cidr'])
+        con.close()
+        return True
+    except Exception as e:
+        con.close()
+        return False
