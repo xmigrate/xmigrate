@@ -14,7 +14,7 @@ class BluePrint(Document):
     image_id = StringField(required=False, max_length=100)
     vpc_id = StringField(required=False, max_length=100)
     subnet_id = StringField(required=False, max_length=100)
-    public_route = BooleanField(required=False)
+    public_route = StringField(required=False, max_length=10)
     ig_id = StringField(required=False, max_length=100)
     route_table = StringField(required=False, max_length=100)
     vm_id = StringField(required=False, max_length=100)
