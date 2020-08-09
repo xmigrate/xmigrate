@@ -1,8 +1,8 @@
 setuptools
 wheel
-netifaces
-netaddr
-psutil
+# netifaces
+# netaddr
+# psutil
 mongoengine
 flask
 ansible
