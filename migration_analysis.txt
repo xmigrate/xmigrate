@@ -223,10 +223,7 @@ response
   "name" : "network-1"
 }
 
-9)/blueprint/network/get GET 
-{
-  "project":"testproject"
-}
+9)/blueprint/network/get?project=testproject GET 
 
 10)/blueprint/subnet/create POST
 {
@@ -238,19 +235,12 @@ response
   "name": "subnet-1"
 }
 
-11)/blueprint/subnet/get GET
-{
-  "project": "testproject",
-  "network" : "network-1"
-}
+11)localhost:8000/blueprint/subnet/get?project=testproject&network=network-1 GET
 
-12)/blueprint/hosts/get GET
-{
-  "project":"testproject"
-}
+12)/blueprint/hosts/get?project=testproject GET
 
 13)/blueprint/update POST
 {
   "project": "testproject",
-  "machines": [{"hostname":"localhost", "type":"public", "subnet":"192.168.1.0/24",}]
+  "machines": [{"hostname":"localhost.localdomain","machine_type":"B2S","type":"private", "subnet":"192.168.1.0/24"}]
 }
