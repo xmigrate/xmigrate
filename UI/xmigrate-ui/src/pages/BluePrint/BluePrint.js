@@ -10,10 +10,11 @@ import {
   Col,
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
-import GetService from "../../services/GetService";
+import GetService ,{ GetServiceWithData} from "../../services/GetService";
 import {
   BLUEPRINT_URL,
   BLUEPRINTNET_NETWORK_CREATE_URL,
+  BLUEPRINTNET_NETWORK_GET_URL,
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 export default class BluePrint extends Component {
@@ -22,9 +23,11 @@ export default class BluePrint extends Component {
     this.state = {
       cidr: "defa",
       project: "testproject",
+      nameNetwork:"",
       hosts: [
         // { id: 1, _id: {$oid:"dummy"},hostname: "Hostname1", ip: "10.170.20.13", subnet: "10.10.0.0/24", network: "10.10.10.0/24", cpu: "inter(R)", core: "1", ram: "10GB", disk: "/dev/xvda" }
       ],
+      dataChecking:[],
       blueprintHost: [
         {
           cores: "1",
@@ -89,27 +92,57 @@ export default class BluePrint extends Component {
     });
   }
 
-  _createBluePrint() {
-    if (this.state.cidr === "defa") {
-      alert("Please Select a valid CIDR");
-    } else {
-      var data = {
+  async _createBluePrint() {
+    // if (this.state.cidr === "defa") {
+    //   alert("Please Select a valid CIDR");
+    // } else {
+    //   var data = {
+    //     cidr: this.state.cidr,
+    //     project: this.state.project,
+    //   };
+    //   PostService(BLUEPRINTNET_NETWORK_CREATE_URL, data).then((res) => {
+    //     console.log("data fot as response",res.data);
+    //     console.log("data fot as response blueprint",res.data.blueprint);
+    //     console.log("data fot as response to json",JSON.parse(res.data.blueprint));
+    //     this.state.dataChecking.push(JSON.parse(res.data.blueprint));
+
+    //     this.setState({ state: this.state });
+    //   });
+    // }
+
+ 
+     var data = {
         cidr: this.state.cidr,
         project: this.state.project,
+        name:this.state.nameNetwork
       };
-      PostService(BLUEPRINTNET_NETWORK_CREATE_URL, data).then((res) => {
-        console.log(res.data);
-        console.log(res.data.blueprint);
-        console.log(JSON.parse(res.data.blueprint));
-
-
-
+      console.log(data);
+      var dataGet={
+        project : this.state.project
+      };
+      await PostService(BLUEPRINTNET_NETWORK_CREATE_URL, data).then((res) => {
+        console.log("data fot as response",res.data);
+        // this.setState({ state: this.state });
+   
+     
+   
       });
-    }
+      await GetServiceWithData(BLUEPRINTNET_NETWORK_GET_URL,dataGet).then((res) => {
+        console.log("data fot as response",res.data);
+        // this.setState({ state: this.state });
+      });
+
   }
   _setCIDR(e) {
     this.setState({
       cidr: e.target.value,
+    });
+
+  
+  }
+  _setnameNetwork(e) {
+    this.setState({
+      nameNetwork: e.target.value,
     });
   }
   render() {
@@ -180,11 +213,30 @@ export default class BluePrint extends Component {
             </Button>
           </div>
 
+
+          {/* HereTable */}
+
           <Card className="mt-4 p-2">
             <Card.Header className="bg-white d-flex">
-              <Form className="mr-40px flex-2 w-100">
+              <Form className="">
                 <Form.Group controlId="select-type">
-                  <Form.Control
+                  <Row>
+                    <Col>
+                  <Form.Control size="md" onChange={this._setCIDR.bind(this)} type="text" placeholder="Input Network CIDR" />
+                  </Col>
+                  <Col>
+                <Form.Control size="md" onChange={this._setnameNetwork.bind(this)} type="text" placeholder="Input Network Name" />
+                </Col>
+                <Col>
+                <Button
+                  className=" media-body"
+                  variant="success"
+                  onClick={this._createBluePrint.bind(this)}
+                >
+                  Create Network
+                </Button>
+                </Col>
+                  {/* <Form.Control
                     className=""
                     defaultValue="defa"
                     as="select"
@@ -196,22 +248,14 @@ export default class BluePrint extends Component {
                     </option>
                     <option value="172.16.0.0">172.16.0.0</option>
                     <option value="10.0.0.0">10.0.0.0</option>
-                  </Form.Control>
+                  </Form.Control> */}
+                  </Row>
+             
                 </Form.Group>
               </Form>
 
-              <div className=" d-flex media-body ">
-                <Button
-                  className="mr-40px media-body"
-                  variant="success"
-                  onClick={this._createBluePrint.bind(this)}
-                >
-                  Create Blueprint
-                </Button>
-                <Button className="media-body" variant="secondary" disabled>
-                  Start <icon.BsArrowRight />
-                </Button>
-              </div>
+         
+             
             </Card.Header>
 
             <Card.Body>
@@ -223,7 +267,7 @@ export default class BluePrint extends Component {
                     <Col xs={{ span: 2 }}>CIDR</Col>
                   </Row>
 
-                  {this.state.blueprintHost.map((data, index) => (
+                  {this.state.dataChecking.map((data, index) => (
                     <div>
                       <Row className="border-bottom  py-3">
                         <Col xs={{ span: 1 }}>
@@ -234,7 +278,7 @@ export default class BluePrint extends Component {
                           />
                         </Col>
                         <Col xs={{ span: 2 }}>Network-1</Col>
-                        <Col xs={{ span: 2 }}>192.168.0.0/16</Col>
+                        <Col xs={{ span: 2 }}>{data[index].ip}</Col>
                       </Row>
                       <div id="accordion" className="collapse">
                         <Row className="font-weight-bold py-3 border-bottom">
@@ -252,7 +296,7 @@ export default class BluePrint extends Component {
                             />
                           </Col>
                           <Col xs={{ span: 2 }}>Subnet-1</Col>
-                          <Col xs={{ span: 2 }}>192.168.1.0/24</Col>
+                          <Col xs={{ span: 2 }}>{data[index].subnet}</Col>
                           <Col xs={{ span: 2 }}>
                             <Form>
                               <Form.Group controlId="select-type">
@@ -303,11 +347,8 @@ export default class BluePrint extends Component {
                                     <option value="defa" disabled>
                                       Select one
                                     </option>
-                                    <option>1</option>
-                                    <option>2</option>
-                                    <option>3</option>
-                                    <option>4</option>
-                                    <option>5</option>
+                                    <option>Pul</option>
+                                    <option></option>bic
                                   </Form.Control>
                                 </Form.Group>
                               </Form>
@@ -323,7 +364,9 @@ export default class BluePrint extends Component {
                 </div>
               </Container>
             </Card.Body>
-          </Card>
+          </Card> 
+
+
         </Container>
       </div>
     );

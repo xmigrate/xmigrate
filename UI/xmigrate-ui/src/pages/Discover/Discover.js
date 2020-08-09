@@ -31,8 +31,13 @@ export default class Discover extends Component {
     }
     onChange(e) {
         // e.persist()
-        var parsed = JSON.parse(e.target.value).map((data) => data.value)
-        this.setState({ tags: e.target.value, parsedTags: parsed })
+        try{
+            var parsed = JSON.parse(e.target.value).map((data) => data.value)
+            this.setState({ tags: e.target.value, parsedTags: parsed })
+        }
+        catch(e){
+            console.log("Here");
+        }
 
     }
     setUsername(e) {
@@ -102,7 +107,7 @@ export default class Discover extends Component {
                     </h4>
 
                     <Row className="py-5 ">
-                        <Col md={{ span: 5 }} className="bg-white shadow-sm rounded">
+                        <Col md={{ span: 5 }} className="bg-white shadow-sm rounded clrg">
                             <div className="p-3 d-flex flex-column justify-content-between h-100">
 
                                 <div id="discover-menu" className={` ${this.state.showDiscoverMenu ? "" : "d-none"} `}>
@@ -142,14 +147,14 @@ export default class Discover extends Component {
 
 
                                         <p className=" text-center pt-3">
-                                            <span className="btn text-primary" onClick={this.editDiscover}> <u> Edit Discovery</u>  </span>
+                                            <span className={` ${this.state.streamming ? "d-none" : "btn text-primary"} `} onClick={this.editDiscover}> <u> Edit Discovery</u>  </span>
                                         </p>
                                     </div>
 
                                 </div>
                             </div>
                         </Col>
-                        <Col md={{ span: 6, offset: 1 }} className="shadow-sm rounded bg-white d-flex flex-column p-0">
+                        <Col md={{ span: 6, offset: 1 }} className="shadow-sm rounded bg-white d-flex flex-column p-0 clrg">
                             <div className="p-3 d-flex justify-content-between">
                                 <span>
                                     {this.state.disableGoToBlueprint ?

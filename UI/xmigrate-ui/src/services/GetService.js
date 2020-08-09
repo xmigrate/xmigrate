@@ -11,16 +11,18 @@ export default function GetService(API) {
     return response
 }
 
-export function GetServiceWithData(API, data) {
-    let config = {
+export function GetServiceWithData(API, dataGet) {
+    let response = Axios.get(API,{
         withCredentials: false,
         headers: { "Content-Type": "application/json" },
-        params: data
-    }
-    let response = Axios.get(API, config)
+        params: dataGet
+    })
     response.then({}).catch(err => {
         console.error(err);
         // window.location.replace(LOGINURL);
     })
     return response;
+
+  
+    
 }

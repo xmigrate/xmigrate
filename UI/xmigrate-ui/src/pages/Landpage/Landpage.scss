@@ -1,0 +1,233 @@
+.Landpage{
+    h1,
+    h6 {
+      font-family: Ubuntu;
+      font-style: normal;
+      font-size: 30px;
+    }
+    h1,
+    h5 {
+      font-weight: normal;
+    }
+    
+    /*
+     * Sidebar
+     */
+    
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100; /* Behind the navbar */
+      padding: 48px 0 0; /* Height of navbar */
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (max-width: 767.98px) {
+      .sidebar {
+        top: 5rem;
+      }
+    }
+    
+    .sidebar-sticky {
+      position: relative;
+      top: 0;
+      height: calc(100vh - 48px);
+      padding-top: 0.5rem;
+      overflow-x: hidden;
+      overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    }
+    
+    @supports ((position: -webkit-sticky) or (position: sticky)) {
+      .sidebar-sticky {
+        position: -webkit-sticky;
+        position: sticky;
+      }
+    }
+    
+    .sidebar .nav-link {
+      color: #333;
+      line-height: 3;
+      padding-left: 2rem !important;
+    }
+    
+    .sidebar .nav-link .feather {
+      margin-right: 1rem;
+      color: #999;
+    }
+    
+    .sidebar .nav-link.active {
+      color: #1da1f2;
+    }
+    
+    .sidebar .nav-link:hover .feather,
+    .sidebar .nav-link.active .feather {
+      color: #1da1f2;
+    }
+    .sidebar .nav-item:hover {
+      background-color: rgba(22, 101, 216, 0.08);
+    }
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+      color: #1da1f2;
+    }
+    
+    /*
+     * Navbar
+     */
+    
+    .navbar-brand {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+      font-size: 1.4rem;
+      color: #1da1f2 !important;
+      padding-left: 2rem;
+    }
+    
+    .navbar .navbar-toggler {
+      top: 0.25rem;
+      right: 1rem;
+    }
+    
+    .right-style {
+      border-left: 0.1rem solid #eaedf3;
+      padding-left: 1rem;
+    }
+    .feather-12 {
+      width: 30px;
+      height: 30px;
+    }
+    .bottombar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+    
+      width: 100%;
+    }
+    .bottomSettings {
+      border-top: 0.1rem solid #eaedf3;
+    }
+    .txtin {
+      padding-left: 1rem;
+      font-size: 0.9rem;
+      color: rgba(0, 0, 0, 0.5);
+    }
+    .bluelink {
+      color: #1da1f2;
+      text-decoration: underline;
+    }
+    .terminal {
+      background-color: #333;
+      height: 29rem;
+    }
+    .btnnavlink {
+      background-color: rgba(22, 101, 216, 0.08);
+      border-radius: 1rem;
+      color: #1da1f2 !important;
+    }
+    
+    .btngrid {
+      background: #1da1f2;
+      border-radius: 50%;
+      color: white;
+    }
+    .feathersmall {
+      width: 1rem;
+      height: 1rem;
+      color: white;
+    }
+    a:hover {
+      text-decoration: none;
+    }
+    .rightli {
+      color: #999;
+    }
+    .banner{
+      text-align: center;
+    }
+    .btn{
+    font-style: lighter;
+    
+    }
+    .banner-txt{
+    
+    font-family: Ubuntu;
+    font-weight: lighter;
+    font-size: 2.5rem;
+    }
+    .lead{
+      font-family: Ubuntu;
+    font-weight: lighter;
+    font-size: .85rem;
+    color: #999;
+    }
+    .boxshad {
+      box-shadow: 2px 2px 50px 15px #dfdede;
+    }
+    .banner-txt2{
+      font-family: Ubuntu;
+      font-weight: lighter;
+      font-size: 1.75rem;
+      }
+      .cl{
+        display: flex;
+      }
+    .HomeColo{
+      background-color: #F9F9F9;
+    }
+    .banner-txt3{
+      font-family: Ubuntu;
+      font-weight: lighter;
+      font-size: 1rem;
+    }
+    
+    .cardshadow{
+      box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.137456);
+      position: relative;
+      /* animation: myfirst 5s infinite;
+      animation-direction: normal;
+      overflow: hidden; */
+      
+    }
+    
+    .box1{
+      text-align: center;
+    }
+    ul.listDesc{
+      list-style-type: none;
+      text-align: left;
+      padding-top: 1rem;
+      font-family: Ubuntu;
+      font-weight: lighter;
+      font-size: .85rem;
+      color: #999;
+    }
+    /* @keyframes myfirst {
+      0%   { left: -200px;}
+      25%  { left: -100px; }
+      50%  { left: 0px; }
+      75%  { left: 100px; }
+      100% { left: 200px;}
+    }
+    .mainCarddiv{
+    
+    } */
+    .footer-brand{
+    font-size: 1.4rem;
+    color: #1da1f2 !important;
+    padding-left: 2rem;
+    }
+    
+    ul.footer-list > li{
+      display: inline;
+      margin: 1rem;
+    }
+    .iconcard{
+      text-align: center;
+    }
+    .txtbtn{
+      font-family: Ubuntu;
+      font-size: small;
+    }
+}
