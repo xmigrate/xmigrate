@@ -179,7 +179,7 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
             for machine in machines:
                 try:
                     BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=nw[0]['cidr'],
-                         ports=machine['ports'], cores=machine['cores'], public_route=subnet_type, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='Not started', upsert=True)
+                         ports=machine['ports'], cores=machine['cores'], public_route=subnet_type, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='0', upsert=True)
                     con.close()
                     return True
                 except Exception as e:

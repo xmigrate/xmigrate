@@ -58,7 +58,7 @@ async def start_cloning(project):
     con.close()
     return False
 
-'''def create_disk_worker(rg_name,uri,disk_name,location):
+def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     con = create_db_con()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     async_creation = compute_client.images.create_or_update(
@@ -73,7 +73,8 @@ async def start_cloning(project):
                 'blob_uri': uri,
                 'caching': "ReadWrite"
             }
-            }
+            },
+            'hyper_vgeneration': 'V1'
         }
     )
     image_resource = async_creation.result()
@@ -82,9 +83,9 @@ async def start_cloning(project):
     except:
         print("disk creation updation failed")
     finally:
-        con.close()'''
+        con.close()
 
-async def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
+'''async def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
     con = create_db_con()
     com1 = f'az disk create -n {disk_name} -g {rg_name} -l {location} --for-upload --upload-size-bytes {file_size} --sku standardssd_lrs'
     com2 = f'az disk grant-access -n {disk_name} -g {rg_name} --access-level Write --duration-in-seconds 86400'
@@ -102,7 +103,7 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
     except Exception as e:
         print("disk creation updation failed "+str(e))
     finally:
-        con.close()
+        con.close()'''
 
 async def create_disk(project):
     con = create_db_con()
