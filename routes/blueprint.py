@@ -37,7 +37,8 @@ async def create_nw():
 @app.route('/blueprint/network/get', methods=['GET'])
 async def get_nw():
     if request.method == 'GET':
-        project = await request.args.get('project')
+        project = request.args.get('project')
+        print(project)
         return  jsonify(netutils.fetch_nw(project))
 
 @app.route('/blueprint/subnet/get', methods=['GET'])
