@@ -2,6 +2,7 @@ from utils.dbconn import *
 from utils.converter import *
 from model.discover import *
 from model.blueprint import *
+from model.network import *
 import json
 from collections import defaultdict
 
@@ -139,6 +140,7 @@ def create_nw(cidr,project,name):
         con.close()
         return True
     except Exception as e:
+        print(str(e))
         con.close()
         return False
 
@@ -146,7 +148,7 @@ def create_nw(cidr,project,name):
 def fetch_nw(project):
     con = create_db_con()
     try:
-        result = Network.objects(project=project)
+        result = Network.objects(project=project).to_json()
         con.close()
         return result
     except Exception as e:
@@ -158,7 +160,7 @@ def fetch_nw(project):
 def fetch_subnet(project,network):
     con = create_db_con()
     try:
-        result = Subnet.objects(project=project, nw_name=network)
+        result = Subnet.objects(project=project, nw_name=network).to_json()
         con.close()
         return result
     except Exception as e:
@@ -176,8 +178,8 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
             machines = Discover.objects(project=project)
             for machine in machines:
                 try:
-                    BluePrint.objects(project=project).update(host=machine['host'], ip='Not created', subnet=cidr, network=nw['cidr'],
-                         ports=machine['ports'], cores=machine['cores'], public_route=True, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='Not started', upsert=True)
+                    BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=nw[0]['cidr'],
+                         ports=machine['ports'], cores=machine['cores'], public_route=subnet_type, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='Not started', upsert=True)
                     con.close()
                     return True
                 except Exception as e:
