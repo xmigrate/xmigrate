@@ -44,9 +44,8 @@ async def get_nw():
 @app.route('/blueprint/subnet/get', methods=['GET'])
 async def get_subnet():
     if request.method == 'GET':
-        data = await request.get_json()
-        network = data['network']
-        project = data['project']
+        network = request.args.get('network')
+        project = request.args.get('project')
         return  jsonify(netutils.fetch_subnet(project,network))
 
 @app.route('/blueprint/subnet/create', methods=['POST'])
@@ -69,8 +68,7 @@ async def create_subnet():
 @app.route('/blueprint/hosts/get', methods=['GET'])
 async def get_hosts():
     if request.method == 'GET':
-        data = await request.get_json()
-        project = data['project']
+        project = request.args.get('project')
         return jsonify(host.fetch_hosts(project))
 
 
@@ -80,7 +78,7 @@ async def update_blueprint():
         data = await request.get_json()
         project = data['project']
         machines = data['machines']
-        blueprint_updated = update_hosts(project,machines)
+        blueprint_updated = host.update_hosts(project,machines)
         if blueprint_updated:
             return jsonify({"msg":"Succesfully updated","status":200})
         else:

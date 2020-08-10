@@ -10,14 +10,23 @@ def fetch_hosts(project):
         hosts = BluePrint.objects(project=project)
         for host in hosts:
             sub_name = Subnet.objects(project=project,cidr=host['subnet'])
-            sub_hosts[sub_name['subnet_name']].append(host)
+            subnet_name = sub_name[0]['subnet_name']
+            if subnet_name not in sub_hosts.keys():
+                sub_hosts[subnet_name] = []
+            machine = host.to_mongo().to_dict()
+            del(machine['_id'])
+            sub_hosts[subnet_name].append(machine)
+        print(sub_hosts)
         for subnet in sub_hosts.keys():
             nw_name = Subnet.objects(project=project,subnet_name=subnet)
-            response[nw_name['nw_name']].append(sub_hosts[subnet])
+            nw_name = nw_name[0]['nw_name']
+            if nw_name not in response.keys():
+                response[nw_name] = []
+            response[nw_name].append(sub_hosts[subnet])
             con.close()
         return response
     except Exception as e:
-        print("Reading from db failed: "+str(e))
+        print("Reading from db failed: "+repr(e))
         con.close()
         return {"msg":"Failed fetching details"}
 
@@ -32,5 +41,6 @@ def update_hosts(project,machines):
         con.close()
         return True
     except Exception as e:
+        print(repr(e))
         con.close()
         return False
