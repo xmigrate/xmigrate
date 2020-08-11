@@ -24,10 +24,13 @@ export default class BluePrint extends Component {
       cidr: "defa",
       project: "testproject",
       nameNetwork:"",
+      nameSubnet:"",
+      subnetCIDR:"",
       hosts: [
         // { id: 1, _id: {$oid:"dummy"},hostname: "Hostname1", ip: "10.170.20.13", subnet: "10.10.0.0/24", network: "10.10.10.0/24", cpu: "inter(R)", core: "1", ram: "10GB", disk: "/dev/xvda" }
       ],
       dataChecking:[],
+      SubnetData:[],
       blueprintHost: [
         {
           cores: "1",
@@ -128,21 +131,45 @@ export default class BluePrint extends Component {
    
       });
       await GetServiceWithData(BLUEPRINTNET_NETWORK_GET_URL,dataGet).then((res) => {
-        console.log("data fot as response",res.data);
-        // this.setState({ state: this.state });
+        console.log("data for as response",res.data);
+        this.state.dataChecking.push(JSON.parse(res.data));
+        this.setState({ state: this.state });
       });
 
   }
+
+  async _createSubnet() {
+    var data = {
+      cidr: this.state.cidr,
+      project: this.state.project,
+      nw_name:this.state.nameNetwork,
+      nw_type: "public",
+      name:nameSubnet
+    };
+  
+  
+  }
+
   _setCIDR(e) {
     this.setState({
       cidr: e.target.value,
-    });
+    }); 
 
   
   }
   _setnameNetwork(e) {
     this.setState({
       nameNetwork: e.target.value,
+    });
+  }
+  _setSubnetName(e) {
+    this.setState({
+      nameSubnet: e.target.value,
+    });
+  }
+  _setSubnetCIDR(e) {
+    this.setState({
+      subnetCIDR: e.target.value,
     });
   }
   render() {
@@ -277,8 +304,8 @@ export default class BluePrint extends Component {
                             className="clickable"
                           />
                         </Col>
-                        <Col xs={{ span: 2 }}>Network-1</Col>
-                        <Col xs={{ span: 2 }}>{data[index].ip}</Col>
+                        <Col xs={{ span: 2 }}>{data[index].nw_name}</Col>
+                        <Col xs={{ span: 2 }}>{data[index].cidr}</Col>
                       </Row>
                       <div id="accordion" className="collapse">
                         <Row className="font-weight-bold py-3 border-bottom">
@@ -295,30 +322,37 @@ export default class BluePrint extends Component {
                               className="clickable"
                             />
                           </Col>
-                          <Col xs={{ span: 2 }}>Subnet-1</Col>
-                          <Col xs={{ span: 2 }}>{data[index].subnet}</Col>
+
+                          <Col xs={{ span: 2 }}>  <Form.Control size="sm" onChange={this._setSubnetName.bind(this)} type="text" placeholder="Subnet Name" /></Col>
+                          <Col xs={{ span: 2 }}><Form.Control size="sm" onChange={this._setSubnetCIDR.bind(this)} type="text" placeholder="Inbut Subnet CIDR" /></Col>
                           <Col xs={{ span: 2 }}>
                             <Form>
-                              <Form.Group controlId="select-type">
+                            <Form.Group controlId="select-type">
                                 <Form.Control
                                   className="select-blueprint-edit"
                                   defaultValue="defa"
                                   as="select"
                                   size="sm"
+
                                   custom
                                 >
                                   <option value="defa" disabled>
                                     Select one
                                   </option>
-                                  <option>1</option>
-                                  <option>2</option>
-                                  <option>3</option>
-                                  <option>4</option>
-                                  <option>5</option>
+                                  <option>Public</option>
+                                  <option>Private</option>
                                 </Form.Control>
                               </Form.Group>
                             </Form>
                           </Col>
+                          <Col xs={{ span: 2 }}> <Button
+                  className=" media-body"
+                  variant="primary"
+                  onClick={this._createSubnet.bind(this)}
+                  size="sm"
+                >
+                  Create
+                </Button></Col>
                         </Row>
                         <div id="accordion-inner" className="collapse">
                           <Row className="font-weight-bold py-3 ">
