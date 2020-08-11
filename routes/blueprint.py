@@ -58,11 +58,12 @@ async def create_subnet():
         nw_type = data['nw_type']
         name = data['name']
         network_layout_created = netutils.create_subnet(network,nw_name,project,nw_type,name)
+        print(network_layout_created)
         if network_layout_created:
             return  jsonify({'status': '200'})
         else:
             return jsonify({'status': '500', 'msg': 'Subnet  creation failed'})
-    return  jsonify({'status': '500', 'msg': 'Subnet creation failed'})
+    
 
 
 @app.route('/blueprint/hosts/get', methods=['GET'])
