@@ -59,6 +59,7 @@ async def start_cloning(project):
     con.close()
     return False
 
+
 async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     con = create_db_con()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
