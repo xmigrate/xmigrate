@@ -12,7 +12,7 @@ import asyncio
 import os
 import asyncio, json
 
-def start_conversion(project):
+async def start_conversion(project):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)

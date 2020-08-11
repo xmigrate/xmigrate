@@ -7,7 +7,7 @@ from model.project import Project
 import string, random
 
 # Provision the resource group.
-def create_rg(project):
+async def create_rg(project):
     con = create_db_con()
     rg_location = Project.objects(name=project)[0]['location']
     rg_name =''.join(random.choices(string.ascii_uppercase +
