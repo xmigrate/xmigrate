@@ -15,13 +15,13 @@ async def call_start_build(project):
     await start_build(project)
 
 async def start_infra_build(project):
-    rg_created = await resource_group.create_rg(project)
+    rg_created = resource_group.create_rg(project)
     if rg_created:
-        disk_created = await disk.create_disk(project)
+        disk_created = disk.create_disk(project)
         if disk_created:
-            network_created = await network.create_nw(project)
+            network_created = network.create_nw(project)
             if network_created:
-                vm_created = await compute.create_vm(project)
+                vm_created = compute.create_vm(project)
                 if vm_created:
                     print("VM created")     
                 else:
@@ -42,15 +42,15 @@ async def start_build(project):
         if p[0]['provider'] == "azure":
             cloning_completed = await asyncio.create_task(disk.start_cloning(project))
             if cloning_completed:
-                converted = await disk.start_conversion(project)
+                converted =  disk.start_conversion(project)
                 if converted:
-                    rg_created = await resource_group.create_rg(project)
+                    rg_created =  resource_group.create_rg(project)
                     if rg_created:
-                        disk_created = await disk.create_disk(project)
+                        disk_created =  disk.create_disk(project)
                         if disk_created:
-                            network_created = await network.create_network(project)
+                            network_created =  network.create_network(project)
                             if network_created:
-                                vm_created = await compute.create_vm(project)
+                                vm_created =  compute.create_vm(project)
                                 if vm_created:
                                     print("VM created")     
                                 else:
