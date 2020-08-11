@@ -181,11 +181,10 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
                     BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=nw[0]['cidr'],
                          ports=machine['ports'], cores=machine['cores'], public_route=subnet_type, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='0', upsert=True)
                     con.close()
-                    return True
                 except Exception as e:
                     print("Error while updating BluePrint: "+str(e))
                     con.close()
-                    return False
+            return True       
         else:
             return True
     except Exception as e:
