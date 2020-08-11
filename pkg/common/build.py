@@ -21,7 +21,7 @@ async def start_infra_build(project):
         if disk_created:
             network_created = await network.create_nw(project)
             if network_created:
-                vm_created = compute.create_vm(project)
+                vm_created = await compute.create_vm(project)
                 if vm_created:
                     print("VM created")     
                 else:
