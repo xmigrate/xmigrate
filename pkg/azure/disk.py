@@ -12,7 +12,7 @@ import asyncio
 import os
 import asyncio, json
 
-async def start_conversion(project):
+def start_conversion(project):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
@@ -24,8 +24,9 @@ async def start_conversion(project):
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))
                 return False
+        con.close()
         return True
-    con.close()
+    
 
 
 async def start_cloning(project):
@@ -105,7 +106,7 @@ def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     finally:
         con.close()'''
 
-async def create_disk(project):
+def create_disk(project):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]['resource_group']
     location = Project.objects(name=project)[0]['location']
