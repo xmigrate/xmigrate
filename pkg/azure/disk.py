@@ -81,7 +81,7 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     )
     image_resource = async_creation.result()
     try:
-        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status=40)
+        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
     except Exception as e:
         print("disk creation updation failed: "+repr(e))
     finally:
