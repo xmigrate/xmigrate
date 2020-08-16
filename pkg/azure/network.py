@@ -38,7 +38,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
     try:
         con = create_db_con()
         print(subnet_result.id)
-        BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id,status='47')
+        BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='47')
     except Exception as e:
         print("Subnet creation failed to save: "+repr(e))
         return False
