@@ -54,7 +54,7 @@ def create_vm(project):
     location = Project.objects(name=project)[0]['location']
     subscription_id = Project.objects(name=project)[0]['subscription_id']
     username = "xmigrate"
-    password = "xmigrate"
+    password = "Xmigrate@13"
     machines = BluePrint.objects(project=project)
     for machine in machines:
         vm_name = machine['host']
