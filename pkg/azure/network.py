@@ -37,7 +37,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
         "Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
     try:
         con = create_db_con()
-        BluePrint.objects(subnet=cidr).update(subnet_id=subnet_result.id,status='47')
+        BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='47')
     except Exception as e:
         print("Subnet creation failed to save: "+repr(e))
         return False
@@ -123,6 +123,9 @@ def create_nw(project):
                 ip_name = machine['host']
                 subnet_id = machine['subnet_id'] 
                 create_publicIP(project, rg_name, ip_name, location, subnet_id,machine['host'])
+        else:
+            con.close()
+            return False
     con.close()
     return True
 
