@@ -119,7 +119,7 @@ def create_nw(project):
             subnet_name = project+"subnet"+str(c)
             subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i)
         if subnet_created:
-            machines = BluePrint.objects(project=project).to_json()
+            machines = BluePrint.objects(project=project)
             for machine in machines:
                 ip_name = machine['host']
                 subnet_id = machine['subnet_id'] 
