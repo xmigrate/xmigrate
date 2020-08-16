@@ -2,7 +2,8 @@
 # is installed automatically with the other libraries.
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.compute import ComputeManagementClient
-from model import blueprint, project
+from model.project import *
+from model.blueprint import *
 from utils.dbconn import *
 
 
