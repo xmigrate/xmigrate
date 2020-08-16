@@ -48,7 +48,7 @@ async def start_build(project):
                     if rg_created:
                         disk_created =  disk.create_disk(project)
                         if disk_created:
-                            network_created =  network.create_network(project)
+                            network_created =  network.create_nw(project)
                             if network_created:
                                 vm_created =  compute.create_vm(project)
                                 if vm_created:
