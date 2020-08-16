@@ -42,8 +42,8 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
     try:
         con = create_db_con()
         BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status=100)
-    except:
-        print("disk creation updation failed")
+    except Exception as e:
+        print("VM creation updation failed: "+repr(e))
     finally:
         con.close()
 
