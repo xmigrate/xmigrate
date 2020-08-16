@@ -72,7 +72,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
         
     print("Provisioning a public NIC ...some operations might take a minute or two.")
     poller = network_client.network_interfaces.create_or_update(rg_name,
-                                                                nic_name,
+                                                                host,
                                                                 {
                                                                     "location": location,
                                                                     "ip_configurations": [{
