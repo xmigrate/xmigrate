@@ -76,7 +76,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
                                                                 {
                                                                     "location": location,
                                                                     "ip_configurations": [{
-                                                                        "name": ip_config_name,
+                                                                        "name": host,
                                                                         "subnet": {"id": subnet_id},
                                                                         "public_ip_address": {"id": ip_address_result.id}
                                                                     }]
