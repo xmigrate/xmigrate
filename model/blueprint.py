@@ -19,5 +19,5 @@ class BluePrint(Document):
     route_table = StringField(required=False, max_length=100)
     vm_id = StringField(required=False, max_length=100)
     project = StringField(required=True, max_length=50,unique=True)
-    nic_id = StringField(max_length=100)
+    nic_id = StringField(max_length=200)
 
