@@ -8,7 +8,7 @@ from utils.dbconn import *
 
 
 
-def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name):
+def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project):
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     print(
         "Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
@@ -61,5 +61,5 @@ def create_vm(project):
         vm_type = machine['machine_type']
         nic_id = machine['nic_id']
         image_name = machine['image_id']
-        create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name)
+        create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project)
     con.close()

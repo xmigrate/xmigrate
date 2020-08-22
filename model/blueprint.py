@@ -21,3 +21,4 @@ class BluePrint(Document):
     project = StringField(required=True, max_length=50,unique=True)
     nic_id = StringField(max_length=200)
 
+
