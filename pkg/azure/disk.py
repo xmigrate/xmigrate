@@ -24,8 +24,9 @@ def start_conversion(project):
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))
                 return False
+        con.close()
         return True
-    con.close()
+    
 
 
 async def start_cloning(project):
@@ -58,7 +59,8 @@ async def start_cloning(project):
     con.close()
     return False
 
-def create_disk_worker(project,rg_name,uri,disk_name,location,f):
+
+async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     con = create_db_con()
     compute_client = get_client_from_cli_profile(ComputeManagementClient)
     async_creation = compute_client.images.create_or_update(
@@ -79,9 +81,9 @@ def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     )
     image_resource = async_creation.result()
     try:
-        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status=40)
-    except:
-        print("disk creation updation failed")
+        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
+    except Exception as e:
+        print("disk creation updation failed: "+repr(e))
     finally:
         con.close()
 
