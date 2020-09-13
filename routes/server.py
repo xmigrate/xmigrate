@@ -1,8 +1,10 @@
 from __main__ import app
 from pkg.common.nodes import *
-from flask import request,render_template
+from quart import request,render_template
+from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/add/servers', methods=['POST'])
+@jwt_required
 def add_servers():
   if request.method == 'POST':
     ips = request.form['ips']

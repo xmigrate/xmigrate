@@ -3,10 +3,12 @@ import pexpect
 from utils.dbconn import *
 from model.discover import *
 import ast
-from flask import render_template,Flask,jsonify, flash, request
+from quart import render_template,Flask,jsonify, flash, request
+from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/')
 @app.route('/index')
+@jwt_required
 def index():
    # pexpect.run('rm ../ansible/log.txt')
     #pexpect.run('touch ../ansible/log.txt')
@@ -15,4 +17,4 @@ def index():
    # result = ast.literal_eval(result)
     #con.close()
     #return render_template('index.html', title='Home')
-    return jsonify({"message":"fuck you!!"})
+    return jsonify({"message":"Good luck"})

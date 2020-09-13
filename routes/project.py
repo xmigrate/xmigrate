@@ -2,9 +2,10 @@ from __main__ import app
 import os
 from quart import jsonify, request
 from pkg.common import project
-
+from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/project/create', methods=['POST'])
+@jwt_required
 async def project_create():
     if request.method == 'POST':
         data = await request.get_json()
@@ -21,13 +22,17 @@ async def project_create():
 
 
 @app.route('/project/get', methods=['GET'])
-def project_get():
+@jwt_required
+async def project_get():
     if request.method == 'GET':
         name = request.args.get('name')
-        return jsonify(project.get_project(name))
+        current_user = get_jwt_identity()
+        print(current_user)
+        return jsonify(project.get_project(name)), 200
 
 
 @app.route('/project/update', methods=['POST'])
+@jwt_required
 async def project_update():
     if request.method == 'POST':
         data = await request.get_json()

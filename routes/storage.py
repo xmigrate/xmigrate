@@ -2,9 +2,11 @@ from __main__ import app
 import os
 from quart import jsonify, request
 from pkg.azure import storage as st
+from quart_jwt_extended import jwt_required, get_jwt_identity
 
 
 @app.route('/storage/create', methods=['POST'])
+@jwt_required
 async def storage_create():
     if request.method == 'POST':
         data = await request.get_json()
@@ -19,6 +21,7 @@ async def storage_create():
             return jsonify({'status': '500'})
 
 @app.route('/storage/get', methods=['GET'])
+@jwt_required
 def storage_get():
     if request.method == 'GET':
         name = request.args.get('name')
@@ -26,6 +29,7 @@ def storage_get():
 
 
 @app.route('/storage/update', methods=['POST'])
+@jwt_required
 async def storage_update():
     if request.method == 'POST':
         data = await request.get_json()
