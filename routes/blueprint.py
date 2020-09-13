@@ -12,15 +12,19 @@ import json
 import asyncio
 from pkg.azure import disk
 from concurrent.futures import ProcessPoolExecutor
+from quart_jwt_extended import jwt_required, get_jwt_identity
+
 executor = ProcessPoolExecutor(max_workers=5)
 
 @app.route('/blueprint')
+@jwt_required
 def blueprint():
     con = create_db_con()
     return Discover.objects.to_json()
 
 
 @app.route('/blueprint/network/create', methods=['POST'])
+@jwt_required
 async def create_nw():
     if request.method == 'POST':
         data = await request.get_json()
@@ -35,6 +39,7 @@ async def create_nw():
     return  jsonify({'status': '500', 'msg': 'Network creation failed'})
 
 @app.route('/blueprint/network/get', methods=['GET'])
+@jwt_required
 async def get_nw():
     if request.method == 'GET':
         project = request.args.get('project')
@@ -42,6 +47,7 @@ async def get_nw():
         return  jsonify(netutils.fetch_nw(project))
 
 @app.route('/blueprint/subnet/get', methods=['GET'])
+@jwt_required
 async def get_subnet():
     if request.method == 'GET':
         network = request.args.get('network')
@@ -49,6 +55,7 @@ async def get_subnet():
         return  jsonify(netutils.fetch_subnet(project,network))
 
 @app.route('/blueprint/subnet/create', methods=['POST'])
+@jwt_required
 async def create_subnet():
     if request.method == 'POST':
         data = await request.get_json()
@@ -67,6 +74,7 @@ async def create_subnet():
 
 
 @app.route('/blueprint/hosts/get', methods=['GET'])
+@jwt_required
 async def get_hosts():
     if request.method == 'GET':
         project = request.args.get('project')
@@ -74,6 +82,7 @@ async def get_hosts():
 
 
 @app.route('/blueprint/update', methods=['POST'])
+@jwt_required
 async def update_blueprint():
     if request.method == 'POST':
         data = await request.get_json()
@@ -87,6 +96,7 @@ async def update_blueprint():
 
 
 @app.route('/blueprint/create', methods=['POST'])
+@jwt_required
 async def create_blueprint():
     if request.method == 'POST':
         data = await request.get_json()
@@ -103,6 +113,7 @@ async def create_blueprint():
 
 
 @app.route('/blueprint/build', methods=['POST'])
+@jwt_required
 async def build_blueprint():
     if request.method == 'POST':
         project = await request.get_json()
@@ -114,6 +125,7 @@ async def build_blueprint():
 
 
 @app.route('/blueprint/image/convert', methods=['POST'])
+@jwt_required
 async def image_convert():
     if request.method == 'POST':
         project = await request.get_json()
@@ -124,6 +136,7 @@ async def image_convert():
         return jsonify({"msg":"cannot read project name","status":500})
 
 @app.route('/blueprint/infra/all', methods=['POST'])
+@jwt_required
 async def infra_build():
     if request.method == 'POST':
         project = await request.get_json()

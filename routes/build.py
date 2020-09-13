@@ -1,10 +1,11 @@
 from __main__ import app
 from utils.dbconn import *
 from model.discover import *
-from flask import jsonify
-
+from quart import jsonify
+from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/start/building', methods=['POST','GET'])
+@jwt_required
 def start_building():
     con = create_db_con()
     machines = json.loads(BluePrint.objects.to_json())

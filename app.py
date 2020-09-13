@@ -10,6 +10,7 @@ import boto3
 import sys
 from quart import Quart, g, request
 from quart_cors import cors
+from quart_jwt_extended import JWTManager
 
 sys.path.append('./')
 
@@ -20,8 +21,11 @@ app = Quart(__name__)
 
 app = cors(app, allow_origin="*")
 
-app.secret_key = getenv("SECRET")
+app.config['JWT_SECRET_KEY'] = 'try2h@ckT415'  # Change this!
+jwt = JWTManager(app)
 
+
+app.secret_key = getenv("SECRET")
 bucket_name = getenv("BUCKET")
 
 from routes.stream import *
@@ -34,6 +38,7 @@ from routes.build import *
 from routes.blueprint import *
 from routes.project import *
 from routes.storage import *
+from routes.auth import *
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

@@ -244,3 +244,23 @@ response
   "project": "testproject",
   "machines": [{"hostname":"localhost.localdomain","machine_type":"B2S","type":"private", "subnet":"192.168.1.0/24"}]
 }
+14)/login POST
+{
+    "username":"vishnu",
+    "password":"vishnu"
+}
+
+response:
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1OTk5OTE1MTEsIm5iZiI6MTU5OTk5MTUxMSwianRpIjoiMjg0YWMyZDYtZjcyNS00NzkwLTkyZTgtYWY2YzQyMjgyZWU1IiwiZXhwIjoxNTk5OTkyNDExLCJpZGVudGl0eSI6InZpc2hudSIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.taAIbCIKJ3bQjDXa29P_skZtcBJ_BQQsv0f088VWqbM"
+}
+15)/signup POST
+{
+    "username":"vishnu",
+    "password":"vishnu"
+}
+
+response:
+{
+  "msg": "User added successfully"
+}

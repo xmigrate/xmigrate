@@ -4,8 +4,10 @@ from model.discover import *
 from pkg.common import nodes as n
 import os
 from quart import jsonify, request
+from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/discover',methods=['POST','GET'])
+@jwt_required
 async def discover():
     con = create_db_con()
     Discover.objects.delete()
