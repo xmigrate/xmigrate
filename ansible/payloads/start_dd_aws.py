@@ -6,7 +6,7 @@ from os import getenv
 
 load_dotenv()
 
-db_con_string = getenv("DB")
+db_con_string = getenv("MONGO_DB")
 
 con = connect(host=db_con_string)
 bucket = getenv("BUCKET")
@@ -24,8 +24,8 @@ class BluePrint(Document):
     status = StringField(required=False, max_length=100)
     ami_id = StringField(required=False, max_length=100)
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Started cloning')
+BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='10')
 os.system('sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://'+bucket+'/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA')
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='Completed cloning')
+BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='25')
 con.close()

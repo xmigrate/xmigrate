@@ -264,3 +264,11 @@ response:
 {
   "msg": "User added successfully"
 }
+
+Status codes
+------------
+
+Started cloning : 10
+Cloning completed: 25
+Start converting: 32
+Conversion completed: 36
