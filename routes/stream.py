@@ -1,8 +1,10 @@
 from __main__ import app
 from quart import jsonify
 from utils.log_reader import *
+from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/stream')
+@jwt_required
 def stream():
     line = ''
     line = read_logs()

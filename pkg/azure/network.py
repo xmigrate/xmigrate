@@ -19,8 +19,9 @@ def create_vnet(rg_name, vnet_name, cidr, location):
         "Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
     try:
         BluePrint.objects(network=cidr).update(vpc_id=vnet_result.name,status='43')
-    except:
-        print("Vnet creation failed to save")
+    except Exception as e:
+        print("Vnet creation failed to save: "+repr(e))
+        return False
     finally:
         con.close()
     return True
@@ -36,9 +37,11 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
         "Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
     try:
         con = create_db_con()
-        BluePrint.objects(subnet=cidr).update(subnet_id=subnet_result.id,status='47')
-    except:
-        print("Subnet creation failed to save")
+        print(subnet_result.id)
+        BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='47')
+    except Exception as e:
+        print("Subnet creation failed to save: "+repr(e))
+        return False
     finally:
         con.close()
     return True
@@ -62,18 +65,18 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     try:
         con = create_db_con()
         BluePrint.objects(project=project).update(status='50')
-    except:
-        print("Public IP creation failed")
+    except Exception as e:
+        print("Public IP creation failed: "+repr(e))
     finally:
         con.close()
         
     print("Provisioning a public NIC ...some operations might take a minute or two.")
     poller = network_client.network_interfaces.create_or_update(rg_name,
-                                                                nic_name,
+                                                                host,
                                                                 {
                                                                     "location": location,
                                                                     "ip_configurations": [{
-                                                                        "name": ip_config_name,
+                                                                        "name": host,
                                                                         "subnet": {"id": subnet_id},
                                                                         "public_ip_address": {"id": ip_address_result.id}
                                                                     }]
@@ -85,8 +88,8 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     try:
         con = create_db_con()
         BluePrint.objects(project=project,host=host).update(status='53', nic_id=nic_result.id)
-    except:
-        print("Nework interface creation failed")
+    except Exception as e:
+        print("Nework interface creation failed:"+repr(e))
     finally:
         con.close()
    
@@ -115,12 +118,15 @@ def create_nw(project):
         for i in subnet:
             subnet_name = project+"subnet"+str(c)
             subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i)
-        if True in subnet_created:
-            machines = BluePrint.objects(project=project).to_json()
+        if subnet_created:
+            machines = BluePrint.objects(project=project)
             for machine in machines:
                 ip_name = machine['host']
                 subnet_id = machine['subnet_id'] 
                 create_publicIP(project, rg_name, ip_name, location, subnet_id,machine['host'])
+        else:
+            con.close()
+            return False
     con.close()
     return True
 

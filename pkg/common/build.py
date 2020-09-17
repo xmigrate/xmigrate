@@ -5,7 +5,7 @@ from model.disk import *
 from utils.log_reader import *
 from utils.dbconn import *
 import time
-from pkg.azure import network as nw
+from pkg.azure import network
 from pkg.azure import disk
 from pkg.azure import resource_group
 from pkg.azure import compute
@@ -19,7 +19,7 @@ async def start_infra_build(project):
     if rg_created:
         disk_created = await disk.create_disk(project)
         if disk_created:
-            network_created = nw.create_nw(project)
+            network_created = network.create_nw(project)
             if network_created:
                 vm_created = compute.create_vm(project)
                 if vm_created:
@@ -42,15 +42,15 @@ async def start_build(project):
         if p[0]['provider'] == "azure":
             cloning_completed = await asyncio.create_task(disk.start_cloning(project))
             if cloning_completed:
-                converted = disk.start_conversion(project)
+                converted =  disk.start_conversion(project)
                 if converted:
-                    rg_created = resource_group.create_rg(project)
+                    rg_created =  resource_group.create_rg(project)
                     if rg_created:
-                        disk_created = disk.create_disk(project)
+                        disk_created =  disk.create_disk(project)
                         if disk_created:
-                            network_created = nw.create_network(project)
+                            network_created =  network.create_nw(project)
                             if network_created:
-                                vm_created = compute.create_vm(project)
+                                vm_created =  compute.create_vm(project)
                                 if vm_created:
                                     print("VM created")     
                                 else:
