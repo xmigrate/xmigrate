@@ -75,6 +75,6 @@ async def start_build(project):
         elif project['provider'] == "aws":
             cloning_completed = await asyncio.create_task(awsdisk.start_cloning(project))
             if cloning_completed:
-                ami_created = await ami.start_ami_creation()
+                ami_created = await ami.start_ami_creation(project)
     else:
         print("No such project")

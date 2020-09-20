@@ -2,10 +2,31 @@ import pexpect, os, sys, time
 from mongoengine import *
 from model.blueprint import *
 from utils.dbconn import *
+from model.storage import Bucket
+import asyncio
 
-def start_ami_creation(project):
-   #bucket=?
-   #img_name=?
+
+async def start_ami_creation(project):
+   con = create_db_con()
+   try:
+      bucket = Bucket.objects(project=project)
+      images = BluePrint.objects(project=project)
+      con.close()
+      bucket_name = bucket['bucket']
+   except Exception as e:
+      print(repr(e))
+   finally:
+      con.close()
+   for image in images:
+      image_name = image['host']+'.img'
+      await asyncio.start_ami_creation_worker(bucket_name, image_name)
+   return True
+   
+      
+
+
+
+async def start_ami_creation_worker(bucket_name, image_name):
     file_trust_policy = open('trust-policy.json', 'w')
     s='''{
        "Version":"2012-10-17",
@@ -72,7 +93,7 @@ def start_ami_creation(project):
         "Format": "raw",
         "UserBucket": {
             "S3Bucket": "'''+bucket_name+'''",
-            "S3Key": "'''+nsg_filename+'''"
+            "S3Key": "'''+image_name+'''"
         }
     }]'''
     file_containers.write(s)
@@ -95,7 +116,7 @@ def start_ami_creation(project):
         con = create_db_con()
         time.sleep(120) # delays for 120 seconds
         progress_start='Progress": "'
-        BluePrint.objects(host=nsg_filename.replace('.img','')).update(status='Started conversion')
+        BluePrint.objects(host=image_name.replace('.img','')).update(status='30')
         if progress_start in progress_output:
             progress = (progress_output.split(progress_start))[1].split('"')[0]
             BluePrint.objects(host=nsg_filename.replace('.img','')).update(status='32')
@@ -103,10 +124,10 @@ def start_ami_creation(project):
             print(progress_output)
         if "completed" in progress_output:
             output = "success"
-            BluePrint.objects(host=nsg_filename.replace('.img','')).update(status='36')
+            BluePrint.objects(host=image_name.replace('.img','')).update(status='36')
     print('***********************************************************')
     print('***     Image has been successfully imported to EC2     ***')
     print('***********************************************************')
     print(amiid)
-    BluePrint.objects(host=nsg_filename.replace('.img','')).update(image_id=amiid)
+    BluePrint.objects(host=image_name.replace('.img','')).update(image_id=amiid)
     con.close()
