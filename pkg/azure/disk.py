@@ -8,7 +8,6 @@ from model.disk import *
 from model.storage import *
 from model.blueprint import *
 from pkg.azure import conversion_worker as cw
-import asyncio
 import os
 import asyncio, json
 
