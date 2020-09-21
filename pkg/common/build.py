@@ -76,5 +76,21 @@ async def start_build(project):
             cloning_completed = await asyncio.create_task(awsdisk.start_cloning(project))
             if cloning_completed:
                 ami_created = await ami.start_ami_creation(project)
+                if ami_created:
+                    network_created = await awsnw.create_nw(project)
+                    if network_created:
+                        ec2_created = ec2.build_ec2(project)
+                        if ec2_created:
+                            print("ec2 creation successfull")
+                        else:
+                            print("ec2 creation failed")
+                    else:
+                        print("Network creation failed")
+                else:
+                    print("ami creation failed")
+            else:
+                print("Cloning failed")
+        else:
+            print("No such provider")
     else:
         print("No such project")

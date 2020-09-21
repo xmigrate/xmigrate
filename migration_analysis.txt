@@ -272,3 +272,8 @@ Started cloning : 10
 Cloning completed: 25
 Start converting: 32
 Conversion completed: 36
+Network created: 43
+Subnet created: 60
+Start VM creation: 95
+VM created: 100
+

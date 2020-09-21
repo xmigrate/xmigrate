@@ -1,13 +1,14 @@
 from utils.dbconn import *
 import os
 from model.blueprint import *
+from model.storage import *
 
 async def start_cloning(project):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "azure":
-        storage = Storage.objects(project=project)[0]['storage']
-        accesskey = Storage.objects(project=project)[0]['access_key']
-        container = Storage.objects(project=project)[0]['container']
+    if Project.objects(name=project)[0]['provider'] == "aws":
+        bucket = Bucket.objects(project=project)[0]['bucket']
+        accesskey = Bucket.objects(project=project)[0]['access_key']
+        secret_key = Bucket.objects(project=project)[0]['secret_key']
         os.popen('echo null > ./logs/ansible/migration_log.txt')
         print('ansible-playbook ./ansible/aws/start_migration.yaml > ./logs/ansible/migration_log.txt')
         os.popen('ansible-playbook ./ansible/aws/start_migration.yaml > ./logs/ansible/migration_log.txt')
