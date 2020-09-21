@@ -17,34 +17,75 @@ import Auth from '../../services/Auth';
 export default class SignIn extends Component {
   constructor(props){
     super()
-    this.state = {}
+    let input = {};
+    input["UserId"] = "";
+    input["password"] = "";                                                                                                                           
+    this.state = {
+      input:input,
+      errors:{}
+    }
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-
-
-  Changemail(e){
-    this.setState({email:e.target.value});
-    console.log(e.target.value);
+  handleChange(event) {
+    let input = this.state.input;
+    input[event.target.name] = event.target.value;
+    this.setState({
+      input
+    });
   }
 
-  ChangePass(e){
-    this.setState({pass:e.target.value});
-  }
-  ClikedLogin(e){
-    e.preventDefault();
-    // var data={
-    //   "username":this.state.email,
-    //   "password":this.state.password
-    // }
-    // PostService(LOGIN, data).then((data) => {
-    //   console.log(data)
-    // })
-    Auth.login(() => {
-      this.props.history.push("/home");
-
+  async handleSubmit(event) {
+    event.preventDefault();
+    if(this.validate()){
+        console.log(this.state);
+           var data={
+      "username":this.state.input["UserId"],
+      "password":this.state.input["password"]
+    }
+    console.log(data);
+    //Posting to server
+    await PostService(LOGIN, data).then((res) => {
+      let input = {};
+      input["UserId"] = "";
+      input["password"] = "";
+      this.setState({input:input});
+      let k = res.data;
+      console.log(k);
+      console.log(k.access_token)
+      Auth.login(() => {
+        this.props.history.push("/home");
+      })
     })
     
+    }
   }
+
+  validate(){
+    let input = this.state.input;
+    let errors = {};
+    let isValid = true;
+
+    if (!input["UserId"]) {
+      isValid = false;
+      errors["UserId"] = "Please enter your UserId.";
+    }
+
+
+    if (!input["password"]) {
+      isValid = false;
+      errors["password"] = "Please enter your password.";
+    }
+
+ 
+
+    this.setState({
+      errors: errors
+    });
+    return isValid;
+}
+
 
   render() {
     return (
@@ -61,16 +102,17 @@ export default class SignIn extends Component {
                 </Card.Header>
                <Card.Body>
                  
-                   <Form className="FormStyle">
+                   <Form className="FormStyle" onSubmit={this.handleSubmit}>
                     <Form.Group className="register bg-blue">
-                      <Form.Label >Email Id</Form.Label>
+                      <Form.Label >User Id</Form.Label>
                       <Form.Control
                         type="text"
-                        onChange = {this.Changemail.bind(this)}
+                        value={this.state.input.UserId}
+                        onChange={this.handleChange}
                         id="exampleInputEmail1"
                         aria-describedby="emailHelp"
                         placeholder="Enter email"
-                        name="email"
+                        name="UserId"
                       />
                     </Form.Group>
                     <Form.Group>
@@ -79,7 +121,8 @@ export default class SignIn extends Component {
                       </Form.Label>
                       <Form.Control
                         type="password"
-                        onChange = {this.ChangePass.bind(this)}
+                        value={this.state.input.password}
+                        onChange={this.handleChange}
                         id="exampleInputPassword1"
                         placeholder="Password"
                         name="password"
@@ -88,7 +131,6 @@ export default class SignIn extends Component {
                     <Button
                       type="submit"
                       className="btn btn-secondary col-lg-12"
-                      onClick={this.ClikedLogin.bind(this)}
                     >
                       Login<FaAngleRight size={20}/>
                     </Button>
