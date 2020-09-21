@@ -15,6 +15,10 @@ import {
   BLUEPRINT_URL,
   BLUEPRINTNET_NETWORK_CREATE_URL,
   BLUEPRINTNET_NETWORK_GET_URL,
+  BLUEPRINTNET_SUBNET_POST_URL,
+  BLUEPRINTNET_SUBNET_GET_URL,
+  BLUEPRINTNET_HOST_GET_URL,
+  BLUEPRINTNET_BUILD_POST_URL
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 export default class BluePrint extends Component {
@@ -144,11 +148,40 @@ export default class BluePrint extends Component {
       project: this.state.project,
       nw_name:this.state.nameNetwork,
       nw_type: "public",
-      name:nameSubnet
+      name:this.state.nameSubnet
     };
-  
+    await PostService(BLUEPRINTNET_SUBNET_POST_URL, data).then((res) => {
+      console.log("data from response of subnet post",res.data);
+    });
+    var dataGet={
+      project : this.state.project,
+      network :this.state.nameNetwork
+    };
+
+    await GetServiceWithData(BLUEPRINTNET_SUBNET_GET_URL, dataGet).then((res) => {
+      console.log("data from response of subnet get",res.data);
+    });
+    var dataGet2={
+      project : this.state.project
+    };
+    await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, dataGet2).then((res) => {
+      var datajson = res.data[this.state.nameNetwork][0];
+      console.log("data from response of host get",datajson );
+      this.state.SubnetData.push(datajson);
+      this.setState({ state: this.state });
+    });
   
   }
+
+  async _createBuild() {
+    var dataGet2={
+      project : this.state.project
+    };
+    await PostService(BLUEPRINTNET_BUILD_POST_URL, dataGet2).then((res) => {
+      console.log("data from response of Build post",res.data);
+    });
+  }
+
 
   _setCIDR(e) {
     this.setState({
@@ -354,6 +387,13 @@ export default class BluePrint extends Component {
                   Create
                 </Button></Col>
                         </Row>
+
+
+
+
+{/* Subnet table */}
+ {this.state.SubnetData.map((data, index) => (
+
                         <div id="accordion-inner" className="collapse">
                           <Row className="font-weight-bold py-3 ">
                             <Col xs={{ span: 1 }}></Col>
@@ -366,8 +406,8 @@ export default class BluePrint extends Component {
                           </Row>
                           <Row className=" py-3 ">
                             <Col xs={{ span: 1 }}></Col>
-                            <Col xs={{ span: 2 }}>xmigrate</Col>
-                            <Col xs={{ span: 2 }}>192.168.1.5</Col>
+                            <Col xs={{ span: 2 }}>{data[index].host}</Col>
+                            <Col xs={{ span: 2 }}>{data[index].network}</Col>
                             <Col xs={{ span: 2 }}>
                               <Form>
                                 <Form.Group controlId="select-machine-type">
@@ -387,11 +427,12 @@ export default class BluePrint extends Component {
                                 </Form.Group>
                               </Form>
                             </Col>
-                            <Col xs={{ span: 2 }}>xyz</Col>
-                            <Col xs={{ span: 2 }}>abc</Col>
+                            <Col xs={{ span: 2 }}>{data[index].machine_type}</Col>
+                            <Col xs={{ span: 2 }}>{data[index].ip}</Col>
                             <Col xs={{ span: 1 }}>Processing</Col>
                           </Row>
                         </div>
+                             ))}
                       </div>
                     </div>
                   ))}
@@ -400,7 +441,23 @@ export default class BluePrint extends Component {
             </Card.Body>
           </Card> 
 
-
+        <Row className="m-2">
+          <Col>
+          <Button variant="success" size="sm"  block>
+      Save
+    </Button>
+            </Col>
+            <Col>
+            <Button variant="primary" size="sm"  onClick={this._createBuild.bind(this)} block>
+      Build
+    </Button>
+            </Col>
+            <Col>
+            <Button variant="danger" size="sm"  block>
+      Reset
+    </Button>
+            </Col>
+        </Row>
         </Container>
       </div>
     );

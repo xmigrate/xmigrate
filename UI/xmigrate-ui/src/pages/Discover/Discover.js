@@ -11,7 +11,7 @@ export default class Discover extends Component {
 
 
     constructor(props) {
-        super(props)
+        super()
         this.state = {
             showDiscoverMenu: true,
             showDiscoverMenuEdit: false,

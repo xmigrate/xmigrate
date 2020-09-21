@@ -2,7 +2,13 @@ import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 import * as icon from 'react-icons/all'
 import "./HeaderComponent.scss"
+import Auth from '../../services/Auth'
 export default class HeaderComponent extends Component {
+    logout(e){
+        Auth.logout(()=>{
+        })   
+    }
+    
     render() {
         return (
             <div className="HeaderComponent">
@@ -62,7 +68,7 @@ export default class HeaderComponent extends Component {
                                     <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                                         <Link className="dropdown-item listitemscol" to="">Dashboard</Link>
                                         <Link className="dropdown-item listitemscol" to="">Edit Profile</Link>
-                                        <Link className="dropdown-item listitemscol" to="">Log Out</Link>
+                                        <Link className="dropdown-item listitemscol" to="/" onClick={this.logout.bind(this)}>Log Out</Link>
                                     </div>
                                 </li>
                             </ul>
