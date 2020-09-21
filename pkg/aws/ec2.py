@@ -29,7 +29,7 @@ async def build_ec2(project):
         con = create_db_con()
         hosts = BluePrint.objects(project=project)
         for host in hosts:
-            async create_machine(host['subnet_id'],host['image_id'],host['machine_type'])
+            asyncio.create_task(create_machine(host['subnet_id'],host['image_id'],host['machine_type']))
         con.close()
     except Exception as e:
         print(repr(e))

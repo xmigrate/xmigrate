@@ -57,7 +57,7 @@ async def create_nw(project):
           if len(subnet) > 0:
             BluePrint.objects(project=project, network=host['network'], subnet=host['subnet']).update(subnet_id = subnet[0]['subnet_id'],status='60')
           else:
-            subnet_build = build_subnet(host['subnet'],network[0]['vpc_id']),host['public_route'])
+            subnet_build = build_subnet(host['subnet'],network[0]['vpc_id'],host['public_route'], project)
         else:
           vpc_build,vpc_id = build_vpc(host['network'],host['public_route'], project)
           if vpc_build: 
