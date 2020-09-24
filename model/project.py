@@ -7,3 +7,4 @@ class Project(Document):
     name = StringField(required=True, max_length=50,unique=True)
     resource_group = StringField(max_length=100)
     subscription_id = StringField(max_length=100)
+    users = ListField(required=True) 
