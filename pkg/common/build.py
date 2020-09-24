@@ -5,10 +5,17 @@ from model.disk import *
 from utils.log_reader import *
 from utils.dbconn import *
 import time
+
 from pkg.azure import network
+from pkg.aws import disk as awsdisk
 from pkg.azure import disk
 from pkg.azure import resource_group
 from pkg.azure import compute
+
+from pkg.aws import ami
+from pkg.aws import network as awsnw
+from pkg.aws import ec2
+
 import asyncio
 
 async def call_start_build(project):
@@ -66,6 +73,24 @@ async def start_build(project):
             else:
                 print("Disk cloning failed")
         elif project['provider'] == "aws":
-            print("Build failed")
+            cloning_completed = await asyncio.create_task(awsdisk.start_cloning(project))
+            if cloning_completed:
+                ami_created = await ami.start_ami_creation(project)
+                if ami_created:
+                    network_created = await awsnw.create_nw(project)
+                    if network_created:
+                        ec2_created = ec2.build_ec2(project)
+                        if ec2_created:
+                            print("ec2 creation successfull")
+                        else:
+                            print("ec2 creation failed")
+                    else:
+                        print("Network creation failed")
+                else:
+                    print("ami creation failed")
+            else:
+                print("Cloning failed")
+        else:
+            print("No such provider")
     else:
         print("No such project")
