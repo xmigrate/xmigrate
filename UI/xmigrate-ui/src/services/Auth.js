@@ -4,17 +4,27 @@ class Auth{
     }
 
     login(cb){
+
         this.authenticated = true;
+
     cb();
     }
 
     logout(cb){
         this.authenticated =false;
+        localStorage.removeItem('auth_token');
         cb();
     }
 
     isAuthenticated(){
-        return this.authenticated;
+        let token = localStorage.getItem('auth_token');
+        if(token!= null){
+            return true;
+        }
+        else{
+            return false;
+        }
+        // return this.authenticated;
     }
 
 }

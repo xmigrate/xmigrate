@@ -52,8 +52,8 @@ export default class SignIn extends Component {
       input["password"] = "";
       this.setState({input:input});
       let k = res.data;
-      console.log(k);
-      console.log(k.access_token)
+      console.log(k.access_token);
+      localStorage.setItem('auth_token', k.access_token);
       Auth.login(() => {
         this.props.history.push("/home");
       })
