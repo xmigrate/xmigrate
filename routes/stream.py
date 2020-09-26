@@ -5,7 +5,7 @@ from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/stream')
 @jwt_required
-def stream():
+async def stream():
     line = ''
     line = read_logs()
     offset= ''
