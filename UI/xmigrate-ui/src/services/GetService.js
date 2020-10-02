@@ -20,7 +20,7 @@ export function GetServiceWithData(API, dataGet) {
     })
     response.then({}).catch(err => {
         console.error(err);
-        // window.location.replace(LOGINURL);
+        window.location.replace("/error");
     })
     return response;
 

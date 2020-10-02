@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import "./SideNavbar.scss"
-import { Link,BrowserRouter } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import * as icon from 'react-icons/all'
 export default class SideNavbar extends Component {
 
@@ -21,18 +21,18 @@ export default class SideNavbar extends Component {
                             </Link>
                         </li>
                         <li className="nav-item p-3">
-                            <Link className="nav-link font-18" to="/report">
+                            <Link className="nav-link font-18 disabled" to="/report">
                                 <icon.BsMap /> Report
                             </Link>
                         </li>
                         <li className="nav-item p-3">
-                            <Link className="nav-link font-18" to="/tutorials">
+                            <Link className="nav-link font-18 disabled" to="/tutorials">
                                 <icon.BsBook /> Tutorials
                             </Link>
                         </li>
                     </ul>
                     <div className="bottombar">
-                        <p className="txtin"><Link className="bluelink" to="">invite your team</Link>
+                        <p className="txtin"><Link className="bluelink" to="">Connect </Link>
                          and <br />start collabrating!
                          </p>
                         <div className="bottomSettings">

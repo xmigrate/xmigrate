@@ -11,8 +11,8 @@ export default function PostService(API, data) {
     }
     let response = Axios.post(API, data, config);
     response.then({}).catch(err => {
-        console.error(err)
-        // window.location.replace(LOGINURL);
+        console.error(err);
+        window.location.replace("/error");
     })
     return response
 }

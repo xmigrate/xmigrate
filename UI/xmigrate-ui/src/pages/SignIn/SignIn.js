@@ -7,12 +7,14 @@ import {
   Card,
   Button
 } from "react-bootstrap";
+import { Link } from 'react-router-dom'
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
 import { FaAngleRight } from "react-icons/fa";
 import "./SignIn.scss";
 import PostService from '../../services/PostService';
-import { LOGIN } from '../../services/Services';
+import { LOGIN,GETPROJECTS } from '../../services/Services';
 import Auth from '../../services/Auth';
+import GetService from '../../services/GetService';
 
 export default class SignIn extends Component {
   constructor(props){
@@ -54,9 +56,22 @@ export default class SignIn extends Component {
       let k = res.data;
       console.log(k.access_token);
       localStorage.setItem('auth_token', k.access_token);
-      Auth.login(() => {
-        this.props.history.push("/home");
+
+       GetService(GETPROJECTS).then((res)=>{
+        console.log(res);
+        if(res.data === "[]"){
+          Auth.login(() => {
+            this.props.history.push("/project");
+          })
+        }
+        else{
+          Auth.login(() => {
+            this.props.history.push("/home");
+          })
+        }
+        
       })
+
     })
     
     }
@@ -134,8 +149,15 @@ export default class SignIn extends Component {
                     >
                       Login<FaAngleRight size={20}/>
                     </Button>
-                    <div className="forgotPassword">
+                    <div>
+                    <div className="forgotPassword float-left">
                       <span className="btn text-muted">Forgot Password?</span>
+                    </div>
+                    <div className="forgotPassword float-right">
+                    <Link  to="/SignUp" >
+                      <span className="btn text-muted">SignUp</span>
+                      </Link>
+                    </div>
                     </div>
                   </Form>  
                 </Card.Body>

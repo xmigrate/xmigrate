@@ -1,8 +1,6 @@
 import React, { Component } from 'react'
 import HeaderComponent from '../../components/HeaderComponent/HeaderComponent'
-import SideNavbar from '../../components/SideNavbar/SideNavbar'
-
-import { BrowserRouter as Router,Switch, Route } from "react-router-dom";
+import SideNavbar from '../../components/SideNavbar/SideNavbar';
 import BluePrint from '../BluePrint/BluePrint';
 import Discover from '../Discover/Discover';
 import {ProtectedRoute} from '../../services/Protected.route';

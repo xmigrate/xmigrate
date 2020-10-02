@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import {
     Navbar,
   } from "react-bootstrap";
-import { Link } from 'react-router-dom'
 import "./MainHeaderComponent.scss"
 export default class MainHeaderComponent extends Component {
     render() {

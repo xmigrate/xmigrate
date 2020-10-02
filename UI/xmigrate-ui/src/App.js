@@ -19,7 +19,8 @@ function App() {
           <Route exact path="/signup" component={SignUp} />
           <ProtectedRoute  path="/home" component={Home} />
           <ProtectedRoute  path="/Project" component={Project} />
-          <Route path="*" component={()=>"404 not found"}/>
+  <Route path="/error" component={()=>{return <h2>Sry For the Error!! Will fix it soon</h2>}}/>
+          <Route path="*" component={()=>{return <h2>404 not Found</h2>}}/>
         </Switch>
       </Router>
     </div>

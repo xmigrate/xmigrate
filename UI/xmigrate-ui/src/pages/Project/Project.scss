@@ -47,5 +47,12 @@ html {
   .ProviderCol:hover{
     color:#1da1f2;
   }
+  .ProviderCol:visited{
+    color:#1da1f2;
+  }
+  .ProviderCol.active{
+    color:#1da1f2;
+  }
+
 
 }
