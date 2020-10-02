@@ -9,12 +9,7 @@ from quart_jwt_extended import jwt_required, get_jwt_identity
 async def project_create():
     if request.method == 'POST':
         data = await request.get_json()
-        provider = data['provider']
-        location = data['location']
-        name = data['name']
-        rg = data['resource_group']
-        subid = data['subscription_id']
-        project_created = project.create_project(provider, location, name, rg, subid, get_jwt_identity())
+        project_created = await project.create_project(data, get_jwt_identity())
         if project_created:
             return jsonify({'status': '200'})
         else:
@@ -35,13 +30,8 @@ async def project_get():
 async def project_update():
     if request.method == 'POST':
         data = await request.get_json()
-        provider = data['provider']
-        location = data['location']
-        name = data['name']
-        rg = data['resource_group']
-        subid = data['subscription_id']
         current_user = get_jwt_identity()
-        project_updated = project.update_project(provider, location, name, rg, subid, current_user)
+        project_updated = await project.update_project(data, current_user)
         if project_updated:
             return jsonify({'status': '200'})
         else:

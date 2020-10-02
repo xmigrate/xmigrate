@@ -190,13 +190,17 @@ migration/status
 }
 
 
-5)/project/create
+5)/project/<create/update>
+For Azure:
 {
+  "subscription_id":"11111-1111-111111-111111",
+  "client_id":"11111-1111-111111-111111",
+  "secret_id": "11111-1111-111111-111111",
+  "tenant_id": "11111-1111-111111-111111",
   "provider":"azure",
-  "location":"westeurope",
-  "name":"testproject",
-  "resource_group":"xmigrate",
-  "subscription_id":"xxxx"
+  "resource_group":"xmig",
+  "location":"eastus1",
+  "name":"tesproject4"
 }
 
 6)/project/get?name=<all/projectname>
@@ -263,6 +267,17 @@ response:
 response:
 {
   "msg": "User added successfully"
+}
+
+16)/location/get POST
+Azure
+-------
+{
+  "subscription_id":"1111111111111-11111111-111111",
+  "client_id":"1111111111111-11111111-111111",
+  "secret":"1111111111111-11111111-111111",
+  "tenant_id": "1111111111111-11111111-111111",
+  "provider":"azure"
 }
 
 Status codes
