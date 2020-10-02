@@ -17,3 +17,4 @@ azure-cli-core
 flask_cors
 keyrings.alt 
 Quart-CORS
+quart_jwt_extended
