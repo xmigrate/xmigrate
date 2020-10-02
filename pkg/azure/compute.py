@@ -5,7 +5,7 @@ from azure.mgmt.compute import ComputeManagementClient
 from model.project import *
 from model.blueprint import *
 from utils.dbconn import *
-
+from azure.common.credentials import ServicePrincipalCredentials
 
 
 def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project):
@@ -63,3 +63,38 @@ def create_vm(project):
         image_name = machine['image_id']
         create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project)
     con.close()
+
+
+def list_available_vm_sizes(compute_client, region = 'EastUS2', minimum_cores = 1, minimum_memory_MB = 768):
+    vm_sizes_list = compute_client.virtual_machine_sizes.list(location=region)
+    machine_types = []
+    for vm_size in vm_sizes_list:
+        if vm_size.number_of_cores >= int(minimum_cores) and vm_size.memory_in_mb >= int(minimum_memory_MB): 
+            machine_types.append({"vm_name":vm_size.name, "cores":vm_size.number_of_cores, "osdisk":vm_size.os_disk_size_in_mb, "disk":vm_size.resource_disk_size_in_mb, "memory":vm_size.memory_in_mb, "max_data_disk":vm_size.max_data_disk_count})
+    return machine_types
+
+
+def get_vm_types(project):
+    client = ''
+    location = ''
+    machine_types = []
+    try:
+        con = create_db_con()
+        subscription_id = Project.objects(name=project)[0]['subscription_id']
+        client_id = Project.objects(name=project)[0]['client_id']
+        tenant_id = Project.objects(name=project)[0]['tenant_id']
+        secret_id = Project.objects(name=project)[0]['secret']
+        location = Project.objects(name=project)[0]['location']
+        creds = ServicePrincipalCredentials(client_id=client_id, secret=secret_id, tenant=tenant_id)
+        client = ComputeManagementClient(creds, subscription_id)
+        machine_types = list_available_vm_sizes(client, region = location, minimum_cores = 1, minimum_memory_MB = 768)
+        flag = True
+    except Exception as e:
+        print(repr(e))
+        flag = False
+    con.close()
+    return machine_types, flag
+
+
+                
+            
