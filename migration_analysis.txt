@@ -280,6 +280,14 @@ Azure
   "provider":"azure"
 }
 
+aws
+----
+{
+  "secret_key": "1111111111111-11111111-111111",
+  "access_key": "1111111111111-11111111-111111",
+  "provider":"aws"
+}
+
 17)/vms/get?project=tesproject3  GET
 
 response:

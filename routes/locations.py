@@ -2,6 +2,7 @@ from __main__ import app
 import os
 from quart import jsonify, request
 from pkg.azure import location
+from pkg.aws import location as regions
 from quart_jwt_extended import jwt_required, get_jwt_identity
 
 @app.route('/locations/get', methods=['POST'])
@@ -17,4 +18,10 @@ async def locations_get():
                 return jsonify({'status': '200', 'locations': locations})
             else:
                 return jsonify({'status': '500', 'locations': locations, 'message':"wrong credentials"})
-
+        elif provider == 'aws':
+            access_key, secret_key = data['access_key'], data['secret_key']
+            locations, flag = regions.get_locations(access_key,secret_key)
+            if flag:
+                return jsonify({'status': '200', 'locations': locations})
+            else:
+                return jsonify({'status': '500', 'locations': locations, 'message':"wrong credentials"})
