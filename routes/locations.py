@@ -12,7 +12,7 @@ async def locations_get():
         data = await request.get_json()
         provider = data['provider']
         if provider == 'azure':
-            subscription_id,client_id,secret,tenant_id = data['subscription_id'], data['client_id'], data['secret'], data['tenant_id']
+            subscription_id,client_id,secret,tenant_id = data['subscription_id'], data['client_id'], data['secret_id'], data['tenant_id']
             locations, flag = location.get_locations(subscription_id,client_id,secret,tenant_id)
             if flag:
                 return jsonify({'status': '200', 'locations': locations})
