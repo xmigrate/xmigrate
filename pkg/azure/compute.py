@@ -9,7 +9,14 @@ from azure.common.credentials import ServicePrincipalCredentials
 
 
 def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project):
-    compute_client = get_client_from_cli_profile(ComputeManagementClient)
+    con = create_db_con()
+    client_id = Project.objects(name=project)[0]['client_id']
+    secret = Project.objects(name=project)[0]['secret']
+    tenant_id = Project.objects(name=project)[0]['tenant_id']
+    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
+    compute_client = ComputeManagementClient(creds,subscription_id)
+    con.close()
     print(
         "Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
     print(nic_id)
