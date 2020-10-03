@@ -3,20 +3,23 @@ import { Form, Container, Col, Row, Card, Button } from "react-bootstrap";
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
 import { FaAngleRight, FaAws, FaCloud } from "react-icons/fa";
 import { SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
-import PostService from '../../services/PostService'
+import PostService from "../../services/PostService";
 import "./Project.scss";
-import { LOCATIONPOST } from '../../services/Services';
+import { LOCATIONPOST, CREATEPROJECT } from "../../services/Services";
+import Loader from '../../components/Loader/Loader'
 
 export default class Project extends Component {
-
-  constructor(props){
-    super()
+  constructor(props) {
+    super();
     let input = {};
-    input["provider"] = "";                                                                                                                    
+    input["provider"] = "";
     this.state = {
-      input:input,
-      errors:{}
-    }
+      input: input,
+      status: "Verify",
+      errors: {},
+      locations:[],
+      loader:false
+    };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -24,7 +27,7 @@ export default class Project extends Component {
     let input = this.state.input;
     input[event.target.name] = event.target.value;
     this.setState({
-      input
+      input,
     });
   }
   handleProvider(text) {
@@ -32,52 +35,66 @@ export default class Project extends Component {
     input["provider"] = text;
     console.log(this.state);
     this.setState({
-      input
+      input,
     });
   }
 
-  handleSubmit(event) {
+  async handleSubmit(event) {
     event.preventDefault();
     console.log(this.state);
-    if(this.validate()){
-
-    if(this.state.input["provider"] ==="aws"){
-
-      var data={
-        "name":this.state.input["name"],
-        "provider":this.state.input["provider"],
-        "secret_key":this.state.input["secret_key"],
-        "access_key":  this.state.input["access_key"],
+    if (this.validate()) {
+      if (this.state.input["provider"] === "aws") {
+        var data = {
+          name: this.state.input["name"],
+          provider: this.state.input["provider"],
+          secret_key: this.state.input["secret_key"],
+          access_key: this.state.input["access_key"],
+        };
+      } else if (this.state.input["provider"] === "azure") {
+        var data = {
+          name: this.state.input["name"],
+          provider: this.state.input["provider"],
+          subscription_id: this.state.input["subscription_id"],
+          secret_id: this.state.input["secret"],
+          tenant_id: this.state.input["tenant_id"],
+          client_id: this.state.input["client_id"],
+          location:this.state.input["location"],
+          resource_group:this.state.input["resource_group"]
+        };
       }
 
-    }else if(this.state.input["provider"]==="azure"){
-      var data={
-        "name":this.state.input["name"],
-        "provider":this.state.input["provider"],
-        "subscription_id":this.state.input["subscription_id"],   
-        "secret":this.state.input["secret"],
-        "tenant_id":this.state.input["tenant_id"], 
-        "client_id":this.state.input["client_id"]  
+      console.log(data);
+      this.setState({
+        loader:true,
+      });
+      if (this.state.status === "Verify") {
+        await PostService(LOCATIONPOST, data).then((res) => {
+          console.log(res.data);
+          this.setState({
+            locations: res.data.locations
+          });
+          this.setState({
+            status: "Create Project",
+          });
+          this.setState({
+            loader:false,
+          });
+        });
+      } else {
+        console.log(data);
+        await PostService(CREATEPROJECT, data).then((res) => {
+          console.log(res);
+        });
       }
     }
-
-  console.log(data);
-  // data = JSON.stringify(data);
-     PostService(LOCATIONPOST, data).then((res) => {
-      console.log(res);
-    });
-  
-}
   }
 
-  validate(){
+  validate() {
     let input = this.state.input;
     let errors = {};
     let isValid = true;
     return isValid;
   }
-
-
 
   render() {
     return (
@@ -93,7 +110,14 @@ export default class Project extends Component {
                   <p className="sub">Cloud migration made easy</p>
                 </Card.Header>
                 <Card.Body>
-                  <Form className="FormStyle" onSubmit={this.handleSubmit}>
+                  {this.state.loader ? <Loader/>:<span></span>}
+                  
+                  <Form className="FormStyle" onSubmit={this.handleSubmit}   style={{
+                        display:
+                          this.state.loader
+                            ? " none"
+                            : "block",
+                      }}>
                     <Form.Group className="register bg-blue">
                       <Form.Label>Project Name</Form.Label>
                       <Form.Control
@@ -109,16 +133,34 @@ export default class Project extends Component {
                       <Form.Label>Select Provider</Form.Label>
                     </Form.Group>
                     <Row className="Providerrow">
-                      <Col className={"ProviderCol"+ (this.state.input.provider === "aws" ? ' active' : '')}>
-                        <Card >
-                          <Card.Body className="Provider" onClick={()=>this.handleProvider("aws")}>
+                      <Col
+                        className={
+                          "ProviderCol" +
+                          (this.state.input.provider === "aws" ? " active" : "")
+                        }
+                      >
+                        <Card>
+                          <Card.Body
+                            className="Provider"
+                            onClick={() => this.handleProvider("aws")}
+                          >
                             <FaAws size={50} />
                           </Card.Body>
                         </Card>
                       </Col>
-                      <Col className={"ProviderCol"+ (this.state.input.provider === "azure" ? ' active' : '')}>
+                      <Col
+                        className={
+                          "ProviderCol" +
+                          (this.state.input.provider === "azure"
+                            ? " active"
+                            : "")
+                        }
+                      >
                         <Card>
-                          <Card.Body className="Provider"  onClick={()=>this.handleProvider("azure")}>
+                          <Card.Body
+                            className="Provider"
+                            onClick={() => this.handleProvider("azure")}
+                          >
                             <SiMicrosoftazure size={50} />
                           </Card.Body>
                         </Card>
@@ -131,8 +173,16 @@ export default class Project extends Component {
                         </Card>
                       </Col> */}
                     </Row>
-            
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
+
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "azure"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
                       <Form.Label>Subscription</Form.Label>
                       <Form.Control
                         type="text"
@@ -141,7 +191,15 @@ export default class Project extends Component {
                         name="subscription_id"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "azure"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
                       <Form.Label>Client Id</Form.Label>
                       <Form.Control
                         type="text"
@@ -150,9 +208,16 @@ export default class Project extends Component {
                         name="client_id"
                       />
                     </Form.Group>
-             
-                 
-                    <Form.Group className="register bg-blue"style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
+
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "azure"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
                       <Form.Label>Secret Key</Form.Label>
                       <Form.Control
                         type="text"
@@ -161,7 +226,15 @@ export default class Project extends Component {
                         name="secret"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "aws" ? ' block' : 'none'}}>
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "aws"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
                       <Form.Label>Secret Key</Form.Label>
                       <Form.Control
                         type="text"
@@ -170,7 +243,15 @@ export default class Project extends Component {
                         name="secret_key"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "aws" ? ' block' : 'none'}}>
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "aws"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
                       <Form.Label>Access Key</Form.Label>
                       <Form.Control
                         type="text"
@@ -179,7 +260,15 @@ export default class Project extends Component {
                         name="access_key"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue"style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "azure"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
                       <Form.Label>Tenat Id</Form.Label>
                       <Form.Control
                         type="text"
@@ -188,7 +277,7 @@ export default class Project extends Component {
                         name="tenant_id"
                       />
                     </Form.Group>
-                                      {/* <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "Azure" ? ' block' : 'none'}}>
+                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "azure" &&  this.state.status === "Create Project" ? ' block' : 'none'}}>
                       <Form.Label>Resource Group</Form.Label>
                       <Form.Control
                         type="text"
@@ -197,23 +286,30 @@ export default class Project extends Component {
                         placeholder="Resource Group"
                         name="resource_group"
                       />
-                    </Form.Group> */}
-                    {/* <Form.Group className="register bg-blue" >
+                    </Form.Group>
+      
+                    <Form.Group  className="register bg-blue"   style={{
+                        display:
+                          this.state.status === "Create Project"
+                            ? " block"
+                            : "none",
+                      }}>
                       <Form.Label>Select Location</Form.Label>
-                      <Form.Control
-                        type="text"
-                        onChange={this.handleChange}
-                        placeholder="Select Location"
-                        name="location"
-                      />
-                    </Form.Group> */}
+                      <Form.Control as="select"  name="location" onChange={this.handleChange}>
+                        {this.state.locations.map((location) => (
+                          <option key={location} value={location}>
+                            {location}
+                          </option>
+                        ))}
+                      </Form.Control>
+                    </Form.Group>
 
                     <Button
                       type="submit"
                       className="btn btn-primary
                        col-lg-12"
                     >
-                      Create Project
+                      {this.state.status}
                       <FaAngleRight size={20} />
                     </Button>
                   </Form>
