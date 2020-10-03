@@ -280,6 +280,51 @@ Azure
   "provider":"azure"
 }
 
+aws
+----
+{
+  "secret_key": "1111111111111-11111111-111111",
+  "access_key": "1111111111111-11111111-111111",
+  "provider":"aws"
+}
+
+17)/vms/get?project=tesproject3  GET
+
+response:
+
+{
+  "machine_types": [
+    {
+      "cores": 1,
+      "disk": 4096,
+      "max_data_disk": 2,
+      "memory": 2048,
+      "osdisk": 1047552,
+      "vm_name": "Standard_B1ms"
+    },
+    {
+      "cores": 1,
+      "disk": 4096,
+      "max_data_disk": 2,
+      "memory": 1024,
+      "osdisk": 1047552,
+      "vm_name": "Standard_B1s"
+    },
+    {
+      "cores": 2,
+      "disk": 16384,
+      "max_data_disk": 4,
+      "memory": 8192,
+      "osdisk": 1047552,
+      "vm_name": "Standard_B2ms"
+    }
+  ],
+  "status": "200"
+}
+
+
+
+
 Status codes
 ------------
 

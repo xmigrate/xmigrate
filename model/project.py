@@ -11,3 +11,5 @@ class Project(Document):
     secret = StringField(max_length=150)
     tenant_id = StringField(max_length=150)
     users = ListField(required=True) 
+    access_key = StringField(max_length=150)
+    secret_key = StringField(max_length=150)
