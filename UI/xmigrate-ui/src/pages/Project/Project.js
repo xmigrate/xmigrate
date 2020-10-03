@@ -3,21 +3,16 @@ import { Form, Container, Col, Row, Card, Button } from "react-bootstrap";
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
 import { FaAngleRight, FaAws, FaCloud } from "react-icons/fa";
 import { SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
+import PostService from '../../services/PostService'
 import "./Project.scss";
-//   import screen from './images/screen.png'
+import { LOCATIONPOST } from '../../services/Services';
 
 export default class Project extends Component {
 
   constructor(props){
     super()
     let input = {};
-    input["ProjectName"] = "";
-    input["Provider"] = "";   
-    input["Location"] = ""; 
-    input["Subscription"] = "";   
-    input["ResourceGroup"]="" ;
-    input["Secret_key"]="";
-    input["Access_key"]="";                                                                                                                       
+    input["provider"] = "";                                                                                                                    
     this.state = {
       input:input,
       errors:{}
@@ -34,7 +29,7 @@ export default class Project extends Component {
   }
   handleProvider(text) {
     let input = this.state.input;
-    input["Provider"] = text;
+    input["provider"] = text;
     console.log(this.state);
     this.setState({
       input
@@ -44,6 +39,42 @@ export default class Project extends Component {
   handleSubmit(event) {
     event.preventDefault();
     console.log(this.state);
+    if(this.validate()){
+
+    if(this.state.input["provider"] ==="aws"){
+
+      var data={
+        "name":this.state.input["name"],
+        "provider":this.state.input["provider"],
+        "secret_key":this.state.input["secret_key"],
+        "access_key":  this.state.input["access_key"],
+      }
+
+    }else if(this.state.input["provider"]==="azure"){
+      var data={
+        "name":this.state.input["name"],
+        "provider":this.state.input["provider"],
+        "subscription_id":this.state.input["subscription_id"],   
+        "secret":this.state.input["secret"],
+        "tenant_id":this.state.input["tenant_id"], 
+        "client_id":this.state.input["client_id"]  
+      }
+    }
+
+  console.log(data);
+  // data = JSON.stringify(data);
+     PostService(LOCATIONPOST, data).then((res) => {
+      console.log(res);
+    });
+  
+}
+  }
+
+  validate(){
+    let input = this.state.input;
+    let errors = {};
+    let isValid = true;
+    return isValid;
   }
 
 
@@ -71,28 +102,28 @@ export default class Project extends Component {
                         onChange={this.handleChange}
                         aria-describedby="emailHelp"
                         placeholder="Add Name"
-                        name="ProjectName"
+                        name="name"
                       />
                     </Form.Group>
                     <Form.Group>
                       <Form.Label>Select Provider</Form.Label>
                     </Form.Group>
                     <Row className="Providerrow">
-                      <Col className={"ProviderCol"+ (this.state.input.Provider === "AWS" ? ' active' : '')}>
+                      <Col className={"ProviderCol"+ (this.state.input.provider === "aws" ? ' active' : '')}>
                         <Card >
-                          <Card.Body className="Provider" onClick={()=>this.handleProvider("AWS")}>
+                          <Card.Body className="Provider" onClick={()=>this.handleProvider("aws")}>
                             <FaAws size={50} />
                           </Card.Body>
                         </Card>
                       </Col>
-                      <Col className={"ProviderCol"+ (this.state.input.Provider === "Azure" ? ' active' : '')}>
+                      <Col className={"ProviderCol"+ (this.state.input.provider === "azure" ? ' active' : '')}>
                         <Card>
-                          <Card.Body className="Provider"  onClick={()=>this.handleProvider("Azure")}>
+                          <Card.Body className="Provider"  onClick={()=>this.handleProvider("azure")}>
                             <SiMicrosoftazure size={50} />
                           </Card.Body>
                         </Card>
                       </Col>
-                      {/* <Col className={"ProviderCol"+ (this.state.input.Provider == "GoogleCloud" ? ' active' : '')}>
+                      {/* <Col className={"ProviderCol"+ (this.state.input.provider == "GoogleCloud" ? ' active' : '')}>
                         <Card>
                           <Card.Body className="Provider" onClick={()=>this.handleProvider("GoogleCloud")}>
                             <SiGooglecloud size={50} />
@@ -101,52 +132,81 @@ export default class Project extends Component {
                       </Col> */}
                     </Row>
             
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.Provider === "Azure" ? ' block' : 'none'}}>
+                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
                       <Form.Label>Subscription</Form.Label>
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
                         placeholder="Subscription id"
-                        name="Subscription"
+                        name="subscription_id"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.Provider === "Azure" ? ' block' : 'none'}}>
+                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
+                      <Form.Label>Client Id</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Client id"
+                        name="client_id"
+                      />
+                    </Form.Group>
+             
+                 
+                    <Form.Group className="register bg-blue"style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
+                      <Form.Label>Secret Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="secret_key"
+                        name="secret"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "aws" ? ' block' : 'none'}}>
+                      <Form.Label>Secret Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Secret key"
+                        name="secret_key"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "aws" ? ' block' : 'none'}}>
+                      <Form.Label>Access Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Access key"
+                        name="access_key"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue"style={{display: this.state.input.provider === "azure" ? ' block' : 'none'}}>
+                      <Form.Label>Tenat Id</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Tenant Id"
+                        name="tenant_id"
+                      />
+                    </Form.Group>
+                                      {/* <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "Azure" ? ' block' : 'none'}}>
                       <Form.Label>Resource Group</Form.Label>
                       <Form.Control
                         type="text"
 
                         onChange={this.handleChange}
                         placeholder="Resource Group"
-                        name="ResourceGroup"
+                        name="resource_group"
                       />
-                    </Form.Group>
-                    <Form.Group className="register bg-blue" >
+                    </Form.Group> */}
+                    {/* <Form.Group className="register bg-blue" >
                       <Form.Label>Select Location</Form.Label>
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
                         placeholder="Select Location"
-                        name="Location"
+                        name="location"
                       />
-                    </Form.Group>
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.Provider === "AWS" ? ' block' : 'none'}}>
-                      <Form.Label>Access Key</Form.Label>
-                      <Form.Control
-                        type="text"
-                        onChange={this.handleChange}
-                        placeholder="access_key"
-                        name="Access_key"
-                      />
-                    </Form.Group>
-                    <Form.Group className="register bg-blue"style={{display: this.state.input.Provider === "AWS" ? ' block' : 'none'}}>
-                      <Form.Label>Secret Key</Form.Label>
-                      <Form.Control
-                        type="text"
-                        onChange={this.handleChange}
-                        placeholder="secret_key"
-                        name="Secret_key"
-                      />
-                    </Form.Group>
+                    </Form.Group> */}
 
                     <Button
                       type="submit"

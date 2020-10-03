@@ -9,6 +9,7 @@ import {
 } from "react-bootstrap";
 import { Link } from 'react-router-dom'
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
+import Loader from '../../components/Loader/Loader'
 import { FaAngleRight } from "react-icons/fa";
 import "./SignIn.scss";
 import PostService from '../../services/PostService';
@@ -24,6 +25,7 @@ export default class SignIn extends Component {
     input["password"] = "";                                                                                                                           
     this.state = {
       input:input,
+      loader:false,
       errors:{}
     }
     this.handleChange = this.handleChange.bind(this);
@@ -48,6 +50,9 @@ export default class SignIn extends Component {
     }
     console.log(data);
     //Posting to server
+    this.setState({
+      loader:true,
+    });
     await PostService(LOGIN, data).then((res) => {
       let input = {};
       input["UserId"] = "";
@@ -56,9 +61,12 @@ export default class SignIn extends Component {
       let k = res.data;
       console.log(k.access_token);
       localStorage.setItem('auth_token', k.access_token);
-
+      
        GetService(GETPROJECTS).then((res)=>{
         console.log(res);
+        this.setState({
+          loader:false,
+        });
         if(res.data === "[]"){
           Auth.login(() => {
             this.props.history.push("/project");
@@ -103,10 +111,16 @@ export default class SignIn extends Component {
 
 
   render() {
+    if(this.state.loader){
+     return <Loader/>
+    }
+    else{
     return (
       <div className="SignIn h-100">
         <MainHeaderComponent />
         {/* Top Navigation Bar  */}
+     
+
         <Container className="h-100">
           <Row className=" h-100 justify-content-center align-items-center">
             <Col md="5">
@@ -168,4 +182,5 @@ export default class SignIn extends Component {
       </div>
     );
   }
+}
 }
