@@ -10,6 +10,7 @@ from model.blueprint import *
 from pkg.azure import conversion_worker as cw
 import os
 import asyncio, json
+from azure.common.credentials import ServicePrincipalCredentials
 
 def start_conversion(project):
     con = create_db_con()
@@ -61,7 +62,13 @@ async def start_cloning(project):
 
 async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     con = create_db_con()
-    compute_client = get_client_from_cli_profile(ComputeManagementClient)
+    client_id = Project.objects(name=project)[0]['client_id']
+    secret = Project.objects(name=project)[0]['secret']
+    tenant_id = Project.objects(name=project)[0]['tenant_id']
+    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
+    compute_client = ComputeManagementClient(creds,subscription_id)
+    con.close()
     async_creation = compute_client.images.create_or_update(
         rg_name,
         disk_name,

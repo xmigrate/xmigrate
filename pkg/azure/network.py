@@ -6,12 +6,17 @@ from utils.dbconn import *
 from model.blueprint import BluePrint
 from model.project import Project
 import random
-
+from azure.common.credentials import ServicePrincipalCredentials
 
 def create_vnet(rg_name, vnet_name, cidr, location):
-    con = create_db_con()
     print("Provisioning a vnet...some operations might take a minute or two.")
-    network_client = get_client_from_cli_profile(NetworkManagementClient)
+    con = create_db_con()
+    client_id = Project.objects(name=project)[0]['client_id']
+    secret = Project.objects(name=project)[0]['secret']
+    tenant_id = Project.objects(name=project)[0]['tenant_id']
+    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
+    network_client = NetworkManagementClient(creds,subscription_id)
     poller = network_client.virtual_networks.create_or_update(rg_name, vnet_name, {
                                                               "location": location, "address_space": {"address_prefixes": [cidr]}})
     vnet_result = poller.result()
@@ -29,7 +34,14 @@ def create_vnet(rg_name, vnet_name, cidr, location):
 
 def create_subnet(rg_name, vnet_name, subnet_name, cidr):
     print("Provisioning a subnet...some operations might take a minute or two.")
-    network_client = get_client_from_cli_profile(NetworkManagementClient)
+    con = create_db_con()
+    client_id = Project.objects(name=project)[0]['client_id']
+    secret = Project.objects(name=project)[0]['secret']
+    tenant_id = Project.objects(name=project)[0]['tenant_id']
+    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
+    network_client = NetworkManagementClient(creds,subscription_id)
+    con.close()
     poller = network_client.subnets.create_or_update(
         rg_name, vnet_name, subnet_name, {"address_prefix": cidr})
     subnet_result = poller.result()
@@ -49,7 +61,14 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr):
 
 def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     print("Provisioning a public IP...some operations might take a minute or two.")
-    network_client = get_client_from_cli_profile(NetworkManagementClient)
+    con = create_db_con()
+    client_id = Project.objects(name=project)[0]['client_id']
+    secret = Project.objects(name=project)[0]['secret']
+    tenant_id = Project.objects(name=project)[0]['tenant_id']
+    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
+    network_client = NetworkManagementClient(creds,subscription_id)
+    con.close()
     poller = network_client.public_ip_addresses.create_or_update(rg_name, ip_name,
                                                                  {
                                                                      "location": location,
