@@ -4,11 +4,17 @@ import boto3
 from utils.dbconn import *
 import asyncio
 from model.project import *
+from pkg.aws import creds
 
 async def create_machine(subnet_id,ami_id,machine_type):
     con = create_db_con()
-    ec2 = boto3.resource('ec2')
-    client = boto3.client('ec2')
+    access_key = Project.objects(name=project)[0]['access_key']
+    secret_key = Project.objects(name=project)[0]['secret_key']
+    location = Project.objects(name=project)[0]['location']
+    con.close()
+    session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
+    ec2 = session.resource('ec2')
+    client = boto3.client('ec2',aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
     amiid = ami_id
     filters = [{'Name':'name','Values':[ami_id]}]
     response = client.describe_images(Filters=filters)

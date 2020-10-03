@@ -4,9 +4,10 @@ from model.blueprint import *
 from utils.dbconn import *
 from model.storage import Bucket
 import asyncio
-
+from pkg.aws import creds
 
 async def start_ami_creation(project):
+   set_creds = creds.set_aws_creds(project)
    con = create_db_con()
    try:
       bucket = Bucket.objects(project=project)
@@ -19,14 +20,11 @@ async def start_ami_creation(project):
       con.close()
    for image in images:
       image_name = image['host']+'.img'
-      await asyncio.start_ami_creation_worker(bucket_name, image_name)
+      await asyncio.start_ami_creation_worker(bucket_name, image_name, project)
    return True
    
-      
 
-
-
-async def start_ami_creation_worker(bucket_name, image_name):
+async def start_ami_creation_worker(bucket_name, image_name, project):
     file_trust_policy = open('trust-policy.json', 'w')
     s='''{
        "Version":"2012-10-17",
@@ -48,7 +46,7 @@ async def start_ami_creation_worker(bucket_name, image_name):
     }'''
     file_trust_policy.write(s)
     file_trust_policy.close()
-    pexpect.run('aws iam create-role --role-name vmimport --assume-role-policy-document file://trust-policy.json')
+    pexpect.run('aws iam create-role --role-name vmimport --assume-role-policy-document file://trust-policy.json --profile '+project)
     file_role_policy = open('role-policy.json', 'w')
     s='''{
        "Version":"2012-10-17",
@@ -86,7 +84,7 @@ async def start_ami_creation_worker(bucket_name, image_name):
     }'''
     file_role_policy.write(s)
     file_role_policy.close()
-    pexpect.run('aws iam put-role-policy --role-name vmimport --policy-name vmimport --policy-document file://role-policy.json')
+    pexpect.run('aws iam put-role-policy --role-name vmimport --policy-name vmimport --policy-document file://role-policy.json --profile '+project)
     file_containers = open('containers.json', 'w')
     s='''[{
         "Description": "Xmigrate-Build",
@@ -98,7 +96,7 @@ async def start_ami_creation_worker(bucket_name, image_name):
     }]'''
     file_containers.write(s)
     file_containers.close()
-    output = pexpect.run('aws ec2 import-image --description "NSG-Build" --disk-containers file://containers.json')
+    output = pexpect.run('aws ec2 import-image --description "NSG-Build" --disk-containers file://containers.json --profile '+project)
     start='ImportTaskId": "'
     try:
         amiid = (output.split(start))[1].split('"')[0]

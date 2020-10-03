@@ -4,7 +4,13 @@ import boto3
 from utils.dbconn import *
 
 def build_vpc(cidr,public_route, project):
-  ec2 = boto3.resource('ec2')
+  con = create_db_con()
+  access_key = Project.objects(name=project)[0]['access_key']
+  secret_key = Project.objects(name=project)[0]['secret_key']
+  location = Project.objects(name=project)[0]['location']
+  con.close()
+  session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
+  ec2 = session.resource('ec2')
   vpc = ec2.create_vpc(CidrBlock=cidr)
   #vpc.create_tags(Tags=[{"Key": "Name", "Value": "default_vpc"}])
   vpc.wait_until_available()
@@ -27,7 +33,13 @@ def build_vpc(cidr,public_route, project):
   return True, vpc.id
 
 def build_subnet(cidr,vpcid,route,project):
-    ec2 = boto3.resource('ec2')
+    con = create_db_con()
+    access_key = Project.objects(name=project)[0]['access_key']
+    secret_key = Project.objects(name=project)[0]['secret_key']
+    location = Project.objects(name=project)[0]['location']
+    con.close()
+    session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
+    ec2 = session.resource('ec2')
     route_table = ec2.RouteTable(route)
     subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
     try:
