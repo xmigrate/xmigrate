@@ -156,7 +156,7 @@
         - /var/log/waagent.log
       become: true
       become_user: root
-    - name: Deproviosn waagent
+    - name: Deprovision waagent
       shell: |
         sudo waagent -force -deprovision
         rm -f ~/.bash_history
@@ -167,7 +167,7 @@
     - block:
       - name: Install Python packages
         pip:
-          name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv']
+          name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython']
         become: true
         become_user: root
       rescue:
@@ -181,6 +181,7 @@
           - psutil
           - pyasn1
           - python-dotenv
+          - dnspython
         become: true
         become_user: root
 
