@@ -22,7 +22,7 @@ async def get_blueprint():
     if request.method == 'GET':
         project = request.args.get('project')
         con = create_db_con()
-        return Discover.objects(project=project).to_json()
+        return jsonify(Discover.objects(project=project).to_json())
     else:
         return jsonify({"status":500, "msg": "method not supported"})
 
