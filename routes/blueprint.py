@@ -18,9 +18,13 @@ executor = ProcessPoolExecutor(max_workers=5)
 
 @app.route('/blueprint')
 @jwt_required
-def blueprint():
-    con = create_db_con()
-    return Discover.objects.to_json()
+async def get_blueprint():
+    if request.method == 'GET':
+        project = request.args.get('project')
+        con = create_db_con()
+        return Discover.objects(project=project).to_json()
+    else:
+        return jsonify({"status":500, "msg": "method not supported"})
 
 
 @app.route('/blueprint/network/create', methods=['POST'])
