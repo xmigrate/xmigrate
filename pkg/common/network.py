@@ -160,7 +160,10 @@ def fetch_nw(project):
 def fetch_subnet(project,network):
     con = create_db_con()
     try:
-        result = Subnet.objects(project=project, nw_name=network).to_json()
+        if network == 'all':
+            result = Subnet.objects(project=project).to_json()
+        else:
+            result = Subnet.objects(project=project, nw_name=network).to_json()
         con.close()
         return result
     except Exception as e:
