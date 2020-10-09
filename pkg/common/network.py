@@ -144,6 +144,29 @@ def create_nw(cidr,project,name):
         con.close()
         return False
 
+def delete_nw(project,name):
+    con = create_db_con()
+    try:
+        Network.objects(project=project,nw_name=name).delete()
+        Subnet.objects(project=project,nw_name=name).delete()
+        con.close()
+        return True
+    except Exception as e:
+        print(str(e))
+        con.close()
+        return False
+
+def delete_subnet(project,name):
+    con = create_db_con()
+    try:
+        Subnet.objects(project=project,subnet_name=name).delete()
+        con.close()
+        return True
+    except Exception as e:
+        print(str(e))
+        con.close()
+        return False
+
 
 def fetch_nw(project):
     con = create_db_con()

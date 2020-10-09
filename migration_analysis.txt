@@ -322,7 +322,19 @@ response:
   "status": "200"
 }
 
+18) /blueprint/network/delete GET
 
+{
+  "project": "testproject",
+  "nw_name": "testnw"
+}
+
+19) /blueprint/subnet/delete GET
+
+{
+  "project": "testproject",
+  "subnet_name": "testnw"
+}
 
 
 Status codes

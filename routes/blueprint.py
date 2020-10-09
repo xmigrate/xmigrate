@@ -42,6 +42,7 @@ async def create_nw():
             return jsonify({'status': '500', 'msg': 'Network  creation failed'})
     return  jsonify({'status': '500', 'msg': 'Network creation failed'})
 
+
 @app.route('/blueprint/network/get', methods=['GET'])
 @jwt_required
 async def get_nw():
@@ -49,6 +50,30 @@ async def get_nw():
         project = request.args.get('project')
         print(project)
         return  jsonify(netutils.fetch_nw(project))
+
+
+@app.route('/blueprint/network/delete', methods=['GET'])
+@jwt_required
+async def delete_nw():
+    if request.method == 'GET':
+        project = request.args.get('project')
+        nw_name = request.args.get('nw_name')
+        if netutils.delete_nw(project, nw_name)
+            return jsonify({"msg":"success", "status":200})
+        else:
+            return  jsonify({"msg":"failed", "status":500})
+
+
+@app.route('/blueprint/subnet/delete', methods=['GET'])
+@jwt_required
+async def delete_subnet():
+    if request.method == 'GET':
+        project = request.args.get('project')
+        subnet_name = request.args.get('subnet_name')
+        if netutils.delete_subnet(project, subnet_name)
+            return jsonify({"msg":"success", "status":200})
+        else:
+            return  jsonify({"msg":"failed", "status":500})
 
 @app.route('/blueprint/subnet/get', methods=['GET'])
 @jwt_required
