@@ -3,6 +3,7 @@ import Axios from 'axios';
 
 
 export default function GetService(API) {
+    Axios.defaults.headers.common['Authorization'] = 'Bearer '+localStorage.getItem('auth_token');
     let response = Axios.get(API, { withCredentials: false,headers: { "Content-Type": "application/json" }} )
     response.then({}).catch(err => {
         // window.location.replace(LOGINURL);
@@ -11,16 +12,18 @@ export default function GetService(API) {
     return response
 }
 
-export function GetServiceWithData(API, data) {
-    let config = {
+export function GetServiceWithData(API, dataGet) {
+    let response = Axios.get(API,{
         withCredentials: false,
         headers: { "Content-Type": "application/json" },
-        params: data
-    }
-    let response = Axios.get(API, config)
+        params: dataGet
+    })
     response.then({}).catch(err => {
         console.error(err);
-        // window.location.replace(LOGINURL);
+        window.location.replace("/error");
     })
     return response;
+
+  
+    
 }

@@ -136,7 +136,7 @@ def create_nw_layout(cidr,p):
 def create_nw(cidr,project,name):
     con = create_db_con()
     try:
-        Network.objects(project=project).update(cidr=cidr,nw_name=name,upsert=True)
+        Network.objects(project=project,nw_name=name).update(cidr=cidr,nw_name=name,upsert=True)
         con.close()
         return True
     except Exception as e:
@@ -172,7 +172,7 @@ def fetch_subnet(project,network):
 def create_subnet(cidr,nw_name,project,subnet_type,name):
     con = create_db_con()
     try:
-        Subnet.objects(project=project).update(cidr=cidr,nw_name=nw_name,subnet_name=name,subnet_type=subnet_type,upsert=True)
+        Subnet.objects(project=project,subnet_name=name).update(cidr=cidr,nw_name=nw_name,subnet_name=name,subnet_type=subnet_type,upsert=True)
         if len(Subnet.objects(project=project)) == 1:
             nw = Network.objects(project=project, nw_name=nw_name)
             machines = Discover.objects(project=project)
