@@ -58,7 +58,7 @@ async def delete_nw():
     if request.method == 'GET':
         project = request.args.get('project')
         nw_name = request.args.get('nw_name')
-        if netutils.delete_nw(project, nw_name)
+        if netutils.delete_nw(project,nw_name):
             return jsonify({"msg":"success", "status":200})
         else:
             return  jsonify({"msg":"failed", "status":500})
@@ -70,7 +70,7 @@ async def delete_subnet():
     if request.method == 'GET':
         project = request.args.get('project')
         subnet_name = request.args.get('subnet_name')
-        if netutils.delete_subnet(project, subnet_name)
+        if netutils.delete_subnet(project, subnet_name):
             return jsonify({"msg":"success", "status":200})
         else:
             return  jsonify({"msg":"failed", "status":500})
