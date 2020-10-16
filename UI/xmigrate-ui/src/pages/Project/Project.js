@@ -5,8 +5,12 @@ import { FaAngleRight, FaAws, FaCloud } from "react-icons/fa";
 import { SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
 import PostService from "../../services/PostService";
 import "./Project.scss";
-import { LOCATIONPOST, CREATEPROJECT } from "../../services/Services";
-import Loader from '../../components/Loader/Loader'
+import {
+  LOCATIONPOST,
+  CREATEPROJECT,
+  CREATESTORAGE,
+} from "../../services/Services";
+import Loader from "../../components/Loader/Loader";
 
 export default class Project extends Component {
   constructor(props) {
@@ -17,8 +21,8 @@ export default class Project extends Component {
       input: input,
       status: "Verify",
       errors: {},
-      locations:[],
-      loader:false
+      locations: [],
+      loader: false,
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -58,32 +62,54 @@ export default class Project extends Component {
           secret_id: this.state.input["secret"],
           tenant_id: this.state.input["tenant_id"],
           client_id: this.state.input["client_id"],
-          location:this.state.input["location"],
-          resource_group:this.state.input["resource_group"]
+          location: this.state.input["location"],
+          resource_group: this.state.input["resource_group"],
         };
       }
 
       console.log(data);
       this.setState({
-        loader:true,
+        loader: true,
       });
       if (this.state.status === "Verify") {
         await PostService(LOCATIONPOST, data).then((res) => {
           console.log(res.data);
           this.setState({
-            locations: res.data.locations
+            locations: res.data.locations,
           });
           this.setState({
             status: "Create Project",
           });
           this.setState({
-            loader:false,
+            loader: false,
           });
         });
-      } else {
+      } else if (this.state.status === "Create Project") {
         console.log(data);
         await PostService(CREATEPROJECT, data).then((res) => {
           console.log(res);
+          this.setState({
+            status: "Storage",
+            loader: false,
+          });
+        });
+      } else if (this.state.status === "Storage") {
+        var data = {
+          project: this.state.input["project"],
+          storage: this.state.input["storage"],
+          container: this.state.input["container"],
+          access_key: this.state.input["access_key"],
+        };
+        console.log("data posted",data);
+        this.setState({
+          loader: true,
+        });
+        await PostService(CREATESTORAGE, data).then((res) => {
+          this.setState({
+            loader: false,
+          });
+          console.log(res);
+          this.props.history.push({pathname:"/home",state:{ detail: this.state.input["name"] }});
         });
       }
     }
@@ -110,14 +136,15 @@ export default class Project extends Component {
                   <p className="sub">Cloud migration made easy</p>
                 </Card.Header>
                 <Card.Body>
-                  {this.state.loader ? <Loader/>:<span></span>}
-                  
-                  <Form className="FormStyle" onSubmit={this.handleSubmit}   style={{
-                        display:
-                          this.state.loader
-                            ? " none"
-                            : "block",
-                      }}>
+                  {this.state.loader ? <Loader /> : <span></span>}
+
+                  <Form
+                    className="FormStyle"
+                    onSubmit={this.handleSubmit}
+                    style={{
+                      display: this.state.loader === true || this.state.status === "Storage"  ? " none" : "block",
+                    }}
+                  >
                     <Form.Group className="register bg-blue">
                       <Form.Label>Project Name</Form.Label>
                       <Form.Control
@@ -277,25 +304,39 @@ export default class Project extends Component {
                         name="tenant_id"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue" style={{display: this.state.input.provider === "azure" &&  this.state.status === "Create Project" ? ' block' : 'none'}}>
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "azure" &&
+                          this.state.status === "Create Project"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
                       <Form.Label>Resource Group</Form.Label>
                       <Form.Control
                         type="text"
-
                         onChange={this.handleChange}
                         placeholder="Resource Group"
                         name="resource_group"
                       />
                     </Form.Group>
-      
-                    <Form.Group  className="register bg-blue"   style={{
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
                         display:
                           this.state.status === "Create Project"
                             ? " block"
                             : "none",
-                      }}>
+                      }}
+                    >
                       <Form.Label>Select Location</Form.Label>
-                      <Form.Control as="select"  name="location" onChange={this.handleChange}>
+                      <Form.Control
+                        as="select"
+                        name="location"
+                        onChange={this.handleChange}
+                      >
                         {this.state.locations.map((location) => (
                           <option key={location} value={location}>
                             {location}
@@ -310,6 +351,59 @@ export default class Project extends Component {
                        col-lg-12"
                     >
                       {this.state.status}
+                      <FaAngleRight size={20} />
+                    </Button>
+                  </Form>
+                  {/* Form For Storage */}
+                  <Form
+                    onSubmit={this.handleSubmit}
+                    style={{
+                      display:
+                        this.state.status === "Storage" && this.state.loader !== true ? " block" : "none",
+                    }}
+                  >
+                    <Form.Group className="register bg-blue">
+                      <Form.Label>Project</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Storage"
+                        name="project"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue">
+                      <Form.Label>Storage</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Storage"
+                        name="storage"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue">
+                      <Form.Label>Container</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Container"
+                        name="container"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue">
+                      <Form.Label>Access Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Access key"
+                        name="access_key"
+                      />
+                    </Form.Group>
+                    <Button
+                      type="submit"
+                      className="btn btn-primary
+                       col-lg-12"
+                    >
+                      Save
                       <FaAngleRight size={20} />
                     </Button>
                   </Form>

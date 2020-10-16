@@ -12,14 +12,15 @@ export default class Discover extends Component {
 
     constructor(props) {
         super()
+        console.log("PROPs",props);
         this.state = {
             showDiscoverMenu: true,
             showDiscoverMenuEdit: false,
             tags: [],
             email: "",
             password: "",
-            provider: "azure",
-            project: "testproject",
+            provider: props.CurrentPro.provider,
+            project: props.CurrentPro.name,
             message: "",
             disableGoToBlueprint: true,
             streamming: false,
@@ -173,7 +174,7 @@ export default class Discover extends Component {
                                             Discover
                                     </Button>
                                     :
-                                    <Link to="/blue-print">
+                                    <Link to="/home/blue-print">
                                         <Button variant="success" >
                                             Go to Blueprint
                                         </Button>

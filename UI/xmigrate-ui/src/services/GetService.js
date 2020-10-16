@@ -13,6 +13,7 @@ export default function GetService(API) {
 }
 
 export function GetServiceWithData(API, dataGet) {
+    Axios.defaults.headers.common['Authorization'] = 'Bearer '+localStorage.getItem('auth_token');
     let response = Axios.get(API,{
         withCredentials: false,
         headers: { "Content-Type": "application/json" },
@@ -20,7 +21,7 @@ export function GetServiceWithData(API, dataGet) {
     })
     response.then({}).catch(err => {
         console.error(err);
-        window.location.replace("/error");
+        // window.location.replace("/error");
     })
     return response;
 

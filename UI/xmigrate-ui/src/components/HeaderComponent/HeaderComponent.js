@@ -3,7 +3,16 @@ import { Link } from 'react-router-dom'
 import * as icon from 'react-icons/all'
 import "./HeaderComponent.scss"
 import Auth from '../../services/Auth'
+import Project from '../../pages/Project/Project'
 export default class HeaderComponent extends Component {
+    constructor(props){
+        super();
+        console.log("loading the project",props.ProjectData);
+        this.state={
+            Projects : props.ProjectData,
+        }
+    }
+ 
     logout(e){
         Auth.logout(()=>{
         })   
@@ -22,20 +31,21 @@ export default class HeaderComponent extends Component {
                     </button>
                     <ul className="navbar-nav mr-auto pl-4">
                         <li className="nav-item dropdown">
-                            <Link className="nav-link dropdown-toggle btnnavlink px-3 py-1" to="" id="navbarDropdown" role="button"
+                            <div className="nav-link dropdown-toggle btnnavlink px-3 py-1" to="" id="navbarDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                ProjectSeOps   </Link>
+                                {this.props.CurrentPro.name}   </div>
 
                             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <Link className="dropdown-item" to="">Action</Link>
-                                <Link className="dropdown-item" to="">Another action</Link>
-                                <div className="dropdown-divider"></div>
-                                <Link className="dropdown-item" to="">Something else here</Link>
+
+                                 {this.state.Projects.map((pro)=>(
+                                     <div className="dropdown-item" key={pro._id.$oid} onClick={()=>this.props.onChangeProject(pro)}>{pro.name}</div>
+                                ))} 
+                             
                             </div>
                         </li>
                         <li className="nav-item pl-2">
-                            <Link className="nav-link btngrid px-2 py-1 text-white " to="">
-                                <icon.FiMenu />
+                            <Link className="nav-link btngrid px-2 py-1 text-white " to="/project">
+                                <icon.FaRegPlusSquare />
                             </Link>
                         </li>
                     </ul>
@@ -61,13 +71,13 @@ export default class HeaderComponent extends Component {
 
                                         <icon.FaUserAstronaut />
                                         {/* <img src="photo-1556470234-36a5389f905a.jpg" width="40" height="40" className="rounded-circle" /> */}
-                                                Reon Saji
+                                                Admin
                                         </Link>
 
 
                                     <div className="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                                        <Link className="dropdown-item listitemscol" to="">Dashboard</Link>
-                                        <Link className="dropdown-item listitemscol" to="">Edit Profile</Link>
+                                        {/* <Link className="dropdown-item listitemscol" to="">Dashboard</Link> */}
+                                        {/* <Link className="dropdown-item listitemscol" to="">Edit Profile</Link> */}
                                         <Link className="dropdown-item listitemscol" to="/" onClick={this.logout.bind(this)}>Log Out</Link>
                                     </div>
                                 </li>

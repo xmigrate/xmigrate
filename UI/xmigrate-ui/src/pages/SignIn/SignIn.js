@@ -63,11 +63,11 @@ export default class SignIn extends Component {
       localStorage.setItem('auth_token', k.access_token);
       
        GetService(GETPROJECTS).then((res)=>{
-        console.log(res);
         this.setState({
           loader:false,
         });
-        if(res.data === "[]"){
+        console.log("Summiting",);
+        if(JSON.parse(res.data).length === 0){
           Auth.login(() => {
             this.props.history.push("/project");
           })
@@ -77,11 +77,8 @@ export default class SignIn extends Component {
             this.props.history.push("/home");
           })
         }
-        
       })
-
     })
-    
     }
   }
 
