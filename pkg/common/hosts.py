@@ -8,8 +8,10 @@ def fetch_hosts(project):
         response = {}
         sub_hosts = {}
         hosts = BluePrint.objects(project=project)
+        print(hosts[0]['subnet'])
         for host in hosts:
             sub_name = Subnet.objects(project=project,cidr=host['subnet'])
+            print(sub_name)
             subnet_name = sub_name[0]['subnet_name']
             if subnet_name not in sub_hosts.keys():
                 sub_hosts[subnet_name] = []
