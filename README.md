@@ -40,4 +40,10 @@ We are passionately working towards the completion of xmigrate project to have t
 
 Stay tuned for more updates. Join our [community](https://xmigrate.slack.com/) and start collaborating 🎉
 
+## License
+
+[xmigrate](https://github.com/iamvishnuks/xmigrate) by [Vishnu KS](https://iamvishnuks.com/) is licensed under [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0)
+
+<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/88x31.png" /></a>
+
 
