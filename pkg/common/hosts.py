@@ -8,7 +8,6 @@ def fetch_hosts(project):
         response = {}
         sub_hosts = {}
         hosts = BluePrint.objects(project=project)
-        print(hosts[0]['subnet'])
         for host in hosts:
             sub_name = Subnet.objects(project=project,cidr=host['subnet'])
             print(sub_name)
@@ -46,3 +45,30 @@ def update_hosts(project,machines):
         print(repr(e))
         con.close()
         return False
+
+
+def fetch_all_hosts(project):
+    try:
+        con = create_db_con()
+        subnets = Subnet.objects(project=project)
+        networks = Network.objects(project=project)
+        subnet_object = []
+        network_objects = []
+        for subnet in subnets:
+            host_objects = [] 
+            hosts = BluePrint.objects(project=project,subnet=subnet['cidr'])
+            for host in hosts:
+                machine = host.to_mongo().to_dict()
+                del(machine['_id'])
+                host_objects.append(machine)
+            subnet_object.append({"name":subnet['subnet_name'],"cidr":subnet['cidr'],"subnet_type":subnet['subnet_type'],"nw_name":subnet['nw_name'],"hosts":host_objects})
+        for network in networks:
+            subs = []
+            for subnet in subnet_object:
+                if subnet['nw_name'] == network['nw_name']:
+                    subs.append(subnet)
+                    network_objects.append({"name":network['nw_name'], "cidr":network['cidr'],'subnets':subs})
+        return {'networks':network_objects}
+    except Exception as e:
+        print(e)
+
