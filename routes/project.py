@@ -23,7 +23,8 @@ async def project_get():
         name = request.args.get('name')
         current_user = get_jwt_identity()
         return jsonify(project.get_project(name, current_user)), 200
-
+    else:
+        return jsonify(msg="method not supported"), 400
 
 @app.route('/project/update', methods=['POST'])
 @jwt_required
@@ -36,3 +37,4 @@ async def project_update():
             return jsonify({'status': '200'})
         else:
             return jsonify({'status': '500'})
+

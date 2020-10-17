@@ -334,7 +334,33 @@ response:
 {
   "project": "testproject",
   "subnet_name": "testnw"
+  "nw_name": "testnw"
 }
+
+20) /user GET
+
+valid response
+{
+    "username": "admin"
+}
+
+invalid response
+
+{
+    "msg": "Signature verification failed"
+}
+
+21) /storage/get
+
+/storage/get?project=xmigrate_test_azure
+
+22) /storage/update
+{
+  "project":"drfdf",
+  "storage":"fdfd",
+  "container":"fdf",
+  "access_key":"fdsfdfsd"
+  }
 
 
 Status codes

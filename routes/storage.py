@@ -22,9 +22,9 @@ async def storage_create():
 
 @app.route('/storage/get', methods=['GET'])
 @jwt_required
-def storage_get():
+async def storage_get():
     if request.method == 'GET':
-        name = request.args.get('name')
+        name = request.args.get('project')
         return jsonify(st.get_storage(name))
 
 

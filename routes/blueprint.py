@@ -70,7 +70,8 @@ async def delete_subnet():
     if request.method == 'GET':
         project = request.args.get('project')
         subnet_name = request.args.get('subnet_name')
-        if netutils.delete_subnet(project, subnet_name):
+        subnet_name = request.args.get('nw_name')
+        if netutils.delete_subnet(project, subnet_name, nw_name):
             return jsonify({"msg":"success", "status":200})
         else:
             return  jsonify({"msg":"failed", "status":500})
