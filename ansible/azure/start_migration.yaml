@@ -1,0 +1,23 @@
+- name : Starting migration
+  become: true
+  remote_user: ubuntu
+  become_method: sudo
+  hosts: nodes
+  gather_facts: no
+  force_handlers: True
+  tasks:
+  - name: <== Deploy payload ==>
+    copy:
+      src: "../payloads/start_dd_azure.py"
+      dest: "/tmp/start.py"
+  - name: <== Setup the environment ==>
+    copy:
+      src: "../payloads/.env"
+      dest: "/tmp/.env"
+  - name: <== Executing payload ==>
+    shell: "python /tmp/start.py {{ storage }} {{ accesskey }} {{ container }}"
+    register: st
+    become: True
+  - name: Message
+    debug:
+      var: st

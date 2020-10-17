@@ -1,0 +1,24 @@
+.BluePrint {
+  // background-color: #eeecec;
+  .select-blueprint-edit {
+    border-radius: 100px;
+    color: #5c5c5c;
+    background-color: #e6e6e6;
+  }
+  tr.expandable > td {
+    box-shadow: inset 0 3px 6px -3px rgba(0, 0, 0, .2);
+    padding: 0;
+  }
+  
+  tr.expandable > td > .inner {
+    margin: 15px;
+    overflow: hidden;
+  }
+  //Css Table loading
+  .bi-trash-fill:hover{
+    color:blue;
+    cursor: pointer;
+  }
+}
+
+

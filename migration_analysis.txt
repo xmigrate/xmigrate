@@ -17,3 +17,361 @@ testcases
 
 
 db.createUser({user: "migrationuser",pwd:"mygrationtool",roles:[{role:"readWrite",db:"migration"}]})
+
+
+Azure VM migration scripts
+--------------------------
+
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
+sudo sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/azure\.archive\.ubuntu\.com\/ubuntu\//g' /etc/apt/sources.list
+sudo sed -i 's/http:\/\/[a-z][a-z]\.archive\.ubuntu\.com\/ubuntu\//http:\/\/azure\.archive\.ubuntu\.com\/ubuntu\//g' /etc/apt/sources.list
+sudo apt-get update
+
+sudo apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure -y
+sudo pip install pyasn1
+sudo apt full-upgrade
+
+sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash"
+' /etc/default/grub
+
+sudo apt install cloud-init netplan.io walinuxagent && sudo systemctl stop walinuxagent
+
+sudo rm -f /etc/cloud/cloud.cfg.d/50-curtin-networking.cfg /etc/cloud/cloud.cfg.d/curtin-preserve-sources.cfg
+sudo rm -f /etc/cloud/ds-identify.cfg
+sudo rm -f /etc/netplan/*.yaml
+
+sudo cat > /etc/cloud/cloud.cfg.d/90_dpkg.cfg << EOF
+datasource_list: [ Azure ]
+EOF
+
+sudo touch /etc/cloud/cloud.cfg.d/90-azure.cfg
+
+cat > /etc/cloud/cloud.cfg.d/90-azure.cfg << EOF
+system_info:
+   package_mirrors:
+     - arches: [i386, amd64]
+       failsafe:
+         primary: http://archive.ubuntu.com/ubuntu
+         security: http://security.ubuntu.com/ubuntu
+       search:
+         primary:
+           - http://azure.archive.ubuntu.com/ubuntu/
+         security: []
+     - arches: [armhf, armel, default]
+       failsafe:
+         primary: http://ports.ubuntu.com/ubuntu-ports
+         security: http://ports.ubuntu.com/ubuntu-ports
+EOF
+
+sudo cat > /etc/cloud/cloud.cfg.d/10-azure-kvp.cfg << EOF
+reporting:
+  logging:
+    type: log
+  telemetry:
+    type: hyperv
+EOF
+
+sudo sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf
+sudo sed -i 's/Provisioning.UseCloudInit=n/Provisioning.UseCloudInit=y/g' /etc/waagent.conf
+sudo sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf
+sudo sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf
+
+sudo cat >> /etc/waagent.conf << EOF
+# For Azure Linux agent version >= 2.2.45, this is the option to configure,
+# enable, or disable the provisioning behavior of the Linux agent.
+# Accepted values are auto (default), waagent, cloud-init, or disabled.
+# A value of auto means that the agent will rely on cloud-init to handle
+# provisioning if it is installed and enabled, which in this case it will.
+Provisioning.Agent=auto
+EOF
+
+
+sudo cloud-init clean --logs --seed
+sudo rm -rf /var/lib/cloud/
+sudo systemctl stop walinuxagent.service
+sudo rm -rf /var/lib/waagent/
+sudo rm -f /var/log/waagent.log
+
+sudo waagent -force -deprovision
+rm -f ~/.bash_history
+export HISTSIZE=0
+# logout
+
+sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://vishnuks/xvda_backup6.raw --sse AES256 --storage-class STANDARD_IA
+
+sudo dd if=/dev/xvda bs=1M status=progress | azbak - /osdisks/$HOSTNAME.raw --storage-account xmigrate --access-key XhWzZKVlzOpDPXzneYBT4oVVnYPaXdp0wsd4ZgLjIpH0BwHR4HmKrnQqdyawGV/Un2a2vGMW/PE+/N2t5b8a7g==
+
+
+qemu-img convert -f raw -o subformat=fixed -O vpc MyLinuxVM.raw MyLinuxVM.vhd
+
+
+az disk create -n testubuntu4 -g ritvick-aks -l westeurope --for-upload --upload-size-bytes 8589935104 --sku standardssd_lrs
+
+az disk grant-access -n testubuntu4 -g ritvick-aks --access-level Write --duration-in-seconds 86400
+
+
+./azcopy copy "./MyLinuxVM.vhd"  "https://md-impexp-hdqzc5vpnkqq.blob.core.windows.net/vvtr3zlkrvgs/abcd?sv=2017-04-17&sr=b&si=0da5fef1-64b2-47ac-b2af-7f9d528d1036&sig=9q8brtU0qMlDxuGH0hFGvXtSxPaNXBva0reUZKuaFIw%3D" --blob-type PageBlob
+--from-to LocalBlob
+
+az disk revoke-access -n testubuntu4 -g ritvick-aks
+
+az vm create --resource-group ritvick-aks --location westeurope --name testubuntu4 --os-type linux --attach-os-disk testubuntu4
+
+
+
+## Discover button
+-------------------
+send below json
+/discover/
+{
+  "hosts":["1.1.1.1","2.2.2.2","3.3.3.3"],
+  "username":"ubuntu",
+  "password":"testpassword",
+  "provider":"azure"
+}
+expect below response
+{
+  'status': '200'
+}
+
+/stream get request
+get you logs
+
+## go to blueprint button
+send post request
+/blueprint
+expect response
+{[{"project": "testproject", "ram": "1002304 kB", "ip": "172.31.34.216", "disk": "/dev/xvda", "cores": "1", "host": "ip6-localhost", "subnet": "172.31.34.216/20", "_id": {"$oid": "5f0ed1d7ceef8258fc88a7d0"}, "cpu_model": "Intel(R) Xeon(R) CPU E5-2676 v3 @ 2.40GHz", "network": "172.31.32.0", "ports": [{"name": "python", "type": "tcp", "port": 22}, {"name": "python", "type": "tcp", "port": 22}]}]}
+
+
+
+
+## Create blueprint button
+----------------------------
+1)blueprint/network/create
+{
+    "cidr":"192.168.0.0",
+    "project": "testproject"
+}
+
+response
+{
+  "blueprint": "[{\"cores\": \"1\", \"project\": \"testproject\", \"network\": \"192.168.32.0/18\", \"public_route\": true, \"host\": \"ip6-localhost\", \"status\": \"Not started\", \"subnet\": \"192.168.34.216/20\", \"_id\": {\"$oid\": \"5f0eda06c9c505383f073da9\"}, \"ports\": [{\"port\": 22, \"type\": \"tcp\", \"name\": \"python\"}, {\"port\": 22, \"type\": \"tcp\", \"name\": \"python\"}], \"machine_type\": \"\", \"ram\": \"1002304 kB\", \"cpu_model\": \"Intel(R) Xeon(R) CPU E5-2676 v3 @ 2.40GHz\", \"ip\": \"192.168.34.216\"}]",
+  "status": "200"
+}
+
+2)blueprint/create
+request
+{
+  "project": "testproject",
+  "machines":[
+                {
+                  "host" :"ip6-localhost",
+                  "machine_type" :"B2S",
+                  "public_route": "False"
+                }
+            ]
+}
+
+Response
+{
+status:"200"
+}
+
+3)Migration status
+
+migration/status
+
+4) Build
+/blueprint/build
+
+{
+  "project" : "testproject"
+}
+
+
+5)/project/<create/update>
+For Azure:
+{
+  "subscription_id":"11111-1111-111111-111111",
+  "client_id":"11111-1111-111111-111111",
+  "secret_id": "11111-1111-111111-111111",
+  "tenant_id": "11111-1111-111111-111111",
+  "provider":"azure",
+  "resource_group":"xmig",
+  "location":"eastus1",
+  "name":"tesproject4"
+}
+
+6)/project/get?name=<all/projectname>
+
+response 
+
+"[{\"_id\": {\"$oid\": \"5f1b2f7df5aa1684cb7c1c81\"}, \"provider\": \"azure\", \"location\": \"westeurope\", \"name\": \"testproject\", \"resource_group\": \"xmigrate\", \"subscription_id\": \"xxxx\"}]"
+
+7) storage
+/storage/create
+{
+  "project" : "testproject",
+  "storage" : "xmigrate",
+  "container": "osdisk",
+  "access_key": "/Un2a2vGMW/PE+/N2t5b8a7g=="
+}
+
+8)/blueprint/network/create POST
+
+{
+  
+  "project" : "testproject",
+  "cidr" : "192.168.0.0/16"
+  "name" : "network-1"
+}
+
+9)/blueprint/network/get?project=testproject GET 
+
+10)/blueprint/subnet/create POST
+{
+  
+  "project" : "testproject",
+  "cidr" : "192.168.1.0/24",
+  "nw_name": "network-1",
+  "nw_type": "public",
+  "name": "subnet-1"
+}
+
+11)localhost:8000/blueprint/subnet/get?project=testproject&network=network-1 GET
+
+12)/blueprint/hosts/get?project=testproject GET
+
+13)/blueprint/update POST
+{
+  "project": "testproject",
+  "machines": [{"hostname":"localhost.localdomain","machine_type":"B2S","type":"private", "subnet":"192.168.1.0/24"}]
+}
+14)/login POST
+{
+    "username":"vishnu",
+    "password":"vishnu"
+}
+
+response:
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1OTk5OTE1MTEsIm5iZiI6MTU5OTk5MTUxMSwianRpIjoiMjg0YWMyZDYtZjcyNS00NzkwLTkyZTgtYWY2YzQyMjgyZWU1IiwiZXhwIjoxNTk5OTkyNDExLCJpZGVudGl0eSI6InZpc2hudSIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.taAIbCIKJ3bQjDXa29P_skZtcBJ_BQQsv0f088VWqbM"
+}
+15)/signup POST
+{
+    "username":"vishnu",
+    "password":"vishnu"
+}
+
+response:
+{
+  "msg": "User added successfully"
+}
+
+16)/location/get POST
+Azure
+-------
+{
+  "subscription_id":"1111111111111-11111111-111111",
+  "client_id":"1111111111111-11111111-111111",
+  "secret_id":"1111111111111-11111111-111111",
+  "tenant_id": "1111111111111-11111111-111111",
+  "provider":"azure"
+}
+
+aws
+----
+{
+  "secret_key": "1111111111111-11111111-111111",
+  "access_key": "1111111111111-11111111-111111",
+  "provider":"aws"
+}
+
+17)/vms/get?project=tesproject3  GET
+
+response:
+
+{
+  "machine_types": [
+    {
+      "cores": 1,
+      "disk": 4096,
+      "max_data_disk": 2,
+      "memory": 2048,
+      "osdisk": 1047552,
+      "vm_name": "Standard_B1ms"
+    },
+    {
+      "cores": 1,
+      "disk": 4096,
+      "max_data_disk": 2,
+      "memory": 1024,
+      "osdisk": 1047552,
+      "vm_name": "Standard_B1s"
+    },
+    {
+      "cores": 2,
+      "disk": 16384,
+      "max_data_disk": 4,
+      "memory": 8192,
+      "osdisk": 1047552,
+      "vm_name": "Standard_B2ms"
+    }
+  ],
+  "status": "200"
+}
+
+18) /blueprint/network/delete GET
+
+{
+  "project": "testproject",
+  "nw_name": "testnw"
+}
+
+19) /blueprint/subnet/delete GET
+
+{
+  "project": "testproject",
+  "subnet_name": "testnw"
+  "nw_name": "testnw"
+}
+
+20) /user GET
+
+valid response
+{
+    "username": "admin"
+}
+
+invalid response
+
+{
+    "msg": "Signature verification failed"
+}
+
+21) /storage/get
+
+/storage/get?project=xmigrate_test_azure
+
+22) /storage/update
+{
+  "project":"drfdf",
+  "storage":"fdfd",
+  "container":"fdf",
+  "access_key":"fdsfdfsd"
+  }
+
+
+Status codes
+------------
+
+Started cloning : 10
+Cloning completed: 25
+Start converting: 32
+Conversion completed: 36
+Network created: 43
+Subnet created: 60
+Start VM creation: 95
+VM created: 100
+

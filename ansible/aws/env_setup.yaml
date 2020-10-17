@@ -1,0 +1,96 @@
+- name : Configure aws-cli and required packages and deploy and execute the payload
+  become: true
+  become_method: sudo
+  hosts: nodes
+  gather_facts: no
+  force_handlers: True
+  tasks:
+  - name: Download get-pip file
+    get_url:
+      url: https://bootstrap.pypa.io/get-pip.py
+      dest: /tmp/get-pip.py
+      mode: 0750
+  - block:
+    - name: Install Python-devl
+      yum:
+        name: python-devel
+        state: latest
+        update_cache: yes
+      become: true
+    - name: Install GCC
+      yum:
+        name: gcc
+        state: latest
+    rescue:
+    - name: Update yum.. older way
+      shell: "sudo yum update -y"
+    - name: Install Python-devel.. older way
+      shell: "sudo yum install python-devel -y"
+    - name: Install GCC .. older way
+      shell: "sudo yum install gcc -y"
+    tags:
+        - devel
+
+  - name: Install pip
+    shell: "sudo python /tmp/get-pip.py"
+  
+  - block:
+    - name: Install Python packages
+      pip:
+        name: "{{ item }}"
+      with_items:
+        - awscli
+        - netifaces
+        - netaddr
+        - mongoengine
+        - psutil
+    rescue:
+    - name: Install python packages
+      shell: "sudo pip install {{ item }}"
+      with_items:
+        - awscli
+        - netifaces
+        - netaddr
+        - mongoengine
+        - psutil
+
+  - name: Create .aws directory
+    file:
+      path: "~/.aws/"
+      state: directory
+      mode: 0755
+
+  - name: Configure awscli credentials
+    copy:
+      src: "~/.aws/credentials"
+      dest: "~/.aws/credentials"
+
+  - name: Configure aws region
+    copy:
+      src: "~/.aws/config"
+      dest: "~/.aws/config"
+
+  - name: <==Deploy payload==>
+    copy:
+      src: "../payloads/footprint.py"
+      dest: "/tmp/footprint.py"
+    tags:
+      - deploy
+
+  - name: <==Executing payload==>
+    shell: "python /tmp/footprint.py"
+    register: st
+    become: True
+    tags:
+      - exec
+
+  - name: Debug
+    debug:
+      var: st
+    tags:
+      - msg
+
+
+
+
+

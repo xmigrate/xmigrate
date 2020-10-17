@@ -1,0 +1,39 @@
+body, html {
+    font-family: Ubuntu !important;
+    font-style: normal;
+    font-weight: normal;
+        height: 100%;
+        background-color: #E5E5E5 !important;
+      }
+      html
+      {
+        scroll-behavior: smooth; 
+      }
+.SignIn{
+    .CardSingin{
+        border: 0 !important;
+        border-radius: 0rem !important;
+      }
+  .FormStyle{
+    padding: 2em;
+  }
+  .card-head {
+
+    background-color: #1DA1F2 ;
+    padding: 4rem 1rem 1rem 2rem;
+    border-radius: .3rem .3rem 0 0 ;
+    color: white;
+  
+  }
+  .sub{
+    font-size: 16px;
+    color: whitesmoke;
+  }
+
+  h3{
+    font-family: Ubuntu;
+    font-style: normal;
+    font-weight: normal !important;
+    font-size: 30px;
+  }
+}
