@@ -102,7 +102,6 @@ async def create_subnet():
             return jsonify({'status': '500', 'msg': 'Subnet  creation failed'})
     
 
-
 @app.route('/blueprint/hosts/get', methods=['GET'])
 @jwt_required
 async def get_hosts():
