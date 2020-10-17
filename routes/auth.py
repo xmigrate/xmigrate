@@ -5,6 +5,7 @@ from quart_jwt_extended import (
 )
 from __main__ import app
 from pkg.common import user
+
 @app.route('/login', methods=['POST'])
 async def login():
     if not request.is_json:
@@ -43,3 +44,10 @@ async def signup():
         return jsonify({"msg":"User added successfully"}), 200
     else:
         return jsonify({"msg":"User addition failed"}), 400
+
+
+@app.route('/user', methods=['GET'])
+@jwt_required
+async def username():
+    username = get_jwt_identity()
+    return jsonify(username=username), 200
