@@ -67,7 +67,7 @@ def fetch_all_hosts(project):
             for subnet in subnet_object:
                 if subnet['nw_name'] == network['nw_name']:
                     subs.append(subnet)
-                    network_objects.append({"name":network['nw_name'], "cidr":network['cidr'],'subnets':subs})
+            network_objects.append({"name":network['nw_name'], "cidr":network['cidr'],'subnets':subs})
         return {'networks':network_objects}
     except Exception as e:
         print(e)
