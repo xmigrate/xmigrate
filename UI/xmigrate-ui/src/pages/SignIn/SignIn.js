@@ -5,7 +5,8 @@ import {
   Col,
   Row,
   Card,
-  Button
+  Button,
+  Alert
 } from "react-bootstrap";
 import { Link } from 'react-router-dom'
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
@@ -22,10 +23,15 @@ export default class SignIn extends Component {
     super()
     let input = {};
     input["UserId"] = "";
-    input["password"] = "";                                                                                                                           
+    input["password"] = "";
+    let  sh = false;  
+    if(props.location.state !== undefined){
+      sh = props.location.state.show
+    }                                                                                                                       
     this.state = {
       input:input,
       loader:false,
+      show: sh,
       errors:{}
     }
     this.handleChange = this.handleChange.bind(this);
@@ -121,6 +127,11 @@ export default class SignIn extends Component {
         <Container className="h-100">
           <Row className=" h-100 justify-content-center align-items-center">
             <Col md="5">
+            {this.state.show?(
+        <Alert  variant='success'  >
+       User Created Successfully !! Please login with username and password
+      </Alert>):""
+        }
               <Card className="CardSingin">
                  <Card.Header className="card-head">
                   <h3>Sign In</h3>

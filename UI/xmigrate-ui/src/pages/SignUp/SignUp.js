@@ -5,7 +5,7 @@ import {
   Col,
   Row,
   Card,
-  Button
+  Button,
 } from "react-bootstrap";
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
 import { FaAngleRight } from "react-icons/fa";
@@ -28,6 +28,7 @@ export default class SignUp extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
+  //Handling Changes in input
   handleChange(event) {
     let input = this.state.input;
     input[event.target.name] = event.target.value;
@@ -36,6 +37,7 @@ export default class SignUp extends Component {
     });
   }
 
+  //Handling Submit funtion
   async handleSubmit(event) {
     event.preventDefault();
     if(this.validate()){
@@ -53,14 +55,17 @@ export default class SignUp extends Component {
       input["password"] = "";
       input["confirm_password"] = "";
       this.setState({input:input});
-      alert('Form is submited');
       console.log(data)
-      this.props.history.push("/");
+      this.props.history.push({
+        pathname: '/',
+        state: { show: true }
+      });
     })
     
     }
   }
 
+  //Validating Data before Post
   validate(){
     let input = this.state.input;
     let errors = {};
@@ -94,11 +99,14 @@ export default class SignUp extends Component {
     return isValid;
 }
 
+
+
   render() {
     return (
       <div className="SignUp h-100">
         <MainHeaderComponent />
         {/* Top Navigation Bar  */}
+    
         <Container className="h-100">
           <Row className=" h-100 justify-content-center align-items-center">
             <Col md="5">
@@ -163,7 +171,7 @@ export default class SignUp extends Component {
             </Col>
           </Row>
         </Container>
-      </div>
+  </div>
     );
   }
 }
