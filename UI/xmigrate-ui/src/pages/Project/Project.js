@@ -95,7 +95,7 @@ export default class Project extends Component {
         });
       } else if (this.state.status === "Storage") {
         var data = {
-          project: this.state.input["project"],
+          project: this.state.input["name"],
           storage: this.state.input["storage"],
           container: this.state.input["container"],
           access_key: this.state.input["access_key"],
@@ -109,12 +109,20 @@ export default class Project extends Component {
             loader: false,
           });
           console.log(res);
-          this.props.history.push({pathname:"/home",state:{ detail: this.state.input["name"] }});
+          if(res.data.status === "200"){
+            this.props.history.push({pathname:"/home",state:{ detail: this.state.input["name"] }});
+          }
+          else{
+            
+          }
+         
         });
       }
     }
   }
 
+
+  //To validate the project submit
   validate() {
     let input = this.state.input;
     let errors = {};
@@ -362,15 +370,6 @@ export default class Project extends Component {
                         this.state.status === "Storage" && this.state.loader !== true ? " block" : "none",
                     }}
                   >
-                    <Form.Group className="register bg-blue">
-                      <Form.Label>Project</Form.Label>
-                      <Form.Control
-                        type="text"
-                        onChange={this.handleChange}
-                        placeholder="Storage"
-                        name="project"
-                      />
-                    </Form.Group>
                     <Form.Group className="register bg-blue">
                       <Form.Label>Storage</Form.Label>
                       <Form.Control

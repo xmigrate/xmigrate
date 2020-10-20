@@ -15,6 +15,7 @@ console.log("SubnetLoading",props);
 this.state = {
   Subnet:props.Subnet.subnet_name,
   VMS:props.VMS,
+  nw_name:props.NetworkName,
     expanded: false }
 }
 
@@ -34,10 +35,10 @@ render(){
         <tbody>
             <tr onClick={this.toggleExpander}>
             <td>#{this.props.index}</td>
-    <td>{this.props.Subnet.subnet_name}</td>
+    <td>{this.props.Subnet.name}</td>
     <td>{this.props.Subnet.cidr}</td>
     <td>{this.props.Subnet.subnet_type}</td>
-    <td onClick={()=>this.props.DeleteSubnet(this.state.Subnet)}>
+    <td onClick={()=>this.props.DeleteSubnet(this.state.Subnet,this.state.nw_name)}>
             <svg
               width="1em"
               id="Del"
@@ -68,12 +69,12 @@ render(){
                               <Col xs={{ span: 2 }}>VM ID</Col>
                               <Col xs={{ span: 1 }}>STATUS</Col>
                             </Row>
-                            {this.props.Subnet.host === undefined || this.props.Subnet.host.length === 0  ? (
+                            {this.props.Subnet.hosts === undefined || this.props.Subnet.hosts.length === 0  ? (
                     <h4>
                           No HostData Avaialble...
                           </h4>
                   ) : (
-                    this.props.Subnet.host.map((host, index) => (
+                    this.props.Subnet.hosts.map((host, index) => (
                       <Row className=" py-3 " key={index}>
                       <Col xs={{ span: 1 }}></Col>
                        <Col xs={{ span: 2 }}>{host.host}</Col>
@@ -87,7 +88,7 @@ render(){
                               as="select"
                               size="sm"
                               custom
-                              onChange={this.props.handleVM}
+                              onChange={(e)=>this.props.handleVM(e,host)}
                             >
                      {this.state.VMS.map((VM) => (
                   <option key={VM.vm_name} value={VM.vm_name}>
@@ -101,7 +102,7 @@ render(){
                       <Col xs={{ span: 2 }}>
                       </Col> 
                        <Col xs={{ span: 2 }}>{host.ip}</Col> 
-                      <Col xs={{ span: 1 }}>Processing</Col>
+                     <Col xs={{ span: 1 }}>{host.status}</Col>
                     </Row>
                     ))
                   )}
