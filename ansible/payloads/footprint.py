@@ -88,7 +88,7 @@ def meminfo():
 
 
 class Discover(Document):
-    host = StringField(required=True, max_length=200, unique=True)
+    host = StringField(required=True, max_length=200)
     ip = StringField(required=True, unique=True)
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
@@ -98,7 +98,9 @@ class Discover(Document):
     ram = StringField(required=True, max_length=50)
     disk = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
-
+    meta = {
+             'indexes': ['host', 'project']
+        }
 
 def main():
     load_dotenv()
