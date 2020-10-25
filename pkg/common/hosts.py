@@ -38,7 +38,7 @@ def update_hosts(project,machines):
         for machine in machines:
             subnet = Subnet.objects(project=project, cidr = machine['subnet'])
             network = Network.objects(project=project, nw_name = subnet[0]['nw_name'])
-            BluePrint.objects(host=machine['hostname'],project=project).update(machine_type=machine['machine_type'],public_route=machine['type'],subnet=machine['subnet'],network=network[0]['cidr'])
+            BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['cidr'])
         con.close()
         return True
     except Exception as e:

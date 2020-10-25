@@ -10,13 +10,12 @@ import {
   Col,
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
-import GetService, { GetServiceWithData } from "../../services/GetService";
+import { GetServiceWithData } from "../../services/GetService";
 import {
   BLUEPRINT_URL,
   BLUEPRINTNET_NETWORK_CREATE_URL,
   BLUEPRINTNET_NETWORK_GET_URL,
   BLUEPRINTNET_SUBNET_POST_URL,
-  BLUEPRINTNET_SUBNET_GET_URL,
   BLUEPRINTNET_HOST_GET_URL,
   BLUEPRINTNET_BUILD_POST_URL,
   BLUEPRINTNET_GET_VMS,
@@ -24,6 +23,7 @@ import {
   BLUEPRINTNET_DELETE_SUBNET,
   BLUEPRINT_SAVE,
   BLUEPRINT_STATUS,
+  BLUEPRINT_UDATE_HOST
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
@@ -35,6 +35,7 @@ export default class BluePrint extends Component {
     this.state = {
       input: input,
       Networks: [],
+      dragStart: false,
       cidr: "",
       project: props.CurrentPro.name,
       status: "loading",
@@ -49,6 +50,9 @@ export default class BluePrint extends Component {
     this.DeleteNetwork = this.DeleteNetwork.bind(this);
     this.DeleteSubnet = this.DeleteSubnet.bind(this);
     this.handleVM = this.handleVM.bind(this);
+    this.drag = this.drag.bind(this);
+    this.allowDrop = this.allowDrop.bind(this);
+    this.drop = this.drop.bind(this);
   }
 
   async GettingData() {
@@ -64,7 +68,7 @@ export default class BluePrint extends Component {
     //     Network["subnet"] = [];
     //   });
     //   console.log("The Networks Loading", NetworksData);
-    // });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+    // });
 
     let VMSDATA;
     let hostCurrents = [];
@@ -233,18 +237,18 @@ export default class BluePrint extends Component {
   }
 
   //Handling Change Of VM--------------------------------------------------------------------------------
-  handleVM(event,host) {
+  handleVM(event, host) {
     // console.log(event.target.value);
     // console.log(host);
     let hostCurrent = this.state.hostCurrents;
-    hostCurrent.map((hostCur,index)=>{
-      if(hostCur.hostname === host.host){
+    hostCurrent.map((hostCur, index) => {
+      if (hostCur.hostname === host.host) {
         hostCur["machine_type"] = event.target.value;
-      } 
-    })
+      }
+    });
     // console.log("The hostCurrent",hostCurrent);
     this.setState({
-      hostCurrents:hostCurrent
+      hostCurrents: hostCurrent,
     });
   }
 
@@ -269,23 +273,23 @@ export default class BluePrint extends Component {
       NetworksData.map((Network, index) => {
         Network.subnets.map((subnet, index) => {
           subnet.hosts.map((host, index) => {
-            res.data.map((hostRes,index)=>{
-              if(host.host === hostRes.host){
+            res.data.map((hostRes, index) => {
+              if (host.host === hostRes.host) {
                 host["status"] = hostRes.status;
-                if(hostRes.status !== "100"){
+                if (hostRes.status !== "100") {
                   flag = false;
                 }
               }
-            })
+            });
           });
         });
       });
-      if(flag){
+      if (flag) {
         clearInterval(this.state.intervalId);
       }
-       this.setState({
-        Networks:NetworksData
-       })
+      this.setState({
+        Networks: NetworksData,
+      });
     });
   }
 
@@ -302,6 +306,77 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
+    });
+  }
+
+  //--------------Reset the Network Table
+  async _Reset() {
+    console.log("Reseting....");
+    var NetworksData = this.state.Networks;
+    NetworksData.map((Network, index) => {
+      let data = {
+        project: this.state.project,
+        nw_name: Network.nw_name,
+      };
+      GetServiceWithData(BLUEPRINTNET_DELETE_NETWORK, data).then((res) => {
+        console.log("Delete Data From Host", res.data);
+      });
+    });
+    //Getting all details if any
+    this.GettingData();
+  }
+
+  // Draging and Drop
+  drag(ev, host, index, subnetname, nw_name) {
+    let data = {
+      host: host,
+      index: index,
+      ChangeSubnet: subnetname,
+      ChangeNetwork: nw_name,
+    };
+    ev.dataTransfer.setData("TransferJson", JSON.stringify(data));
+  }
+
+  allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  drop(ev, subnetname, nw_name) {
+    ev.preventDefault();
+    var data = JSON.parse(ev.dataTransfer.getData("TransferJson"));
+
+    console.log(data);
+    console.log(subnetname);
+    console.log(nw_name);
+    var NetworksData = this.state.Networks;
+    NetworksData.map((Network, index) => {
+      if (Network.nw_name === data.ChangeNetwork) {
+        Network.subnets.map((subnet, index) => {
+          if (subnet.name === data.ChangeSubnet) {
+            subnet.hosts.splice(data.index, 1);
+          }
+        });
+      } else if (Network.nw_name === nw_name) {
+        Network.subnets.map((subnet, index) => {
+          if (subnet.name === subnetname) {
+            data.host["subnet"] = subnet.cidr;
+            subnet.hosts.push(data.host);
+          }
+        });
+      } else {
+      }
+    });
+
+    var data1 = {
+      project: this.state.project,
+      machines:[data.host]
+    }
+    console.log("data passinf to the url",data1);
+    PostService(BLUEPRINT_UDATE_HOST, data1).then((res) => {
+      console.log("After Drag and drop", res.data);
+    });
+    this.setState({
+      Networks: NetworksData,
     });
   }
 
@@ -384,7 +459,7 @@ export default class BluePrint extends Component {
 
             {/* HereTable */}
 
-            <Card className="mt-4 p-2">
+            <Card className="mt-4 p-2 blurprintTable">
               <Card.Header className="bg-white d-flex">
                 <Form className="">
                   <Form.Group controlId="select-type">
@@ -455,6 +530,10 @@ export default class BluePrint extends Component {
                           DeleteNetwork={this.DeleteNetwork}
                           DeleteSubnet={this.DeleteSubnet}
                           handleVM={this.handleVM}
+                          drag={this.drag}
+                          dragStart={this.state.dragStart}
+                          allowDrop={this.allowDrop}
+                          drop={this.drop}
                         />
                       ))
                     )}
@@ -485,7 +564,12 @@ export default class BluePrint extends Component {
                 </Button>
               </Col>
               <Col>
-                <Button variant="danger" size="sm" block>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={this._Reset.bind(this)}
+                  block
+                >
                   Reset
                 </Button>
               </Col>

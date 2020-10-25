@@ -36,7 +36,7 @@ export default class NetworkTableRow extends Component {
     const isLoadingSubnet = Subnets.length === 0;
     return (
       <tbody>
-        <tr key={this.props.index} onClick={this.toggleExpander}>
+        <tr key={this.props.index} className="NetworkRow" onClick={this.toggleExpander}>
           <td>#{this.props.index}</td>
           <td>{this.props.Network.nw_name}</td>
           <td>{this.props.Network.cidr}</td>
@@ -140,6 +140,10 @@ export default class NetworkTableRow extends Component {
                         VMS={this.props.VMS}
                         DeleteSubnet={this.props.DeleteSubnet}
                         handleVM={this.props.handleVM}
+                        drag={this.props.drag}
+                        dragStart={this.props.dragStart}
+                        allowDrop = {this.props.allowDrop}
+                        drop = {this.props.drop}
                       />
                     ))
                   )}

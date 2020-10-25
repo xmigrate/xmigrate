@@ -47,6 +47,7 @@ export default class SignIn extends Component {
   }
 
   async handleSubmit(event) {
+    let errors ={};
     event.preventDefault();
     if(this.validate()){
         console.log(this.state);
@@ -60,6 +61,18 @@ export default class SignIn extends Component {
       loader:true,
     });
     await PostService(LOGIN, data).then((res) => {
+      let input = {};
+      if(res===401){
+        errors["Authentication"] = "Invalid Authentication";
+        input["UserId"] = "";
+        input["password"] = "";
+        this.setState({
+          input:input,
+          errors:errors,
+          loader:false
+        });
+      }
+      else{
       let input = {};
       input["UserId"] = "";
       input["password"] = "";
@@ -84,6 +97,7 @@ export default class SignIn extends Component {
           })
         }
       })
+    }
     })
     }
   }
@@ -171,6 +185,7 @@ export default class SignIn extends Component {
                     >
                       Login<FaAngleRight size={20}/>
                     </Button>
+                    <div className="text-danger">{this.state.errors.Authentication}</div>
                     <div>
                     <div className="forgotPassword float-left">
                       <span className="btn text-muted">Forgot Password?</span>

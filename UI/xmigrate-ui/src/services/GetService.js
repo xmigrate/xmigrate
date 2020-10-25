@@ -5,9 +5,11 @@ import Axios from 'axios';
 export default function GetService(API) {
     Axios.defaults.headers.common['Authorization'] = 'Bearer '+localStorage.getItem('auth_token');
     let response = Axios.get(API, { withCredentials: false,headers: { "Content-Type": "application/json" }} )
-    response.then({}).catch(err => {
+    response.then({}).catch(error => {
         // window.location.replace(LOGINURL);
-        console.error(err)
+        console.log(error.response.data);
+        console.log(error.response.status);
+        console.log(error.response.headers);
     })
     return response
 }
@@ -19,8 +21,10 @@ export function GetServiceWithData(API, dataGet) {
         headers: { "Content-Type": "application/json" },
         params: dataGet
     })
-    response.then({}).catch(err => {
-        console.error(err);
+    response.then({}).catch(error => {
+        console.log(error.response.data);
+        console.log(error.response.status);
+        console.log(error.response.headers);
         // window.location.replace("/error");
     })
     return response;

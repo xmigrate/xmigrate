@@ -19,6 +19,27 @@
     color:blue;
     cursor: pointer;
   }
+  .blueprint-edit-table{
+    padding-right: 0px;
+    padding-left: 0px;
+    .table{
+      border: 1px solid #0000004a;
+    }
+
+  }
+  .NetworkRow:hover{
+    background-color: #e6e6e6;
+  }
+  .SubnetRow:hover{
+    background-color: #e6e6e6;
+  }
+
+
+  .blurprintTable{
+    .card-body{
+      padding: 0px;
+    }
+  }
 }
 
 

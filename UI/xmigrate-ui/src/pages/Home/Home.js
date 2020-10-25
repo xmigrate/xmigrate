@@ -8,7 +8,6 @@ import { ProtectedRoute } from "../../services/Protected.route";
 import GetService,{GetServiceWithData} from "../../services/GetService";
 import { GETPROJECTS,BLUEPRINT_URL } from "../../services/Services";
 import Settings from "../Settings/Settings";
-import { useHistory } from "react-router-dom";
 export default class Home extends Component {
   constructor(props) {
     super();
@@ -37,7 +36,7 @@ export default class Home extends Component {
       }
 
     });
-    if(noProject==false){
+    if(noProject===false){
 
    
         var CurrentProject ;
