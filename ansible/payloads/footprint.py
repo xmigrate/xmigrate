@@ -88,8 +88,8 @@ def meminfo():
 
 
 class Discover(Document):
-    host = StringField(required=True, max_length=200)
-    ip = StringField(required=True, unique=True)
+    host = StringField(required=True, max_length=200 )
+    ip = StringField(required=True)
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
     ports = ListField()
@@ -99,8 +99,10 @@ class Discover(Document):
     disk = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
     meta = {
-             'indexes': ['host', 'project']
-        }
+        'indexes': [
+            {'fields': ('host', 'project'), 'unique': True}
+        ]
+    }
 
 def main():
     load_dotenv()
@@ -113,10 +115,9 @@ def main():
     disk = disk_info()
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
-    post1 = Discover(host=socket.gethostname(), ip=result['ip'], subnet=result['subnet'], network=result['network'],
-                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info(),project=project)
     try:
-        post1.save()
+        Discover.objects(project=project,host=socket.gethostname()).update(host=socket.gethostname(), ip=result['ip'], subnet=result['subnet'], network=result['network'],
+                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info(), upsert=True)
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)

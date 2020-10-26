@@ -10,7 +10,6 @@ from quart_jwt_extended import jwt_required, get_jwt_identity
 @jwt_required
 async def discover():
     con = create_db_con()
-    Discover.objects.delete()
     con.close()
     if request.method == 'POST':
         data = await request.get_json()

@@ -2,7 +2,7 @@ from mongoengine import *
 
 class BluePrint(Document):
     host = StringField(required=True, max_length=200)
-    ip = StringField(required=True, unique=True)
+    ip = StringField(required=True)
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
     ports = ListField()
@@ -21,7 +21,9 @@ class BluePrint(Document):
     project = StringField(required=True, max_length=50)
     nic_id = StringField(max_length=200)
     meta = {
-             'indexes': ['host', 'project']
-        }
+        'indexes': [
+            {'fields': ('host', 'project'), 'unique': True}
+        ]
+    }
 
 
