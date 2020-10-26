@@ -1,9 +1,5 @@
 import React, { Component } from "react";
 import {
-    Container,
-    Table,
-    Card,
-    Button,
     Form,
     Row,
     Col,
@@ -13,8 +9,9 @@ constructor(props){
 super();
 console.log("SubnetLoading",props);
 this.state = {
-  Subnet:props.Subnet.subnet_name,
+  Subnet:props.Subnet.name,
   VMS:props.VMS,
+  nw_name:props.NetworkName,
     expanded: false }
 }
 
@@ -32,12 +29,12 @@ toggleExpander = (e) => {
 render(){
     return(
         <tbody>
-            <tr onClick={this.toggleExpander}>
+            <tr onClick={this.toggleExpander}  className="SubnetRow">
             <td>#{this.props.index}</td>
-    <td>{this.props.Subnet.subnet_name}</td>
+    <td>{this.props.Subnet.name}</td>
     <td>{this.props.Subnet.cidr}</td>
     <td>{this.props.Subnet.subnet_type}</td>
-    <td onClick={()=>this.props.DeleteSubnet(this.state.Subnet)}>
+    <td onClick={()=>this.props.DeleteSubnet(this.state.Subnet,this.state.nw_name)}>
             <svg
               width="1em"
               id="Del"
@@ -57,7 +54,7 @@ render(){
             </tr>
             {
             this.state.expanded && (
-                <tr className="expandable" key="tr-expander">
+                <tr className="expandable" key="tr-expander"  onDrop={(e)=>this.props.drop(e,this.state.Subnet,this.state.nw_name)} onDragOver={(e)=>this.props.allowDrop(e)}>
                     <td className="uk-background-muted" colSpan={6}>
                     <Row className="font-weight-bold py-3 ">
                               <Col xs={{ span: 1 }}>#</Col>
@@ -68,13 +65,13 @@ render(){
                               <Col xs={{ span: 2 }}>VM ID</Col>
                               <Col xs={{ span: 1 }}>STATUS</Col>
                             </Row>
-                            {this.props.Subnet.host === undefined || this.props.Subnet.host.length === 0  ? (
-                    <h4>
-                          No HostData Avaialble...
-                          </h4>
+                            {this.props.Subnet.hosts === undefined || this.props.Subnet.hosts.length === 0  ? (
+                  <h6 className="text-center text-muted">
+                       No SubnetData Avaialble...
+                       </h6>
                   ) : (
-                    this.props.Subnet.host.map((host, index) => (
-                      <Row className=" py-3 " key={index}>
+                    this.props.Subnet.hosts.map((host, index) => (
+                      <Row className=" py-3 " key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
                       <Col xs={{ span: 1 }}></Col>
                        <Col xs={{ span: 2 }}>{host.host}</Col>
                       <Col xs={{ span: 2 }}>{host.ip}</Col> 
@@ -87,7 +84,7 @@ render(){
                               as="select"
                               size="sm"
                               custom
-                              onChange={this.props.handleVM}
+                              onChange={(e)=>this.props.handleVM(e,host)}
                             >
                      {this.state.VMS.map((VM) => (
                   <option key={VM.vm_name} value={VM.vm_name}>
@@ -101,7 +98,7 @@ render(){
                       <Col xs={{ span: 2 }}>
                       </Col> 
                        <Col xs={{ span: 2 }}>{host.ip}</Col> 
-                      <Col xs={{ span: 1 }}>Processing</Col>
+                     <Col xs={{ span: 1 }}>{host.status}</Col>
                     </Row>
                     ))
                   )}

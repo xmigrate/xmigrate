@@ -5,7 +5,8 @@ import {
   Col,
   Row,
   Card,
-  Button
+  Button,
+  Alert
 } from "react-bootstrap";
 import { Link } from 'react-router-dom'
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
@@ -22,10 +23,15 @@ export default class SignIn extends Component {
     super()
     let input = {};
     input["UserId"] = "";
-    input["password"] = "";                                                                                                                           
+    input["password"] = "";
+    let  sh = false;  
+    if(props.location.state !== undefined){
+      sh = props.location.state.show
+    }                                                                                                                       
     this.state = {
       input:input,
       loader:false,
+      show: sh,
       errors:{}
     }
     this.handleChange = this.handleChange.bind(this);
@@ -41,6 +47,7 @@ export default class SignIn extends Component {
   }
 
   async handleSubmit(event) {
+    let errors ={};
     event.preventDefault();
     if(this.validate()){
         console.log(this.state);
@@ -54,6 +61,18 @@ export default class SignIn extends Component {
       loader:true,
     });
     await PostService(LOGIN, data).then((res) => {
+      let input = {};
+      if(res===401){
+        errors["Authentication"] = "Invalid Authentication";
+        input["UserId"] = "";
+        input["password"] = "";
+        this.setState({
+          input:input,
+          errors:errors,
+          loader:false
+        });
+      }
+      else{
       let input = {};
       input["UserId"] = "";
       input["password"] = "";
@@ -78,6 +97,7 @@ export default class SignIn extends Component {
           })
         }
       })
+    }
     })
     }
   }
@@ -121,6 +141,11 @@ export default class SignIn extends Component {
         <Container className="h-100">
           <Row className=" h-100 justify-content-center align-items-center">
             <Col md="5">
+            {this.state.show?(
+        <Alert  variant='success'  >
+       User Created Successfully !! Please login with username and password
+      </Alert>):""
+        }
               <Card className="CardSingin">
                  <Card.Header className="card-head">
                   <h3>Sign In</h3>
@@ -160,6 +185,7 @@ export default class SignIn extends Component {
                     >
                       Login<FaAngleRight size={20}/>
                     </Button>
+                    <div className="text-danger">{this.state.errors.Authentication}</div>
                     <div>
                     <div className="forgotPassword float-left">
                       <span className="btn text-muted">Forgot Password?</span>

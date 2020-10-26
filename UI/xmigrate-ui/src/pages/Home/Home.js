@@ -8,7 +8,6 @@ import { ProtectedRoute } from "../../services/Protected.route";
 import GetService,{GetServiceWithData} from "../../services/GetService";
 import { GETPROJECTS,BLUEPRINT_URL } from "../../services/Services";
 import Settings from "../Settings/Settings";
-import { useHistory } from "react-router-dom";
 export default class Home extends Component {
   constructor(props) {
     super();
@@ -22,12 +21,24 @@ export default class Home extends Component {
   }
 
   async componentDidMount() {
+    this.setState({
+      Loading:true
+    });
+    let noProject  = true;
+    let ProjectDetails;
     // Func:Getting the projects of user by calling Funtion with authentication id user id identified
     await GetService(GETPROJECTS).then((res) => {
       if (res.data === "[]") {
         this.props.history.push("/project");
       } else {
-        let ProjectDetails = JSON.parse(res.data);
+        noProject = false;
+        ProjectDetails = JSON.parse(res.data);
+      }
+
+    });
+    if(noProject===false){
+
+   
         var CurrentProject ;
         //Setting Which Needs to be the Current Project on loading
         if (typeof this.props.state !== "undefined") {
@@ -42,7 +53,7 @@ export default class Home extends Component {
         console.log("The Current Project",CurrentProject.name);
         let BlueprintDisabled = true;
         let BlueprintData;
-        GetServiceWithData(BLUEPRINT_URL, dataGet).then(
+       await GetServiceWithData(BLUEPRINT_URL, dataGet).then(
           (res) => {
             console.log(res.data);
             if(JSON.parse(res.data).length === 0){
@@ -62,12 +73,12 @@ export default class Home extends Component {
           BlueprintData:BlueprintData
         });
       }
-    });
+   
   }
 
   // Func:Changing the project state when clicking the sidebar by call back Funtion
   async changeProject(project) {
-    console.log(project);
+    console.log("Changine Project",project);
     var dataGet ={
       project: project.name
     }

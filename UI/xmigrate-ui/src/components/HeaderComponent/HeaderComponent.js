@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import * as icon from 'react-icons/all'
 import "./HeaderComponent.scss"
 import Auth from '../../services/Auth'
-import Project from '../../pages/Project/Project'
 export default class HeaderComponent extends Component {
     constructor(props){
         super();

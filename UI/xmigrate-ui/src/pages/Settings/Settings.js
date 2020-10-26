@@ -10,6 +10,12 @@ import {
 } from "react-bootstrap";
 import { FaAngleRight, FaAws, FaCloud } from "react-icons/fa";
 import { SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
+import {
+  BLUEPRINT_GET_STORAGE,
+  BLUEPRINT_UPDATE_STORAGE
+} from "../../services/Services";
+import { GetServiceWithData } from "../../services/GetService";
+import PostService from "../../services/PostService";
 export default class Settings extends Component {
 constructor(props){
   super();
@@ -23,14 +29,38 @@ constructor(props){
   input["tenant_id"] = props.CurrentPro.tenant_id;
   input["location"] = props.CurrentPro.location;
   input["client_id"] =props.CurrentPro.client_id;
+  input["storage"] = "";
+  input["container"] = "";
+  input["access_key"] = "";
   this.state = {
+    project:props.CurrentPro.name,
     input: input,
     status: "Verify",
     errors: {},
     locations: []
   };
+  this.handleChange = this.handleChange.bind(this);
+  this.handleProvider = this.handleProvider.bind(this);
+  this.handleStorageUpdate = this.handleStorageUpdate.bind(this);
 
+}
 
+async componentDidMount() {
+  var data = {
+    project: this.state.project,
+  };
+  let input = this.state.input;
+  await GetServiceWithData(BLUEPRINT_GET_STORAGE, data).then((res) => {
+    let data = JSON.parse(res.data);
+    if(data.length!==0){
+      input["storage"] = data[0].storage;
+      input["container"] = data[0].container;
+      input["access_key"] = data[0].access_key;
+    }
+  })
+  this.setState({
+    input,
+  });
 }
 
 handleChange(event) {
@@ -50,6 +80,21 @@ handleProvider(text) {
 }
 
 
+async handleStorageUpdate(event){
+  event.preventDefault();
+  var data ={
+    project:this.state.input.name,
+    storage:this.state.input.storage,
+    container:this.state.input.container,
+    access_key:this.state.input.access_key
+  }
+  console.log(data);
+  await PostService(BLUEPRINT_UPDATE_STORAGE, data).then((res) => {
+    console.log(res);
+  })
+
+}
+
 validate() {
   let input = this.state.input;
   let errors = {};
@@ -65,7 +110,7 @@ validate() {
         <Container className="py-5 ">
           <h4 className="p-0 m-0">Project Settings</h4>
           <Row className="py-5 ">
-            <Col md="5" className="bg-white shadow-sm rounded ">
+            <Col md="6" className="bg-white shadow-sm rounded ">
               <div className="p-3 d-flex flex-column justify-content-between h-100">
                 <Form className="FormStyle" onSubmit={this.handleSubmit}>
                   <Form.Group className="register bg-blue">
@@ -76,6 +121,7 @@ validate() {
                       onChange={this.handleChange}
                       aria-describedby="ProjectHelp"
                       placeholder="Project Name"
+                      disabled={true}
                       value = {this.state.input.name}
                       name="name"
                     />
@@ -268,18 +314,58 @@ validate() {
                     className="btn btn-primary
                        col-lg-12"
                   >
-                    Save
+                    Update
                     <FaAngleRight size={20} />
                   </Button>
                 </Form>
               </div>
             </Col>
             <Col
-              md={{ span: 6, offset: 1 }}
+              md={{ span: 5, offset: 1 }}
               className="bg-white shadow-sm rounded "
             >
-              <div className="p-3 d-flex flex-column justify-content-between h-100">
-                <h2>Storage</h2>
+              <div className="p-3 d-flex flex-column justify-content-between">
+                <h4>Storage</h4>
+                <Form className="FormStyle" onSubmit={this.handleStorageUpdate}>
+                <Form.Group className="register bg-blue">
+                      <Form.Label>Storage</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Storage"
+                        value = {this.state.input.storage}
+                        name="storage"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue">
+                      <Form.Label>Container</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Container"
+                        value = {this.state.input.container}
+                        name="container"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue">
+                      <Form.Label>Access Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Access key"
+                        value = {this.state.input.access_key}
+                        name="access_key"
+                      />
+                    </Form.Group>
+                    <Button
+                      type="submit"
+                      className="btn btn-primary
+                       col-lg-12"
+                    >
+                      Update
+                      <FaAngleRight size={20} />
+                    </Button>
+                </Form>
               </div>
             </Col>
           </Row>

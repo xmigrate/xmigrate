@@ -8,11 +8,26 @@ export default function PostService(API, data) {
         withCredentials: false,
         headers: { "Content-Type": "application/json" }
     }
-    let response = Axios.post(API, data, config);
-    response.then({}).catch(err => {
-        console.error(err);
-        // window.location.replace("/error");
-    })
+    let response = Axios.post(API, data, config).catch(error=>{
+        console.log("Here");
+        if(error.response.status === 401){
+            return error.response.status
+        }
+        else{
+            console.error(error);
+        }
+        
+    });
+    // response.then({}).catch(error => {
+    //     console.log("Here");
+    //     if(error.response.status === 401){
+    //         return error.response.status
+    //     }
+    //     console.log(error.response.data);
+    //     console.log(error.response.status);
+    //     console.log(error.response.headers);
+    //     // window.location.replace("/error");
+    // })
     return response
 }
 

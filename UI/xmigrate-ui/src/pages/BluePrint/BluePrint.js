@@ -10,62 +10,106 @@ import {
   Col,
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
-import GetService, { GetServiceWithData } from "../../services/GetService";
+import { GetServiceWithData } from "../../services/GetService";
 import {
   BLUEPRINT_URL,
   BLUEPRINTNET_NETWORK_CREATE_URL,
   BLUEPRINTNET_NETWORK_GET_URL,
   BLUEPRINTNET_SUBNET_POST_URL,
-  BLUEPRINTNET_SUBNET_GET_URL,
   BLUEPRINTNET_HOST_GET_URL,
   BLUEPRINTNET_BUILD_POST_URL,
   BLUEPRINTNET_GET_VMS,
   BLUEPRINTNET_DELETE_NETWORK,
   BLUEPRINTNET_DELETE_SUBNET,
   BLUEPRINT_SAVE,
-  BLUEPRINT_STATUS
+  BLUEPRINT_STATUS,
+  BLUEPRINT_UDATE_HOST
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
 import NetworkTableRow from "../../components/Table/NetworkTable";
-import { SiLetterboxd } from "react-icons/all";
 export default class BluePrint extends Component {
-  // Network:[
-  //   subnet:[
-  //     host:[],
-  //   ],
-  // ]
   constructor(props) {
     super();
     let input = {};
     this.state = {
       input: input,
       Networks: [],
+      dragStart: false,
       cidr: "",
       project: props.CurrentPro.name,
       status: "loading",
       VMS: [],
       hosts: [],
-      VMSSelected:"",
-      hostCurrent:{},
-      SubnetData: []
+      VMSSelected: "",
+      hostCurrent: {},
+      SubnetData: [],
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
     this.DeleteNetwork = this.DeleteNetwork.bind(this);
     this.DeleteSubnet = this.DeleteSubnet.bind(this);
     this.handleVM = this.handleVM.bind(this);
+    this.drag = this.drag.bind(this);
+    this.allowDrop = this.allowDrop.bind(this);
+    this.drop = this.drop.bind(this);
   }
 
-
-  async GettingData(){
+  async GettingData() {
     this.setState({
-      status: "loading"
+      status: "loading",
     });
     var data = {
       project: this.state.project,
     };
+    // await GetServiceWithData(BLUEPRINTNET_NETWORK_GET_URL, data).then((res) => {
+    //   NetworksData = JSON.parse(res.data);
+    //   NetworksData.forEach((Network) => {
+    //     Network["subnet"] = [];
+    //   });
+    //   console.log("The Networks Loading", NetworksData);
+    // });
 
+    let VMSDATA;
+    let hostCurrents = [];
+    //Getting the VMS  Details------------
+    await GetServiceWithData(BLUEPRINTNET_GET_VMS, data).then((res) => {
+      VMSDATA = res.data.machine_types;
+      console.log("Machine Types", VMSDATA);
+    });
+
+    //Gettin the Details of Current Host
+    let NetworksDatas;
+    await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, data).then((res) => {
+      console.log("Response Data of New Blueprint host", res.data.networks);
+      NetworksDatas = res.data.networks;
+      NetworksDatas.map((Network, index) => {
+        Network.subnets.map((subnet, index) => {
+          subnet.hosts.map((host, index) => {
+            let hostCurrent = {};
+            hostCurrent["hostname"] = host.host;
+            hostCurrent["type"] = subnet.subnet_type;
+            hostCurrent["subnet"] = host.subnet;
+            hostCurrent["machine_type"] = host.machine_type;
+            hostCurrents.push(hostCurrent);
+          });
+        });
+      });
+    });
+
+    //Setting the State
+    this.setState({
+      Networks: NetworksDatas,
+      VMS: VMSDATA,
+      hostCurrents: hostCurrents,
+      status: "loaded",
+    });
+  }
+
+  async componentDidMount() {
+    var data = {
+      project: this.state.project,
+    };
     await GetServiceWithData(BLUEPRINT_URL, data).then((res) => {
       console.log("Logging Blueprint url details", res.data);
       var dataBlurprint = JSON.parse(res.data);
@@ -85,88 +129,6 @@ export default class BluePrint extends Component {
       );
     });
 
-    //Getting Data From Network While Mounting
-    var NetworksData;
-    await GetServiceWithData(BLUEPRINTNET_NETWORK_GET_URL, data).then((res) => {
-      NetworksData = JSON.parse(res.data);
-      NetworksData.forEach((Network) => {
-        Network["subnet"] = [];
-      });
-      console.log("The Networks Loading", NetworksData);
-    });
-    //Getting Subnet Details---------------
-    var dataGet = {
-      project: this.state.project,
-      network: "all",
-    };
-
-    //Getting Data From Subnet While Mounting
-    var SubnetDetails;
-    await GetServiceWithData(BLUEPRINTNET_SUBNET_GET_URL, dataGet).then(
-      (res) => {
-        console.log("data from response of subnet get", res.data);
-        SubnetDetails = JSON.parse(res.data);
-        //Setting up Network with Subnet
-        NetworksData.map((Network, index) => {
-          var SubnetofNetwork = [];
-          SubnetDetails.map((Subnet) => {
-            if (Subnet.nw_name === Network.nw_name) {
-              Subnet["host"] = [];
-              SubnetofNetwork.push(Subnet);
-            }
-          });
-          Network.subnet = SubnetofNetwork;
-        });
-        console.log("After Loading Subnet to Network", NetworksData);
-      }
-    );
-      let hostCurrent ={};
-    //Getting Data From Host While Mounting
-    console.log("data from request to host get", data);
-    await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, data).then((res) => {
-      // var datajson = res.data[this.state.nameNetwork][0];
-      console.log("data from response of host get", res.data);
-      NetworksData.map((Network, index) => {
-        if (res.data[Network.nw_name] !== undefined) {
-          res.data[Network.nw_name].map((hosts, index) => {
-            hosts.map((host, index) => {
-              console.log("The host details", host);
-              SubnetDetails.map((subnet, index) => {
-                console.log("Host details get", host.subnet);
-                console.log("Host details get", subnet.cidr);
-                if (host.subnet === subnet.cidr) {
-                  console.log("Host details going to be pushed", host);
-                  hostCurrent["hostname"] = host.host;
-                  hostCurrent["type"]= subnet.subnet_type
-                  hostCurrent["subnet"]=host.subnet 
-                  Network.subnet[index].host.push(host);
-                }
-              });
-            });
-          });
-        }
-        console.log("The Network Having host", Network);
-      });
-    });
-    let VMSDATA;
-    //Getting the VMS  Details------------
-    await GetServiceWithData(BLUEPRINTNET_GET_VMS, data).then(
-      (res)=>{
-        VMSDATA = res.data.machine_types;
-        console.log("Machine Types",VMSDATA);
-      }
-    );
-
-    //Setting the State
-    this.setState({
-      Networks: NetworksData,
-      VMS:VMSDATA,
-      hostCurrent:hostCurrent,
-      status: "loaded"
-    });
-  }
-
-  async componentDidMount() {
     //Getting the Network Data
     this.GettingData();
   }
@@ -185,11 +147,15 @@ export default class BluePrint extends Component {
     var dataGet = {
       project: this.state.project,
     };
+    let NetworksData = this.state.Networks;
     await GetServiceWithData(BLUEPRINTNET_NETWORK_GET_URL, dataGet).then(
       (res) => {
-        var NetworksData = JSON.parse(res.data);
-        NetworksData.forEach((Network) => {
-          Network["subnet"] = [];
+        var NetworksDataServer = JSON.parse(res.data);
+        NetworksDataServer.forEach((Network) => {
+          if (this.state.input["NetworkName"] === Network.nw_name) {
+            Network["subnets"] = [];
+            NetworksData.push(Network);
+          }
         });
         console.log("the Networks Loading", NetworksData);
         this.setState({ Networks: NetworksData });
@@ -215,42 +181,8 @@ export default class BluePrint extends Component {
     await PostService(BLUEPRINTNET_SUBNET_POST_URL, data).then((res) => {
       console.log("data from response of subnet post", res.data);
     });
-    //Getting Subnet Details---------------
-    var dataGet = {
-      project: this.state.project,
-      network: NameNetwork,
-    };
-    await GetServiceWithData(BLUEPRINTNET_SUBNET_GET_URL, dataGet).then(
-      (res) => {
-        console.log("data from response of subnet get", res.data);
-        var NetworksData = this.state.Networks;
-        NetworksData[indexNetwork].subnet = JSON.parse(res.data);
-        this.setState({
-          Networks: NetworksData,
-        });
-      }
-    );
-    var dataGet2 = {
-      project: this.state.project,
-    };
 
     this.GettingData();
-    //Getting the host Details------------
-    // await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, dataGet2).then(
-    //   (res) => {
-    //     // var datajson = res.data[this.state.nameNetwork][0];
-    //     console.log("data from response of host get", res.data);
-    //   }
-    // );
-
-    //Getting the VMS  Details------------
-    // await GetServiceWithData(BLUEPRINTNET_GET_VMS, dataGet2).then(
-    //   (res)=>{
-    //     var VMSDATA = res.data.machine_types;
-    //     console.log("Machine Types",VMSDATA);
-    //      this.setState({ VMS:VMSDATA});
-    //   }
-    // );
   }
 
   //Deleteing Network Detaisls--------------------------------------------------------------------------------
@@ -282,11 +214,12 @@ export default class BluePrint extends Component {
   }
 
   //Deleteing Subnet Detaisls--------------------------------------------------------------------------------
-  async DeleteSubnet(subnetname) {
+  async DeleteSubnet(subnetname, nw_name) {
     console.log("Deleting Subent");
     var data = {
       project: this.state.project,
       subnet_name: subnetname,
+      nw_name: nw_name,
     };
     await GetServiceWithData(BLUEPRINTNET_DELETE_SUBNET, data).then((res) => {
       console.log("Delete Data From Host", res.data);
@@ -304,13 +237,19 @@ export default class BluePrint extends Component {
   }
 
   //Handling Change Of VM--------------------------------------------------------------------------------
-  handleVM(event) {
-    console.log(event.target.value);
-    let hostCurrent = this.state.hostCurrent;
-    hostCurrent["machine_type"]=event.target.value;
+  handleVM(event, host) {
+    // console.log(event.target.value);
+    // console.log(host);
+    let hostCurrent = this.state.hostCurrents;
+    hostCurrent.map((hostCur, index) => {
+      if (hostCur.hostname === host.host) {
+        hostCur["machine_type"] = event.target.value;
+      }
+    });
+    // console.log("The hostCurrent",hostCurrent);
     this.setState({
-      hostCurrent,
-    })
+      hostCurrents: hostCurrent,
+    });
   }
 
   //Creating Build-------------------------------------------------------------------------
@@ -321,39 +260,135 @@ export default class BluePrint extends Component {
     console.log("Building");
     await PostService(BLUEPRINTNET_BUILD_POST_URL, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      var interval = setInterval(this.getStatus, 10000);
-      this.setState({ interval: interval});
+      var interval = setInterval(this.getStatus(data), 10000);
+      this.setState({ interval: interval });
     });
   }
-  getStatus(){
-    GetService(BLUEPRINT_STATUS).then((res)=>{
+  getStatus(data) {
+    GetServiceWithData(BLUEPRINT_STATUS, data).then((res) => {
       console.log(res);
-    })
+      let flag = true;
+      let NetworksData = this.state.Networks;
+      //Setting the host status
+      NetworksData.map((Network, index) => {
+        Network.subnets.map((subnet, index) => {
+          subnet.hosts.map((host, index) => {
+            res.data.map((hostRes, index) => {
+              if (host.host === hostRes.host) {
+                host["status"] = hostRes.status;
+                if (hostRes.status !== "100") {
+                  flag = false;
+                }
+              }
+            });
+          });
+        });
+      });
+      if (flag) {
+        clearInterval(this.state.intervalId);
+      }
+      this.setState({
+        Networks: NetworksData,
+      });
+    });
   }
 
   //Creating SaveNetwork-----------------------------------------------------------------
   async _SaveBuild() {
-    console.log("Here the data for host Current is saved",this.state.hostCurrent);
-    var data={
-      project:this.state.project,
-      machines:[this.state.hostCurrent]
-    }
+    console.log(
+      "Here the data for host Current is saved",
+      this.state.hostCurrents
+    );
+    var data = {
+      project: this.state.project,
+      machines: this.state.hostCurrents,
+    };
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
     });
-  } 
+  }
+
+  //--------------Reset the Network Table
+  async _Reset() {
+    console.log("Reseting....");
+    var NetworksData = this.state.Networks;
+    NetworksData.map((Network, index) => {
+      let data = {
+        project: this.state.project,
+        nw_name: Network.nw_name,
+      };
+      GetServiceWithData(BLUEPRINTNET_DELETE_NETWORK, data).then((res) => {
+        console.log("Delete Data From Host", res.data);
+      });
+    });
+    //Getting all details if any
+    this.GettingData();
+  }
+
+  // Draging and Drop
+  drag(ev, host, index, subnetname, nw_name) {
+    let data = {
+      host: host,
+      index: index,
+      ChangeSubnet: subnetname,
+      ChangeNetwork: nw_name,
+    };
+    ev.dataTransfer.setData("TransferJson", JSON.stringify(data));
+  }
+
+  allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  drop(ev, subnetname, nw_name) {
+    ev.preventDefault();
+    var data = JSON.parse(ev.dataTransfer.getData("TransferJson"));
+
+    console.log(data);
+    console.log(subnetname);
+    console.log(nw_name);
+    var NetworksData = this.state.Networks;
+    NetworksData.map((Network, index) => {
+      if (Network.nw_name === data.ChangeNetwork) {
+        Network.subnets.map((subnet, index) => {
+          if (subnet.name === data.ChangeSubnet) {
+            subnet.hosts.splice(data.index, 1);
+          }
+        });
+      } else if (Network.nw_name === nw_name) {
+        Network.subnets.map((subnet, index) => {
+          if (subnet.name === subnetname) {
+            data.host["subnet"] = subnet.cidr;
+            subnet.hosts.push(data.host);
+          }
+        });
+      } else {
+      }
+    });
+
+    var data1 = {
+      project: this.state.project,
+      machines:[data.host]
+    }
+    console.log("data passinf to the url",data1);
+    PostService(BLUEPRINT_UDATE_HOST, data1).then((res) => {
+      console.log("After Drag and drop", res.data);
+    });
+    this.setState({
+      Networks: NetworksData,
+    });
+  }
 
   render() {
     const Networks = this.state.Networks;
     const isLoadingNetwork = Networks.length === 0;
     if (this.state.status === "loading") {
       return (
-        <Container>       
-         <Loader />
+        <Container>
+          <Loader />
         </Container>
-
-      )
+      );
     } else {
       return (
         <div className="BluePrint media-body background-primary">
@@ -424,7 +459,7 @@ export default class BluePrint extends Component {
 
             {/* HereTable */}
 
-            <Card className="mt-4 p-2">
+            <Card className="mt-4 p-2 blurprintTable">
               <Card.Header className="bg-white d-flex">
                 <Form className="">
                   <Form.Group controlId="select-type">
@@ -494,7 +529,11 @@ export default class BluePrint extends Component {
                           CreateSubnet={this.CreateSubnet}
                           DeleteNetwork={this.DeleteNetwork}
                           DeleteSubnet={this.DeleteSubnet}
-                          handleVM = {this.handleVM}
+                          handleVM={this.handleVM}
+                          drag={this.drag}
+                          dragStart={this.state.dragStart}
+                          allowDrop={this.allowDrop}
+                          drop={this.drop}
                         />
                       ))
                     )}
@@ -525,7 +564,12 @@ export default class BluePrint extends Component {
                 </Button>
               </Col>
               <Col>
-                <Button variant="danger" size="sm" block>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={this._Reset.bind(this)}
+                  block
+                >
                   Reset
                 </Button>
               </Col>

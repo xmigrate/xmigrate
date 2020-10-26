@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import {
-  Container,
   Table,
-  Card,
   Button,
   Form,
   Row,
@@ -18,10 +16,11 @@ export default class NetworkTableRow extends Component {
       expanded: false,
       Delete: false,
     };
-    console.log("The lengeth ",props.Network.subnet.length);
+    console.log("The lengeth ",props.Network.subnets.length);
+    this.toggleExpander = this.toggleExpander.bind(this);
   }
 
-  toggleExpander = (e) => {
+  toggleExpander(e){
     if (e.target.id === "Del") return;
     if (!this.state.expanded) {
       this.setState({ expanded: true });
@@ -33,11 +32,11 @@ export default class NetworkTableRow extends Component {
 
 
   render() {
-    const Subnets = this.props.Network.subnet;
+    const Subnets = this.props.Network.subnets;
     const isLoadingSubnet = Subnets.length === 0;
     return (
       <tbody>
-        <tr key={this.props.index} onClick={this.toggleExpander}>
+        <tr key={this.props.index} className="NetworkRow" onClick={this.toggleExpander}>
           <td>#{this.props.index}</td>
           <td>{this.props.Network.nw_name}</td>
           <td>{this.props.Network.cidr}</td>
@@ -132,14 +131,19 @@ export default class NetworkTableRow extends Component {
                       </tr>
                     </tbody>
                   ) : (
-                    this.props.Network.subnet.map((SubnetData, index) => (
+                    this.props.Network.subnets.map((SubnetData, index) => (
                       <SubnetTable
                         key={index}
                         index={index + 1}
                         Subnet={SubnetData}
+                        NetworkName={this.state.Network}
                         VMS={this.props.VMS}
                         DeleteSubnet={this.props.DeleteSubnet}
                         handleVM={this.props.handleVM}
+                        drag={this.props.drag}
+                        dragStart={this.props.dragStart}
+                        allowDrop = {this.props.allowDrop}
+                        drop = {this.props.drop}
                       />
                     ))
                   )}

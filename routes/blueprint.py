@@ -107,7 +107,7 @@ async def create_subnet():
 async def get_hosts():
     if request.method == 'GET':
         project = request.args.get('project')
-        return jsonify(host.fetch_hosts(project))
+        return jsonify(host.fetch_all_hosts(project))
 
 
 @app.route('/blueprint/update', methods=['POST'])

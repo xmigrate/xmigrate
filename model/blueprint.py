@@ -1,7 +1,7 @@
 from mongoengine import *
 
 class BluePrint(Document):
-    host = StringField(required=True, max_length=200, unique=True)
+    host = StringField(required=True, max_length=200)
     ip = StringField(required=True, unique=True)
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
@@ -18,7 +18,10 @@ class BluePrint(Document):
     ig_id = StringField(required=False, max_length=100)
     route_table = StringField(required=False, max_length=100)
     vm_id = StringField(required=False, max_length=200)
-    project = StringField(required=True, max_length=50,unique=True)
+    project = StringField(required=True, max_length=50)
     nic_id = StringField(max_length=200)
+    meta = {
+             'indexes': ['host', 'project']
+        }
 
 
