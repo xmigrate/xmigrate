@@ -53,6 +53,7 @@ export default class BluePrint extends Component {
     this.drag = this.drag.bind(this);
     this.allowDrop = this.allowDrop.bind(this);
     this.drop = this.drop.bind(this);
+    this.getStatus = this.getStatus.bind(this)
   }
 
   async GettingData() {
@@ -260,14 +261,17 @@ export default class BluePrint extends Component {
     console.log("Building");
     await PostService(BLUEPRINTNET_BUILD_POST_URL, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      var interval = setInterval(this.getStatus(data), 10000);
+      var interval = setInterval(this.getStatus, 3000);
       this.setState({ interval: interval });
     });
   }
-  getStatus(data) {
-    GetServiceWithData(BLUEPRINT_STATUS, data).then((res) => {
-      console.log(res);
-      let flag = true;
+  getStatus() {
+    let data1 = {
+      project: this.state.project,
+    };
+    GetServiceWithData(BLUEPRINT_STATUS, data1).then((res) => {
+      console.log("Response For Status",res);
+      let flag;
       let NetworksData = this.state.Networks;
       //Setting the host status
       NetworksData.map((Network, index) => {
@@ -276,8 +280,11 @@ export default class BluePrint extends Component {
             res.data.map((hostRes, index) => {
               if (host.host === hostRes.host) {
                 host["status"] = hostRes.status;
-                if (hostRes.status !== "100") {
+                if (parseInt(hostRes.status) <100) {
                   flag = false;
+                }
+                else{
+                  flag = true;
                 }
               }
             });
@@ -299,9 +306,18 @@ export default class BluePrint extends Component {
       "Here the data for host Current is saved",
       this.state.hostCurrents
     );
+    let hostData = this.state.hostCurrents
+    hostData.map((host,index)=>{
+      if(host.type === "Public" || host.type === "True"  ){
+        host["type"] = "True"
+      }
+      else{
+        host["type"] = "False"
+      }
+    });
     var data = {
       project: this.state.project,
-      machines: this.state.hostCurrents,
+      machines: hostData,
     };
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
@@ -334,6 +350,7 @@ export default class BluePrint extends Component {
       ChangeSubnet: subnetname,
       ChangeNetwork: nw_name,
     };
+    console.log("On drag",data);
     ev.dataTransfer.setData("TransferJson", JSON.stringify(data));
   }
 
@@ -343,9 +360,15 @@ export default class BluePrint extends Component {
 
   drop(ev, subnetname, nw_name) {
     ev.preventDefault();
+    let SamePlace = false;
     var data = JSON.parse(ev.dataTransfer.getData("TransferJson"));
-
-    console.log(data);
+       //Checking if in same place
+    if(nw_name === data.ChangeNetwork && subnetname === data.ChangeSubnet ){
+        console.log("Same Place");
+        SamePlace = true;
+    }
+    if(SamePlace == false){
+    console.log("On Drop",);
     console.log(subnetname);
     console.log(nw_name);
     var NetworksData = this.state.Networks;
@@ -356,6 +379,15 @@ export default class BluePrint extends Component {
             subnet.hosts.splice(data.index, 1);
           }
         });
+        if (Network.nw_name === nw_name) {
+          Network.subnets.map((subnet, index) => {
+            if (subnet.name === subnetname) {
+              data.host["subnet"] = subnet.cidr;
+              subnet.hosts.push(data.host);
+            }
+          });
+        }
+
       } else if (Network.nw_name === nw_name) {
         Network.subnets.map((subnet, index) => {
           if (subnet.name === subnetname) {
@@ -378,6 +410,9 @@ export default class BluePrint extends Component {
     this.setState({
       Networks: NetworksData,
     });
+    this.GettingData();
+  }
+  
   }
 
   render() {

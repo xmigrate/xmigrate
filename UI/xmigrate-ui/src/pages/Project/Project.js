@@ -109,7 +109,7 @@ export default class Project extends Component {
             loader: false,
           });
           console.log(res);
-          if(res.data.status === 200){
+          if(res.status === 200){
             this.props.history.push({pathname:"/home",state:{ detail: this.state.input["name"] }});
           }
           else{
