@@ -15,14 +15,18 @@ COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 COPY nginx.conf /etc/nginx/nginx.conf
 
 WORKDIR /app
-COPY requirements.txt requirements.txt
+RUN mkdir -p ./logs/ansible/ && touch ./logs/ansible/log.txt && touch ./logs/ansible/migration_log.txt
+
 RUN apk update && \
     apk add qemu && \
     apk add sshpass && \
     apk add make && \
     apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-dev && \
-    pip3 install --upgrade pip setuptools && \
-    pip3 install -r requirements.txt && \
+    pip3 install --upgrade pip setuptools
+
+COPY requirements.txt requirements.txt
+
+RUN pip3 install -r requirements.txt && \
     apk del .build-deps && \
     apk add --no-cache --update python3
 
