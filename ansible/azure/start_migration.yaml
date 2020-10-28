@@ -10,12 +10,8 @@
     copy:
       src: "../payloads/start_dd_azure.py"
       dest: "/tmp/start.py"
-  - name: <== Setup the environment ==>
-    copy:
-      src: "../payloads/.env"
-      dest: "/tmp/.env"
   - name: <== Executing payload ==>
-    shell: "python /tmp/start.py {{ storage }} {{ accesskey }} {{ container }}"
+    shell: "python /tmp/start.py {{ storage }} {{ accesskey }} {{ container }} '{{ mongodb }}'"
     register: st
     become: True
   - name: Message

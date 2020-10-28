@@ -11,6 +11,9 @@ from pkg.azure import conversion_worker as cw
 import os
 import asyncio, json
 from azure.common.credentials import ServicePrincipalCredentials
+from dotenv import load_dotenv
+from os import getenv
+
 
 def start_conversion(project):
     con = create_db_con()
@@ -35,9 +38,11 @@ async def start_cloning(project):
         storage = Storage.objects(project=project)[0]['storage']
         accesskey = Storage.objects(project=project)[0]['access_key']
         container = Storage.objects(project=project)[0]['container']
+        load_dotenv()
+        mongodb = os.getenv('MONGO_DB')
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        print('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
-        os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+'"> ./logs/ansible/migration_log.txt')
+        print('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+' mongodb='+mongodb+'"> ./logs/ansible/migration_log.txt')
+        os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+' mongodb='+mongodb+'"> ./logs/ansible/migration_log.txt')
         while True:
             machines = BluePrint.objects(project=project)
             machine_count = len(machines)
