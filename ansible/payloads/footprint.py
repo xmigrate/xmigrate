@@ -105,8 +105,7 @@ class Discover(Document):
     }
 
 def main():
-    load_dotenv()
-    db_con_string = getenv("MONGO_DB")
+    db_con_string = sys.argv[2]
     project = sys.argv[1]
     con = connect(host=db_con_string)
     result = network_info()
