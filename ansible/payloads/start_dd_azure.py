@@ -7,12 +7,14 @@ import sys
 
 load_dotenv()
 
-db_con_string = getenv("MONGO_DB")
-
+db_con_string = sys.argv[4]
 con = connect(host=db_con_string)
 storage_accnt = sys.argv[1]
 access_key = sys.argv[2]
 container = sys.argv[3]
+
+print(db_con_string)
+
 hostname = socket.gethostname()
 
 class BluePrint(Document):
