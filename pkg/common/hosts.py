@@ -38,6 +38,10 @@ def update_hosts(project,machines):
         for machine in machines:
             subnet = Subnet.objects(project=project, cidr = machine['subnet'])
             network = Network.objects(project=project, nw_name = subnet[0]['nw_name'])
+            if machine['public_route'] == 'Public':
+                machine['public_route'] = True
+            elif machine['public_route'] == 'Private':
+                machine['public_route'] = False
             BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['cidr'])
         con.close()
         return True
