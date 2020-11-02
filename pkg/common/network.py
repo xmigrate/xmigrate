@@ -198,6 +198,10 @@ def fetch_subnet(project,network):
 def create_subnet(cidr,nw_name,project,subnet_type,name):
     con = create_db_con()
     try:
+        if subnet_type == 'Public':
+            subnet_type = True
+        elif subnet_type == 'Private':
+            subnet_type = False
         Subnet.objects(project=project,subnet_name=name).update(cidr=cidr,nw_name=nw_name,subnet_name=name,subnet_type=subnet_type,upsert=True)
         if len(Subnet.objects(project=project)) == 1:
             nw = Network.objects(project=project, nw_name=nw_name)
