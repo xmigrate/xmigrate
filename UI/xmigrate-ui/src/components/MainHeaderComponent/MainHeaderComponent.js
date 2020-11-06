@@ -9,7 +9,14 @@ export default class MainHeaderComponent extends Component {
             <div className="MainHeaderComponent">
         <Navbar className="navbar  navbar-default navbar-expand-lg navbar-light fixed-top">
           <div className="navbar-brand col-md-3 col-lg-2" href="#">
-            <strong>x</strong>migrate
+          <img
+              src="Assets/images/logoSm.png"
+              width="150"
+              height="40"
+              className="d-inline-block align-top"
+              alt="xmigrate logo"
+            />
+            {/* <strong>x</strong>migrate */}
           </div>
           <button
             className="navbar-toggler position-absolute d-md-none collapsed"
