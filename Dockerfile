@@ -7,8 +7,8 @@ RUN yarn && yarn build
 
 FROM nginx:1.16-alpine
 
-RUN wget https://aka.ms/downloadazcopy-v10-linux && \
-    tar -zxf ./downloadazcopy-v10-linux && \
+RUN wget  https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
+    tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
     mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin  
 
 
