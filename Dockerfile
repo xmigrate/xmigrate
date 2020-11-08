@@ -9,7 +9,7 @@ FROM nginx:1.16-alpine
 
 RUN wget https://aka.ms/downloadazcopy-v10-linux && \
     tar -zxf ./downloadazcopy-v10-linux && \
-    mv ./azcopy_linux_amd64_10.6.0/azcopy /usr/bin  
+    mv ./azcopy_linux_amd64_10.7.0/azcopy /usr/bin  
 
 
 WORKDIR /app
