@@ -367,7 +367,7 @@ export default class BluePrint extends Component {
         console.log("Same Place");
         SamePlace = true;
     }
-    if(SamePlace == false){
+    if(SamePlace === false){
     console.log("On Drop",);
     console.log(subnetname);
     console.log(nw_name);

@@ -191,13 +191,6 @@
         dest: "/tmp/footprint.py"
       tags:
         - deploy
-    - name: <==Upload env file==>
-      copy:
-        src: "../payloads/.env"
-        dest: "/tmp/.env"
-      tags:
-        - deploy
-
     - name: <==Executing payload==>
       shell: "python /tmp/footprint.py {{ project }} '{{ mongodb }}'"
       register: st

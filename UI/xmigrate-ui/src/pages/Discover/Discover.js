@@ -8,7 +8,7 @@ import { DISCOVERURL, STREAMURL } from '../../services/Services';
 import { Link } from 'react-router-dom';
 
 export default class Discover extends Component {
-
+    
 
     constructor(props) {
         super()
@@ -26,6 +26,7 @@ export default class Discover extends Component {
             streamming: false,
             parsedTags: []
         };
+        this.messagesEndRef = React.createRef();
         this.onChange = this.onChange.bind(this)
         this.editDiscover = this.editDiscover.bind(this)
         this.getStream = this.getStream.bind(this)
@@ -76,9 +77,12 @@ export default class Discover extends Component {
             this.setState({ intervalId: intervalId, streamming: true, showDiscoverMenu: false, showDiscoverMenuEdit: true });
         })
     }
-
+    scrollToBottom = () => {
+        this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+      }
     getStream() {
         GetService(STREAMURL).then((data) => {
+            this.scrollToBottom();
             console.log(data);
             if (data.data.offset === "EOF") {
                 clearInterval(this.state.intervalId);
@@ -183,6 +187,7 @@ export default class Discover extends Component {
                             </div>
                             <div className="background-primary media-body p-3 discover-logs" >
                                 {this.state.message}
+                                <div ref={this.messagesEndRef}></div>
                             </div>
                         </Col>
                     </Row>

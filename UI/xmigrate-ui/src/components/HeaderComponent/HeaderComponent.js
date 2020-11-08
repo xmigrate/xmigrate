@@ -22,7 +22,13 @@ export default class HeaderComponent extends Component {
             <div className="HeaderComponent">
                 <nav className="navbar navbar-expand-lg navbar-light sticky-top bg-light flex-md-nowrap p-0 ">
                     <Link className="navbar-brand col-md-3 col-lg-2" to="">
-                        <img className="w-60" src="/Assets/images/logo/logo.png" alt="xmigrate"/>
+                    <img
+              src="Assets/images/logoSm.png"
+              width="150"
+              height="40"
+              className="d-inline-block align-top"
+              alt="xmigrate logo"
+            />
                     </Link>
                     <button className="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse"
                         data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">

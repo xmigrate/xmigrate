@@ -29,10 +29,44 @@ function App() {
               );
             }}
           />
-          <Route
-            path="*"
+             <Route
+            path="/401"
             component={() => {
-              return <h2>404 not Found</h2>;
+              return (
+                <div className="d-flex justify-content-center align-items-center h-100">
+                <h2>401 !!!Unauthorized Access</h2>
+              </div>
+              )
+            }}
+          />
+          <Route
+            path="/404"
+            component={() => {
+              return (
+                <div className="d-flex justify-content-center align-items-center h-100">
+                <h2>404 !!!Server not Found</h2>
+              </div>
+              )
+            }}
+          />
+                <Route
+            path="/500"
+            component={() => {
+              return (
+                <div className="d-flex justify-content-center align-items-center h-100">
+                <h2>500 !!!Internal Server Error</h2>
+              </div>
+              )
+            }}
+          />
+            <Route
+            path="/400"
+            component={() => {
+              return (
+                <div className="d-flex justify-content-center align-items-center h-100">
+                <h2>400 !!!Request Error</h2>
+              </div>
+              )
             }}
           />
         </Switch>
