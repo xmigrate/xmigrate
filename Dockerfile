@@ -16,7 +16,7 @@ WORKDIR /app
 
 RUN apk update && \
     apk add --no-cache bash py-pip && \
-    apk add --no-cache qemu-img sshpass make g++ python3-dev libffi-dev openssl-dev && \
+    apk add --no-cache qemu-img sshpass make g++ python3-dev libffi-dev openssl-dev libc6-compat && \
     pip3 install --upgrade pip setuptools \
     pip install azure-cli 
     
