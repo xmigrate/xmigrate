@@ -8,7 +8,7 @@ from model.project import Project
 import random
 from azure.common.credentials import ServicePrincipalCredentials
 
-def create_vnet(rg_name, vnet_name, cidr, location):
+def create_vnet(rg_name, vnet_name, cidr, location, project):
     print("Provisioning a vnet...some operations might take a minute or two.")
     con = create_db_con()
     client_id = Project.objects(name=project)[0]['client_id']
@@ -32,7 +32,7 @@ def create_vnet(rg_name, vnet_name, cidr, location):
     return True
 
 
-def create_subnet(rg_name, vnet_name, subnet_name, cidr):
+def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
     print("Provisioning a subnet...some operations might take a minute or two.")
     con = create_db_con()
     client_id = Project.objects(name=project)[0]['client_id']
@@ -128,7 +128,7 @@ def create_nw(project):
     c = 0
     for i in cidr:
         vnet_name = project+"vnet"+str(c)
-        vnet_created.append(create_vnet(rg_name, vnet_name, i, location))
+        vnet_created.append(create_vnet(rg_name, vnet_name, i, location, project))
         c = c+1
     c = 0
     if True in vnet_created:
@@ -136,7 +136,7 @@ def create_nw(project):
         subnet_created = []
         for i in subnet:
             subnet_name = project+"subnet"+str(c)
-            subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i)
+            subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i, project)
         if subnet_created:
             machines = BluePrint.objects(project=project)
             for machine in machines:
