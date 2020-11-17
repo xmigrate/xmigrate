@@ -8,18 +8,17 @@ import string, random
 from azure.common.credentials import ServicePrincipalCredentials
 
 # Provision the resource group.
-def create_rg(project):
+async def create_rg(project):
     con = create_db_con()
     try:
         if Project.objects(name=project)[0]['resource_group']:
-            return True
+            if Project.objects(name=project)[0]['resource_group_created']:
+                return True
     except Exception as e:
         print("Reaching Project document failed: "+repr(e))
     else:
         rg_location = Project.objects(name=project)[0]['location']
-        rg_name =''.join(random.choices(string.ascii_uppercase +
-                                string.digits, k = 8))
-        rg_name = rg_name + "_xmigrate" 
+        rg_name = Project.objects(name=project)[0]['resource_group']
         try:
             client_id = Project.objects(name=project)[0]['client_id']
             secret = Project.objects(name=project)[0]['secret']
@@ -32,7 +31,7 @@ def create_rg(project):
                 rg_name, {"location": rg_location})
             print(
                 "Provisioned resource group"+ rg_result.name+" in the "+rg_result.location+" region")
-            Project.objects(name=project).update(resource_group=rg_result.name)
+            Project.objects(name=project).update(resource_group=rg_result.name, resource_group_created=True)
             con.close()
             return True
         except Exception as e:

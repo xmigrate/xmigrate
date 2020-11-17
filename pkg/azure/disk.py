@@ -10,19 +10,20 @@ from model.blueprint import *
 from pkg.azure import conversion_worker as cw
 import os
 import asyncio, json
+from asyncio.subprocess import PIPE, STDOUT 
 from azure.common.credentials import ServicePrincipalCredentials
 from dotenv import load_dotenv
 from os import getenv
+import shlex, subprocess
 
-
-def start_conversion(project):
+async def start_downloading(project):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
             osdisk_raw = machine['host']+".raw"+".000"
             try:
-                cw.conversion_worker(osdisk_raw,project,machine['host'])  
+                await cw.download_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))
@@ -30,6 +31,36 @@ def start_conversion(project):
         con.close()
         return True
     
+
+async def start_conversion(project):
+    con = create_db_con()
+    if Project.objects(name=project)[0]['provider'] == "azure":
+        machines = BluePrint.objects(project=project)
+        for machine in machines:
+            osdisk_raw = machine['host']+".raw"+".000"
+            try:
+                await cw.conversion_worker(osdisk_raw,project,machine['host'])  
+            except Exception as e:
+                print("Conversion failed for "+osdisk_raw)
+                print(str(e))
+                return False
+        con.close()
+        return True
+
+async def start_uploading(project):
+    con = create_db_con()
+    if Project.objects(name=project)[0]['provider'] == "azure":
+        machines = BluePrint.objects(project=project)
+        for machine in machines:
+            osdisk_raw = machine['host']+".raw"+".000"
+            try:
+                await cw.upload_worker(osdisk_raw,project,machine['host'])  
+            except Exception as e:
+                print("Conversion failed for "+osdisk_raw)
+                print(str(e))
+                return False
+        con.close()
+        return True
 
 
 async def start_cloning(project):
@@ -40,29 +71,25 @@ async def start_cloning(project):
         container = Storage.objects(project=project)[0]['container']
         load_dotenv()
         mongodb = os.getenv('MONGO_DB')
+        current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        print('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+' mongodb='+mongodb+'"> ./logs/ansible/migration_log.txt')
-        os.popen('ansible-playbook ./ansible/azure/start_migration.yaml -e "storage='+storage+' accesskey='+accesskey+' container='+container+' mongodb='+mongodb+'"> ./logs/ansible/migration_log.txt')
-        while True:
-            machines = BluePrint.objects(project=project)
-            machine_count = len(machines)
-            print("machine count: "+str(machine_count))
-            status_count = 0
+        command = "/usr/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ "\""
+        os.popen('echo '+ command + '> ./logs/ansible/migration_log.txt')
+        args = shlex.split(command)
+        process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+        await process.wait()
+        machines = BluePrint.objects(project=project)
+        machine_count = len(machines)
+        flag = True
+        status_count = 0
+        while flag:
             for machine in machines:
                 if int(machine['status'])>=25:
                     status_count = status_count + 1
-            print("status count: "+str(status_count))
             if status_count == machine_count:
-                return True
-            elif "PLAY RECAP" in read_migration_logs():
-                if "unreachable=0" in read_migration_logs():
-                    if "failed=0" in read_migration_logs():    
-                        return True
-                    else:
-                        break
-            await asyncio.sleep(60)        
-    con.close()
-    return False
+                flag = False
+        con.close()
+        return not flag
 
 
 async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
@@ -142,7 +169,7 @@ async def adhoc_image_conversion(project):
         for machine in machines:
             osdisk_raw = machine['host']+".raw"+".000"
             try:
-                cw.conversion_worker(osdisk_raw,project,machine['host'])  
+                await asyncio.create_task(cw.conversion_worker(osdisk_raw,project,machine['host']))  
             except Exception as e:
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))

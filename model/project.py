@@ -13,3 +13,4 @@ class Project(Document):
     users = ListField(required=True) 
     access_key = StringField(max_length=150)
     secret_key = StringField(max_length=150)
+    resource_group_created = BooleanField(default=False)

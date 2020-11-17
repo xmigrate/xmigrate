@@ -4,8 +4,37 @@ from model.blueprint import *
 from utils.dbconn import *
 import os
 from pkg.azure import sas
+from asyncio.subprocess import PIPE, STDOUT 
+import asyncio
+from pathlib import Path
 
-def conversion_worker(osdisk_raw,project,host):
+
+async def download_worker(osdisk_raw,project,host):
+    con = create_db_con()
+    account_name = Storage.objects(project=project)[0]['storage']
+    container_name = Storage.objects(project=project)[0]['container']
+    access_key = Storage.objects(project=project)[0]['access_key']
+    sas_token = sas.generate_sas_token(account_name,access_key)
+    pipe_result = ''
+    file_size = '0'
+    try:
+        cur_path = os.getcwd()
+        path = cur_path+"/osdisks/"+osdisk_raw
+        if not os.path.exists(path):
+            os.popen('echo "download started"> ./logs/ansible/migration_log.txt')
+            url = "https://" + account_name + ".blob.core.windows.net/" + container_name + "/" + osdisk_raw + "?" + sas_token
+            command1 = "azcopy copy '" + url + "' '"+path+"'"
+            os.popen('echo '+command1+'>> ./logs/ansible/migration_log.txt')
+            process1 = await asyncio.create_subprocess_shell(command1, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+            await process1.wait()
+            BluePrint.objects(project=project,host=host).update(status='32')
+    except Exception as e:
+        print(repr(e))
+    finally:
+        con.close()
+
+
+async def upload_worker(osdisk_raw,project,host):
     con = create_db_con()
     account_name = Storage.objects(project=project)[0]['storage']
     container_name = Storage.objects(project=project)[0]['container']
@@ -15,21 +44,48 @@ def conversion_worker(osdisk_raw,project,host):
     file_size = '0'
     try:
         osdisk_vhd = osdisk_raw.replace(".raw.000",".vhd")
-        path = "./osdisks/"+osdisk_raw
-        if not os.path.exists(path):
-            url = "https://" + account_name + ".blob.core.windows.net/" + container_name + "/" + osdisk_raw + "?" + sas_token
-            os.popen("azcopy copy '" + url + "' './osdisks/"+ osdisk_raw + "'").read()
-        BluePrint.objects(project=project,host=host).update(status='32')
-        print("Start converting")
-        print(path)
-        os.popen("qemu-img convert -f raw -o subformat=fixed,force_size -O vpc ./osdisks/"+osdisk_raw+" ./osdisks/"+osdisk_vhd).read()
-        BluePrint.objects(project=project,host=host).update(status='34')
-        file_size = os.popen("ls -la ./osdisks/"+osdisk_vhd).readline().split()[4]
-        os.popen("azcopy copy './osdisks/"+ osdisk_vhd + "' '" + url.replace(".raw.000",".vhd") + "'").read()
+        cur_path = os.getcwd()
+        path = cur_path+"/osdisks/"+osdisk_raw
+        vhd_path = cur_path+"/osdisks/"+osdisk_vhd
+        file_size = Path(vhd_path).stat().st_size 
+        os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
+        os.popen('echo "VHD uploading" >> ./logs/ansible/migration_log.txt')
+        command3 = "azcopy copy '"+vhd_path + "' '" + url.replace(".raw.000",".vhd") + "'"
+        process3 = await asyncio.create_subprocess_shell(command3, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+        await process3.wait()
+        os.popen('echo "VHD uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
         Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=file_size, upsert=True)
+    except Exception as e:
+        print(repr(e))
+    finally:
+        con.close()
+
+
+async def conversion_worker(osdisk_raw,project,host):
+    con = create_db_con()
+    account_name = Storage.objects(project=project)[0]['storage']
+    container_name = Storage.objects(project=project)[0]['container']
+    access_key = Storage.objects(project=project)[0]['access_key']
+    sas_token = sas.generate_sas_token(account_name,access_key)
+    pipe_result = ''
+    try:
+        osdisk_vhd = osdisk_raw.replace(".raw.000",".vhd")
+        cur_path = os.getcwd()
+        path = cur_path+"/osdisks/"+osdisk_raw
+        vhd_path = cur_path+"/osdisks/"+osdisk_vhd
+        print("Start converting")
+        print(path)
+        os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
+        command2 = "qemu-img convert -f raw -o subformat=fixed,force_size -O vpc "+path+" "+vhd_path
+        process2 = await asyncio.create_subprocess_shell(command2, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+        await process2.wait()
+        BluePrint.objects(project=project,host=host).update(status='34')
+        os.popen('echo "Conversion completed" >> ./logs/ansible/migration_log.txt')
     except Exception as e:
         print(str(e))
         file_size = '0'
     finally:
         con.close() 
+
+
