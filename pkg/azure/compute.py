@@ -55,7 +55,7 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
         con.close()
 
 
-def create_vm(project):
+async def create_vm(project):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]['resource_group']
     location = Project.objects(name=project)[0]['location']

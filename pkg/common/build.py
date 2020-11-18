@@ -19,7 +19,7 @@ from pkg.aws import ec2
 import asyncio
 
 async def call_start_build(project):
-    await start_build(project)
+    await asyncio.create_task(start_build(project))
 
 async def start_infra_build(project):
     rg_created = resource_group.create_rg(project)
@@ -47,29 +47,39 @@ async def start_build(project):
     print(p)
     if len(p) > 0:
         if p[0]['provider'] == "azure":
-            cloning_completed = await asyncio.create_task(disk.start_cloning(project))
+            print("****************Cloning awaiting*****************")
+            cloning_completed = await disk.start_cloning(project)
+            print("****************Cloning completed*****************")
             if cloning_completed:
-                converted =  disk.start_conversion(project)
-                if converted:
-                    rg_created =  resource_group.create_rg(project)
-                    if rg_created:
-                        disk_created =  disk.create_disk(project)
-                        if disk_created:
-                            network_created =  network.create_nw(project)
-                            if network_created:
-                                vm_created =  compute.create_vm(project)
-                                if vm_created:
-                                    print("VM created")     
+                image_downloaded = await disk.start_downloading(project)
+                if image_downloaded:
+                    converted =  await disk.start_conversion(project)
+                    if converted:
+                        image_uploaded = await disk.start_uploading(project)
+                        if image_uploaded:
+                            rg_created = await resource_group.create_rg(project)
+                            if rg_created:
+                                disk_created = await disk.create_disk(project)
+                                if disk_created:
+                                    network_created = await network.create_nw(project)
+                                    if network_created:
+                                        vm_created = await compute.create_vm(project)
+                                        if vm_created:
+                                            print("VM created")     
+                                        else:
+                                            print("VM creation failed")
+                                    else:
+                                        print("Network creation failed")
                                 else:
-                                    print("VM creation failed")
+                                    print("Disk creation failed")
                             else:
-                                print("Network creation failed")
+                                print("Resource group creation failed")
                         else:
-                            print("Disk creation failed")
+                            print("Image uploading failed")
                     else:
-                        print("Resource group creation failed")
+                        print("Disk conversion failed")
                 else:
-                    print("Disk conversion failed")
+                    print("Image downloading failed")
             else:
                 print("Disk cloning failed")
         elif project['provider'] == "aws":
