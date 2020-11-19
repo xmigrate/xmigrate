@@ -44,6 +44,7 @@ export default class BluePrint extends Component {
       VMSSelected: "",
       hostCurrent: {},
       SubnetData: [],
+      BuildStatus: false
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -258,6 +259,7 @@ export default class BluePrint extends Component {
     let data = {
       project: this.state.project,
     };
+    this.setState({ BuildStatus: true})
     console.log("Building");
     await PostService(BLUEPRINTNET_BUILD_POST_URL, data).then((res) => {
       console.log("data from response of Build post", res.data);
@@ -293,6 +295,7 @@ export default class BluePrint extends Component {
       });
       if (flag) {
         clearInterval(this.state.intervalId);
+        this.setState({ BuildStatus: false})
       }
       this.setState({
         Networks: NetworksData,
@@ -582,6 +585,7 @@ export default class BluePrint extends Component {
                 <Button
                   variant="success"
                   onClick={this._SaveBuild.bind(this)}
+                  disabled={this.state.BuildStatus}
                   size="sm"
                   block
                 >
@@ -593,6 +597,7 @@ export default class BluePrint extends Component {
                   variant="primary"
                   size="sm"
                   onClick={this._createBuild.bind(this)}
+                  disabled={this.state.BuildStatus}
                   block
                 >
                   Build
@@ -603,6 +608,7 @@ export default class BluePrint extends Component {
                   variant="danger"
                   size="sm"
                   onClick={this._Reset.bind(this)}
+                  disabled={this.state.BuildStatus}
                   block
                 >
                   Reset
