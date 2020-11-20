@@ -23,7 +23,7 @@ async def download_worker(osdisk_raw,project,host):
         if not os.path.exists(path):
             os.popen('echo "download started"> ./logs/ansible/migration_log.txt')
             url = "https://" + account_name + ".blob.core.windows.net/" + container_name + "/" + osdisk_raw + "?" + sas_token
-            command1 = "azcopy copy '" + url + "' '"+path+"'"
+            command1 = "azcopy copy --recursive '" + url + "' '"+path+"'"
             os.popen('echo '+command1+'>> ./logs/ansible/migration_log.txt')
             process1 = await asyncio.create_subprocess_shell(command1, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
