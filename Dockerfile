@@ -20,8 +20,6 @@ RUN apk update && \
     pip3 install --upgrade pip setuptools \
     pip install azure-cli 
     
-
-COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN mkdir -p ./logs/ansible/ && mkdir osdisks && touch ./logs/ansible/log.txt && touch ./logs/ansible/migration_log.txt
@@ -30,6 +28,8 @@ COPY requirements.txt requirements.txt
 
 RUN pip3 install -r requirements.txt && \
     apk add --no-cache --update python3
+
+COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 
 COPY . .
 RUN rm -rf UI
