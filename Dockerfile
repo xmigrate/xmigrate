@@ -14,9 +14,10 @@ RUN wget https://aka.ms/downloadazcopy-v10-linux && \
 
 WORKDIR /app
 
-RUN apk update && \
+RUN echo 'http://dl-cdn.alpinelinux.org/alpine/v3.7/main' >> /etc/apk/repositories && \ 
+    apk update && \
     apk add --no-cache bash py-pip && \
-    apk add --no-cache qemu-img sshpass make g++ python3-dev libffi-dev openssl-dev libc6-compat && \
+    apk add --no-cache qemu-img=2.10.1-r3 sshpass make g++ python3-dev libffi-dev openssl-dev libc6-compat && \
     pip3 install --upgrade pip setuptools \
     pip install azure-cli 
     
