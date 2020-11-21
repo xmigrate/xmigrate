@@ -58,6 +58,7 @@ async def upload_worker(osdisk_raw,project,host):
         Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=file_size, upsert=True)
     except Exception as e:
         print(repr(e))
+        os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
     finally:
         con.close()
 
