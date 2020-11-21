@@ -56,7 +56,7 @@ async def upload_worker(osdisk_raw,project,host):
         await process3.wait()
         os.popen('echo "VHD uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
-        Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=file_size, upsert=True)
+        Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=str(file_size), upsert=True)
     except Exception as e:
         print(repr(e))
         os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
