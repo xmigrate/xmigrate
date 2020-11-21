@@ -50,7 +50,8 @@ async def upload_worker(osdisk_raw,project,host):
         file_size = Path(vhd_path).stat().st_size 
         os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
         os.popen('echo "VHD uploading" >> ./logs/ansible/migration_log.txt')
-        command3 = "azcopy copy --recursive '"+vhd_path + "' '" + url.replace(".raw.000",".vhd") + "'"
+        url = "https://" + account_name + ".blob.core.windows.net/" + container_name + "/" + osdisk_vhd + "?" + sas_token
+        command3 = "azcopy copy --recursive '"+vhd_path + "' '" + url + "'"
         process3 = await asyncio.create_subprocess_shell(command3, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process3.wait()
         os.popen('echo "VHD uploaded" >> ./logs/ansible/migration_log.txt')
