@@ -33,7 +33,6 @@
           - linux-tools-azure
           - linux-cloud-tools-azure
           - npm
-          - grub-efi
           update_cache: yes
         become: true
         become_user: root
@@ -42,7 +41,7 @@
         shell: "apt update -y"
         become: true
       - name: Failback installation "Installing azure tools and python"
-        shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure grub-efi linux-cloud-tools-azure -y"
+        shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure -y"
         become: true
         
     - name: Install azbak 
@@ -185,6 +184,11 @@
           - dnspython
         become: true
         become_user: root
+
+    - name: Installing kernel modules without Hyper-V
+      command: sudo mkinitrd --preload=hv_storvsc --preload=hv_vmbus -v -f initrd-`uname -r`.img `uname -r`
+      become: yes
+      become_user: root
 
     - name: <==Deploy payload==>
       copy:
