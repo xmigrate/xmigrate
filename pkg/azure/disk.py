@@ -73,7 +73,7 @@ async def start_cloning(project):
         mongodb = os.getenv('MONGO_DB')
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        command = "/usr/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ "\""
+        command = "/usr/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ " project="+project+"\""
         os.popen('echo '+ command + '> ./logs/ansible/migration_log.txt')
         args = shlex.split(command)
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)

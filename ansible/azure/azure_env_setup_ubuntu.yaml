@@ -185,11 +185,6 @@
         become: true
         become_user: root
 
-    - name: Installing kernel modules without Hyper-V
-      command: sudo mkinitrd --preload=hv_storvsc --preload=hv_vmbus -v -f initrd-`uname -r`.img `uname -r`
-      become: yes
-      become_user: root
-
     - name: <==Deploy payload==>
       copy:
         src: "../payloads/footprint.py"
