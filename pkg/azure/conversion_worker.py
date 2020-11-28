@@ -79,7 +79,7 @@ async def conversion_worker(osdisk_raw,project,host):
         print("Start converting")
         print(path)
         os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
-        command2 = "qemu-img convert -f raw -o subformat=fixed,force_size -O vpc "+path+" "+vhd_path
+        command2 = "qemu-img convert -f raw -o subformat=fixed -O vpc "+path+" "+vhd_path
         process2 = await asyncio.create_subprocess_shell(command2, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process2.wait()
         BluePrint.objects(project=project,host=host).update(status='34')
