@@ -12,9 +12,6 @@ from quart_jwt_extended import JWTManager
 
 sys.path.append('./')
 
-load_dotenv()
-
-
 app = Quart(__name__)
 
 app = cors(app, allow_origin="*")
