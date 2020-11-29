@@ -27,3 +27,4 @@ keyrings.alt
 Quart-CORS
 quart_jwt_extended
 dnspython
+python3-dotenv

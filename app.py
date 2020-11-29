@@ -1,5 +1,3 @@
-from dotenv import load_dotenv
-from os import getenv
 from ansible.playbook import Playbook
 import ast
 import json
@@ -25,8 +23,8 @@ app.config['JWT_SECRET_KEY'] = 'try2h@ckT415'  # Change this!
 jwt = JWTManager(app)
 
 
-app.secret_key = getenv("SECRET")
-bucket_name = getenv("BUCKET")
+#app.secret_key = getenv("SECRET")
+
 
 from routes.stream import *
 from routes.status import *
