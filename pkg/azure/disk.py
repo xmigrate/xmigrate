@@ -111,7 +111,10 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
                 'os_type': 'Linux',
                 'os_state': "Generalized",
                 'blob_uri': uri,
-                'caching': "ReadWrite"
+                'caching': "ReadWrite",
+                'managed_disk': {
+                    'storage_account_type': 'StandardSSD_LRS'
+                }
             }
             },
             'hyper_vgeneration': 'V1'
