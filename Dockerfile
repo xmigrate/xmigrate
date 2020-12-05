@@ -22,7 +22,7 @@ RUN wget https://aka.ms/downloadazcopy-v10-linux && \
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
-RUN mkdir -p ./logs/ansible/ && mkdir osdisks && touch ./logs/ansible/log.txt && touch ./logs/ansible/migration_log.txt
+RUN mkdir -p ./logs/ansible/ && mkdir osdisks && touch ./logs/ansible/log.txt && touch ./logs/ansible/migration_log.txt && touch ./logs/ansible/azcopy_log.txt
 
 COPY requirements.txt requirements.txt
 
@@ -34,6 +34,7 @@ COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 
 COPY . .
 RUN rm -rf UI
+ENV AZCOPY_BUFFER_GB=0.3
 EXPOSE 80
 ENTRYPOINT ["/bin/sh", "./scripts/start.sh"]
 
