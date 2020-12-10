@@ -1,6 +1,6 @@
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.subscription import SubscriptionClient
-
+from utils.logger import *
 
 def get_locations(subscription_id,client_id,secret,tenant_id):
     available_locations = []
@@ -13,4 +13,5 @@ def get_locations(subscription_id,client_id,secret,tenant_id):
         return available_locations,True 
     except Exception as e:
         print(repr(e))
+        logger("Fetching available locations failed: "+str(e),"warning")
         return available_locations, False

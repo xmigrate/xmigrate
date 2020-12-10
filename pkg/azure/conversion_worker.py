@@ -7,7 +7,7 @@ from pkg.azure import sas
 from asyncio.subprocess import PIPE, STDOUT 
 import asyncio
 from pathlib import Path
-
+from utils.logger import *
 
 async def download_worker(osdisk_raw,project,host):
     con = create_db_con()
@@ -30,6 +30,7 @@ async def download_worker(osdisk_raw,project,host):
             BluePrint.objects(project=project,host=host).update(status='32')
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
     finally:
         con.close()
 
@@ -59,6 +60,7 @@ async def upload_worker(osdisk_raw,project,host):
         Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=str(file_size), upsert=True)
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
         os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
     finally:
         con.close()
@@ -86,6 +88,7 @@ async def conversion_worker(osdisk_raw,project,host):
         os.popen('echo "Conversion completed" >> ./logs/ansible/migration_log.txt')
     except Exception as e:
         print(str(e))
+        logger(str(e),"warning")
         file_size = '0'
     finally:
         con.close() 

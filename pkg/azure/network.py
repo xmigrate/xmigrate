@@ -7,6 +7,7 @@ from model.blueprint import BluePrint
 from model.project import Project
 import random
 from azure.common.credentials import ServicePrincipalCredentials
+from utils.logger import *
 
 def create_vnet(rg_name, vnet_name, cidr, location, project):
     print("Provisioning a vnet...some operations might take a minute or two.")
@@ -26,6 +27,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
         BluePrint.objects(network=cidr).update(vpc_id=vnet_result.name,status='43')
     except Exception as e:
         print("Vnet creation failed to save: "+repr(e))
+        logger("Vnet creation failed to save: "+repr(e),"warning")
         return False
     finally:
         con.close()
@@ -53,6 +55,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
         BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='60')
     except Exception as e:
         print("Subnet creation failed to save: "+repr(e))
+        logger("Subnet creation failed to save: "+repr(e),"warning")
         return False
     finally:
         con.close()
@@ -86,6 +89,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
         BluePrint.objects(project=project).update(status='60')
     except Exception as e:
         print("Public IP creation failed: "+repr(e))
+        logger("Public IP creation failed: "+repr(e),"warning")
     finally:
         con.close()
         

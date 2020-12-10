@@ -6,7 +6,7 @@ from model.project import *
 from model.blueprint import *
 from utils.dbconn import *
 from azure.common.credentials import ServicePrincipalCredentials
-
+from utils.logger import *
 
 def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project):
     con = create_db_con()
@@ -51,6 +51,7 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
         BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status=100)
     except Exception as e:
         print("VM creation updation failed: "+repr(e))
+        logger("VM creation updation failed: "+repr(e),"warning")
     finally:
         con.close()
 
@@ -98,6 +99,7 @@ def get_vm_types(project):
         flag = True
     except Exception as e:
         print(repr(e))
+        logger("Fetching vm details failed: "+repr(e),"warning")
         flag = False
     con.close()
     return machine_types, flag

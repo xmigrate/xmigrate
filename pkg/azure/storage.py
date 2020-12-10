@@ -1,6 +1,6 @@
 from utils.dbconn import *
 from model.storage import *
-
+from utils.logger import *
 
 def get_storage(name):
     con = create_db_con()
@@ -19,6 +19,7 @@ def create_storage(project, storage, container, access_key):
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
+        logger(str(e),"warning")
         return False
     finally:
         con.close()
@@ -33,6 +34,7 @@ def update_storage(project, storage, container, access_key):
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
+        logger(str(e),"warning")
         return False
     finally:
         con.close()

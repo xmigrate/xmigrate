@@ -4,6 +4,7 @@ from model.project import *
 from model.disk import *
 from utils.log_reader import *
 from utils.dbconn import *
+from utils.logger import *
 import time
 
 from pkg.azure import network
@@ -47,9 +48,11 @@ async def start_build(project):
     print(p)
     if len(p) > 0:
         if p[0]['provider'] == "azure":
+            logger("Cloning started","info")
             print("****************Cloning awaiting*****************")
             cloning_completed = await disk.start_cloning(project)
             print("****************Cloning completed*****************")
+            logger("Cloning completed","info")
             if cloning_completed:
                 image_downloaded = await disk.start_downloading(project)
                 if image_downloaded:
@@ -65,23 +68,32 @@ async def start_build(project):
                                     if network_created:
                                         vm_created = await compute.create_vm(project)
                                         if vm_created:
-                                            print("VM created")     
+                                            print("VM created")
+                                            logger("VM created","info")     
                                         else:
                                             print("VM creation failed")
+                                            logger("VM creation failed","info")
                                     else:
                                         print("Network creation failed")
+                                        logger("Network creation failed","info")
                                 else:
                                     print("Disk creation failed")
+                                    logger("Disk creation failed","info")
                             else:
                                 print("Resource group creation failed")
+                                logger("Resource group creation failed","info")
                         else:
                             print("Image uploading failed")
+                            logger("Image uploading failed","info")
                     else:
                         print("Disk conversion failed")
+                        logger("Disk conversion failed","info")
                 else:
                     print("Image downloading failed")
+                    logger("Image downloading failed","info")
             else:
                 print("Disk cloning failed")
+                logger("Disk cloning failed","info")
         elif project['provider'] == "aws":
             cloning_completed = await asyncio.create_task(awsdisk.start_cloning(project))
             if cloning_completed:
