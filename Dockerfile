@@ -18,7 +18,7 @@ RUN wget http://launchpadlibrarian.net/422997913/qemu-utils_2.0.0+dfsg-2ubuntu1.
 
 RUN wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
     tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
-    mv ./azcopy_linux_amd64_10.7.0/azcopy /usr/bin  
+    mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin  
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
