@@ -53,6 +53,7 @@ export default class Project extends Component {
           provider: this.state.input["provider"],
           secret_key: this.state.input["secret_key"],
           access_key: this.state.input["access_key"],
+          location: this.state.input["location"]
         };
       } else if (this.state.input["provider"] === "azure") {
         var data = {
