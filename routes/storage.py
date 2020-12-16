@@ -2,6 +2,7 @@ from __main__ import app
 import os
 from quart import jsonify, request
 from pkg.azure import storage as st
+from pkg.aws import bucket
 from quart_jwt_extended import jwt_required, get_jwt_identity
 
 
@@ -10,11 +11,18 @@ from quart_jwt_extended import jwt_required, get_jwt_identity
 async def storage_create():
     if request.method == 'POST':
         data = await request.get_json()
+        provider = data['provider']
         project  = data['project']
-        storage = data['storage']
-        container = data['container']
-        access_key = data['access_key']
-        storage_created = st.create_storage(project, storage, container, access_key)
+        if provider == 'azure':
+            storage = data['storage']
+            container = data['container']
+            access_key = data['access_key']
+            storage_created = st.create_storage(project, storage, container, access_key)
+        elif provider == 'aws':
+            bucket = data['bucket']
+            secret_key = data['secret_key']
+            access_key = data['access_key']
+            storage_created = bucket.create_bucket(project, bucket, secret_key, access_key)
         if storage_created:
             return jsonify({'status': '200'})
         else:
@@ -34,10 +42,17 @@ async def storage_update():
     if request.method == 'POST':
         data = await request.get_json()
         project  = data['project']
-        storage = data['storage']
-        container = data['container']
-        access_key = data['access_key']
-        storage_updated = st.update_storage(project, storage, container, access_key)
+        provider = data['provider']
+        if provider == 'azure':
+            storage = data['storage']
+            container = data['container']
+            access_key = data['access_key']
+            storage_updated = st.update_storage(project, storage, container, access_key)
+        elif provider =="aws":
+            bucket = data['bucket']
+            secret_key = data['secret_key']
+            access_key = data['access_key']
+            storage_updated = bucket.update_bucket(project, bucket, secret_key, access_key)
         if storage_updated:
             return jsonify({'status': '200'})
         else:
