@@ -2,7 +2,7 @@ from __main__ import app
 import os
 from quart import jsonify, request
 from pkg.azure import storage as st
-from pkg.aws import bucket
+from pkg.aws import bucket as bk
 from quart_jwt_extended import jwt_required, get_jwt_identity
 
 
@@ -22,7 +22,7 @@ async def storage_create():
             bucket = data['bucket']
             secret_key = data['secret_key']
             access_key = data['access_key']
-            storage_created = bucket.create_bucket(project, bucket, secret_key, access_key)
+            storage_created = bk.create_bucket(project, bucket, secret_key, access_key)
         if storage_created:
             return jsonify({'status': '200'})
         else:
