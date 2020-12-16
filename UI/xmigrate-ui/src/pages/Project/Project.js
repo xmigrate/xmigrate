@@ -98,14 +98,15 @@ export default class Project extends Component {
         if (this.state.input["provider"] === "aws") {
           var data = {
             //Here Make Changes
-            // name: this.state.input["name"],
-            // provider: this.state.input["provider"],
-            // secret_key: this.state.input["secret_key"],
-            // access_key: this.state.input["access_key"],
-            // location: this.state.input["location"]
+            project: this.state.input["name"],
+            provider: this.state.input["provider"],
+            bucket:this.state.input["bucket"],
+            secret_key: this.state.input["secret_key"],
+            access_key: this.state.input["access_key"],
           };
         } else if (this.state.input["provider"] === "azure") {
           var data = {
+            provider: this.state.input["provider"],
             project: this.state.input["name"],
             storage: this.state.input["storage"],
             container: this.state.input["container"],
@@ -396,8 +397,8 @@ export default class Project extends Component {
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="S3"
-                        name="s3Bucket"
+                        placeholder="S3 Bucket Name"
+                        name="bucket"
                       />
                     </Form.Group>
                     <Form.Group className="register bg-blue"
