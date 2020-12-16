@@ -95,12 +95,24 @@ export default class Project extends Component {
           });
         });
       } else if (this.state.status === "Storage") {
-        var data = {
-          project: this.state.input["name"],
-          storage: this.state.input["storage"],
-          container: this.state.input["container"],
-          access_key: this.state.input["access_key"],
-        };
+        if (this.state.input["provider"] === "aws") {
+          var data = {
+            //Here Make Changes
+            // name: this.state.input["name"],
+            // provider: this.state.input["provider"],
+            // secret_key: this.state.input["secret_key"],
+            // access_key: this.state.input["access_key"],
+            // location: this.state.input["location"]
+          };
+        } else if (this.state.input["provider"] === "azure") {
+          var data = {
+            project: this.state.input["name"],
+            storage: this.state.input["storage"],
+            container: this.state.input["container"],
+            access_key: this.state.input["access_key"],
+          };
+        }
+   
         console.log("data posted",data);
         this.setState({
           loader: true,
@@ -371,7 +383,30 @@ export default class Project extends Component {
                         this.state.status === "Storage" && this.state.loader !== true ? " block" : "none",
                     }}
                   >
-                    <Form.Group className="register bg-blue">
+                        <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "aws"
+                            ? "block"
+                            : "none",
+                      }}
+                    >
+                      <Form.Label>S3 Bucket</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="S3"
+                        name="s3Bucket"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue"
+                     style={{
+                      display:
+                        this.state.input.provider === "azure"
+                          ? "block"
+                          : "none",
+                    }}>
                       <Form.Label>Storage</Form.Label>
                       <Form.Control
                         type="text"
@@ -380,7 +415,12 @@ export default class Project extends Component {
                         name="storage"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue">
+                    <Form.Group className="register bg-blue"  style={{
+                      display:
+                        this.state.input.provider === "azure"
+                          ? " block"
+                          : "none",
+                    }}>
                       <Form.Label>Container</Form.Label>
                       <Form.Control
                         type="text"
@@ -389,7 +429,12 @@ export default class Project extends Component {
                         name="container"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue">
+                    <Form.Group className="register bg-blue"  style={{
+                      display:
+                        this.state.input.provider === "azure"
+                          ? " block"
+                          : "none",
+                    }}>
                       <Form.Label>Access Key</Form.Label>
                       <Form.Control
                         type="text"
