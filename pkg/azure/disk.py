@@ -81,7 +81,6 @@ async def start_cloning(project):
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
         command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ " project="+project+"\""
-        args = shlex.split(command)
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process.wait()
         machines = BluePrint.objects(project=project)

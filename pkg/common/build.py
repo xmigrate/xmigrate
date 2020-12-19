@@ -43,9 +43,7 @@ async def start_infra_build(project):
 
 async def start_build(project):
     con = create_db_con()
-    print(project)
     p = Project.objects(name=project)
-    print(p)
     if len(p) > 0:
         if p[0]['provider'] == "azure":
             logger("Cloning started","info")
@@ -94,8 +92,11 @@ async def start_build(project):
             else:
                 print("Disk cloning failed")
                 logger("Disk cloning failed","info")
-        elif project['provider'] == "aws":
-            cloning_completed = await asyncio.create_task(awsdisk.start_cloning(project))
+        elif p[0]['provider'] == "aws":
+            logger("Cloning started","info")
+            print("****************Cloning awaiting*****************")
+            cloning_completed = await awsdisk.start_cloning(project)
+            print("****************Cloning completed*****************")
             if cloning_completed:
                 ami_created = await ami.start_ami_creation(project)
                 if ami_created:

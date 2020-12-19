@@ -1,6 +1,7 @@
 from __main__ import app
 from utils.dbconn import *
 from model.discover import *
+from model.project import *
 from pkg.common import nodes as n
 import os
 from quart import jsonify, request
@@ -25,7 +26,19 @@ async def discover():
         if n.add_nodes(nodes,username,password) == False:
             return jsonify({'status': '500'})
     if provider == "aws":
-        os.popen('ansible-playbook ./ansible/aws/env_setup.yaml > ./logs/ansible/log.txt')
+        proj_details = Project.objects(name=project)[0]
+        access_key = proj_details['access_key']
+        secret_key = proj_details['secret_key']
+        location = proj_details['location']
+        credentials_str = '['+project+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
+        if not os.path.exists('/root/.aws'):
+            os.mkdir('/root/.aws')
+        with open('/root/.aws/credentials', 'a+') as writer:
+            writer.write(credentials_str)
+        config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
+        with open('/root/.aws/config', 'a+') as writer:
+            writer.write(config_str)
+        os.popen('ansible-playbook ./ansible/aws/env_setup.yaml -e "mongodb='+mongodb+' project='+project+'"> ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     elif provider == "azure":
         os.popen('ansible-playbook ./ansible/azure/azure_env_setup_ubuntu.yaml -e "mongodb='+mongodb+' project='+project+'" > ./logs/ansible/log.txt')

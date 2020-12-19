@@ -112,7 +112,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
     while not "success" in output:
         progress_output = pexpect.run('aws ec2 describe-import-image-tasks --import-task-ids %s' % amiid)
         con = create_db_con()
-        time.sleep(120) # delays for 120 seconds
+        asyncio.sleep(120) # delays for 120 seconds
         progress_start='Progress": "'
         BluePrint.objects(host=image_name.replace('.img','')).update(status='30')
         if progress_start in progress_output:

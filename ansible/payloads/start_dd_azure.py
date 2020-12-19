@@ -1,11 +1,8 @@
 import os
 from mongoengine import *
 import socket
-from dotenv import load_dotenv
-from os import getenv
 import sys
 
-load_dotenv()
 
 db_con_string = sys.argv[4]
 con = connect(host=db_con_string)
@@ -14,7 +11,6 @@ access_key = sys.argv[2]
 container = sys.argv[3]
 project = sys.argv[5]
 
-print(db_con_string)
 
 hostname = socket.gethostname()
 

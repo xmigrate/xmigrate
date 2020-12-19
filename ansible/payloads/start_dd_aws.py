@@ -1,15 +1,16 @@
 import os
 from mongoengine import *
 import socket
-from dotenv import load_dotenv
-from os import getenv
+import sys
 
-load_dotenv()
-
-db_con_string = getenv("MONGO_DB")
-
+db_con_string = sys.argv[4]
 con = connect(host=db_con_string)
-bucket = getenv("BUCKET")
+bucket = sys.argv[1]
+access_key = sys.argv[2]
+secret_key = sys.argv[3]
+project = sys.argv[5]
+
+hostname = socket.gethostname()
 
 class BluePrint(Document):
     host = StringField(required=True, max_length=200, unique=True)
@@ -23,9 +24,15 @@ class BluePrint(Document):
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
     ami_id = StringField(required=False, max_length=100)
+    project = StringField(required=True, max_length=50)
+    meta = {
+        'indexes': [
+            {'fields': ('host', 'project'), 'unique': True}
+        ]
+    }
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='10')
-os.system('sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://'+bucket+'/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA')
+BluePrint.objects(host=hostname,project=project).update(status='10')
+os.system('sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://'+bucket+'/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA --profile '+project)
 
-BluePrint.objects(host=socket.getfqdn('0.0.0.0')).update(status='25')
+BluePrint.objects(host=hostname, project=project).update(status='25')
 con.close()
