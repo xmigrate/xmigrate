@@ -6,24 +6,7 @@ from model.storage import Bucket
 from model.project import *
 import asyncio
 from pkg.aws import creds
-
-async def start_ami_creation(project):
-   set_creds = creds.set_aws_creds(project)
-   con = create_db_con()
-   try:
-      bucket = Bucket.objects(project=project)
-      images = BluePrint.objects(project=project)
-      con.close()
-      bucket_name = bucket['bucket']
-   except Exception as e:
-      print(repr(e))
-   finally:
-      con.close()
-   for image in images:
-      image_name = image['host']+'.img'
-      await asyncio.start_ami_creation_worker(bucket_name, image_name, project)
-   return True
-   
+import boto3
 
 async def start_ami_creation_worker(bucket_name, image_name, project):
    con = create_db_con()
@@ -121,3 +104,22 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
             break
          else:
             asyncio.sleep(60)
+
+
+async def start_ami_creation(project):
+   set_creds = creds.set_aws_creds(project)
+   con = create_db_con()
+   bucket_name = ''
+   images = []
+   try:
+      bucket = Bucket.objects(project=project)[0]
+      images = BluePrint.objects(project=project)
+      bucket_name = bucket['bucket']
+   except Exception as e:
+      print(repr(e))
+   finally:
+      con.close()
+   for image in images:
+      image_name = image['host']+'.img'
+      await start_ami_creation_worker(bucket_name, image_name, project)
+   return True
