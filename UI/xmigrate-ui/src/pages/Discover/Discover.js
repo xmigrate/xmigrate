@@ -127,7 +127,7 @@ export default class Discover extends Component {
                                     <Form className="py-4">
                                         <Form.Group controlId="formBasicEmail" onChange={this.setUsername.bind(this)}>
                                             <Form.Label>Username</Form.Label>
-                                            <Form.Control type="text" placeholder="User shouls have sudo access" />
+                                            <Form.Control type="text" placeholder="User should have sudo access" />
                                         </Form.Group>
                                         <Form.Group controlId="formBasicPassword" onChange={this.setPassword.bind(this)}>
                                             <Form.Label>Password</Form.Label>

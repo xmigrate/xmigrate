@@ -174,7 +174,7 @@ export default class Project extends Component {
                         id="exampleInputEmail1"
                         onChange={this.handleChange}
                         aria-describedby="emailHelp"
-                        placeholder="Add Name"
+                        placeholder="Project Name"
                         name="name"
                       />
                     </Form.Group>
@@ -232,11 +232,11 @@ export default class Project extends Component {
                             : "none",
                       }}
                     >
-                      <Form.Label>Subscription</Form.Label>
+                      <Form.Label>Subscription Id</Form.Label>
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="Subscription id"
+                        placeholder="Subscription Id"
                         name="subscription_id"
                       />
                     </Form.Group>
@@ -253,7 +253,7 @@ export default class Project extends Component {
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="Client id"
+                        placeholder="Client Id"
                         name="client_id"
                       />
                     </Form.Group>
@@ -271,7 +271,7 @@ export default class Project extends Component {
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="secret_key"
+                        placeholder="Secret Key"
                         name="secret"
                       />
                     </Form.Group>
