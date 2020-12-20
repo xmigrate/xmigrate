@@ -8,7 +8,6 @@ flask
 ansible
 pygtail
 boto3
-pexpect
 python-dotenv
 azure-common==1.1.25
 azure-core==1.7.0

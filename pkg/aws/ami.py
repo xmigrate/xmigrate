@@ -1,8 +1,9 @@
-import pexpect, os, sys, time
+import os, sys, time
 from mongoengine import *
 from model.blueprint import *
 from utils.dbconn import *
 from model.storage import Bucket
+from model.project import *
 import asyncio
 from pkg.aws import creds
 
@@ -25,8 +26,13 @@ async def start_ami_creation(project):
    
 
 async def start_ami_creation_worker(bucket_name, image_name, project):
-    file_trust_policy = open('trust-policy.json', 'w')
-    s='''{
+   con = create_db_con()
+   access_key = Project.objects(name=project)[0]['access_key']
+   secret_key = Project.objects(name=project)[0]['secret_key']
+   region = Project.objects(name=project)[0]['location']
+   import_task_id = ''
+   client = boto3.client('iam', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+   file_trust_policy='''{
        "Version":"2012-10-17",
        "Statement":[
           {
@@ -44,11 +50,8 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
           }
        ]
     }'''
-    file_trust_policy.write(s)
-    file_trust_policy.close()
-    pexpect.run('aws iam create-role --role-name vmimport --assume-role-policy-document file://trust-policy.json --profile '+project)
-    file_role_policy = open('role-policy.json', 'w')
-    s='''{
+   response = client.create_role(RoleName='vmimport',AssumeRolePolicyDocument=file_trust_policy,Description='For vm migration',MaxSessionDuration=7200,Tags=[{'Key': 'app','Value': 'xmigrate'},])
+   file_role_policy = '''{
        "Version":"2012-10-17",
        "Statement":[
           {
@@ -81,51 +84,40 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
              "Resource":"*"
           }
        ]
-    }'''
-    file_role_policy.write(s)
-    file_role_policy.close()
-    pexpect.run('aws iam put-role-policy --role-name vmimport --policy-name vmimport --policy-document file://role-policy.json --profile '+project)
-    file_containers = open('containers.json', 'w')
-    s='''[{
-        "Description": "Xmigrate-Build",
-        "Format": "raw",
-        "UserBucket": {
-            "S3Bucket": "'''+bucket_name+'''",
-            "S3Key": "'''+image_name+'''"
-        }
-    }]'''
-    file_containers.write(s)
-    file_containers.close()
-    output = pexpect.run('aws ec2 import-image --description "NSG-Build" --disk-containers file://containers.json --profile '+project)
-    start='ImportTaskId": "'
-    try:
-        amiid = (output.split(start))[1].split('"')[0]
-    except:
-        print(output)
-        print(start)
-    print('1) Remove the temp files (trust-policy.json, role-policy.json, containers.json)')
-    pexpect.run('rm trust-policy.json')
-    pexpect.run('rm role-policy.json')
-    pexpect.run('rm containers.json')
-
-    print('2) Check the status of loading the AMI image to your EC2. This usually takes 20-30 minutes')
-    while not "success" in output:
-        progress_output = pexpect.run('aws ec2 describe-import-image-tasks --import-task-ids %s' % amiid)
-        con = create_db_con()
-        asyncio.sleep(120) # delays for 120 seconds
-        progress_start='Progress": "'
-        BluePrint.objects(host=image_name.replace('.img','')).update(status='30')
-        if progress_start in progress_output:
-            progress = (progress_output.split(progress_start))[1].split('"')[0]
-            BluePrint.objects(host=nsg_filename.replace('.img','')).update(status='32')
-            print('    The progress on importing the image to EC2 is: "'+progress+'%"')
-            print(progress_output)
-        if "completed" in progress_output:
-            output = "success"
-            BluePrint.objects(host=image_name.replace('.img','')).update(status='36')
-    print('***********************************************************')
-    print('***     Image has been successfully imported to EC2     ***')
-    print('***********************************************************')
-    print(amiid)
-    BluePrint.objects(host=image_name.replace('.img','')).update(image_id=amiid)
-    con.close()
+   }'''
+   response = client.put_role_policy(
+      RoleName='vmimport',
+      PolicyName='vmimport',
+      PolicyDocument=file_role_policy
+   )
+   client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=region)
+   response = client.import_image(
+      DiskContainers=[
+         {
+               'Description': 'Xmigrate',
+               'Format': 'RAW',
+               'UserBucket': {
+                  'S3Bucket': "'"+bucket_name+"'",
+                  'S3Key': "'"+image_name+"'"
+               }
+         },
+      ]
+   )
+   try:
+      import_task_id = response['ImportTaskId']
+      BluePrint.objects(host=image_name.replace('.img','')).update(status='30')
+      logger("AMI creation started: "+import_task_id,"info")
+   except Exception as e:
+      print(str(e))
+      logger("Error while creating AMI:"+str(e),"error")
+   if len(import_task_id > 0):
+      while True:
+         response = client.describe_import_image_tasks(
+            ImportTaskIds=[
+            import_task_id,
+            ]
+         )
+         if response['ImportImageTasks'][0]['Status'] == "completed":
+            break
+         else:
+            asyncio.sleep(60)
