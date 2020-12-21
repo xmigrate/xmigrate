@@ -33,10 +33,10 @@ async def create_project(data, user):
         secret_key = data['secret_key']
         location = data['location']
         credentials_str = '['+name+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
-        with open('/root/.aws/credentials', 'a+') as writer:
+        with open('/root/.aws/credentials', 'w+') as writer:
             writer.write(credentials_str)
         config_str = '[profile '+name+']\nregion = '+location+'\noutput = json'
-        with open('/root/.aws/config', 'a+') as writer:
+        with open('/root/.aws/config', 'w+') as writer:
             writer.write(config_str)
         post = Project(name=name, provider=provider, users=users, location=location, access_key=access_key, secret_key=secret_key)
     try:

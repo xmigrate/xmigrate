@@ -11,10 +11,10 @@ def set_aws_creds(project):
         credentials_str = '['+project+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
         if not os.path.exists('/root/.aws'):
             os.mkdir('/root/.aws')
-        with open('/root/.aws/credentials', 'a+') as writer:
+        with open('/root/.aws/credentials', 'w+') as writer:
             writer.write(credentials_str)
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
-        with open('/root/.aws/config', 'a+') as writer:
+        with open('/root/.aws/config', 'w+') as writer:
             writer.write(config_str)
         return True
     except Exception as e:
