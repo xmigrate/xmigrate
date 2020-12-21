@@ -7,6 +7,7 @@ from model.project import *
 import asyncio
 from pkg.aws import creds
 import boto3
+from utils.logger import *
 
 async def start_ami_creation_worker(bucket_name, image_name, project):
    con = create_db_con()
@@ -33,46 +34,49 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
           }
        ]
     }'''
-   response = client.create_role(RoleName='vmimport',AssumeRolePolicyDocument=file_trust_policy,Description='For vm migration',MaxSessionDuration=7200,Tags=[{'Key': 'app','Value': 'xmigrate'},])
-   file_role_policy = '''{
-       "Version":"2012-10-17",
-       "Statement":[
-          {
-             "Effect":"Allow",
-             "Action":[
-                "s3:ListBucket",
-                "s3:GetBucketLocation"
-             ],
-             "Resource":[
-                "arn:aws:s3:::'''+bucket_name+'''"
-             ]
-          },
-          {
-             "Effect":"Allow",
-             "Action":[
-                "s3:GetObject"
-             ],
-             "Resource":[
-                "arn:aws:s3:::'''+bucket_name+'''/*"
-             ]
-          },
-          {
-             "Effect":"Allow",
-             "Action":[
-                "ec2:ModifySnapshotAttribute",
-                "ec2:CopySnapshot",
-                "ec2:RegisterImage",
-                "ec2:Describe*"
-             ],
-             "Resource":"*"
-          }
-       ]
-   }'''
-   response = client.put_role_policy(
-      RoleName='vmimport',
-      PolicyName='vmimport',
-      PolicyDocument=file_role_policy
-   )
+   try:
+      response = client.create_role(RoleName='vmimport',AssumeRolePolicyDocument=file_trust_policy,Description='For vm migration',MaxSessionDuration=7200,Tags=[{'Key': 'app','Value': 'xmigrate'},])
+      file_role_policy = '''{
+         "Version":"2012-10-17",
+         "Statement":[
+            {
+               "Effect":"Allow",
+               "Action":[
+                  "s3:ListBucket",
+                  "s3:GetBucketLocation"
+               ],
+               "Resource":[
+                  "arn:aws:s3:::'''+bucket_name+'''"
+               ]
+            },
+            {
+               "Effect":"Allow",
+               "Action":[
+                  "s3:GetObject"
+               ],
+               "Resource":[
+                  "arn:aws:s3:::'''+bucket_name+'''/*"
+               ]
+            },
+            {
+               "Effect":"Allow",
+               "Action":[
+                  "ec2:ModifySnapshotAttribute",
+                  "ec2:CopySnapshot",
+                  "ec2:RegisterImage",
+                  "ec2:Describe*"
+               ],
+               "Resource":"*"
+            }
+         ]
+      }'''
+      response = client.put_role_policy(
+         RoleName='vmimport',
+         PolicyName='vmimport',
+         PolicyDocument=file_role_policy
+      )
+   except Exception as e:
+      print(str(e))
    client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=region)
    response = client.import_image(
       DiskContainers=[
@@ -80,8 +84,8 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
                'Description': 'Xmigrate',
                'Format': 'RAW',
                'UserBucket': {
-                  'S3Bucket': "'"+bucket_name+"'",
-                  'S3Key': "'"+image_name+"'"
+                  'S3Bucket': bucket_name,
+                  'S3Key': image_name
                }
          },
       ]
@@ -93,7 +97,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
    except Exception as e:
       print(str(e))
       logger("Error while creating AMI:"+str(e),"error")
-   if len(import_task_id > 0):
+   if len(import_task_id) > 0:
       while True:
          response = client.describe_import_image_tasks(
             ImportTaskIds=[
