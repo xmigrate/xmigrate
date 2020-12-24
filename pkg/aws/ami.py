@@ -88,7 +88,18 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
                   'S3Key': image_name
                }
          },
-      ]
+      ],
+      TagSpecifications=[
+        {
+            'ResourceType': 'import-image-task',
+            'Tags': [
+                {
+                    'Key': 'Name',
+                    'Value': image_name
+                },
+            ]
+        },
+    ]
    )
    try:
       import_task_id = response['ImportTaskId']
@@ -105,9 +116,13 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
             ]
          )
          if response['ImportImageTasks'][0]['Status'] == "completed":
+            ami_id = import_task_id
+            BluePrint.objects(host=image_name.replace('.img','')).update(image_id=ami_id)
+            BluePrint.objects(host=image_name.replace('.img','')).update(status='35')
             break
          else:
             asyncio.sleep(60)
+   con.close()
 
 
 async def start_ami_creation(project):

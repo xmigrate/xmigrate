@@ -97,12 +97,19 @@ async def start_build(project):
             print("****************Cloning awaiting*****************")
             cloning_completed = await awsdisk.start_cloning(project)
             print("****************Cloning completed*****************")
+            logger("Cloning completed","info")
             if cloning_completed:
+                logger("AMI creation started","info")
                 ami_created = await ami.start_ami_creation(project)
+                logger("AMI creation completed:"+str(ami_created),"info")
                 if ami_created:
+                    logger("Network creation started","info")
                     network_created = await awsnw.create_nw(project)
+                    logger("Network creation completed","info")
                     if network_created:
-                        ec2_created = ec2.build_ec2(project)
+                        logger("EC2 creation started","info")
+                        ec2_created = await ec2.build_ec2(project)
+                        logger("EC2 creation completed","info")
                         if ec2_created:
                             print("ec2 creation successfull")
                         else:

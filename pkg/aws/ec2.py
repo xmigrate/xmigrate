@@ -6,7 +6,7 @@ import asyncio
 from model.project import *
 from pkg.aws import creds
 
-async def create_machine(subnet_id,ami_id,machine_type):
+async def create_machine(project,subnet_id,ami_id,machine_type):
     con = create_db_con()
     access_key = Project.objects(name=project)[0]['access_key']
     secret_key = Project.objects(name=project)[0]['secret_key']
@@ -23,8 +23,8 @@ async def create_machine(subnet_id,ami_id,machine_type):
     instances = ec2.create_instances(ImageId=ami_id, InstanceType=machine_type, MaxCount=1, MinCount=1, NetworkInterfaces=[{'SubnetId': subnet_id, 'DeviceIndex': 0, 'AssociatePublicIpAddress': True}])
     instances[0].wait_until_running()
     try:
-        BluePrint.objects(ami_id=amiid).update(instance_id=instances[0].id)
-        BluePrint.objects(ami_id=amiid).update(status='100')
+        BluePrint.objects(image_id=amiid).update(instance_id=instances[0].id)
+        BluePrint.objects(image_id=amiid).update(status='100')
     except Exception as e:
         print(repr(e))
     finally:
@@ -33,17 +33,20 @@ async def create_machine(subnet_id,ami_id,machine_type):
 
 async def build_ec2(project):
     try:
+        print(project)
         con = create_db_con()
         hosts = BluePrint.objects(project=project)
         for host in hosts:
-            asyncio.create_task(create_machine(host['subnet_id'],host['image_id'],host['machine_type']))
+            print(host['machine_type'])
+            await create_machine(project,host['subnet_id'],host['image_id'],host['machine_type'])
         con.close()
+        return True
     except Exception as e:
+        print(str(e))
         print(repr(e))
         return False
     finally:
         con.close()
-        return True
 
 
 def ec2_instance_types(ec2,region_name):

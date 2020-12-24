@@ -1,7 +1,9 @@
 from mongoengine import *
 from model.blueprint import *
+from model.project import *
 import boto3
 from utils.dbconn import *
+import asyncio
 
 def build_vpc(cidr,public_route, project):
   con = create_db_con()
@@ -69,14 +71,17 @@ async def create_nw(project):
           if len(subnet) > 0:
             BluePrint.objects(project=project, network=host['network'], subnet=host['subnet']).update(subnet_id = subnet[0]['subnet_id'],status='60')
           else:
-            subnet_build = build_subnet(host['subnet'],network[0]['vpc_id'],host['public_route'], project)
+            updated_host = BluePrint.objects(project=project, network=host['network'], host=host['host'])[0]
+            subnet_build = build_subnet(updated_host['subnet'],updated_host['vpc_id'],updated_host['route_table'], project)
         else:
           vpc_build,vpc_id = build_vpc(host['network'],host['public_route'], project)
-          if vpc_build: 
-            subnet_build = build_subnet(host['subnet'],vpc_id,host['public_route'], project)
+          if vpc_build:
+            updated_host = BluePrint.objects(project=project, network=host['network'], host=host['host'])[0]
+            subnet_build = build_subnet(host['subnet'],vpc_id,updated_host['route_table'], project)
       else:
         if not host['subnet_id']:
-          subnet_build = build_subnet(host['subnet'],vpc_id,host['public_route'], project)
+          updated_host = BluePrint.objects(project=project, network=host['network'], host=host['host'])[0]
+          subnet_build = build_subnet(host['subnet'],updated_host['vpc_id'],updated_host['route_table'], project)
   except Exception as e:
     print(repr(e))
     return False
