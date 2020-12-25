@@ -19,11 +19,16 @@ async def create_machine(project,subnet_id,ami_id,machine_type):
     filters = [{'Name':'name','Values':[ami_id]}]
     response = client.describe_images(Filters=filters)
     ami_id = response['Images'][0]['ImageId']
-    BluePrint.objects(ami_id=amiid).update(status='95')
+    BluePrint.objects(image_id=amiid).update(status='95')
     instances = ec2.create_instances(ImageId=ami_id, InstanceType=machine_type, MaxCount=1, MinCount=1, NetworkInterfaces=[{'SubnetId': subnet_id, 'DeviceIndex': 0, 'AssociatePublicIpAddress': True}])
     instances[0].wait_until_running()
+    instance_id = instances[0].id
+    running_instances = ec2.instances.filter(InstanceIds=[instance_id])
+    ip = ''
+    for instance in running_instances:
+        ip = instance.public_ip_address
     try:
-        BluePrint.objects(image_id=amiid).update(instance_id=instances[0].id)
+        BluePrint.objects(image_id=amiid).update(vm_id=instances[0].id, ip=ip)
         BluePrint.objects(image_id=amiid).update(status='100')
     except Exception as e:
         print(repr(e))
