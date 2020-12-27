@@ -468,32 +468,7 @@ export default class BluePrint extends Component {
               </Card.Body>
             </Card>
 
-            <div className="mt-4 d-flex justify-content-between">
-              <Button
-                className="media-body py-3 mr-40px text-secondary bg-white"
-                variant="light"
-                size="lg"
-                active
-              >
-                Cloning <icon.FiCopy />
-              </Button>
-              <Button
-                className="media-body py-3 mr-40px text-secondary bg-white"
-                variant="light"
-                size="lg"
-                active
-              >
-                Conversion <icon.BsArrowRepeat />
-              </Button>
-              <Button
-                className="media-body py-3 text-secondary bg-white"
-                variant="light"
-                size="lg"
-                active
-              >
-                Build <icon.BsPlay />
-              </Button>
-            </div>
+
 
             {/* HereTable */}
 
@@ -579,42 +554,35 @@ export default class BluePrint extends Component {
                 </Container>
               </Card.Body>
             </Card>
-
-            <Row className="m-2">
-              <Col>
-                <Button
-                  variant="success"
-                  onClick={this._SaveBuild.bind(this)}
-                  disabled={this.state.BuildStatus}
-                  size="sm"
-                  block
-                >
-                  Save
-                </Button>
-              </Col>
-              <Col>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={this._createBuild.bind(this)}
-                  disabled={this.state.BuildStatus}
-                  block
-                >
-                  Build
-                </Button>
-              </Col>
-              <Col>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={this._Reset.bind(this)}
-                  disabled={this.state.BuildStatus}
-                  block
-                >
-                  Reset
-                </Button>
-              </Col>
-            </Row>
+            <div className="mt-4 d-flex justify-content-between">
+              <Button
+              variant="success"
+                className="media-body py-3 mr-40px text-success bt-main"
+                onClick={this._SaveBuild.bind(this)}
+                disabled={this.state.BuildStatus}
+                size="lg"
+              >
+                Save <icon.FiCopy />
+              </Button>
+              <Button
+              variant="primary"
+                className="media-body py-3 mr-40px text-primary  bt-main"
+                onClick={this._createBuild.bind(this)}
+                disabled={this.state.BuildStatus}
+                size="lg"
+              >
+                Build <icon.BsPlay />
+              </Button>
+              <Button
+              variant="danger"
+                className="media-body py-3 text-danger  bt-main"
+                onClick={this._Reset.bind(this)}
+                disabled={this.state.BuildStatus}
+                size="lg"
+              >
+                Reset <icon.BsArrowRepeat />
+              </Button>
+            </div>
           </Container>
         </div>
       );
