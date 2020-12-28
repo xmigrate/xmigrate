@@ -171,7 +171,7 @@ export default class Discover extends Component {
                                 {this.state.disableGoToBlueprint ?
                                     this.state.streamming ?
                                         <Button variant="secondary" disabled>
-                                            Download Blueprint
+                                            Go to Blueprint
                                         </Button>
                                         :
                                         <Button variant="secondary" disabled>
