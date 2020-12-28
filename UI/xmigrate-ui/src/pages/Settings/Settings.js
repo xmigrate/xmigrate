@@ -31,7 +31,8 @@ constructor(props){
   input["client_id"] =props.CurrentPro.client_id;
   input["storage"] = "";
   input["container"] = "";
-  input["access_key"] = "";
+  input["secret_key_aws"]=props.CurrentPro.secret_key;
+  input["access_key_aws"] = props.CurrentPro.access_key;
   this.state = {
     project:props.CurrentPro.name,
     input: input,
@@ -45,13 +46,16 @@ constructor(props){
 
 }
 
+// Some statements are commented in this project for updating future provision of Project Settings
 async componentDidMount() {
   var data = {
     project: this.state.project,
+    provider:this.state.input.provider
   };
   let input = this.state.input;
   await GetServiceWithData(BLUEPRINT_GET_STORAGE, data).then((res) => {
     let data = JSON.parse(res.data);
+    console.log("Printing Getting Data",data);
     if(data.length!==0){
       input["storage"] = data[0].storage;
       input["container"] = data[0].container;
@@ -112,7 +116,7 @@ validate() {
           <Row className="py-5 ">
             <Col md="6" className="bg-white shadow-sm rounded ">
               <div className="p-3 d-flex flex-column justify-content-between h-100">
-                <Form className="FormStyle" onSubmit={this.handleSubmit}>
+                <Form className="FormStyle" >
                   <Form.Group className="register bg-blue">
                     <Form.Label>Project Name</Form.Label>
                     <Form.Control
@@ -139,7 +143,7 @@ validate() {
                       <Card>
                         <Card.Body
                           className="Provider"
-                          onClick={() => this.handleProvider("aws")}
+                          // onClick={() => this.handleProvider("aws")}
                         >
                           <FaAws size={50} />
                         </Card.Body>
@@ -154,7 +158,7 @@ validate() {
                       <Card>
                         <Card.Body
                           className="Provider"
-                          onClick={() => this.handleProvider("azure")}
+                          // onClick={() => this.handleProvider("azure")}
                         >
                           <SiMicrosoftazure size={50} />
                         </Card.Body>
@@ -183,6 +187,7 @@ validate() {
                       type="text"
                       onChange={this.handleChange}
                       placeholder="Subscription id"
+                      disabled={true}
                       value = {this.state.input.subscription_id}
                       name="subscription_id"
                     />
@@ -201,6 +206,7 @@ validate() {
                       type="text"
                       onChange={this.handleChange}
                       placeholder="Client id"
+                      disabled={true}
                       name="client_id"
                       value = {this.state.input.client_id}
                     />
@@ -220,6 +226,7 @@ validate() {
                       type="text"
                       onChange={this.handleChange}
                       placeholder="secret_key"
+                      disabled={true}
                       value = {this.state.input.secret}
                       name="secret"
                     />
@@ -236,6 +243,8 @@ validate() {
                       type="text"
                       onChange={this.handleChange}
                       placeholder="Secret key"
+                      disabled={true}
+                      value = {this.state.input.secret_key_aws}
                       name="secret_key"
                     />
                   </Form.Group>
@@ -251,6 +260,8 @@ validate() {
                       type="text"
                       onChange={this.handleChange}
                       placeholder="Access key"
+                      disabled={true}
+                      value = {this.state.input.access_key_aws}
                       name="access_key"
                     />
                   </Form.Group>
@@ -268,6 +279,7 @@ validate() {
                       type="text"
                       onChange={this.handleChange}
                       placeholder="Tenant Id"
+                      disabled={true}
                       value = {this.state.input.tenant_id}
                       name="tenant_id"
                     />
@@ -287,6 +299,7 @@ validate() {
                       type="text"
                       onChange={this.handleChange}
                       placeholder="Resource Group"
+                      disabled={true}
                       name="resource_group"
                     />
                   </Form.Group>
@@ -298,6 +311,7 @@ validate() {
                       as="select"
                       name="location"
                       onChange={this.handleChange}
+                      disabled={true}
                       defaultValue = {this.state.input.location}
                     >
                       <option>{this.state.input.location}</option>
@@ -309,14 +323,14 @@ validate() {
                     </Form.Control>
                   </Form.Group>
 
-                  <Button
+                  {/* <Button
                     type="submit"
                     className="btn btn-primary
                        col-lg-12"
                   >
                     Update
                     <FaAngleRight size={20} />
-                  </Button>
+                  </Button> */}
                 </Form>
               </div>
             </Col>
