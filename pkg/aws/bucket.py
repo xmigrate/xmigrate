@@ -29,3 +29,10 @@ def update_bucket(project, bucket, secret_key, access_key):
         return False
     finally:
         con.close()
+
+def get_storage(name):
+    con = create_db_con()
+    if name == "all":
+        return Storage.objects.to_json()
+    else:
+        return Storage.objects(project=name).to_json()
