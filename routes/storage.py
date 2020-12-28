@@ -35,7 +35,7 @@ async def storage_get():
         name = request.args.get('project')
         if name == "azure":
             return jsonify(st.get_storage(name))
-        else:
+        elif name == "aws":
             return jsonify(bk.get_storage(name))
 
 
