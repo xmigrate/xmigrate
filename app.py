@@ -17,6 +17,7 @@ app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
 app.config['JWT_SECRET_KEY'] = 'try2h@ckT415'  # Change this!
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 3600
 jwt = JWTManager(app)
 
 
