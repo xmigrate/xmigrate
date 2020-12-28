@@ -56,7 +56,7 @@ async def storage_update():
             bucket = data['bucket']
             secret_key = data['secret_key']
             access_key = data['access_key']
-            storage_updated = bucket.update_bucket(project, bucket, secret_key, access_key)
+            storage_updated = bk.update_bucket(project, bucket, secret_key, access_key)
         if storage_updated:
             return jsonify({'status': '200'})
         else:
