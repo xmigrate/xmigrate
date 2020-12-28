@@ -33,7 +33,10 @@ async def storage_create():
 async def storage_get():
     if request.method == 'GET':
         name = request.args.get('project')
-        return jsonify(st.get_storage(name))
+        if name == "azure":
+            return jsonify(st.get_storage(name))
+        else:
+            return jsonify(bk.get_storage(name))
 
 
 @app.route('/storage/update', methods=['POST'])
