@@ -33,9 +33,10 @@ async def storage_create():
 async def storage_get():
     if request.method == 'GET':
         name = request.args.get('project')
-        if name == "azure":
+        provider = request.args.get('provider')
+        if provider == "azure":
             return jsonify(st.get_storage(name))
-        elif name == "aws":
+        elif provider == "aws":
             return jsonify(bk.get_storage(name))
 
 
