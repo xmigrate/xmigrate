@@ -8,6 +8,7 @@ import {
   Form,
   Row,
   Col,
+  Modal
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
 import { GetServiceWithData } from "../../services/GetService";
@@ -44,7 +45,10 @@ export default class BluePrint extends Component {
       VMSSelected: "",
       hostCurrent: {},
       SubnetData: [],
-      BuildStatus: false
+      BuildStatus: false,
+      ShowAlertReset: false,
+      ShowAlertBuild: false,
+      ShowAlertSave: false
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -54,7 +58,7 @@ export default class BluePrint extends Component {
     this.drag = this.drag.bind(this);
     this.allowDrop = this.allowDrop.bind(this);
     this.drop = this.drop.bind(this);
-    this.getStatus = this.getStatus.bind(this)
+    this.getStatus = this.getStatus.bind(this);
   }
 
   async GettingData() {
@@ -259,7 +263,7 @@ export default class BluePrint extends Component {
     let data = {
       project: this.state.project,
     };
-    this.setState({ BuildStatus: true})
+    this.setState({ BuildStatus: true })
     console.log("Building");
     await PostService(BLUEPRINTNET_BUILD_POST_URL, data).then((res) => {
       console.log("data from response of Build post", res.data);
@@ -272,7 +276,7 @@ export default class BluePrint extends Component {
       project: this.state.project,
     };
     GetServiceWithData(BLUEPRINT_STATUS, data1).then((res) => {
-      console.log("Response For Status",res);
+      console.log("Response For Status", res);
       let flag;
       let NetworksData = this.state.Networks;
       //Setting the host status
@@ -282,10 +286,10 @@ export default class BluePrint extends Component {
             res.data.map((hostRes, index) => {
               if (host.host === hostRes.host) {
                 host["status"] = hostRes.status;
-                if (parseInt(hostRes.status) <100) {
+                if (parseInt(hostRes.status) < 100) {
                   flag = false;
                 }
-                else{
+                else {
                   flag = true;
                 }
               }
@@ -295,7 +299,7 @@ export default class BluePrint extends Component {
       });
       if (flag) {
         clearInterval(this.state.intervalId);
-        this.setState({ BuildStatus: false})
+        this.setState({ BuildStatus: false })
       }
       this.setState({
         Networks: NetworksData,
@@ -310,11 +314,11 @@ export default class BluePrint extends Component {
       this.state.hostCurrents
     );
     let hostData = this.state.hostCurrents
-    hostData.map((host,index)=>{
-      if(host.type === "Public" || host.type === "True"  ){
+    hostData.map((host, index) => {
+      if (host.type === "Public" || host.type === "True") {
         host["type"] = "True"
       }
-      else{
+      else {
         host["type"] = "False"
       }
     });
@@ -353,7 +357,7 @@ export default class BluePrint extends Component {
       ChangeSubnet: subnetname,
       ChangeNetwork: nw_name,
     };
-    console.log("On drag",data);
+    console.log("On drag", data);
     ev.dataTransfer.setData("TransferJson", JSON.stringify(data));
   }
 
@@ -365,57 +369,96 @@ export default class BluePrint extends Component {
     ev.preventDefault();
     let SamePlace = false;
     var data = JSON.parse(ev.dataTransfer.getData("TransferJson"));
-       //Checking if in same place
-    if(nw_name === data.ChangeNetwork && subnetname === data.ChangeSubnet ){
-        console.log("Same Place");
-        SamePlace = true;
+    //Checking if in same place
+    if (nw_name === data.ChangeNetwork && subnetname === data.ChangeSubnet) {
+      console.log("Same Place");
+      SamePlace = true;
     }
-    if(SamePlace === false){
-    console.log("On Drop",);
-    console.log(subnetname);
-    console.log(nw_name);
-    var NetworksData = this.state.Networks;
-    NetworksData.map((Network, index) => {
-      if (Network.nw_name === data.ChangeNetwork) {
-        Network.subnets.map((subnet, index) => {
-          if (subnet.name === data.ChangeSubnet) {
-            subnet.hosts.splice(data.index, 1);
+    if (SamePlace === false) {
+      console.log("On Drop",);
+      console.log(subnetname);
+      console.log(nw_name);
+      var NetworksData = this.state.Networks;
+      NetworksData.map((Network, index) => {
+        if (Network.nw_name === data.ChangeNetwork) {
+          Network.subnets.map((subnet, index) => {
+            if (subnet.name === data.ChangeSubnet) {
+              subnet.hosts.splice(data.index, 1);
+            }
+          });
+          if (Network.nw_name === nw_name) {
+            Network.subnets.map((subnet, index) => {
+              if (subnet.name === subnetname) {
+                data.host["subnet"] = subnet.cidr;
+                subnet.hosts.push(data.host);
+              }
+            });
           }
-        });
-        if (Network.nw_name === nw_name) {
+
+        } else if (Network.nw_name === nw_name) {
           Network.subnets.map((subnet, index) => {
             if (subnet.name === subnetname) {
               data.host["subnet"] = subnet.cidr;
               subnet.hosts.push(data.host);
             }
           });
+        } else {
         }
+      });
 
-      } else if (Network.nw_name === nw_name) {
-        Network.subnets.map((subnet, index) => {
-          if (subnet.name === subnetname) {
-            data.host["subnet"] = subnet.cidr;
-            subnet.hosts.push(data.host);
-          }
-        });
-      } else {
+      var data1 = {
+        project: this.state.project,
+        machines: [data.host]
       }
-    });
-
-    var data1 = {
-      project: this.state.project,
-      machines:[data.host]
+      console.log("data passinf to the url", data1);
+      PostService(BLUEPRINT_UDATE_HOST, data1).then((res) => {
+        console.log("After Drag and drop", res.data);
+      });
+      this.setState({
+        Networks: NetworksData,
+      });
+      this.GettingData();
     }
-    console.log("data passinf to the url",data1);
-    PostService(BLUEPRINT_UDATE_HOST, data1).then((res) => {
-      console.log("After Drag and drop", res.data);
-    });
-    this.setState({
-      Networks: NetworksData,
-    });
-    this.GettingData();
+
   }
-  
+
+
+  ///Handling Alerts---------------------------------------------------------------------
+  handleAlertOpenReset() {
+    this.setState({
+      ShowAlertReset: true
+    })
+  }
+
+  handleAlertCloseReset() {
+    this.setState({
+      ShowAlertReset: false
+    })
+  }
+
+
+  handleAlertOpenBuild() {
+    this.setState({
+      ShowAlertBuild: true
+    })
+  }
+
+  handleAlertCloseBuild() {
+    this.setState({
+      ShowAlertBuild: false
+    })
+  }
+
+  handleAlertOpenSave() {
+    this.setState({
+      ShowAlertSave: true
+    })
+  }
+
+  handleAlertCloseSave() {
+    this.setState({
+      ShowAlertSave: false
+    })
   }
 
   render() {
@@ -532,51 +575,54 @@ export default class BluePrint extends Component {
                         </tr>
                       </tbody>
                     ) : (
-                      this.state.Networks.map((NetworkData, index) => (
-                        <NetworkTableRow
-                          key={index}
-                          index={index + 1}
-                          Network={NetworkData}
-                          VMS={this.state.VMS}
-                          handleChange={this.handleChange}
-                          CreateSubnet={this.CreateSubnet}
-                          DeleteNetwork={this.DeleteNetwork}
-                          DeleteSubnet={this.DeleteSubnet}
-                          handleVM={this.handleVM}
-                          drag={this.drag}
-                          dragStart={this.state.dragStart}
-                          allowDrop={this.allowDrop}
-                          drop={this.drop}
-                        />
-                      ))
-                    )}
+                        this.state.Networks.map((NetworkData, index) => (
+                          <NetworkTableRow
+                            key={index}
+                            index={index + 1}
+                            Network={NetworkData}
+                            VMS={this.state.VMS}
+                            handleChange={this.handleChange}
+                            CreateSubnet={this.CreateSubnet}
+                            DeleteNetwork={this.DeleteNetwork}
+                            DeleteSubnet={this.DeleteSubnet}
+                            handleVM={this.handleVM}
+                            drag={this.drag}
+                            dragStart={this.state.dragStart}
+                            allowDrop={this.allowDrop}
+                            drop={this.drop}
+                          />
+                        ))
+                      )}
                   </Table>
                 </Container>
               </Card.Body>
             </Card>
             <div className="mt-4 d-flex justify-content-between">
               <Button
-              variant="success"
+                variant="success"
                 className="media-body py-3 mr-40px text-success bt-main"
-                onClick={this._SaveBuild.bind(this)}
+                // onClick={this._SaveBuild.bind(this)}
+                onClick={this.handleAlertOpenSave.bind(this)}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
                 Save <icon.FiCopy />
               </Button>
               <Button
-              variant="primary"
+                variant="primary"
                 className="media-body py-3 mr-40px text-primary  bt-main"
-                onClick={this._createBuild.bind(this)}
+                // onClick={this._createBuild.bind(this)}
+                onClick={this.handleAlertOpenBuild.bind(this)}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
                 Build <icon.BsPlay />
               </Button>
               <Button
-              variant="danger"
+                variant="danger"
                 className="media-body py-3 text-danger  bt-main"
-                onClick={this._Reset.bind(this)}
+                // onClick={this._Reset.bind(this)}
+                onClick={this.handleAlertOpenReset.bind(this)}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
@@ -584,6 +630,79 @@ export default class BluePrint extends Component {
               </Button>
             </div>
           </Container>
+
+
+          {/* Reset Alert */}
+
+          <Modal show={this.state.ShowAlertReset}
+            onHide={this.handleAlertCloseReset.bind(this)}
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Reset Project</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>Do you want to Reset?</Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary"
+                onClick={this.handleAlertCloseReset.bind(this)}
+              >
+                Close
+          </Button>
+              <Button variant="primary"
+                onClick={this._Reset.bind(this)}
+              >
+                Reset
+          </Button>
+            </Modal.Footer>
+          </Modal>
+
+
+
+          {/* Build Alert */}
+
+          <Modal show={this.state.ShowAlertBuild}
+            onHide={this.handleAlertCloseBuild.bind(this)}
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Reset Project</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>Do you want to Build?</Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary"
+                onClick={this.handleAlertCloseBuild.bind(this)}
+              >
+                Close
+          </Button>
+              <Button variant="primary"
+                onClick={this._createBuild.bind(this)}
+              >
+                Build
+          </Button>
+            </Modal.Footer>
+          </Modal>
+
+
+
+          {/* Save Alert */}
+          <Modal show={this.state.ShowAlertSave}
+            onHide={this.handleAlertCloseSave.bind(this)}
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Reset Project</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>Do you want to Save?</Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary"
+                onClick={this.handleAlertCloseSave.bind(this)}
+              >
+                Close
+          </Button>
+              <Button variant="primary"
+                onClick={this._SaveBuild.bind(this)}
+              >
+                Save
+          </Button>
+            </Modal.Footer>
+          </Modal>
         </div>
       );
     }
