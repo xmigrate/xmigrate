@@ -8,7 +8,8 @@ import {
   Form,
   Row,
   Col,
-  Modal
+  Modal,
+  Alert
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
 import { GetServiceWithData } from "../../services/GetService";
@@ -48,7 +49,9 @@ export default class BluePrint extends Component {
       BuildStatus: false,
       ShowAlertReset: false,
       ShowAlertBuild: false,
-      ShowAlertSave: false
+      ShowAlertSave: false,
+      showUpdateAlert:false,
+      showUpdateMessage:""
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -260,6 +263,7 @@ export default class BluePrint extends Component {
 
   //Creating Build-------------------------------------------------------------------------
   async _createBuild() {
+    this.handleAlertCloseBuild();
     let data = {
       project: this.state.project,
     };
@@ -299,7 +303,8 @@ export default class BluePrint extends Component {
       });
       if (flag) {
         clearInterval(this.state.intervalId);
-        this.setState({ BuildStatus: false })
+
+        this.setState({ BuildStatus: false, showUpdateAlert:true,showUpdateMessage:"Build Successfull!!"})
       }
       this.setState({
         Networks: NetworksData,
@@ -309,6 +314,7 @@ export default class BluePrint extends Component {
 
   //Creating SaveNetwork-----------------------------------------------------------------
   async _SaveBuild() {
+    this.handleAlertCloseSave();
     console.log(
       "Here the data for host Current is saved",
       this.state.hostCurrents
@@ -329,11 +335,13 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
+      this.setState({ showUpdateAlert:true,showUpdateMessage:"Save Successfull!!"})
     });
   }
 
   //--------------Reset the Network Table
   async _Reset() {
+    this.handleAlertCloseReset();
     console.log("Reseting....");
     var NetworksData = this.state.Networks;
     NetworksData.map((Network, index) => {
@@ -347,6 +355,8 @@ export default class BluePrint extends Component {
     });
     //Getting all details if any
     this.GettingData();
+    this.setState({ showUpdateAlert:true,showUpdateMessage:"Reset Successfull!!"})
+
   }
 
   // Draging and Drop
@@ -461,6 +471,14 @@ export default class BluePrint extends Component {
     })
   }
 
+///Closing Alert
+  closeAlertUpdate(){
+    this.setState({
+      showUpdateAlert:false
+    })
+  }
+
+
   render() {
     const Networks = this.state.Networks;
     const isLoadingNetwork = Networks.length === 0;
@@ -475,6 +493,9 @@ export default class BluePrint extends Component {
         <div className="BluePrint media-body background-primary">
           <Container className="py-5 ">
             <h4 className="p-0 m-0">Blueprint</h4>
+            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
+        <p>{this.state.showUpdateMessage}</p>
+      </Alert>
             <Card className="mt-4 p-2">
               <Card.Header className="bg-white">Discovered Hosts</Card.Header>
               <Card.Body>
@@ -663,7 +684,7 @@ export default class BluePrint extends Component {
             onHide={this.handleAlertCloseBuild.bind(this)}
           >
             <Modal.Header closeButton>
-              <Modal.Title>Reset Project</Modal.Title>
+              <Modal.Title>Build Project</Modal.Title>
             </Modal.Header>
             <Modal.Body>Do you want to Build?</Modal.Body>
             <Modal.Footer>
@@ -687,7 +708,7 @@ export default class BluePrint extends Component {
             onHide={this.handleAlertCloseSave.bind(this)}
           >
             <Modal.Header closeButton>
-              <Modal.Title>Reset Project</Modal.Title>
+              <Modal.Title>Save Project</Modal.Title>
             </Modal.Header>
             <Modal.Body>Do you want to Save?</Modal.Body>
             <Modal.Footer>
