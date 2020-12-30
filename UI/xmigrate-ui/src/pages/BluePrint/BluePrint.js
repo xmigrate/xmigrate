@@ -335,7 +335,7 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      this.setState({ showUpdateAlert:true,showUpdateMessage:"Save Successfull!!"})
+      this.setState({ showUpdateAlert:true,showUpdateMessage:"Save Blueprint Successfull!!"})
     });
   }
 
@@ -493,9 +493,7 @@ export default class BluePrint extends Component {
         <div className="BluePrint media-body background-primary">
           <Container className="py-5 ">
             <h4 className="p-0 m-0">Blueprint</h4>
-            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
-        <p>{this.state.showUpdateMessage}</p>
-      </Alert>
+
             <Card className="mt-4 p-2">
               <Card.Header className="bg-white">Discovered Hosts</Card.Header>
               <Card.Body>
@@ -532,7 +530,9 @@ export default class BluePrint extends Component {
               </Card.Body>
             </Card>
 
-
+            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
+        <p>{this.state.showUpdateMessage}</p>
+      </Alert>
 
             {/* HereTable */}
 
@@ -708,7 +708,7 @@ export default class BluePrint extends Component {
             onHide={this.handleAlertCloseSave.bind(this)}
           >
             <Modal.Header closeButton>
-              <Modal.Title>Save Project</Modal.Title>
+              <Modal.Title>Save BluePrint</Modal.Title>
             </Modal.Header>
             <Modal.Body>Do you want to Save?</Modal.Body>
             <Modal.Footer>
