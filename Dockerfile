@@ -32,9 +32,6 @@ RUN python3.7 -m pip install -r requirements.txt
 
 COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 
-RUN apt update -y 
-RUN apt install -y git
-
 COPY . .
 RUN rm -rf UI
 ENV AZCOPY_BUFFER_GB=0.3
