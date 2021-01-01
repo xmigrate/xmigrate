@@ -10,12 +10,8 @@
     copy:
       src: "../payloads/start_dd_aws.py"
       dest: "/tmp/start.py"
-  - name: <== Setup the environment ==>
-    copy:
-      src: "../payloads/.env"
-      dest: "/tmp/.env"
   - name: <== Executing payload ==>
-    shell: "python /tmp/start.py"
+    shell: "python3 /tmp/start.py {{ bucket }} {{ access_key }} {{ secret_key }} '{{ mongodb }}' {{ project }}"
     register: st
     become: True
   - name: Message

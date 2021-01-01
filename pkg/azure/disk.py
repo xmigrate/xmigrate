@@ -3,6 +3,7 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.common.client_factory import get_client_from_cli_profile
 from utils.dbconn import *
 from utils.log_reader import *
+from utils.logger import *
 from model.project import *
 from model.disk import *
 from model.storage import *
@@ -25,8 +26,10 @@ async def start_downloading(project):
             try:
                 await cw.download_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
-                print("Conversion failed for "+osdisk_raw)
+                print("Download failed for "+osdisk_raw)
                 print(str(e))
+                logger("Download failed for "+osdisk_raw,"warning")
+                logger("Here is the error: "+str(e),"warning")
                 return False
         con.close()
         return True
@@ -43,6 +46,8 @@ async def start_conversion(project):
             except Exception as e:
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))
+                logger("Conversion failed for "+osdisk_raw,"warning")
+                logger("Here is the error: "+str(e),"warning")
                 return False
         con.close()
         return True
@@ -56,8 +61,10 @@ async def start_uploading(project):
             try:
                 await cw.upload_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
-                print("Conversion failed for "+osdisk_raw)
+                print("Upload failed for "+osdisk_raw)
                 print(str(e))
+                logger("Upload failed for "+osdisk_raw,"warning")
+                logger("Here is the error: "+str(e),"warning")
                 return False
         con.close()
         return True
@@ -73,9 +80,7 @@ async def start_cloning(project):
         mongodb = os.getenv('MONGO_DB')
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        command = "/usr/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ "\""
-        os.popen('echo '+ command + '> ./logs/ansible/migration_log.txt')
-        args = shlex.split(command)
+        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ " project="+project+"\""
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process.wait()
         machines = BluePrint.objects(project=project)
@@ -111,7 +116,9 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
                 'os_type': 'Linux',
                 'os_state': "Generalized",
                 'blob_uri': uri,
-                'caching': "ReadWrite"
+                'caching': "ReadWrite",
+                'storage_account_type': 'StandardSSD_LRS'
+                
             }
             },
             'hyper_vgeneration': 'V1'
@@ -122,28 +129,9 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
         BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
     except Exception as e:
         print("disk creation updation failed: "+repr(e))
+        logger("Disk creation updation failed: "+repr(e),"warning")
     finally:
         con.close()
-
-'''async def create_disk_worker(project,rg_name,uri,disk_name,location, file_size):
-    con = create_db_con()
-    com1 = f'az disk create -n {disk_name} -g {rg_name} -l {location} --for-upload --upload-size-bytes {file_size} --sku standardssd_lrs'
-    com2 = f'az disk grant-access -n {disk_name} -g {rg_name} --access-level Write --duration-in-seconds 86400'
-    print(com1)
-    os.popen(com1).read()
-    print(com2)
-    sas_uri = os.popen(com2).read()
-    sas_uri = json.loads(sas_uri)
-    sas_uri = sas_uri['accessSas']
-    com3 = f'azcopy copy "./osdisks/{disk_name}.vhd"  "{sas_uri}" --blob-type PageBlob --from-to LocalBlob'
-    print(com3)
-    os.popen(com3).read()
-    try:
-        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
-    except Exception as e:
-        print("disk creation updation failed "+str(e))
-    finally:
-        con.close()'''
 
 async def create_disk(project):
     con = create_db_con()
@@ -152,11 +140,9 @@ async def create_disk(project):
     disks = Disk.objects(project=project)
     storage_account = Storage.objects(project=project)[0]['storage']
     container = Storage.objects(project=project)[0]['container']
-    print(disks)
     for disk in disks:
         vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
-        print(disk)
         await create_disk_worker(project,rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'])
     return True
         

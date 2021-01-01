@@ -7,7 +7,7 @@ from pkg.azure import sas
 from asyncio.subprocess import PIPE, STDOUT 
 import asyncio
 from pathlib import Path
-
+from utils.logger import *
 
 async def download_worker(osdisk_raw,project,host):
     con = create_db_con()
@@ -30,6 +30,7 @@ async def download_worker(osdisk_raw,project,host):
             BluePrint.objects(project=project,host=host).update(status='32')
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
     finally:
         con.close()
 
@@ -56,9 +57,10 @@ async def upload_worker(osdisk_raw,project,host):
         await process3.wait()
         os.popen('echo "VHD uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
-        Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=file_size, upsert=True)
+        Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=str(file_size), upsert=True)
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
         os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
     finally:
         con.close()
@@ -79,13 +81,14 @@ async def conversion_worker(osdisk_raw,project,host):
         print("Start converting")
         print(path)
         os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
-        command2 = "qemu-img convert -f raw -o subformat=fixed,force_size -O vpc "+path+" "+vhd_path
+        command2 = "qemu-img convert -f raw -o subformat=fixed -O vpc "+path+" "+vhd_path
         process2 = await asyncio.create_subprocess_shell(command2, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process2.wait()
         BluePrint.objects(project=project,host=host).update(status='34')
         os.popen('echo "Conversion completed" >> ./logs/ansible/migration_log.txt')
     except Exception as e:
         print(str(e))
+        logger(str(e),"warning")
         file_size = '0'
     finally:
         con.close() 

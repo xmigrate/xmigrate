@@ -1,21 +1,36 @@
 import os
 from mongoengine import *
 import socket
-from dotenv import load_dotenv
-from os import getenv
 import sys
 
-load_dotenv()
 
 db_con_string = sys.argv[4]
 con = connect(host=db_con_string)
 storage_accnt = sys.argv[1]
 access_key = sys.argv[2]
 container = sys.argv[3]
+project = sys.argv[5]
 
-print(db_con_string)
 
 hostname = socket.gethostname()
+
+class Discover(Document):
+    host = StringField(required=True, max_length=200 )
+    ip = StringField(required=True)
+    subnet = StringField(required=True, max_length=50)
+    network = StringField(required=True, max_length=50)
+    ports = ListField()
+    cores = StringField(max_length=2)
+    cpu_model = StringField(required=True, max_length=150)
+    ram = StringField(required=True, max_length=50)
+    disk = StringField(required=True, max_length=50)
+    project = StringField(required=True, max_length=50)
+    meta = {
+        'indexes': [
+            {'fields': ('host', 'project'), 'unique': True}
+        ]
+    }
+
 
 class BluePrint(Document):
     host = StringField(required=True, max_length=200)
@@ -43,8 +58,9 @@ class BluePrint(Document):
         ]
     }
     
-BluePrint.objects(host=hostname).update(status='10')
-os.system('sudo dd if=/dev/xvda bs=1M status=progress | azbak - /'+container+'/'+hostname+'.raw --storage-account '+storage_accnt+' --access-key '+access_key)
+osdisk = Discover.objects(host=hostname,project=project)[0]['disk']
+BluePrint.objects(host=hostname,project=project).update(status='10')
+os.system('sudo dd if='+osdisk+' bs=1M status=progress | azbak - /'+container+'/'+hostname+'.raw --storage-account '+storage_accnt+' --access-key '+access_key)
 
-BluePrint.objects(host=hostname).update(status='25')
+BluePrint.objects(host=hostname, project=project).update(status='25')
 con.close()

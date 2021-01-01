@@ -1,5 +1,3 @@
-from dotenv import load_dotenv
-from os import getenv
 from ansible.playbook import Playbook
 import ast
 import json
@@ -14,19 +12,17 @@ from quart_jwt_extended import JWTManager
 
 sys.path.append('./')
 
-load_dotenv()
-
-
 app = Quart(__name__)
 
 app = cors(app, allow_origin="*")
 
 app.config['JWT_SECRET_KEY'] = 'try2h@ckT415'  # Change this!
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 3600
 jwt = JWTManager(app)
 
 
-app.secret_key = getenv("SECRET")
-bucket_name = getenv("BUCKET")
+#app.secret_key = getenv("SECRET")
+
 
 from routes.stream import *
 from routes.status import *

@@ -11,28 +11,33 @@
       dest: /tmp/get-pip.py
       mode: 0750
   - block:
-    - name: Install Python-devl
+    - name: Install Python3
       yum:
-        name: python-devel
+        name: python3
         state: latest
         update_cache: yes
       become: true
+      become_method: sudo
     - name: Install GCC
       yum:
         name: gcc
+        state: latest
+    - name: Install python36-devel
+      yum:
+        name: python36-devel
         state: latest
     rescue:
     - name: Update yum.. older way
       shell: "sudo yum update -y"
     - name: Install Python-devel.. older way
-      shell: "sudo yum install python-devel -y"
+      shell: "sudo yum install python3 python36-devel -y"
     - name: Install GCC .. older way
       shell: "sudo yum install gcc -y"
     tags:
         - devel
 
-  - name: Install pip
-    shell: "sudo python /tmp/get-pip.py"
+          #  - name: Install pip
+          #    shell: "sudo python /tmp/get-pip.py"
   
   - block:
     - name: Install Python packages
@@ -44,15 +49,19 @@
         - netaddr
         - mongoengine
         - psutil
+        - python-dotenv
+        - dnspython
     rescue:
     - name: Install python packages
-      shell: "sudo pip install {{ item }}"
+      shell: "sudo pip3 install {{ item }}"
       with_items:
         - awscli
         - netifaces
         - netaddr
         - mongoengine
         - psutil
+        - python-dotenv
+        - dnspython
 
   - name: Create .aws directory
     file:
@@ -78,7 +87,7 @@
       - deploy
 
   - name: <==Executing payload==>
-    shell: "python /tmp/footprint.py"
+    shell: "python3 /tmp/footprint.py {{ project }} '{{ mongodb }}'"
     register: st
     become: True
     tags:
@@ -89,8 +98,3 @@
       var: st
     tags:
       - msg
-
-
-
-
-

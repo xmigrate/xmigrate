@@ -1,6 +1,6 @@
 from utils.dbconn import *
 from model.project import *
-
+import os
 
 def get_project(name, user):
     con = create_db_con()
@@ -26,10 +26,18 @@ async def create_project(data, user):
         tenant_id = data['tenant_id']
         post = Project(name=name, provider=provider, users=users, location=location, resource_group=resource_group, subscription_id=subscription_id, client_id=client_id, secret=secret, tenant_id=tenant_id)
     elif provider == 'aws':
+        if not os.path.exists('/root/.aws'):
+            os.mkdir('/root/.aws')
         name = data['name']
         access_key = data['access_key']
         secret_key = data['secret_key']
         location = data['location']
+        credentials_str = '['+name+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
+        with open('/root/.aws/credentials', 'w+') as writer:
+            writer.write(credentials_str)
+        config_str = '[profile '+name+']\nregion = '+location+'\noutput = json'
+        with open('/root/.aws/config', 'w+') as writer:
+            writer.write(config_str)
         post = Project(name=name, provider=provider, users=users, location=location, access_key=access_key, secret_key=secret_key)
     try:
         post.save()

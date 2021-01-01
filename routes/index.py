@@ -1,8 +1,4 @@
 from __main__ import app
-import pexpect
-from utils.dbconn import *
-from model.discover import *
-import ast
 from quart import render_template,jsonify, flash, request
 from quart_jwt_extended import jwt_required, get_jwt_identity
 

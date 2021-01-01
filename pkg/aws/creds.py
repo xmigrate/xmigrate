@@ -1,6 +1,6 @@
-import pexpect
 from model.project import *
 from utils.dbconn import *
+import os
 
 def set_aws_creds(project):
     try:
@@ -8,16 +8,15 @@ def set_aws_creds(project):
         access_key = Project.objects(name=project)[0]['access_key']
         secret_key = Project.objects(name=project)[0]['secret_key']
         location = Project.objects(name=project)[0]['location']
-        child = pexpect.spawn('aws configure --profile '+project)
-        child.expect ('AWS Access Key ID *')
-        child.sendline (access_key)
-        child.expect ('AWS Secret Access Key*')
-        child.sendline (secret_key)
-        child.expect ('Default region name*')
-        child.sendline (location)
-        child.expect ('Default output format*')
-        child.sendline ('json\n')
+        credentials_str = '['+project+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
+        if not os.path.exists('/root/.aws'):
+            os.mkdir('/root/.aws')
+        with open('/root/.aws/credentials', 'w+') as writer:
+            writer.write(credentials_str)
+        config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
+        with open('/root/.aws/config', 'w+') as writer:
+            writer.write(config_str)
         return True
-    except Expection as e:
+    except Exception as e:
         print(repr(e))
         return False

@@ -72,7 +72,7 @@ render(){
                   ) : (
                     this.props.Subnet.hosts.map((host, index) => (
                       <Row className=" py-3 " key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
-                      <Col xs={{ span: 1 }}></Col>
+                      <Col ></Col>
                        <Col xs={{ span: 2 }}>{host.host}</Col>
                       <Col xs={{ span: 2 }}>{host.ip}</Col> 
                       <Col xs={{ span: 2 }}>
@@ -95,9 +95,9 @@ render(){
                           </Form.Group>
                         </Form> 
                       </Col>
-                      <Col xs={{ span: 2 }}>
+                      <Col xs={{ span: 2 }}>{host.image_id}
                       </Col> 
-                       <Col xs={{ span: 2 }}>{host.ip}</Col> 
+                       <Col xs={{ span: 2 }}>{host.host}</Col> 
                      <Col xs={{ span: 1 }}>{host.status}</Col>
                     </Row>
                     ))

@@ -155,14 +155,14 @@ export default class SignIn extends Component {
                  
                    <Form className="FormStyle" onSubmit={this.handleSubmit}>
                     <Form.Group className="register bg-blue">
-                      <Form.Label >User Id</Form.Label>
+                      <Form.Label >User Name</Form.Label>
                       <Form.Control
                         type="text"
                         value={this.state.input.UserId}
                         onChange={this.handleChange}
                         id="exampleInputEmail1"
                         aria-describedby="emailHelp"
-                        placeholder="Enter email"
+                        placeholder="User Name"
                         name="UserId"
                       />
                     </Form.Group>

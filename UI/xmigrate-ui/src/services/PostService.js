@@ -15,7 +15,7 @@ export default function PostService(API, data) {
         }
         else if(error.response.status === 404){
             window.location.replace("/404");
-        } else if(error.response.status === 500){
+     } else if(error.response.status === 500){
             window.location.replace("/500");
         }
         else if(error.response.status === 400 ){

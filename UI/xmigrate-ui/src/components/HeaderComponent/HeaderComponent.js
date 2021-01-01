@@ -49,8 +49,9 @@ export default class HeaderComponent extends Component {
                             </div>
                         </li>
                         <li className="nav-item pl-2">
-                            <Link className="nav-link btngrid px-2 py-1 text-white " to="/project">
-                                <icon.FaRegPlusSquare />
+                            {/* <Link className="nav-link btngrid px-2 py-1 text-white " to="/project"> */}
+                            <Link className="nav-link px-2 py-1" to="/project">
+                                <icon.BsPlusCircleFill className="btngrid" size={20}/>
                             </Link>
                         </li>
                     </ul>

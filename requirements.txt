@@ -8,7 +8,6 @@ flask
 ansible
 pygtail
 boto3
-pexpect
 python-dotenv
 azure-common==1.1.25
 azure-core==1.7.0
@@ -23,7 +22,8 @@ azure-storage-common==1.4.2
 azure-storage-blob==12.5.0
 azure-cli-core
 flask_cors
-keyrings.alt 
+keyrings.alt
+PyJWT==v1.7.1
 Quart-CORS
 quart_jwt_extended
 dnspython

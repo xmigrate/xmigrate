@@ -1,2 +1,2 @@
 nginx;
-python3 app.py;
+python3.7 app.py;

@@ -53,6 +53,7 @@ export default class Project extends Component {
           provider: this.state.input["provider"],
           secret_key: this.state.input["secret_key"],
           access_key: this.state.input["access_key"],
+          location: this.state.input["location"]
         };
       } else if (this.state.input["provider"] === "azure") {
         var data = {
@@ -94,12 +95,25 @@ export default class Project extends Component {
           });
         });
       } else if (this.state.status === "Storage") {
-        var data = {
-          project: this.state.input["name"],
-          storage: this.state.input["storage"],
-          container: this.state.input["container"],
-          access_key: this.state.input["access_key"],
-        };
+        if (this.state.input["provider"] === "aws") {
+          var data = {
+            //Here Make Changes
+            project: this.state.input["name"],
+            provider: this.state.input["provider"],
+            bucket:this.state.input["bucket"],
+            secret_key: this.state.input["secret_key"],
+            access_key: this.state.input["access_key"],
+          };
+        } else if (this.state.input["provider"] === "azure") {
+          var data = {
+            provider: this.state.input["provider"],
+            project: this.state.input["name"],
+            storage: this.state.input["storage"],
+            container: this.state.input["container"],
+            access_key: this.state.input["access_key"],
+          };
+        }
+   
         console.log("data posted",data);
         this.setState({
           loader: true,
@@ -160,7 +174,7 @@ export default class Project extends Component {
                         id="exampleInputEmail1"
                         onChange={this.handleChange}
                         aria-describedby="emailHelp"
-                        placeholder="Add Name"
+                        placeholder="Project Name"
                         name="name"
                       />
                     </Form.Group>
@@ -218,11 +232,11 @@ export default class Project extends Component {
                             : "none",
                       }}
                     >
-                      <Form.Label>Subscription</Form.Label>
+                      <Form.Label>Subscription Id</Form.Label>
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="Subscription id"
+                        placeholder="Subscription Id"
                         name="subscription_id"
                       />
                     </Form.Group>
@@ -239,7 +253,7 @@ export default class Project extends Component {
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="Client id"
+                        placeholder="Client Id"
                         name="client_id"
                       />
                     </Form.Group>
@@ -257,7 +271,7 @@ export default class Project extends Component {
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="secret_key"
+                        placeholder="Secret Key"
                         name="secret"
                       />
                     </Form.Group>
@@ -370,7 +384,30 @@ export default class Project extends Component {
                         this.state.status === "Storage" && this.state.loader !== true ? " block" : "none",
                     }}
                   >
-                    <Form.Group className="register bg-blue">
+                        <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "aws"
+                            ? "block"
+                            : "none",
+                      }}
+                    >
+                      <Form.Label>S3 Bucket</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="S3 Bucket Name"
+                        name="bucket"
+                      />
+                    </Form.Group>
+                    <Form.Group className="register bg-blue"
+                     style={{
+                      display:
+                        this.state.input.provider === "azure"
+                          ? "block"
+                          : "none",
+                    }}>
                       <Form.Label>Storage</Form.Label>
                       <Form.Control
                         type="text"
@@ -379,7 +416,12 @@ export default class Project extends Component {
                         name="storage"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue">
+                    <Form.Group className="register bg-blue"  style={{
+                      display:
+                        this.state.input.provider === "azure"
+                          ? " block"
+                          : "none",
+                    }}>
                       <Form.Label>Container</Form.Label>
                       <Form.Control
                         type="text"
@@ -388,7 +430,12 @@ export default class Project extends Component {
                         name="container"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue">
+                    <Form.Group className="register bg-blue"  style={{
+                      display:
+                        this.state.input.provider === "azure"
+                          ? " block"
+                          : "none",
+                    }}>
                       <Form.Label>Access Key</Form.Label>
                       <Form.Control
                         type="text"

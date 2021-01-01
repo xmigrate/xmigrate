@@ -3,6 +3,7 @@
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.resource import ResourceManagementClient
 from utils.dbconn import *
+from utils.logger import *
 from model.project import Project
 import string, random
 from azure.common.credentials import ServicePrincipalCredentials
@@ -16,6 +17,7 @@ async def create_rg(project):
                 return True
     except Exception as e:
         print("Reaching Project document failed: "+repr(e))
+        logger("Reaching Project document failed: "+repr(e),"warning")
     else:
         rg_location = Project.objects(name=project)[0]['location']
         rg_name = Project.objects(name=project)[0]['resource_group']
@@ -36,4 +38,5 @@ async def create_rg(project):
             return True
         except Exception as e:
             print("Resource group creation failed "+str(e))
+            logger("Resource group creation failed: "+repr(e),"warning")
             return False

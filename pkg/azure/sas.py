@@ -6,7 +6,7 @@ def generate_sas_token(storage_account,access_key):
             storage_account,
             account_key=access_key,
             resource_types=ResourceTypes(object=True),
-            permission=AccountSasPermissions(read=True),
+            permission=AccountSasPermissions(read=True, write=True),
             expiry=datetime.utcnow() + timedelta(hours=2)
         )
     return sas_token

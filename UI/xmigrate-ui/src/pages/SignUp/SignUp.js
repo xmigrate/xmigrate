@@ -119,7 +119,7 @@ export default class SignUp extends Component {
                  
                    <Form className="FormStyle" onSubmit={this.handleSubmit}>
                     <Form.Group className="register bg-blue">
-                      <Form.Label >User Id</Form.Label>
+                      <Form.Label >User Name</Form.Label>
                       <Form.Control
                         type="text"
                         name="name"
@@ -127,7 +127,7 @@ export default class SignUp extends Component {
                         onChange={this.handleChange}
                         id="name"
                         aria-describedby="nameHelp"
-                        placeholder="Enter Userid"
+                        placeholder="Enter UserName"
                       />
                     </Form.Group>
                     <div className="text-danger">{this.state.errors.name}</div>
@@ -155,7 +155,7 @@ export default class SignUp extends Component {
                         value={this.state.input.confirm_password}
                         onChange={this.handleChange}
                         id="exampleInputPassword1"
-                        placeholder="Re Enter Password"
+                        placeholder="Password"
                       />
                     </Form.Group>
                     <div className="text-danger">{this.state.errors.confirm_password}</div>
