@@ -2,7 +2,6 @@
   become: true
   become_method: sudo
   hosts: nodes
-  gather_facts: no
   force_handlers: True
   tasks:
     - name: Backup sources list

@@ -41,6 +41,6 @@ async def discover():
         os.popen('ansible-playbook ./ansible/aws/env_setup.yaml -e "mongodb='+mongodb+' project='+project+'"> ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     elif provider == "azure":
-        os.popen('ansible-playbook ./ansible/azure/azure_env_setup_ubuntu.yaml -e "mongodb='+mongodb+' project='+project+'" > ./logs/ansible/log.txt')
+        os.popen('ansible-playbook ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" > ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     return jsonify({'status': '500'})
