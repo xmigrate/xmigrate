@@ -257,7 +257,23 @@ export default class Project extends Component {
                         name="client_id"
                       />
                     </Form.Group>
-
+                    <Form.Group
+                      className="register bg-blue"
+                      style={{
+                        display:
+                          this.state.input.provider === "aws"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
+                      <Form.Label>Access Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Access key"
+                        name="access_key"
+                      />
+                    </Form.Group>
                     <Form.Group
                       className="register bg-blue"
                       style={{
@@ -292,23 +308,7 @@ export default class Project extends Component {
                         name="secret_key"
                       />
                     </Form.Group>
-                    <Form.Group
-                      className="register bg-blue"
-                      style={{
-                        display:
-                          this.state.input.provider === "aws"
-                            ? " block"
-                            : "none",
-                      }}
-                    >
-                      <Form.Label>Access Key</Form.Label>
-                      <Form.Control
-                        type="text"
-                        onChange={this.handleChange}
-                        placeholder="Access key"
-                        name="access_key"
-                      />
-                    </Form.Group>
+            
                     <Form.Group
                       className="register bg-blue"
                       style={{
