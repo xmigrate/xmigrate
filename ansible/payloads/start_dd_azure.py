@@ -4,12 +4,11 @@ import socket
 import sys
 
 
-db_con_string = sys.argv[4]
+db_con_string = sys.argv[3]
 con = connect(host=db_con_string)
-storage_accnt = sys.argv[1]
-access_key = sys.argv[2]
-container = sys.argv[3]
-project = sys.argv[5]
+url = sys.argv[1]
+sas = sys.argv[2]
+project = sys.argv[4]
 
 
 hostname = socket.gethostname()
@@ -60,7 +59,7 @@ class BluePrint(Document):
     
 osdisk = Discover.objects(host=hostname,project=project)[0]['disk']
 BluePrint.objects(host=hostname,project=project).update(status='10')
-os.system('sudo dd if='+osdisk+' bs=1M status=progress | azcopy copy - '+url+hostname+'.raw?'+sas)
+os.system('sudo dd if='+osdisk+' bs=1M status=progress | azcopy copy "'+url+hostname+'.raw?'+sas+'" --from-to PipeBlob')
 
 BluePrint.objects(host=hostname, project=project).update(status='25')
 con.close()
