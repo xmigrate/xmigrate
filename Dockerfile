@@ -26,6 +26,8 @@ RUN mkdir -p ./logs/ansible/ && mkdir osdisks && touch ./logs/ansible/log.txt &&
 
 COPY requirements.txt requirements.txt
 
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
 RUN python3.7 -m pip install -U pip
 
 RUN python3.7 -m pip install setuptools-rust
