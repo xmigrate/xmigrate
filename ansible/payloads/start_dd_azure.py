@@ -60,7 +60,7 @@ class BluePrint(Document):
     
 osdisk = Discover.objects(host=hostname,project=project)[0]['disk']
 BluePrint.objects(host=hostname,project=project).update(status='10')
-os.system('sudo dd if='+osdisk+' bs=1M status=progress | azbak - /'+container+'/'+hostname+'.raw --storage-account '+storage_accnt+' --access-key '+access_key)
+os.system('sudo dd if='+osdisk+' bs=1M status=progress | azcopy copy - '+url+hostname+'.raw?'+sas)
 
 BluePrint.objects(host=hostname, project=project).update(status='25')
 con.close()

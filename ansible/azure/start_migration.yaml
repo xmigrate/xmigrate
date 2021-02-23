@@ -11,7 +11,7 @@
       src: "../payloads/start_dd_azure.py"
       dest: "/tmp/start.py"
   - name: <== Executing payload ==>
-    shell: "python /tmp/start.py {{ storage }} {{ accesskey }} {{ container }} '{{ mongodb }}' {{ project }}"
+    shell: "python /tmp/start.py {{ url }} {{ sas }} '{{ mongodb }}' {{ project }}"
     register: st
     become: True
   - name: Message
