@@ -16,6 +16,7 @@ from azure.common.credentials import ServicePrincipalCredentials
 from dotenv import load_dotenv
 from os import getenv
 import shlex, subprocess
+from pkg.azure import sas
 
 async def start_downloading(project):
     con = create_db_con()
@@ -76,7 +77,7 @@ async def start_cloning(project):
         storage = Storage.objects(project=project)[0]['storage']
         accesskey = Storage.objects(project=project)[0]['access_key']
         container = Storage.objects(project=project)[0]['container']
-        sas_token = sas.generate_sas_token(storage,access_key)
+        sas_token = sas.generate_sas_token(storage,accesskey)
         url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
         load_dotenv()
         mongodb = os.getenv('MONGO_DB')
