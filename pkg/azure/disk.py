@@ -76,11 +76,13 @@ async def start_cloning(project):
         storage = Storage.objects(project=project)[0]['storage']
         accesskey = Storage.objects(project=project)[0]['access_key']
         container = Storage.objects(project=project)[0]['container']
+        sas_token = sas.generate_sas_token(storage,access_key)
+        url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
         load_dotenv()
         mongodb = os.getenv('MONGO_DB')
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ " project="+project+"\""
+        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas="+sas_token+" mongodb="+mongodb+ " project="+project+"\""
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process.wait()
         machines = BluePrint.objects(project=project)

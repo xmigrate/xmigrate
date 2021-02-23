@@ -40,13 +40,19 @@
         shell: "apt update -y"
         become: true
       - name: Failback installation "Installing azure tools and python"
-        shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure -y"
+        shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure unzip -y"
         become: true
         
     - name: Install azbak 
       shell: "sudo npm install --global azbak"
       become_user: root
       become_method: sudo
+    
+    - name: Install azcopy
+      unarchive:
+        src: https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz
+        dest: /usr/local/bin
+        remote_src: True
 
     - name: Update grub entry
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"
