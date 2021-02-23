@@ -32,7 +32,7 @@ RUN python3.7 -m pip install -U pip
 
 RUN python3.7 -m pip install setuptools-rust
 
-RUN python3.7 -m easy_install --upgrade pyOpenSSL
+RUN python3.7 -m pip install --no-use-pep517 --upgrade pyOpenSSL
 
 RUN python3.7 -m pip install -r requirements.txt 
 
