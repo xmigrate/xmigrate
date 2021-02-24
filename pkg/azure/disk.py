@@ -23,7 +23,7 @@ async def start_downloading(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await cw.download_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
@@ -41,7 +41,7 @@ async def start_conversion(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await cw.conversion_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
@@ -58,7 +58,7 @@ async def start_uploading(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await cw.upload_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
@@ -156,7 +156,7 @@ async def adhoc_image_conversion(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await asyncio.create_task(cw.conversion_worker(osdisk_raw,project,machine['host']))  
             except Exception as e:
