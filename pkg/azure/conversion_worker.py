@@ -44,7 +44,7 @@ async def upload_worker(osdisk_raw,project,host):
     pipe_result = ''
     file_size = '0'
     try:
-        osdisk_vhd = osdisk_raw.replace(".raw.000",".vhd")
+        osdisk_vhd = osdisk_raw.replace(".raw",".vhd")
         cur_path = os.getcwd()
         path = cur_path+"/osdisks/"+osdisk_raw
         vhd_path = cur_path+"/osdisks/"+osdisk_vhd
@@ -74,7 +74,7 @@ async def conversion_worker(osdisk_raw,project,host):
     sas_token = sas.generate_sas_token(account_name,access_key)
     pipe_result = ''
     try:
-        osdisk_vhd = osdisk_raw.replace(".raw.000",".vhd")
+        osdisk_vhd = osdisk_raw.replace(".raw",".vhd")
         cur_path = os.getcwd()
         path = cur_path+"/osdisks/"+osdisk_raw
         vhd_path = cur_path+"/osdisks/"+osdisk_vhd
