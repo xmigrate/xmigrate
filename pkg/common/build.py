@@ -41,6 +41,35 @@ async def start_infra_build(project):
     else:
         print("Resource group creation failed")
 
+async def call_start_clone(project,hostname):
+    await asyncio.create_task(start_cloning(project,hostname))
+
+async def start_cloning(project,hostname):
+    con = create_db_con()
+    p = Project.objects(name=project)
+    if len(p) > 0:
+        if p[0]['provider'] == "azure":
+            logger("Cloning started","info")
+            print("****************Cloning awaiting*****************")
+            cloning_completed = await disk.start_cloning(project,hostname)
+            if cloning_completed:
+                print("****************Cloning completed*****************")
+                logger("Disk cloning completed","info")
+            else:
+                print("Disk cloning failed")
+                logger("Disk cloning failed","error")
+        elif p[0]['provider'] == "aws":
+            logger("Cloning started","info")
+            print("****************Cloning awaiting*****************")
+            cloning_completed = await awsdisk.start_cloning(project,hostname)
+            if cloning_completed:
+                print("****************Cloning completed*****************")
+                logger("Cloning completed","info")
+            else:
+                print("Disk cloning failed")
+                logger("Disk cloning failed","error")
+
+
 async def start_build(project):
     con = create_db_con()
     p = Project.objects(name=project)

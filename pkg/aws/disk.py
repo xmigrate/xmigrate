@@ -2,6 +2,7 @@ from utils.dbconn import *
 import os
 from model.blueprint import *
 from model.storage import *
+from model.discover import *
 import asyncio
 from asyncio.subprocess import PIPE, STDOUT 
 
@@ -10,11 +11,12 @@ async def start_cloning(project):
     bucket = Bucket.objects(project=project)[0]['bucket']
     accesskey = Bucket.objects(project=project)[0]['access_key']
     secret_key = Bucket.objects(project=project)[0]['secret_key']
+    public_ip = Discover.objects(name=project,host=hostname)[0]['public_ip']
     load_dotenv()
     mongodb = os.getenv('MONGO_DB')
     current_dir = os.getcwd()
     print("/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/aws/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\"")
-    command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/aws/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\""
+    command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/aws/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\" --limit "+public_ip
     process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
     await process.wait()
     machines = BluePrint.objects(project=project)
