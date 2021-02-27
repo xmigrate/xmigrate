@@ -79,6 +79,36 @@ async def start_cloning(project,hostname):
                     print("Disk cloning failed")
                     logger("Disk cloning failed","error")
 
+async def call_start_convert(project,hostname):
+    await asyncio.create_task(start_convert(project,hostname))
+
+async def start_convert(project,hostname):
+    con = create_db_con()
+    p = Project.objects(name=project)
+    if len(p) > 0:
+        if p[0]['provider'] == "azure":
+            logger("Conversion started","info")
+            print("****************Conversion awaiting*****************")
+            converted =  await disk.start_conversion(project,hostname)
+            if converted:
+                print("****************Conversion completed*****************")
+                logger("Disk Conversion completed","info")
+            else:
+                print("Disk Conversion failed")
+                logger("Disk Conversion failed","error")
+        elif p[0]['provider'] == "aws":
+            logger("Conversion started","info")
+            print("****************Conversion awaiting*****************")
+            logger("AMI creation started","info")
+            ami_created = await ami.start_ami_creation(project,hostname)
+            if converted:
+                print("****************Conversion completed*****************")
+                logger("Conversion completed","info")
+                logger("AMI creation completed:"+str(ami_created),"info")
+            else:
+                print("Disk Conversion failed")
+                logger("Disk Conversion failed","error")
+
 
 async def start_build(project):
     con = create_db_con()

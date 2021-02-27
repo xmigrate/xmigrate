@@ -172,7 +172,8 @@ async def image_convert():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
-        asyncio.create_task(disk.adhoc_image_conversion(project))
+        hostname = project['hostname']
+        asyncio.create_task(build.call_start_convert(project,hostname))
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})
