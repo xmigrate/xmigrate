@@ -106,7 +106,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
                                                                 }
                                                                 )
 
-    nic_renisult = poller.result()
+    nic_result = poller.result()
     print("Provisioned network interface client {nic_result.name}")
     try:
         con = create_db_con()
