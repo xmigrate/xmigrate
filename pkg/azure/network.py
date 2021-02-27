@@ -106,11 +106,11 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
                                                                 }
                                                                 )
 
-    nic_result = poller.result()
+    nic_renisult = poller.result()
     print("Provisioned network interface client {nic_result.name}")
     try:
         con = create_db_con()
-        BluePrint.objects(project=project,host=host).update(status='60', nic_id=nic_result.id)
+        BluePrint.objects(project=project,host=host).update(status='60', nic_id=nic_result.id, ip=ip_address_result.ip_address)
     except Exception as e:
         print("Nework interface creation failed:"+repr(e))
     finally:
