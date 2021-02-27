@@ -2,9 +2,11 @@ import os
 from model.blueprint import *
 from model.project import *
 from model.disk import *
+from model.discover import *
 from utils.log_reader import *
 from utils.dbconn import *
 from utils.logger import *
+from pkg.common import nodes as n
 import time
 
 from pkg.azure import network
@@ -48,26 +50,34 @@ async def start_cloning(project,hostname):
     con = create_db_con()
     p = Project.objects(name=project)
     if len(p) > 0:
-        if p[0]['provider'] == "azure":
-            logger("Cloning started","info")
-            print("****************Cloning awaiting*****************")
-            cloning_completed = await disk.start_cloning(project,hostname)
-            if cloning_completed:
-                print("****************Cloning completed*****************")
-                logger("Disk cloning completed","info")
-            else:
-                print("Disk cloning failed")
-                logger("Disk cloning failed","error")
-        elif p[0]['provider'] == "aws":
-            logger("Cloning started","info")
-            print("****************Cloning awaiting*****************")
-            cloning_completed = await awsdisk.start_cloning(project,hostname)
-            if cloning_completed:
-                print("****************Cloning completed*****************")
-                logger("Cloning completed","info")
-            else:
-                print("Disk cloning failed")
-                logger("Disk cloning failed","error")
+        nodes = []
+        for host in Discover.objects(project=project):
+            nodes.append(host['public_ip'])
+        username = Discover.objects(project=project)[0]['username']
+        password = Discover.objects(project=project)[0]['password']
+        if n.add_nodes(nodes,username,password, project) == False:
+            logger("Cloning couldn't start because inventory not created","error")
+        else:
+            if p[0]['provider'] == "azure":
+                logger("Cloning started","info")
+                print("****************Cloning awaiting*****************")
+                cloning_completed = await disk.start_cloning(project,hostname)
+                if cloning_completed:
+                    print("****************Cloning completed*****************")
+                    logger("Disk cloning completed","info")
+                else:
+                    print("Disk cloning failed")
+                    logger("Disk cloning failed","error")
+            elif p[0]['provider'] == "aws":
+                logger("Cloning started","info")
+                print("****************Cloning awaiting*****************")
+                cloning_completed = await awsdisk.start_cloning(project,hostname)
+                if cloning_completed:
+                    print("****************Cloning completed*****************")
+                    logger("Cloning completed","info")
+                else:
+                    print("Disk cloning failed")
+                    logger("Disk cloning failed","error")
 
 
 async def start_build(project):

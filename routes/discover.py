@@ -13,7 +13,7 @@ from os import getenv
 @jwt_required
 async def discover():
     con = create_db_con()
-    con.close()
+    current_dir = os.getcwd()
     if request.method == 'POST':
         data = await request.get_json()
         provider = data['provider']
@@ -23,7 +23,7 @@ async def discover():
         project = data["project"]
         load_dotenv()
         mongodb = os.getenv('MONGO_DB')
-        if n.add_nodes(nodes,username,password) == False:
+        if n.add_nodes(nodes,username,password, project) == False:
             return jsonify({'status': '500'})
     if provider == "aws":
         proj_details = Project.objects(name=project)[0]
@@ -38,9 +38,10 @@ async def discover():
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open('/root/.aws/config', 'w+') as writer:
             writer.write(config_str)
-        os.popen('ansible-playbook ./ansible/aws/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'"> ./logs/ansible/log.txt')
+        
+        os.popen('ansible-playbook -i '+current_dir+'/ansible/+'project+'/hosts ./ansible/aws/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     elif provider == "azure":
-        os.popen('ansible-playbook ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" > ./logs/ansible/log.txt')
+        os.popen('ansible-playbook -i '+current_dir+'/ansible/+'project+'/hosts ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     return jsonify({'status': '500'})

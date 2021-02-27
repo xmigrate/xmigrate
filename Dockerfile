@@ -41,6 +41,7 @@ COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 COPY . .
 RUN rm -rf UI
 ENV AZCOPY_BUFFER_GB=0.3
+RUN export ANSIBLE_HOST_KEY_CHECKING=False
 EXPOSE 80
 ENTRYPOINT ["/bin/sh", "./scripts/start.sh"]
 

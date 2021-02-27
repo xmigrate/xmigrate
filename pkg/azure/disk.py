@@ -76,6 +76,7 @@ async def start_cloning(project, hostname):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         public_ip = Discover.objects(name=project,host=hostname)[0]['public_ip']
+        user = Discover.objects(name=project,host=hostname)[0]['user']
         storage = Storage.objects(project=project)[0]['storage']
         accesskey = Storage.objects(project=project)[0]['access_key']
         container = Storage.objects(project=project)[0]['container']
@@ -85,7 +86,7 @@ async def start_cloning(project, hostname):
         mongodb = os.getenv('MONGO_DB')
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas="+sas_token+" mongodb="+mongodb+ " project="+project+"\" --limit "+public_ip
+        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/+"project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas="+sas_token+" mongodb="+mongodb+ " project="+project+"\" --limit "+public_ip+" --user "+user+" --become-user "+user+" --become-method sudo"
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process.wait()
         machines = BluePrint.objects(project=project)
