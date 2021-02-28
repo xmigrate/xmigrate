@@ -4,63 +4,75 @@ from model.project import *
 import boto3
 from utils.dbconn import *
 import asyncio
+from model.network import *
 
 def build_vpc(cidr,public_route, project):
   con = create_db_con()
-  access_key = Project.objects(name=project)[0]['access_key']
-  secret_key = Project.objects(name=project)[0]['secret_key']
-  location = Project.objects(name=project)[0]['location']
-  con.close()
-  session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
-  ec2 = session.resource('ec2')
-  vpc = ec2.create_vpc(CidrBlock=cidr)
-  #vpc.create_tags(Tags=[{"Key": "Name", "Value": "default_vpc"}])
-  vpc.wait_until_available()
-  try:
-    con = create_db_con()
-    BluePrint.objects(network=cidr, project=project).update(vpc_id = vpc.id, status='43')
-    if public_route:
-      ig = ec2.create_internet_gateway()
-      vpc.attach_internet_gateway(InternetGatewayId=ig.id)
-      BluePrint.objects(network=cidr, project=project).update(ig_id=ig.id)
-      route_table = vpc.create_route_table()
-      route = route_table.create_route(DestinationCidrBlock='0.0.0.0/0',GatewayId=ig.id)
-      BluePrint.objects(network=cidr, project=project).update(route_table=route_table.id)
-    con.close()
-  except Exception as e:
-    print(repr(e))
-    return False,0
-  finally:
-    con.close()
-  return True, vpc.id
-
-def build_subnet(cidr,vpcid,route,project):
-    con = create_db_con()
+  created = Network.objects(cidr=cidr, project=project)[0]['created']
+  if not created:
     access_key = Project.objects(name=project)[0]['access_key']
     secret_key = Project.objects(name=project)[0]['secret_key']
     location = Project.objects(name=project)[0]['location']
     con.close()
     session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
     ec2 = session.resource('ec2')
-    route_table = ec2.RouteTable(route)
-    subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
+    vpc = ec2.create_vpc(CidrBlock=cidr)
+    #vpc.create_tags(Tags=[{"Key": "Name", "Value": "default_vpc"}])
+    vpc.wait_until_available()
     try:
       con = create_db_con()
-      BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='60')
-      route_table.associate_with_subnet(SubnetId=subnet.id)
+      BluePrint.objects(network=cidr, project=project).update(vpc_id = vpc.id, status='43')
+      if public_route:
+        ig = ec2.create_internet_gateway()
+        vpc.attach_internet_gateway(InternetGatewayId=ig.id)
+        BluePrint.objects(network=cidr, project=project).update(ig_id=ig.id)
+        route_table = vpc.create_route_table()
+        route = route_table.create_route(DestinationCidrBlock='0.0.0.0/0',GatewayId=ig.id)
+        BluePrint.objects(network=cidr, project=project).update(route_table=route_table.id)
+        Network.objects(cidr=cidr, project=project).update(created=True, upsert=True)
       con.close()
     except Exception as e:
       print(repr(e))
-      return False
+      return False,0
     finally:
       con.close()
+    return True, vpc.id
+  else:
     return True
 
 
-async def create_nw(project):
+def build_subnet(cidr,vpcid,route,project):
+    con = create_db_con()
+    created = Subnet.objects(cidr=cidr, project=project)[0]['created']
+    if not created:
+      access_key = Project.objects(name=project)[0]['access_key']
+      secret_key = Project.objects(name=project)[0]['secret_key']
+      location = Project.objects(name=project)[0]['location']
+      con.close()
+      session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
+      ec2 = session.resource('ec2')
+      route_table = ec2.RouteTable(route)
+      subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
+      try:
+        con = create_db_con()
+        BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='60')
+        Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
+        route_table.associate_with_subnet(SubnetId=subnet.id)
+        con.close()
+      except Exception as e:
+        print(repr(e))
+        return False
+      finally:
+        con.close()
+      return True
+    else:
+      return True
+
+
+async def create_nw(project, hostname):
   try:
     con = create_db_con()
-    hosts = BluePrint.objects(project=project)
+    hosts = BluePrint.objects(project=project, host=hostname)
     for host in hosts:
       vpc_id = ''
       if not host['vpc_id']:

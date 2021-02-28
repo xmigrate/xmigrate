@@ -1,6 +1,6 @@
 from model.discover import *
 from utils.dbconn import *
-from utils.logger import 
+from utils.logger import *
 
 def add_nodes(nodes,user,password):
     ansible_hosts = "'./ansible/"+project+"/hosts"

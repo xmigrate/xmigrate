@@ -155,7 +155,7 @@ async def build_blueprint():
 
 @app.route('/blueprint/host/clone', methods=['POST'])
 @jwt_required
-async def image_convert():
+async def image_clone():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
@@ -177,6 +177,20 @@ async def image_convert():
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})
+
+
+@app.route('/blueprint/network/build', methods=['POST'])
+@jwt_required
+async def network_build():
+    if request.method == 'POST':
+        project = await request.get_json()
+        project = project['project']
+        hostname = project['hostname']
+        asyncio.create_task(build.call_build_network(project,hostname))
+        return jsonify({"msg":"Build started","status":200})
+    else:
+        return jsonify({"msg":"cannot read project name","status":500})
+
 
 @app.route('/blueprint/host/build', methods=['POST'])
 @jwt_required

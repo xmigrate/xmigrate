@@ -39,9 +39,9 @@ async def discover():
         with open('/root/.aws/config', 'w+') as writer:
             writer.write(config_str)
         
-        os.popen('ansible-playbook -i '+current_dir+'/ansible/+'project+'/hosts ./ansible/aws/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
+        os.popen('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/aws/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     elif provider == "azure":
-        os.popen('ansible-playbook -i '+current_dir+'/ansible/+'project+'/hosts ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
+        os.popen('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     return jsonify({'status': '500'})

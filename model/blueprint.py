@@ -3,6 +3,7 @@ from mongoengine import *
 class BluePrint(Document):
     host = StringField(required=True, max_length=200)
     ip = StringField(required=True)
+    ip_created = BooleanField(required=True, default=False)
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
     ports = ListField()
