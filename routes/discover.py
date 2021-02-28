@@ -38,9 +38,9 @@ async def discover():
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open('/root/.aws/config', 'w+') as writer:
             writer.write(config_str)
-        os.popen('ansible-playbook ./ansible/aws/env_setup.yaml -e "mongodb='+mongodb+' project='+project+'"> ./logs/ansible/log.txt')
+        os.popen('ansible-playbook ./ansible/aws/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'"> ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     elif provider == "azure":
-        os.popen('ansible-playbook ./ansible/azure/azure_env_setup_ubuntu.yaml -e "mongodb='+mongodb+' project='+project+'" > ./logs/ansible/log.txt')
+        os.popen('ansible-playbook ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" > ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     return jsonify({'status': '500'})

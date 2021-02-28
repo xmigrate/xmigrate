@@ -16,13 +16,14 @@ from azure.common.credentials import ServicePrincipalCredentials
 from dotenv import load_dotenv
 from os import getenv
 import shlex, subprocess
+from pkg.azure import sas
 
 async def start_downloading(project):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await cw.download_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
@@ -40,7 +41,7 @@ async def start_conversion(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await cw.conversion_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
@@ -57,7 +58,7 @@ async def start_uploading(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await cw.upload_worker(osdisk_raw,project,machine['host'])  
             except Exception as e:
@@ -76,11 +77,13 @@ async def start_cloning(project):
         storage = Storage.objects(project=project)[0]['storage']
         accesskey = Storage.objects(project=project)[0]['access_key']
         container = Storage.objects(project=project)[0]['container']
+        sas_token = sas.generate_sas_token(storage,accesskey)
+        url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
         load_dotenv()
         mongodb = os.getenv('MONGO_DB')
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"storage="+storage+" accesskey="+accesskey+" container="+container+" mongodb="+mongodb+ " project="+project+"\""
+        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas="+sas_token+" mongodb="+mongodb+ " project="+project+"\""
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process.wait()
         machines = BluePrint.objects(project=project)
@@ -153,7 +156,7 @@ async def adhoc_image_conversion(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"+".000"
+            osdisk_raw = machine['host']+".raw"
             try:
                 await asyncio.create_task(cw.conversion_worker(osdisk_raw,project,machine['host']))  
             except Exception as e:
