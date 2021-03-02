@@ -194,11 +194,12 @@ async def network_build():
 
 @app.route('/blueprint/host/build', methods=['POST'])
 @jwt_required
-async def infra_build():
+async def host_build():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
-        asyncio.create_task(build.start_infra_build(project))
+        hostname = project['hostname']
+        asyncio.create_task(build.call_build_host(project,hostname))
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})

@@ -141,6 +141,33 @@ async def start_network_build(project,hostname):
                 print("Network creation failed")
                 logger("Network creation failed","error")
 
+async def call_build_host(project,hostname):
+    await asyncio.create_task(start_host_build(project,hostname))
+
+
+async def start_host_build(project,hostname):
+    con = create_db_con()
+    p = Project.objects(name=project)
+    if len(p) > 0:
+        if p[0]['provider'] == "azure":
+            logger("Host build started","info")
+            print("****************Host build awaiting*****************")
+            vm_created = await compute.create_vm(project, hostname)
+            if vm_created:
+                logger("Host created","info")
+            else:
+                print("Host creation failed")
+                logger("Host creation failed","error")
+        elif p[0]['provider'] == "aws":
+            logger("ec2 creation started","info")
+            ec2_created = await ec2.build_ec2(project, hostname)
+            if ec2_created:
+                logger("ec2 creation completed","info")
+            else:
+                print("ec2 creation failed")
+                logger("ec2 creation failed","error")
+
+
 async def start_build(project):
     con = create_db_con()
     p = Project.objects(name=project)
