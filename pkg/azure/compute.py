@@ -56,14 +56,14 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
         con.close()
 
 
-async def create_vm(project):
+async def create_vm(project, hostname):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]['resource_group']
     location = Project.objects(name=project)[0]['location']
     subscription_id = Project.objects(name=project)[0]['subscription_id']
     username = "xmigrate"
     password = "Xmigrate@13"
-    machines = BluePrint.objects(project=project)
+    machines = BluePrint.objects(project=project, host=hostname)
     for machine in machines:
         vm_name = machine['host']
         vm_type = machine['machine_type']

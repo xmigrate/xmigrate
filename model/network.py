@@ -4,6 +4,7 @@ class Network(Document):
     cidr = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
     nw_name = StringField(required=True, max_length=50)
+    created = BooleanField(required=True, default=False)
     meta = {
         'indexes': [
             {'fields': ('cidr', 'project','nw_name'), 'unique': True}
@@ -16,6 +17,7 @@ class Subnet(Document):
     project = StringField(required=True, max_length=50)
     subnet_name = StringField(required=True, max_length=150)
     subnet_type = BooleanField(required=True)
+    created = BooleanField(required=True, default=False)
     meta = {
         'indexes': [
             {'fields': ('cidr', 'project','subnet_name'), 'unique': True}

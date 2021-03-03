@@ -36,11 +36,11 @@ async def create_machine(project,subnet_id,ami_id,machine_type):
         con.close()
 
 
-async def build_ec2(project):
+async def build_ec2(project, hostname):
     try:
         print(project)
         con = create_db_con()
-        hosts = BluePrint.objects(project=project)
+        hosts = BluePrint.objects(project=project, host=hostname)
         for host in hosts:
             print(host['machine_type'])
             await create_machine(project,host['subnet_id'],host['image_id'],host['machine_type'])

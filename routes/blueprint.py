@@ -153,24 +153,53 @@ async def build_blueprint():
         return jsonify({"msg":"cannot read project name","status":500})
 
 
-@app.route('/blueprint/image/convert', methods=['POST'])
+@app.route('/blueprint/host/clone', methods=['POST'])
+@jwt_required
+async def image_clone():
+    if request.method == 'POST':
+        project = await request.get_json()
+        project = project['project']
+        hostname = project['hostname']
+        asyncio.create_task(build.call_start_clone(project,hostname))
+        return jsonify({"msg":"Cloning started","status":200})
+    else:
+        return jsonify({"msg":"Some error occured","status":500})
+
+
+@app.route('/blueprint/host/convert', methods=['POST'])
 @jwt_required
 async def image_convert():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
-        asyncio.create_task(disk.adhoc_image_conversion(project))
+        hostname = project['hostname']
+        asyncio.create_task(build.call_start_convert(project,hostname))
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})
 
-@app.route('/blueprint/infra/all', methods=['POST'])
+
+@app.route('/blueprint/network/build', methods=['POST'])
 @jwt_required
-async def infra_build():
+async def network_build():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
-        asyncio.create_task(build.start_infra_build(project))
+        hostname = project['hostname']
+        asyncio.create_task(build.call_build_network(project,hostname))
+        return jsonify({"msg":"Build started","status":200})
+    else:
+        return jsonify({"msg":"cannot read project name","status":500})
+
+
+@app.route('/blueprint/host/build', methods=['POST'])
+@jwt_required
+async def host_build():
+    if request.method == 'POST':
+        project = await request.get_json()
+        project = project['project']
+        hostname = project['hostname']
+        asyncio.create_task(build.call_build_host(project,hostname))
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})

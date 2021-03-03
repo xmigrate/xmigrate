@@ -125,14 +125,17 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
    con.close()
 
 
-async def start_ami_creation(project):
+async def start_ami_creation(project, hostname):
    set_creds = creds.set_aws_creds(project)
    con = create_db_con()
    bucket_name = ''
    images = []
    try:
       bucket = Bucket.objects(project=project)[0]
-      images = BluePrint.objects(project=project)
+      if hostname == "all":
+         images = BluePrint.objects(project=project)
+      else:
+         images = BluePrint.objects(project=project,host=hostname)
       bucket_name = bucket['bucket']
    except Exception as e:
       print(repr(e))
