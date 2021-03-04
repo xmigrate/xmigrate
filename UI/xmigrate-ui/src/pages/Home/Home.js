@@ -5,9 +5,10 @@ import BluePrint from "../BluePrint/BluePrint";
 import Discover from "../Discover/Discover";
 import Loader from "../../components/Loader/Loader";
 import { ProtectedRoute } from "../../services/Protected.route";
-import GetService,{GetServiceWithData} from "../../services/GetService";
-import { GETPROJECTS,BLUEPRINT_URL } from "../../services/Services";
+import GetService, { GetServiceWithData } from "../../services/GetService";
+import { GETPROJECTS, BLUEPRINT_URL } from "../../services/Services";
 import Settings from "../Settings/Settings";
+
 export default class Home extends Component {
   constructor(props) {
     super();
@@ -15,16 +16,16 @@ export default class Home extends Component {
       Projects: [],
       Loading: true,
       CurrentPro: "Default",
-      BlueprintDisabled:true
+      BlueprintDisabled: true
     };
     this.changeProject = this.changeProject.bind(this);
   }
 
   async componentDidMount() {
     this.setState({
-      Loading:true
+      Loading: true
     });
-    let noProject  = true;
+    let noProject = true;
     let ProjectDetails;
     // Func:Getting the projects of user by calling Funtion with authentication id user id identified
     await GetService(GETPROJECTS).then((res) => {
@@ -36,72 +37,72 @@ export default class Home extends Component {
       }
 
     });
-    if(noProject===false){
+    if (noProject === false) {
 
-   
-        var CurrentProject ;
-        //Setting Which Needs to be the Current Project on loading
-        if (typeof this.props.state !== "undefined") {
-          CurrentProject =  this.props.state.detail;
-        }
-        else{
-          CurrentProject = ProjectDetails[0];
-        }
-        let dataGet ={
-          project: CurrentProject.name
-        }
-        console.log("The Current Project",CurrentProject.name);
-        let BlueprintDisabled = true;
-        let BlueprintData;
-       await GetServiceWithData(BLUEPRINT_URL, dataGet).then(
-          (res) => {
-            console.log(res.data);
-            if(JSON.parse(res.data).length === 0){
-              BlueprintDisabled = true;
-            }
-            else{
-              BlueprintDisabled = false;
-              BlueprintData = res.data;
-            }
-          }
-        );
-        this.setState({
-          Projects: ProjectDetails,
-          Loading: false,
-          CurrentPro: CurrentProject,
-          BlueprintDisabled : BlueprintDisabled,
-          BlueprintData:BlueprintData
-        });
+
+      var CurrentProject;
+      //Setting Which Needs to be the Current Project on loading
+      if (typeof this.props.state !== "undefined") {
+        CurrentProject = this.props.state.detail;
       }
-   
+      else {
+        CurrentProject = ProjectDetails[0];
+      }
+      let dataGet = {
+        project: CurrentProject.name
+      }
+      console.log("The Current Project", CurrentProject.name);
+      let BlueprintDisabled = true;
+      let BlueprintData;
+      await GetServiceWithData(BLUEPRINT_URL, dataGet).then(
+        (res) => {
+          console.log(res.data);
+          if (JSON.parse(res.data).length === 0) {
+            BlueprintDisabled = true;
+          }
+          else {
+            BlueprintDisabled = false;
+            BlueprintData = res.data;
+          }
+        }
+      );
+      this.setState({
+        Projects: ProjectDetails,
+        Loading: false,
+        CurrentPro: CurrentProject,
+        BlueprintDisabled: BlueprintDisabled,
+        BlueprintData: BlueprintData
+      });
+    }
+
   }
 
   // Func:Changing the project state when clicking the sidebar by call back Funtion
   async changeProject(project) {
-    console.log("Changine Project",project);
-    var dataGet ={
+    console.log("Changine Project", project);
+    var dataGet = {
       project: project.name
     }
-    let BlueprintDisabled ;
+    let BlueprintDisabled;
     this.setState({
-      Loading:true
+      Loading: true
     });
     await GetServiceWithData(BLUEPRINT_URL, dataGet).then(
       (res) => {
-        if(JSON.parse(res.data).length === 0){
+        if (JSON.parse(res.data).length === 0) {
           BlueprintDisabled = true;
         }
-        else{
+        else {
           BlueprintDisabled = false;
         }
       }
     );
     this.setState({
       CurrentPro: project,
-      BlueprintDisabled : BlueprintDisabled,
-      Loading:false
+      BlueprintDisabled: BlueprintDisabled,
+      Loading: false
     });
-    if(BlueprintDisabled && this.props.location.pathname ==='/home/blue-print'){
+    if (BlueprintDisabled && this.props.location.pathname === '/home/blue-print') {
       this.props.history.push('/home/discover');
     }
   }
@@ -119,7 +120,8 @@ export default class Home extends Component {
           />
           <div className="container-fluid media-body ">
             <div className="row h-100">
-              <SideNavbar BlueprintDis={this.state.BlueprintDisabled}  />
+              <SideNavbar BlueprintDis={this.state.BlueprintDisabled} />
+
               <ProtectedRoute
                 exact
                 strict
@@ -128,6 +130,7 @@ export default class Home extends Component {
                   <BluePrint CurrentPro={this.state.CurrentPro} BluePrintData={this.state.BlueprintData} />
                 )}
               />
+
               <ProtectedRoute
                 exact
                 strict
@@ -139,6 +142,7 @@ export default class Home extends Component {
                   />
                 )}
               />
+
               <ProtectedRoute
                 exact
                 strict

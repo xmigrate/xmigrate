@@ -6,6 +6,7 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
+import "./NetworkTable.scss";
 import SubnetTable from "./SubnetTable";
 export default class NetworkTableRow extends Component {
   constructor(props) {
@@ -35,12 +36,12 @@ export default class NetworkTableRow extends Component {
     const Subnets = this.props.Network.subnets;
     const isLoadingSubnet = Subnets.length === 0;
     return (
-      <tbody>
-        <tr key={this.props.index} className="NetworkRow" onClick={this.toggleExpander}>
-          <td>#{this.props.index}</td>
-          <td>{this.props.Network.nw_name}</td>
-          <td>{this.props.Network.cidr}</td>
-          <td onClick={()=>this.props.DeleteNetwork(this.state.Network)}>
+      <tbody className="NetworkTable">
+        <tr key={this.props.index} className="NetworkRow tData" onClick={this.toggleExpander}>
+          <td colSpan={1}>{this.props.index}</td>
+          <td colSpan={1}>{this.props.Network.nw_name}</td>
+          <td colSpan={1}>{this.props.Network.cidr}</td>
+          <td colSpan={1} onClick={()=>this.props.DeleteNetwork(this.state.Network)}>
             <svg
               width="1em"
               id="Del"
@@ -59,7 +60,7 @@ export default class NetworkTableRow extends Component {
           </td>
         </tr>
         {this.state.expanded && (
-          <tr className="expandable" key="tr-expander">
+          <tr className="expandable tData" key="tr-expander">
             <td className="uk-background-muted" colSpan={6}>
               <div className="inner">
                 <Row className=" py-3">
@@ -144,6 +145,10 @@ export default class NetworkTableRow extends Component {
                         dragStart={this.props.dragStart}
                         allowDrop = {this.props.allowDrop}
                         drop = {this.props.drop}
+                        BlueprintHostClone={this.props._BlueprintHostClone}
+                        BlueprintHostConvert={this.props._BlueprintHostConvert}
+                        BlueprintHostBuild={this.props._BlueprintHostBuild}
+
                       />
                     ))
                   )}

@@ -25,7 +25,11 @@ import {
   BLUEPRINTNET_DELETE_SUBNET,
   BLUEPRINT_SAVE,
   BLUEPRINT_STATUS,
-  BLUEPRINT_UDATE_HOST
+  BLUEPRINT_UDATE_HOST,
+  BLUEPRINT_NETWROK_BUILD,
+  BLUEPRINT_HOST_BUILD,
+  BLUEPRINT_HOST_CONVERT,
+  BLUEPRINT_HOST_CLONE
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
@@ -50,8 +54,8 @@ export default class BluePrint extends Component {
       ShowAlertReset: false,
       ShowAlertBuild: false,
       ShowAlertSave: false,
-      showUpdateAlert:false,
-      showUpdateMessage:""
+      showUpdateAlert: false,
+      showUpdateMessage: ""
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -304,7 +308,7 @@ export default class BluePrint extends Component {
       if (flag) {
         clearInterval(this.state.intervalId);
 
-        this.setState({ BuildStatus: false, showUpdateAlert:true,showUpdateMessage:"Build Successfull!!"})
+        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
       }
       this.setState({
         Networks: NetworksData,
@@ -335,7 +339,7 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      this.setState({ showUpdateAlert:true,showUpdateMessage:"Save Blueprint Successfull!!"})
+      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!" })
     });
   }
 
@@ -355,7 +359,7 @@ export default class BluePrint extends Component {
     });
     //Getting all details if any
     this.GettingData();
-    this.setState({ showUpdateAlert:true,showUpdateMessage:"Reset Successfull!!"})
+    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!" })
 
   }
 
@@ -471,12 +475,65 @@ export default class BluePrint extends Component {
     })
   }
 
-///Closing Alert
-  closeAlertUpdate(){
+  ///Closing Alert
+  closeAlertUpdate() {
     this.setState({
-      showUpdateAlert:false
+      showUpdateAlert: false
     })
   }
+
+  //BluePrintNetworkBuild-------------------------------------------------------------------------
+  async _BlueprintNetworkBuild() {
+console.log("Network Build");
+    // var data = {
+    //   project: this.state.project,
+    //   machines: hostData,
+    // };
+    // console.log(data);
+    // await PostService(BLUEPRINT_NETWROK_BUILD, data).then((res) => {
+    //   console.log("data from response of Network Build post", res.data);
+    // });
+  }
+
+  //BlueprintHostClone-------------------------------------------------------------------------
+  async _BlueprintHostClone() {
+    console.log("Network Clone");
+    var data = {
+      project: this.state.project,
+      machines: hostData,
+    };
+    console.log(data);
+    await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
+      console.log("data from response of Network Build post", res.data);
+    });
+  }
+
+  //BlueprintHostConvert-------------------------------------------------------------------------
+  async _BlueprintHostConvert() {
+    console.log("Network Convert");
+    // var data = {
+    //   project: this.state.project,
+    //   machines: hostData,
+    // };
+    // console.log(data);
+    // await PostService(BLUEPRINT_HOST_CONVERT, data).then((res) => {
+    //   console.log("data from response of Network Build post", res.data);
+    // });
+  }
+
+  //BlueprintHostBuild-------------------------------------------------------------------------
+  async _BlueprintHostBuild() {
+    console.log("Network Build");
+    // var data = {
+    //   project: this.state.project,
+    //   machines: hostData,
+    // };
+    // console.log(data);
+    // await PostService(BLUEPRINT_HOST_BUILD, data).then((res) => {
+    //   console.log("data from response of Network Build post", res.data);
+    // });
+  }
+
 
 
   render() {
@@ -491,16 +548,16 @@ export default class BluePrint extends Component {
     } else {
       return (
         <div className="BluePrint media-body background-primary">
-          <Container className="py-5 ">
-            <h4 className="p-0 m-0">Blueprint</h4>
+          <Container className="py-4 ">
+            <h4 className="p-0 m-0 HeadingPage">Blueprint</h4>
 
             <Card className="mt-4 p-2">
               <Card.Header className="bg-white">Discovered Hosts</Card.Header>
               <Card.Body>
                 <Table responsive borderless>
                   <thead>
-                    <tr>
-                      <th>#</th>
+                    <tr className="tName">
+                      <th></th>
                       <th>Hostname</th>
                       <th>IP</th>
                       <th>Subnet</th>
@@ -513,7 +570,7 @@ export default class BluePrint extends Component {
                   </thead>
                   <tbody>
                     {this.state.hosts.map((data, index) => (
-                      <tr key={index}>
+                      <tr className="tData" key={index}>
                         <td>{data.id}</td>
                         <td>{data.hostname}</td>
                         <td>{data.ip}</td>
@@ -531,8 +588,8 @@ export default class BluePrint extends Component {
             </Card>
 
             <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
-        <p>{this.state.showUpdateMessage}</p>
-      </Alert>
+              <p>{this.state.showUpdateMessage}</p>
+            </Alert>
 
             {/* HereTable */}
 
@@ -561,7 +618,7 @@ export default class BluePrint extends Component {
                       </Col>
                       <Col>
                         <Button
-                          className=" media-body"
+                          className=" media-body successGreen"
                           variant="success"
                           onClick={this._createBluePrint.bind(this)}
                         >
@@ -575,19 +632,19 @@ export default class BluePrint extends Component {
 
               <Card.Body>
                 <Container fluid className="blueprint-edit-table">
-                  <Table className="bordered hover">
-                    <thead>
+                  <Table className=" hover">
+                    <thead className="tName">
                       <tr>
-                        <th>#</th>
-                        <th>NETWORK</th>
-                        <th>CIDR</th>
-                        <th></th>
+                        <th colSpan={1}>#</th>
+                        <th colSpan={1}>NETWORK</th>
+                        <th colSpan={1}>CIDR</th>
+                        <th colSpan={3}></th>
                       </tr>
                     </thead>
 
                     {isLoadingNetwork ? (
                       <tbody>
-                        <tr>
+                        <tr className="tData">
                           <td colSpan={6} className="text-center">
                             <em className="text-muted">
                               No Network Data Avaialble...
@@ -611,6 +668,9 @@ export default class BluePrint extends Component {
                             dragStart={this.state.dragStart}
                             allowDrop={this.allowDrop}
                             drop={this.drop}
+                            BlueprintHostClone={this._BlueprintHostClone}
+                            BlueprintHostConvert={this._BlueprintHostConvert}
+                            BlueprintHostBuild={this._BlueprintHostBuild}
                           />
                         ))
                       )}
@@ -694,7 +754,8 @@ export default class BluePrint extends Component {
                 Close
           </Button>
               <Button variant="primary"
-                onClick={this._createBuild.bind(this)}
+                // onClick={this._createBuild.bind(this)}
+                onClick={this._BlueprintNetworkBuild.bind(this)}
               >
                 Build
           </Button>
