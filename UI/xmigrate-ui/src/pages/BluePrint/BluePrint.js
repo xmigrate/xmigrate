@@ -498,14 +498,14 @@ console.log("Network Build");
   //BlueprintHostClone-------------------------------------------------------------------------
   async _BlueprintHostClone() {
     console.log("Network Clone");
-    var data = {
-      project: this.state.project,
-      machines: hostData,
-    };
-    console.log(data);
-    await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
-    });
+    // var data = {
+    //   project: this.state.project,
+    //   machines: hostData,
+    // };
+    // console.log(data);
+    // await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
+    //   console.log("data from response of Network Build post", res.data);
+    // });
   }
 
   //BlueprintHostConvert-------------------------------------------------------------------------
