@@ -107,7 +107,7 @@ export default class Discover extends Component {
         return (
             <div className="Discover media-body background-primary ">
                 <Container className="py-5 ">
-                    <h4 className="p-0 m-0">
+                    <h4 className="p-0 m-0 HeadingPage">
                         Add IP’s of your servers to be migrated
                     </h4>
 
