@@ -34,7 +34,11 @@
 .font-24{
     font-size: 24px;
 }
-
+.HeadingPage{
+    font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  }
 .background-primary{
     background-color: #eeecec;
 }

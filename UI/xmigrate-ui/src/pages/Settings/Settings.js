@@ -9,8 +9,12 @@ import {
   Col,
   Alert
 } from "react-bootstrap";
-import { FaAngleRight, FaAws, FaCloud } from "react-icons/fa";
-import { SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
+import { FaAngleRight, FaAws,
+  //  FaCloud 
+  } from "react-icons/fa";
+import { SiMicrosoftazure, 
+  // SiGooglecloud 
+} from "react-icons/si";
 import {
   BLUEPRINT_GET_STORAGE,
   BLUEPRINT_UPDATE_STORAGE
@@ -19,7 +23,7 @@ import { GetServiceWithData } from "../../services/GetService";
 import PostService from "../../services/PostService";
 export default class Settings extends Component {
   constructor(props) {
-    super();
+   super(props);
     console.log("The props Received:", props.CurrentPro);
     let input = {};
     input["name"] = props.CurrentPro.name;
@@ -34,6 +38,11 @@ export default class Settings extends Component {
     input["container"] = "";
     input["secret_key_aws"] = props.CurrentPro.secret_key;
     input["access_key_aws"] = props.CurrentPro.access_key;
+    input["access_key_azure"] = "";
+    input["bucket"] = "";
+    input["access_key_aws_storage"] = "";
+    input["secret_key_aws_storage"]="";
+
     this.state = {
       project: props.CurrentPro.name,
       input: input,
@@ -91,8 +100,9 @@ export default class Settings extends Component {
 
   async handleStorageUpdate(event) {
     event.preventDefault();
+    var data ={};
     if (this.state.input.provider === "aws") {
-      var data = {
+      data = {
         provider: this.state.input.provider,
         project: this.state.input.name,
         bucket: this.state.input.bucket,
@@ -100,7 +110,7 @@ export default class Settings extends Component {
         secret_key: this.state.input.secret_key_aws_storage
       }
     } else {
-      var data = {
+      data = {
         provider: this.state.input.provider,
         project: this.state.input.name,
         storage: this.state.input.storage,
@@ -119,8 +129,8 @@ export default class Settings extends Component {
   }
 
   validate() {
-    let input = this.state.input;
-    let errors = {};
+    // let input = this.state.input;
+    // let errors = {};
     let isValid = true;
     return isValid;
   }
@@ -403,7 +413,6 @@ export default class Settings extends Component {
                       name="container"
                     />
                   </Form.Group>
-
 
                   <Form.Group className="register bg-blue" style={{
                     display:
