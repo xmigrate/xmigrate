@@ -69,7 +69,7 @@ def build_subnet(cidr,vpcid,route,project):
       return True
 
 
-async def create_nw(project, hostname):
+async def create_nw(project):
   try:
     con = create_db_con()
     hosts = BluePrint.objects(project=project, host=hostname)

@@ -110,11 +110,12 @@ async def start_convert(project,hostname):
                 logger("Disk Conversion failed","error")
 
 
-async def call_build_network(project,hostname):
-    await asyncio.create_task(start_network_build(project,hostname))
+
+async def call_build_network(project):
+    await asyncio.create_task(start_network_build(project))
 
 
-async def start_network_build(project,hostname):
+async def start_network_build(project):
     con = create_db_con()
     p = Project.objects(name=project)
     if len(p) > 0:
@@ -124,7 +125,7 @@ async def start_network_build(project,hostname):
             rg_created = await resource_group.create_rg(project)
             if rg_created:
                 logger("Resource group created","info")
-                network_created = await network.create_nw(project,hostname)
+                network_created = await network.create_nw(project)
                 if network_created:
                     logger("Network created","info")
                 else:
