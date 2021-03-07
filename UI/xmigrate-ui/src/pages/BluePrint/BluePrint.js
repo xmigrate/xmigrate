@@ -698,7 +698,7 @@ console.log("Network Build");
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
-                Build <icon.BsPlay />
+                Build Network <icon.BsPlay />
               </Button>
               <Button
                 variant="danger"
