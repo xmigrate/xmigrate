@@ -27,7 +27,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
         print(
             "Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
         try:
-            BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='43')
+            BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='5')
             Network.objects(cidr=cidr, project=project).update(created=True, upsert=True)
         except Exception as e:
             print("Vnet creation failed to save: "+repr(e))
@@ -60,7 +60,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
         try:
             con = create_db_con()
             print(subnet_result.id)
-            BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='60')
+            BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='10')
             Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
         except Exception as e:
             print("Subnet creation failed to save: "+repr(e))
@@ -99,7 +99,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
             "Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
         try:
             con = create_db_con()
-            BluePrint.objects(project=project, host=host).update(status='60', ip_created=True)
+            BluePrint.objects(project=project, host=host).update(status='15', ip_created=True)
         except Exception as e:
             print("Public IP creation failed: "+repr(e))
             logger("Public IP creation failed: "+repr(e),"warning")
@@ -122,7 +122,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
         print("Provisioned network interface client {nic_result.name}")
         try:
             con = create_db_con()
-            BluePrint.objects(project=project,host=host).update(status='60', nic_id=nic_result.id,ip=ip_address_result.ip_address)
+            BluePrint.objects(project=project,host=host).update(status='20', nic_id=nic_result.id,ip=ip_address_result.ip_address)
         except Exception as e:
             print("Nework interface creation failed:"+repr(e))
         finally:
