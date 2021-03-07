@@ -25,11 +25,7 @@ import {
   BLUEPRINTNET_DELETE_SUBNET,
   BLUEPRINT_SAVE,
   BLUEPRINT_STATUS,
-  BLUEPRINT_UDATE_HOST,
-  BLUEPRINT_NETWROK_BUILD,
-  // BLUEPRINT_HOST_BUILD,
-  // BLUEPRINT_HOST_CONVERT,
-  // BLUEPRINT_HOST_CLONE
+  BLUEPRINT_UDATE_HOST
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
@@ -54,8 +50,8 @@ export default class BluePrint extends Component {
       ShowAlertReset: false,
       ShowAlertBuild: false,
       ShowAlertSave: false,
-      showUpdateAlert: false,
-      showUpdateMessage: ""
+      showUpdateAlert:false,
+      showUpdateMessage:""
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -96,9 +92,9 @@ export default class BluePrint extends Component {
     await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, data).then((res) => {
       console.log("Response Data of New Blueprint host", res.data.networks);
       NetworksDatas = res.data.networks;
-     NetworksDatas.forEach((Network, index) => {
-        Network.subnets.forEach((subnet, index) => {
-          subnet.hosts.forEach((host, index) => {
+      NetworksDatas.map((Network, index) => {
+        Network.subnets.map((subnet, index) => {
+          subnet.hosts.map((host, index) => {
             let hostCurrent = {};
             hostCurrent["hostname"] = host.host;
             hostCurrent["type"] = subnet.subnet_type;
@@ -211,7 +207,7 @@ export default class BluePrint extends Component {
     });
     var NetworksData = this.state.Networks;
     var i;
-    NetworksData.forEach((Network, index) => {
+    NetworksData.map((Network, index) => {
       if (Network.nw_name === NameNetwork) {
         i = index;
       }
@@ -254,7 +250,7 @@ export default class BluePrint extends Component {
     // console.log(event.target.value);
     // console.log(host);
     let hostCurrent = this.state.hostCurrents;
-    hostCurrent.forEach((hostCur, index) => {
+    hostCurrent.map((hostCur, index) => {
       if (hostCur.hostname === host.host) {
         hostCur["machine_type"] = event.target.value;
       }
@@ -288,10 +284,10 @@ export default class BluePrint extends Component {
       let flag;
       let NetworksData = this.state.Networks;
       //Setting the host status
-      NetworksData.forEach((Network, index) => {
-        Network.subnets.forEach((subnet, index) => {
-          subnet.hosts.forEach((host, index) => {
-            res.data.forEach((hostRes, index) => {
+      NetworksData.map((Network, index) => {
+        Network.subnets.map((subnet, index) => {
+          subnet.hosts.map((host, index) => {
+            res.data.map((hostRes, index) => {
               if (host.host === hostRes.host) {
                 host["status"] = hostRes.status;
                 if (parseInt(hostRes.status) < 100) {
@@ -308,7 +304,7 @@ export default class BluePrint extends Component {
       if (flag) {
         clearInterval(this.state.intervalId);
 
-        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
+        this.setState({ BuildStatus: false, showUpdateAlert:true,showUpdateMessage:"Build Successfull!!"})
       }
       this.setState({
         Networks: NetworksData,
@@ -324,7 +320,7 @@ export default class BluePrint extends Component {
       this.state.hostCurrents
     );
     let hostData = this.state.hostCurrents
-    hostData.forEach((host, index) => {
+    hostData.map((host, index) => {
       if (host.type === "Public" || host.type === "True") {
         host["type"] = "True"
       }
@@ -339,7 +335,7 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!" })
+      this.setState({ showUpdateAlert:true,showUpdateMessage:"Save Blueprint Successfull!!"})
     });
   }
 
@@ -348,7 +344,7 @@ export default class BluePrint extends Component {
     this.handleAlertCloseReset();
     console.log("Reseting....");
     var NetworksData = this.state.Networks;
-    NetworksData.forEach((Network, index) => {
+    NetworksData.map((Network, index) => {
       let data = {
         project: this.state.project,
         nw_name: Network.nw_name,
@@ -359,7 +355,7 @@ export default class BluePrint extends Component {
     });
     //Getting all details if any
     this.GettingData();
-    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!" })
+    this.setState({ showUpdateAlert:true,showUpdateMessage:"Reset Successfull!!"})
 
   }
 
@@ -393,15 +389,15 @@ export default class BluePrint extends Component {
       console.log(subnetname);
       console.log(nw_name);
       var NetworksData = this.state.Networks;
-      NetworksData.forEach((Network, index) => {
+      NetworksData.map((Network, index) => {
         if (Network.nw_name === data.ChangeNetwork) {
-          Network.subnets.forEach((subnet, index) => {
+          Network.subnets.map((subnet, index) => {
             if (subnet.name === data.ChangeSubnet) {
               subnet.hosts.splice(data.index, 1);
             }
           });
           if (Network.nw_name === nw_name) {
-            Network.subnets.forEach((subnet, index) => {
+            Network.subnets.map((subnet, index) => {
               if (subnet.name === subnetname) {
                 data.host["subnet"] = subnet.cidr;
                 subnet.hosts.push(data.host);
@@ -410,7 +406,7 @@ export default class BluePrint extends Component {
           }
 
         } else if (Network.nw_name === nw_name) {
-          Network.subnets.forEach((subnet, index) => {
+          Network.subnets.map((subnet, index) => {
             if (subnet.name === subnetname) {
               data.host["subnet"] = subnet.cidr;
               subnet.hosts.push(data.host);
@@ -475,63 +471,12 @@ export default class BluePrint extends Component {
     })
   }
 
-  ///Closing Alert
-  closeAlertUpdate() {
+///Closing Alert
+  closeAlertUpdate(){
     this.setState({
-      showUpdateAlert: false
+      showUpdateAlert:false
     })
   }
-
-  //BluePrintNetworkBuild-------------------------------------------------------------------------
-  async _BlueprintNetworkBuild() {
-console.log("Network Build");
-    var data = {
-      project: this.state.project,
-    };
-    await PostService(BLUEPRINT_NETWROK_BUILD, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
-    });
-  }
-
-  //BlueprintHostClone-------------------------------------------------------------------------
-  async _BlueprintHostClone() {
-    console.log("Network Clone");
-    // var data = {
-    //   project: this.state.project,
-    //   machines: hostData,
-    // };
-    // console.log(data);
-    // await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
-    //   console.log("data from response of Network Build post", res.data);
-    // });
-  }
-
-  //BlueprintHostConvert-------------------------------------------------------------------------
-  async _BlueprintHostConvert() {
-    console.log("Network Convert");
-    // var data = {
-    //   project: this.state.project,
-    //   machines: hostData,
-    // };
-    // console.log(data);
-    // await PostService(BLUEPRINT_HOST_CONVERT, data).then((res) => {
-    //   console.log("data from response of Network Build post", res.data);
-    // });
-  }
-
-  //BlueprintHostBuild-------------------------------------------------------------------------
-  async _BlueprintHostBuild() {
-    console.log("Network Build");
-    // var data = {
-    //   project: this.state.project,
-    //   machines: hostData,
-    // };
-    // console.log(data);
-    // await PostService(BLUEPRINT_HOST_BUILD, data).then((res) => {
-    //   console.log("data from response of Network Build post", res.data);
-    // });
-  }
-
 
 
   render() {
@@ -546,16 +491,16 @@ console.log("Network Build");
     } else {
       return (
         <div className="BluePrint media-body background-primary">
-          <Container className="py-4 ">
-            <h4 className="p-0 m-0 HeadingPage">Blueprint</h4>
+          <Container className="py-5 ">
+            <h4 className="p-0 m-0">Blueprint</h4>
 
             <Card className="mt-4 p-2">
               <Card.Header className="bg-white">Discovered Hosts</Card.Header>
               <Card.Body>
                 <Table responsive borderless>
                   <thead>
-                    <tr className="tName">
-                      <th></th>
+                    <tr>
+                      <th>#</th>
                       <th>Hostname</th>
                       <th>IP</th>
                       <th>Subnet</th>
@@ -568,7 +513,7 @@ console.log("Network Build");
                   </thead>
                   <tbody>
                     {this.state.hosts.map((data, index) => (
-                      <tr className="tData" key={index}>
+                      <tr key={index}>
                         <td>{data.id}</td>
                         <td>{data.hostname}</td>
                         <td>{data.ip}</td>
@@ -586,8 +531,8 @@ console.log("Network Build");
             </Card>
 
             <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
-              <p>{this.state.showUpdateMessage}</p>
-            </Alert>
+        <p>{this.state.showUpdateMessage}</p>
+      </Alert>
 
             {/* HereTable */}
 
@@ -616,7 +561,7 @@ console.log("Network Build");
                       </Col>
                       <Col>
                         <Button
-                          className=" media-body successGreen"
+                          className=" media-body"
                           variant="success"
                           onClick={this._createBluePrint.bind(this)}
                         >
@@ -630,20 +575,19 @@ console.log("Network Build");
 
               <Card.Body>
                 <Container fluid className="blueprint-edit-table">
-                  <Table className=" hover">
-                    <thead className="tName">
+                  <Table className="bordered hover">
+                    <thead>
                       <tr>
-                        <th scope="col"></th>
-                        <th scope="col">NETWORK</th>
-                        <th scope="col">CIDR</th>
-                        <th scope="col"></th>
-                        <th className="col-5"></th>
+                        <th>#</th>
+                        <th>NETWORK</th>
+                        <th>CIDR</th>
+                        <th></th>
                       </tr>
                     </thead>
 
                     {isLoadingNetwork ? (
                       <tbody>
-                        <tr className="tData">
+                        <tr>
                           <td colSpan={6} className="text-center">
                             <em className="text-muted">
                               No Network Data Avaialble...
@@ -667,9 +611,6 @@ console.log("Network Build");
                             dragStart={this.state.dragStart}
                             allowDrop={this.allowDrop}
                             drop={this.drop}
-                            BlueprintHostClone={this._BlueprintHostClone}
-                            BlueprintHostConvert={this._BlueprintHostConvert}
-                            BlueprintHostBuild={this._BlueprintHostBuild}
                           />
                         ))
                       )}
@@ -696,7 +637,7 @@ console.log("Network Build");
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
-                Build Network <icon.BsPlay />
+                Build <icon.BsPlay />
               </Button>
               <Button
                 variant="danger"
@@ -753,8 +694,7 @@ console.log("Network Build");
                 Close
           </Button>
               <Button variant="primary"
-                // onClick={this._createBuild.bind(this)}
-                onClick={this._BlueprintNetworkBuild.bind(this)}
+                onClick={this._createBuild.bind(this)}
               >
                 Build
           </Button>
