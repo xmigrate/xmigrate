@@ -72,7 +72,7 @@ def build_subnet(cidr,vpcid,route,project):
 async def create_nw(project):
   try:
     con = create_db_con()
-    hosts = BluePrint.objects(project=project)
+    hosts = BluePrint.objects(project=project, host=hostname)
     for host in hosts:
       vpc_id = ''
       if not host['vpc_id']:

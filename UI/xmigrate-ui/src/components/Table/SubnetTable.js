@@ -3,7 +3,11 @@ import {
     Form,
     Row,
     Col,
+    Button
   } from "react-bootstrap";
+  import * as icon from "react-icons/all";
+import { IconContext } from "react-icons";
+import "./NetworkTable.scss";
 export default class SubnetTable extends Component {
 constructor(props){
 super();
@@ -29,8 +33,13 @@ toggleExpander = (e) => {
 render(){
     return(
         <tbody>
-            <tr onClick={this.toggleExpander}  className="SubnetRow">
-            <td>#{this.props.index}</td>
+            <tr onClick={this.toggleExpander}  className="SubnetRow tData">
+            <td >{ this.state.expanded ? <IconContext.Provider value={{ color: "#1DA1F2" }}>
+  <div>
+  <icon.BsCaretDownFill  /> 
+  </div>
+</IconContext.Provider> :  <icon.BsCaretRightFill /> } 
+           </td>
     <td>{this.props.Subnet.name}</td>
     <td>{this.props.Subnet.cidr}</td>
     <td>{this.props.Subnet.subnet_type}</td>
@@ -51,19 +60,19 @@ render(){
               />
             </svg>
           </td>
+          <td></td>
             </tr>
             {
             this.state.expanded && (
-                <tr className="expandable" key="tr-expander"  onDrop={(e)=>this.props.drop(e,this.state.Subnet,this.state.nw_name)} onDragOver={(e)=>this.props.allowDrop(e)}>
+                <tr className="expandable " key="tr-expander"  onDrop={(e)=>this.props.drop(e,this.state.Subnet,this.state.nw_name)} onDragOver={(e)=>this.props.allowDrop(e)}>
                     <td className="uk-background-muted" colSpan={6}>
-                    <Row className="font-weight-bold py-3 ">
-                              <Col xs={{ span: 1 }}>#</Col>
-                              <Col xs={{ span: 2 }}>HOSTNAME</Col>
+                    <Row className="font-weight-bold py-3 ml-1">
+                              <Col xs={{ span: 1 }}></Col>
+                              <Col xs={{ span: 3 }}>HOSTNAME</Col>
                               <Col xs={{ span: 2 }}>IP</Col>
                               <Col xs={{ span: 2 }}>MACHINE TYPE</Col>
-                              <Col xs={{ span: 2 }}>IMAGE ID</Col>
-                              <Col xs={{ span: 2 }}>VM ID</Col>
-                              <Col xs={{ span: 1 }}>STATUS</Col>
+                              <Col xs={{ span: 2 }}>ACTION</Col>
+                              {/* <Col xs={{ span: 1 }}>STATUS</Col> */}
                             </Row>
                             {this.props.Subnet.hosts === undefined || this.props.Subnet.hosts.length === 0  ? (
                   <h6 className="text-center text-muted">
@@ -71,9 +80,9 @@ render(){
                        </h6>
                   ) : (
                     this.props.Subnet.hosts.map((host, index) => (
-                      <Row className=" py-3 " key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
-                      <Col ></Col>
-                       <Col xs={{ span: 2 }}>{host.host}</Col>
+                      <Row className=" py-3 HostRow" key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
+                      <Col xs={{ span: 1 }}></Col>
+                       <Col xs={{ span: 3 }}>{host.host}</Col>
                       <Col xs={{ span: 2 }}>{host.ip}</Col> 
                       <Col xs={{ span: 2 }}>
                         <Form>
@@ -95,10 +104,35 @@ render(){
                           </Form.Group>
                         </Form> 
                       </Col>
-                      <Col xs={{ span: 2 }}>{host.image_id}
-                      </Col> 
-                       <Col xs={{ span: 2 }}>{host.host}</Col> 
-                     <Col xs={{ span: 1 }}>{host.status}</Col>
+                      <Col>   
+                
+                       <Button
+                      className=" media-body"
+                      variant="success"
+                      size="sm"
+                      onClick={this.props.BlueprintHostClone.bind(this)}
+                    >
+                      Clone
+                    </Button>
+                   ----------
+                                   <Button
+                      className=" media-body"
+                      variant="danger"
+                      size="sm"
+                      onClick={this.props.BlueprintHostConvert.bind(this)}
+                    >
+                      Convert
+                    </Button>
+                    ---------
+                    <Button
+                      className=" media-body"
+                      variant="primary"
+                      size="sm"
+                      onClick={this.props.BlueprintHostBuild.bind(this)}
+                    >
+                      Build
+                    </Button></Col>
+                     {/* <Col xs={{ span: 1 }}>{host.status}</Col> */}
                     </Row>
                     ))
                   )}

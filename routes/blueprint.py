@@ -185,7 +185,8 @@ async def network_build():
     if request.method == 'POST':
         project = await request.get_json()
         project = project['project']
-        asyncio.create_task(build.call_build_network(project,hostname))
+        hostname = project['hostname']
+        asyncio.create_task(build.call_build_network(project))
         return jsonify({"msg":"Build started","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})

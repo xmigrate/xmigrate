@@ -1,8 +1,12 @@
 import React, { Component } from "react";
 import { Form, Container, Col, Row, Card, Button } from "react-bootstrap";
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
-import { FaAngleRight, FaAws, FaCloud } from "react-icons/fa";
-import { SiMicrosoftazure, SiGooglecloud } from "react-icons/si";
+import { FaAngleRight, FaAws, 
+  // FaCloud
+ } from "react-icons/fa";
+import { SiMicrosoftazure, 
+  // SiGooglecloud 
+} from "react-icons/si";
 import PostService from "../../services/PostService";
 import "./Project.scss";
 import {
@@ -47,8 +51,9 @@ export default class Project extends Component {
     event.preventDefault();
     console.log(this.state);
     if (this.validate()) {
+      var data = {};
       if (this.state.input["provider"] === "aws") {
-        var data = {
+        data = {
           name: this.state.input["name"],
           provider: this.state.input["provider"],
           secret_key: this.state.input["secret_key"],
@@ -56,7 +61,7 @@ export default class Project extends Component {
           location: this.state.input["location"]
         };
       } else if (this.state.input["provider"] === "azure") {
-        var data = {
+        data = {
           name: this.state.input["name"],
           provider: this.state.input["provider"],
           subscription_id: this.state.input["subscription_id"],
@@ -95,8 +100,9 @@ export default class Project extends Component {
           });
         });
       } else if (this.state.status === "Storage") {
+        var dataProvider = {};
         if (this.state.input["provider"] === "aws") {
-          var data = {
+          dataProvider = {
             //Here Make Changes
             project: this.state.input["name"],
             provider: this.state.input["provider"],
@@ -105,7 +111,7 @@ export default class Project extends Component {
             access_key: this.state.input["access_key"],
           };
         } else if (this.state.input["provider"] === "azure") {
-          var data = {
+          dataProvider = {
             provider: this.state.input["provider"],
             project: this.state.input["name"],
             storage: this.state.input["storage"],
@@ -114,11 +120,11 @@ export default class Project extends Component {
           };
         }
    
-        console.log("data posted",data);
+        console.log("data posted",dataProvider);
         this.setState({
           loader: true,
         });
-        await PostService(CREATESTORAGE, data).then((res) => {
+        await PostService(CREATESTORAGE, dataProvider).then((res) => {
           this.setState({
             loader: false,
           });
@@ -138,8 +144,8 @@ export default class Project extends Component {
 
   //To validate the project submit
   validate() {
-    let input = this.state.input;
-    let errors = {};
+    // let input = this.state.input;
+    // let errors = {};
     let isValid = true;
     return isValid;
   }

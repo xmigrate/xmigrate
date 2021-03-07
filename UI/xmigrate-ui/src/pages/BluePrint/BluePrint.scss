@@ -5,50 +5,72 @@
     color: #5c5c5c;
     background-color: #e6e6e6;
   }
+
   tr.expandable > td {
-    box-shadow: inset 0 3px 6px -3px rgba(0, 0, 0, .2);
+    
     padding: 0;
   }
-  
+
   tr.expandable > td > .inner {
-    margin: 15px;
+    // margin: 15px;
     overflow: hidden;
   }
   //Css Table loading
-  .bi-trash-fill:hover{
-    color:0082FF;
+  .bi-trash-fill:hover {
+    color: 0082ff;
     cursor: pointer;
   }
-  .blueprint-edit-table{
+  .blueprint-edit-table {
     padding-right: 0px;
     padding-left: 0px;
-    .table{
-      border: 1px solid #0000004a;
-    }
-
-  }
-  .NetworkRow:hover{
-    background-color: #e6e6e6;
-  }
-  .SubnetRow:hover{
-    background-color: #e6e6e6;
   }
 
 
-  .blurprintTable{
-    .card-body{
+
+  .blurprintTable {
+    .card-body {
       padding: 0px;
     }
   }
-  .bt-main{
+  .bt-main {
     background-color: whitesmoke;
   }
-  .bt-main:focus{
+  .bt-main:focus {
     background-color: whitesmoke;
   }
-  .bt-main:hover{
+  .bt-main:hover {
     background-color: gainsboro;
   }
+  .tName {
+    font-family: Ubuntu;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 18px;
+  }
+  .tData {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 19px;
+    color: rgba(51, 51, 51, 0.8);
+    border-top: 1px solid #ebebec;
+    border-bottom: 1px solid #ebebec;
+  }
+  .card-header {
+    border: 0;
+    font-family: Ubuntu;
+    font-style: normal;
+    font-weight: bold;
+  }
+  .successGreen{
+    background-color:  #47B881;
+  }
+  .table td,
+  .table th {
+    border-top: 0px;
+  }
+  .table thead th {
+    border-bottom:0px;
+   }
 }
-
-
