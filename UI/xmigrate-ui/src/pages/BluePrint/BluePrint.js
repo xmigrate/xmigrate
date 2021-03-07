@@ -26,7 +26,7 @@ import {
   BLUEPRINT_SAVE,
   BLUEPRINT_STATUS,
   BLUEPRINT_UDATE_HOST,
-  // BLUEPRINT_NETWROK_BUILD,
+  BLUEPRINT_NETWROK_BUILD,
   // BLUEPRINT_HOST_BUILD,
   // BLUEPRINT_HOST_CONVERT,
   // BLUEPRINT_HOST_CLONE
@@ -485,14 +485,12 @@ export default class BluePrint extends Component {
   //BluePrintNetworkBuild-------------------------------------------------------------------------
   async _BlueprintNetworkBuild() {
 console.log("Network Build");
-    // var data = {
-    //   project: this.state.project,
-    //   machines: hostData,
-    // };
-    // console.log(data);
-    // await PostService(BLUEPRINT_NETWROK_BUILD, data).then((res) => {
-    //   console.log("data from response of Network Build post", res.data);
-    // });
+    var data = {
+      project: this.state.project,
+    };
+    await PostService(BLUEPRINT_NETWROK_BUILD, data).then((res) => {
+      console.log("data from response of Network Build post", res.data);
+    });
   }
 
   //BlueprintHostClone-------------------------------------------------------------------------
