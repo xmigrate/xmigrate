@@ -131,11 +131,11 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
         logger("Public IP was already created for this host: "+host,"info")
    
 
-async def create_nw(project,hostname):
+async def create_nw(project):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]["resource_group"]
     location = Project.objects(name=project)[0]["location"]
-    machines = BluePrint.objects(project=project, host=hostname)
+    machines = BluePrint.objects(project=project)
     cidr = []
     subnet = []
     for machine in machines:
