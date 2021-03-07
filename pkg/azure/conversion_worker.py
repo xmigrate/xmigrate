@@ -27,7 +27,7 @@ async def download_worker(osdisk_raw,project,host):
             os.popen('echo '+command1+'>> ./logs/ansible/migration_log.txt')
             process1 = await asyncio.create_subprocess_shell(command1, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
-            BluePrint.objects(project=project,host=host).update(status='32')
+            BluePrint.objects(project=project,host=host).update(status='30')
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")
@@ -84,7 +84,7 @@ async def conversion_worker(osdisk_raw,project,host):
         command2 = "qemu-img convert -f raw -o subformat=fixed -O vpc "+path+" "+vhd_path
         process2 = await asyncio.create_subprocess_shell(command2, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process2.wait()
-        BluePrint.objects(project=project,host=host).update(status='34')
+        BluePrint.objects(project=project,host=host).update(status='35')
         os.popen('echo "Conversion completed" >> ./logs/ansible/migration_log.txt')
     except Exception as e:
         print(str(e))
