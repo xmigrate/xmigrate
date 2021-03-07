@@ -7,6 +7,8 @@ import {
   Col,
 } from "react-bootstrap";
 import "./NetworkTable.scss";
+import * as icon from "react-icons/all";
+import { IconContext } from "react-icons";
 import SubnetTable from "./SubnetTable";
 export default class NetworkTableRow extends Component {
   constructor(props) {
@@ -38,10 +40,15 @@ export default class NetworkTableRow extends Component {
     return (
       <tbody className="NetworkTable">
         <tr key={this.props.index} className="NetworkRow tData" onClick={this.toggleExpander}>
-          <td colSpan={1}>{this.props.index}</td>
-          <td colSpan={1}>{this.props.Network.nw_name}</td>
-          <td colSpan={1}>{this.props.Network.cidr}</td>
-          <td colSpan={1} onClick={()=>this.props.DeleteNetwork(this.state.Network)}>
+          <td >{ this.state.expanded ? <IconContext.Provider value={{ color: "#1DA1F2" }}>
+  <div>
+  <icon.BsCaretDownFill  /> 
+  </div>
+</IconContext.Provider> :  <icon.BsCaretRightFill /> } 
+           </td>
+          <td >{this.props.Network.nw_name}</td>
+          <td >{this.props.Network.cidr}</td>
+          <td  onClick={()=>this.props.DeleteNetwork(this.state.Network)}>
             <svg
               width="1em"
               id="Del"
@@ -58,6 +65,7 @@ export default class NetworkTableRow extends Component {
               />
             </svg>
           </td>
+          <td></td>
         </tr>
         {this.state.expanded && (
           <tr className="expandable tData" key="tr-expander">
@@ -115,11 +123,11 @@ export default class NetworkTableRow extends Component {
                 <Table className="bordered hover">
                   <thead>
                     <tr>
-                      <th >#</th>
-                      <th>SUBNET</th>
-                      <th>CIDR</th>
-                      <th>TYPE</th>
-                      <th></th>
+                      <th scope="col"></th>
+                      <th scope="col"> SUBNET</th>
+                      <th scope="col">CIDR</th>
+                      <th scope="col">TYPE</th>
+                      <th className="col-3"></th>
                     </tr>
                   </thead>
 
@@ -145,9 +153,9 @@ export default class NetworkTableRow extends Component {
                         dragStart={this.props.dragStart}
                         allowDrop = {this.props.allowDrop}
                         drop = {this.props.drop}
-                        BlueprintHostClone={this.props._BlueprintHostClone}
-                        BlueprintHostConvert={this.props._BlueprintHostConvert}
-                        BlueprintHostBuild={this.props._BlueprintHostBuild}
+                        BlueprintHostClone={this.props.BlueprintHostClone}
+                        BlueprintHostConvert={this.props.BlueprintHostConvert}
+                        BlueprintHostBuild={this.props.BlueprintHostBuild}
 
                       />
                     ))

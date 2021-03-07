@@ -5,6 +5,9 @@ import {
     Col,
     Button
   } from "react-bootstrap";
+  import * as icon from "react-icons/all";
+import { IconContext } from "react-icons";
+import "./NetworkTable.scss";
 export default class SubnetTable extends Component {
 constructor(props){
 super();
@@ -31,7 +34,12 @@ render(){
     return(
         <tbody>
             <tr onClick={this.toggleExpander}  className="SubnetRow tData">
-            <td>#{this.props.index}</td>
+            <td >{ this.state.expanded ? <IconContext.Provider value={{ color: "#1DA1F2" }}>
+  <div>
+  <icon.BsCaretDownFill  /> 
+  </div>
+</IconContext.Provider> :  <icon.BsCaretRightFill /> } 
+           </td>
     <td>{this.props.Subnet.name}</td>
     <td>{this.props.Subnet.cidr}</td>
     <td>{this.props.Subnet.subnet_type}</td>
@@ -52,13 +60,14 @@ render(){
               />
             </svg>
           </td>
+          <td></td>
             </tr>
             {
             this.state.expanded && (
                 <tr className="expandable " key="tr-expander"  onDrop={(e)=>this.props.drop(e,this.state.Subnet,this.state.nw_name)} onDragOver={(e)=>this.props.allowDrop(e)}>
                     <td className="uk-background-muted" colSpan={6}>
                     <Row className="font-weight-bold py-3 ml-1">
-                              <Col xs={{ span: 1 }}>#</Col>
+                              <Col xs={{ span: 1 }}></Col>
                               <Col xs={{ span: 3 }}>HOSTNAME</Col>
                               <Col xs={{ span: 2 }}>IP</Col>
                               <Col xs={{ span: 2 }}>MACHINE TYPE</Col>
@@ -71,7 +80,7 @@ render(){
                        </h6>
                   ) : (
                     this.props.Subnet.hosts.map((host, index) => (
-                      <Row className=" py-3 " key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
+                      <Row className=" py-3 HostRow" key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
                       <Col xs={{ span: 1 }}></Col>
                        <Col xs={{ span: 3 }}>{host.host}</Col>
                       <Col xs={{ span: 2 }}>{host.ip}</Col> 
@@ -101,7 +110,7 @@ render(){
                       className=" media-body"
                       variant="success"
                       size="sm"
-                      onClick={this.props._BlueprintHostClone.bind(this)}
+                      onClick={this.props.BlueprintHostClone.bind(this)}
                     >
                       Clone
                     </Button>

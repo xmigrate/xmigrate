@@ -26,10 +26,10 @@ import {
   BLUEPRINT_SAVE,
   BLUEPRINT_STATUS,
   BLUEPRINT_UDATE_HOST,
-  BLUEPRINT_NETWROK_BUILD,
-  BLUEPRINT_HOST_BUILD,
-  BLUEPRINT_HOST_CONVERT,
-  BLUEPRINT_HOST_CLONE
+  // BLUEPRINT_NETWROK_BUILD,
+  // BLUEPRINT_HOST_BUILD,
+  // BLUEPRINT_HOST_CONVERT,
+  // BLUEPRINT_HOST_CLONE
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
@@ -96,9 +96,9 @@ export default class BluePrint extends Component {
     await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, data).then((res) => {
       console.log("Response Data of New Blueprint host", res.data.networks);
       NetworksDatas = res.data.networks;
-      NetworksDatas.map((Network, index) => {
-        Network.subnets.map((subnet, index) => {
-          subnet.hosts.map((host, index) => {
+     NetworksDatas.forEach((Network, index) => {
+        Network.subnets.forEach((subnet, index) => {
+          subnet.hosts.forEach((host, index) => {
             let hostCurrent = {};
             hostCurrent["hostname"] = host.host;
             hostCurrent["type"] = subnet.subnet_type;
@@ -211,7 +211,7 @@ export default class BluePrint extends Component {
     });
     var NetworksData = this.state.Networks;
     var i;
-    NetworksData.map((Network, index) => {
+    NetworksData.forEach((Network, index) => {
       if (Network.nw_name === NameNetwork) {
         i = index;
       }
@@ -254,7 +254,7 @@ export default class BluePrint extends Component {
     // console.log(event.target.value);
     // console.log(host);
     let hostCurrent = this.state.hostCurrents;
-    hostCurrent.map((hostCur, index) => {
+    hostCurrent.forEach((hostCur, index) => {
       if (hostCur.hostname === host.host) {
         hostCur["machine_type"] = event.target.value;
       }
@@ -288,10 +288,10 @@ export default class BluePrint extends Component {
       let flag;
       let NetworksData = this.state.Networks;
       //Setting the host status
-      NetworksData.map((Network, index) => {
-        Network.subnets.map((subnet, index) => {
-          subnet.hosts.map((host, index) => {
-            res.data.map((hostRes, index) => {
+      NetworksData.forEach((Network, index) => {
+        Network.subnets.forEach((subnet, index) => {
+          subnet.hosts.forEach((host, index) => {
+            res.data.forEach((hostRes, index) => {
               if (host.host === hostRes.host) {
                 host["status"] = hostRes.status;
                 if (parseInt(hostRes.status) < 100) {
@@ -324,7 +324,7 @@ export default class BluePrint extends Component {
       this.state.hostCurrents
     );
     let hostData = this.state.hostCurrents
-    hostData.map((host, index) => {
+    hostData.forEach((host, index) => {
       if (host.type === "Public" || host.type === "True") {
         host["type"] = "True"
       }
@@ -348,7 +348,7 @@ export default class BluePrint extends Component {
     this.handleAlertCloseReset();
     console.log("Reseting....");
     var NetworksData = this.state.Networks;
-    NetworksData.map((Network, index) => {
+    NetworksData.forEach((Network, index) => {
       let data = {
         project: this.state.project,
         nw_name: Network.nw_name,
@@ -393,15 +393,15 @@ export default class BluePrint extends Component {
       console.log(subnetname);
       console.log(nw_name);
       var NetworksData = this.state.Networks;
-      NetworksData.map((Network, index) => {
+      NetworksData.forEach((Network, index) => {
         if (Network.nw_name === data.ChangeNetwork) {
-          Network.subnets.map((subnet, index) => {
+          Network.subnets.forEach((subnet, index) => {
             if (subnet.name === data.ChangeSubnet) {
               subnet.hosts.splice(data.index, 1);
             }
           });
           if (Network.nw_name === nw_name) {
-            Network.subnets.map((subnet, index) => {
+            Network.subnets.forEach((subnet, index) => {
               if (subnet.name === subnetname) {
                 data.host["subnet"] = subnet.cidr;
                 subnet.hosts.push(data.host);
@@ -410,7 +410,7 @@ export default class BluePrint extends Component {
           }
 
         } else if (Network.nw_name === nw_name) {
-          Network.subnets.map((subnet, index) => {
+          Network.subnets.forEach((subnet, index) => {
             if (subnet.name === subnetname) {
               data.host["subnet"] = subnet.cidr;
               subnet.hosts.push(data.host);
@@ -635,10 +635,11 @@ console.log("Network Build");
                   <Table className=" hover">
                     <thead className="tName">
                       <tr>
-                        <th colSpan={1}>#</th>
-                        <th colSpan={1}>NETWORK</th>
-                        <th colSpan={1}>CIDR</th>
-                        <th colSpan={3}></th>
+                        <th scope="col"></th>
+                        <th scope="col">NETWORK</th>
+                        <th scope="col">CIDR</th>
+                        <th scope="col"></th>
+                        <th className="col-5"></th>
                       </tr>
                     </thead>
 
