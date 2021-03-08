@@ -157,9 +157,9 @@ async def build_blueprint():
 @jwt_required
 async def image_clone():
     if request.method == 'POST':
-        project = await request.get_json()
-        project = project['project']
-        hostname = project['hostname']
+        data = await request.get_json()
+        project = data['project']
+        hostname = data['hostname']
         asyncio.create_task(build.call_start_clone(project,hostname))
         return jsonify({"msg":"Cloning started","status":200})
     else:
@@ -170,9 +170,9 @@ async def image_clone():
 @jwt_required
 async def image_convert():
     if request.method == 'POST':
-        project = await request.get_json()
-        project = project['project']
-        hostname = project['hostname']
+        data = await request.get_json()
+        project = data['project']
+        hostname = data['hostname']
         asyncio.create_task(build.call_start_convert(project,hostname))
         return jsonify({"msg":"Build started","status":200})
     else:
@@ -195,9 +195,9 @@ async def network_build():
 @jwt_required
 async def host_build():
     if request.method == 'POST':
-        project = await request.get_json()
-        project = project['project']
-        hostname = project['hostname']
+        data = await request.get_json()
+        project = data['project']
+        hostname = data['hostname']
         asyncio.create_task(build.call_build_host(project,hostname))
         return jsonify({"msg":"Build started","status":200})
     else:
