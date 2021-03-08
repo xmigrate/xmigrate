@@ -2,7 +2,7 @@ from model.discover import *
 from utils.dbconn import *
 from utils.logger import *
 
-def add_nodes(nodes,user,password):
+def add_nodes(nodes,user,password,project):
     ansible_hosts = "'./ansible/"+project+"/hosts"
     host_file = open(ansible_hosts,'w')
     for node in nodes:
