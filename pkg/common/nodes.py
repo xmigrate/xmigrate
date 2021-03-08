@@ -1,9 +1,13 @@
 from model.discover import *
 from utils.dbconn import *
 from utils.logger import *
+import os
+
 
 def add_nodes(nodes,user,password,project):
-    ansible_hosts = "'./ansible/"+project+"/hosts"
+    ansible_hosts = "./ansible/"+project+"/hosts"
+    if not os.path.exists("./ansible/"+project):
+      os.makedirs("./ansible/"+project)
     host_file = open(ansible_hosts,'w')
     for node in nodes:
       try:
