@@ -21,7 +21,7 @@ def build_vpc(cidr,public_route, project):
     vpc.wait_until_available()
     try:
       con = create_db_con()
-      BluePrint.objects(network=cidr, project=project).update(vpc_id = vpc.id, status='43')
+      BluePrint.objects(network=cidr, project=project).update(vpc_id = vpc.id, status='10')
       if public_route:
         ig = ec2.create_internet_gateway()
         vpc.attach_internet_gateway(InternetGatewayId=ig.id)
@@ -55,7 +55,7 @@ def build_subnet(cidr,vpcid,route,project):
       subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
       try:
         con = create_db_con()
-        BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='60')
+        BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='20')
         Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
         route_table.associate_with_subnet(SubnetId=subnet.id)
         con.close()
@@ -78,10 +78,10 @@ async def create_nw(project):
       if not host['vpc_id']:
         network = BluePrint.objects(project=project, network = host['network'], vpc_id__exists = True)
         if len(network) > 0:
-          BluePrint.objects(project=project, network=host['network']).update(vpc_id = network[0]['vpc_id'], status='43')
+          BluePrint.objects(project=project, network=host['network']).update(vpc_id = network[0]['vpc_id'], status='10')
           subnet = BluePrint.objects(project=project, network = host['network'], subnet = host['subnet'], subnet_id__exists = True)
           if len(subnet) > 0:
-            BluePrint.objects(project=project, network=host['network'], subnet=host['subnet']).update(subnet_id = subnet[0]['subnet_id'],status='60')
+            BluePrint.objects(project=project, network=host['network'], subnet=host['subnet']).update(subnet_id = subnet[0]['subnet_id'],status='20')
           else:
             updated_host = BluePrint.objects(project=project, network=host['network'], host=host['host'])[0]
             subnet_build = build_subnet(updated_host['subnet'],updated_host['vpc_id'],updated_host['route_table'], project)
