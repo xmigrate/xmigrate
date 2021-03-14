@@ -2,11 +2,11 @@ from mongoengine import *
 
 class Discover(Document):
     host = StringField(required=True, max_length=200 )
-    ip = StringField(required=True)
+    ip = StringField(required=True, max_length=150)
     subnet = StringField(required=True, max_length=150)
     network = StringField(required=True, max_length=150)
     ports = ListField()
-    cores = StringField(max_length=2)
+    cores = StringField(max_length=150)
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=150)
     disk = StringField(required=True, max_length=150)
