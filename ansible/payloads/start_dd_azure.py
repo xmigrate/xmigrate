@@ -16,14 +16,15 @@ hostname = socket.gethostname()
 class Discover(Document):
     host = StringField(required=True, max_length=200 )
     ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=50)
-    network = StringField(required=True, max_length=50)
+    subnet = StringField(required=True, max_length=150)
+    network = StringField(required=True, max_length=150)
     ports = ListField()
     cores = StringField(max_length=2)
     cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=50)
-    disk = StringField(required=True, max_length=50)
-    project = StringField(required=True, max_length=50)
+    ram = StringField(required=True, max_length=150)
+    disk = StringField(required=True, max_length=150)
+    project = StringField(required=True, max_length=150)
+    public_ip = StringField(required=True, max_length=150)
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
