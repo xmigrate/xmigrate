@@ -87,7 +87,7 @@
       - deploy
 
   - name: <==Executing payload==>
-    shell: "python3 /tmp/footprint.py {{ project }} '{{ mongodb }}'"
+    shell: "python3 /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
     register: st
     become: True
     tags:

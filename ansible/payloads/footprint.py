@@ -98,6 +98,7 @@ class Discover(Document):
     ram = StringField(required=True, max_length=50)
     disk = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
+    public_ip = StringField(required=True, max_length=150)
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
@@ -107,6 +108,7 @@ class Discover(Document):
 def main():
     db_con_string = sys.argv[2]
     project = sys.argv[1]
+    public_ip = sys.argv[3]
     con = connect(host=db_con_string)
     result = network_info()
     result['ports'] = ports_info()
@@ -115,7 +117,7 @@ def main():
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
     try:
-        Discover.objects(project=project,host=socket.gethostname()).update(host=socket.gethostname(), ip=result['ip'], subnet=result['subnet'], network=result['network'],
+        Discover.objects(project=project,host=socket.gethostname()).update(host=socket.gethostname(),public_ip=public_ip, ip=result['ip'], subnet=result['subnet'], network=result['network'],
                  ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info(), upsert=True)
     except Exception as e:
         print("Boss you have to see this!!")

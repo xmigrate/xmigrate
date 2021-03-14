@@ -78,8 +78,8 @@ async def start_uploading(project):
 async def start_cloning(project, hostname):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "azure":
-        public_ip = Discover.objects(name=project,host=hostname)[0]['public_ip']
-        user = Discover.objects(name=project,host=hostname)[0]['user']
+        public_ip = Discover.objects(project=project,host=hostname)[0]['public_ip']
+        user = Project.objects(name=project)[0]['user']
         storage = Storage.objects(project=project)[0]['storage']
         accesskey = Storage.objects(project=project)[0]['access_key']
         container = Storage.objects(project=project)[0]['container']

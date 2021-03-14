@@ -11,6 +11,7 @@ class Discover(Document):
     ram = StringField(required=True, max_length=150)
     disk = StringField(required=True, max_length=150)
     project = StringField(required=True, max_length=150)
+    public_ip = StringField(required=True, max_length=150)
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
