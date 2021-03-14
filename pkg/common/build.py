@@ -51,10 +51,10 @@ async def start_cloning(project,hostname):
     p = Project.objects(name=project)
     if len(p) > 0:
         nodes = []
-        for host in Project.objects(project=project)[0]['public_ip']:
+        for host in Project.objects(name=project)[0]['public_ip']:
             nodes.append(host)
-        username = Project.objects(project=project)[0]['username']
-        password = Project.objects(project=project)[0]['password']
+        username = Project.objects(name=project)[0]['username']
+        password = Project.objects(name=project)[0]['password']
         if n.add_nodes(nodes,username,password, project, False) == False:
             logger("Cloning couldn't start because inventory not created","error")
         else:
