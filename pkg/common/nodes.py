@@ -1,4 +1,4 @@
-from model.discover import *
+from model.project import *
 from utils.dbconn import *
 from utils.logger import *
 import os
@@ -13,8 +13,8 @@ def add_nodes(nodes,user,password,project, update_db=True):
       try:
         Project.objects(project=project).update(public_ip=nodes, username=user, password=password, upsert=True)
       except Exception as e:
-        print("Error while inserting to Discover: "+str(e))
-        logger("Error while inserting to Discover: "+str(e),"error")
+        print("Error while inserting to Project: "+str(e))
+        logger("Error while inserting to Project: "+str(e),"error")
     nodes = '\n'.join(nodes)
     try:
       s='[nodes]'+'\n'+nodes+'\n'+'[all:vars]'+'\n'+'ansible_ssh_pass = '+password
