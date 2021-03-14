@@ -14,3 +14,6 @@ class Project(Document):
     access_key = StringField(max_length=150)
     secret_key = StringField(max_length=150)
     resource_group_created = BooleanField(default=False)
+    username = StringField(max_length=150)
+    password = StringField(max_length=150)
+    public_ip = ListField()

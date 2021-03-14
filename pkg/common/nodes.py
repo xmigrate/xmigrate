@@ -4,16 +4,14 @@ from utils.logger import *
 import os
 
 
-def add_nodes(nodes,user,password,project):
+def add_nodes(nodes,user,password,project, update_db=True):
     ansible_hosts = "./ansible/"+project+"/hosts"
     if not os.path.exists("./ansible/"+project):
       os.makedirs("./ansible/"+project)
     host_file = open(ansible_hosts,'w')
-    for node in nodes:
+    if update_db:
       try:
-        Discover.objects(project=project).update(host="not discovered", ip="not discovered", subnet="not discovered", network="not discovered",
-                  ports="not discovered", cores="not discovered", cpu_model="not discovered", ram="not discovered", disk="not discovered", 
-                  public_ip=node, username=user, password=password, upsert=True)
+        Project.objects(project=project).update(public_ip=nodes, username=user, password=password, upsert=True)
       except Exception as e:
         print("Error while inserting to Discover: "+str(e))
         logger("Error while inserting to Discover: "+str(e),"error")
