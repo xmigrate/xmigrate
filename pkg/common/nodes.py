@@ -4,14 +4,14 @@ from utils.logger import *
 import os
 
 
-def add_nodes(nodes,user,password,project, update_db=True):
-    ansible_hosts = "./ansible/"+project+"/hosts"
-    if not os.path.exists("./ansible/"+project):
-      os.makedirs("./ansible/"+project)
+def add_nodes(nodes,user,password,p, update_db=True):
+    ansible_hosts = "./ansible/"+p+"/hosts"
+    if not os.path.exists("./ansible/"+p):
+      os.makedirs("./ansible/"+p)
     host_file = open(ansible_hosts,'w')
     if update_db:
       try:
-        Project.objects(project=project).update(public_ip=nodes, username=user, password=password, upsert=True)
+        Project.objects(project=p).update(public_ip=nodes, username=user, password=password, upsert=True)
       except Exception as e:
         print("Error while inserting to Project: "+str(e))
         logger("Error while inserting to Project: "+str(e),"error")
