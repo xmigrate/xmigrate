@@ -153,12 +153,11 @@ async def start_host_build(project,hostname):
         if p[0]['provider'] == "azure":
             logger("Host build started","info")
             print("****************Host build awaiting*****************")
-            vm_created = await compute.create_vm(project, hostname)
-            if vm_created:
-                logger("Host created","info")
+            disk_created = await disk.create_disk(project,hostname)
+            if disk_created:
+                vm_created = await compute.create_vm(project, hostname)
             else:
-                print("Host creation failed")
-                logger("Host creation failed","error")
+                logger("Disk creation failed","error")
         elif p[0]['provider'] == "aws":
             logger("ec2 creation started","info")
             ec2_created = await ec2.build_ec2(project, hostname)

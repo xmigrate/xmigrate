@@ -147,11 +147,11 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     finally:
         con.close()
 
-async def create_disk(project):
+async def create_disk(project, hostname):
     con = create_db_con()
     rg_name = Project.objects(name=project)[0]['resource_group']
     location = Project.objects(name=project)[0]['location']
-    disks = Disk.objects(project=project)
+    disks = Disk.objects(project=project,host=hostname)
     storage_account = Storage.objects(project=project)[0]['storage']
     container = Storage.objects(project=project)[0]['container']
     for disk in disks:
