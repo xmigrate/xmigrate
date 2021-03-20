@@ -110,7 +110,8 @@ render(){
                       className=" media-body"
                       variant="success"
                       size="sm"
-                      onClick={this.props.BlueprintHostClone.bind(this)}
+                      disabled={host["BtStatus"] !=="clone"}
+                      onClick={()=>this.props.BlueprintHostClone(host.host)}
                     >
                       Clone
                     </Button>
@@ -119,7 +120,8 @@ render(){
                       className=" media-body"
                       variant="danger"
                       size="sm"
-                      onClick={this.props.BlueprintHostConvert.bind(this)}
+                      disabled={host["BtStatus"] !=="convert"}
+                      onClick={()=>this.props.BlueprintHostConvert(host.host)}
                     >
                       Convert
                     </Button>
@@ -128,7 +130,8 @@ render(){
                       className=" media-body"
                       variant="primary"
                       size="sm"
-                      onClick={this.props.BlueprintHostBuild.bind(this)}
+                      disabled={host["BtStatus"] !== "build"}
+                      onClick={()=>this.props.BlueprintHostBuild(host.host)}
                     >
                       Build
                     </Button></Col>

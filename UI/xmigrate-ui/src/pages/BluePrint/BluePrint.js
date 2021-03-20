@@ -26,10 +26,10 @@ import {
   BLUEPRINT_SAVE,
   BLUEPRINT_STATUS,
   BLUEPRINT_UDATE_HOST,
-  BLUEPRINT_NETWROK_BUILD,
-  // BLUEPRINT_HOST_BUILD,
-  // BLUEPRINT_HOST_CONVERT,
-  // BLUEPRINT_HOST_CLONE
+  BLUEPRINT_NETWORK_BUILD,
+  BLUEPRINT_HOST_BUILD,
+  BLUEPRINT_HOST_CONVERT,
+  BLUEPRINT_HOST_CLONE
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
@@ -66,6 +66,9 @@ export default class BluePrint extends Component {
     this.allowDrop = this.allowDrop.bind(this);
     this.drop = this.drop.bind(this);
     this.getStatus = this.getStatus.bind(this);
+    this._BlueprintHostClone = this._BlueprintHostClone.bind(this);
+    this._BlueprintHostConvert = this._BlueprintHostConvert.bind(this);
+    this._BlueprintHostBuild = this._BlueprintHostBuild.bind(this);
   }
 
   async GettingData() {
@@ -99,6 +102,16 @@ export default class BluePrint extends Component {
      NetworksDatas.forEach((Network, index) => {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
+            if(host["status"]=== "20"){
+              host["BtStatus"] = "clone";
+            }else if(host["status"] === "25"){
+              host["BtStatus"] = "convert";
+            }else if(host["status"] === "35"){
+              host["BtStatus"] = "build";
+            }
+            else{
+              host["BtStatus"] = "BuildNetwork";
+            }
             let hostCurrent = {};
             hostCurrent["hostname"] = host.host;
             hostCurrent["type"] = subnet.subnet_type;
@@ -109,7 +122,7 @@ export default class BluePrint extends Component {
         });
       });
     });
-
+    console.log("Network Data:",NetworksDatas);
     //Setting the State
     this.setState({
       Networks: NetworksDatas,
@@ -279,46 +292,50 @@ export default class BluePrint extends Component {
       this.setState({ interval: interval });
     });
   }
-  getStatus() {
-    let data1 = {
-      project: this.state.project,
-    };
-    GetServiceWithData(BLUEPRINT_STATUS, data1).then((res) => {
-      console.log("Response For Status", res);
-      let flag;
-      let NetworksData = this.state.Networks;
-      //Setting the host status
-      NetworksData.forEach((Network, index) => {
-        Network.subnets.forEach((subnet, index) => {
-          subnet.hosts.forEach((host, index) => {
-            res.data.forEach((hostRes, index) => {
-              if (host.host === hostRes.host) {
-                host["status"] = hostRes.status;
-                if (parseInt(hostRes.status) < 100) {
-                  flag = false;
-                }
-                else {
-                  flag = true;
-                }
-              }
-            });
-          });
-        });
-      });
-      if (flag) {
-        clearInterval(this.state.intervalId);
 
-        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
-      }
-      this.setState({
-        Networks: NetworksData,
-      });
-    });
-  }
+
+  //OLd Getting Status Migration------------------------------------------------
+  // getStatus() {
+  //   let data1 = {
+  //     project: this.state.project,
+  //   };
+  //   GetServiceWithData(BLUEPRINT_STATUS, data1).then((res) => {
+  //     console.log("Response For Status", res);
+  //     let flag;
+  //     let NetworksData = this.state.Networks;
+  //     //Setting the host status
+  //     NetworksData.forEach((Network, index) => {
+  //       Network.subnets.forEach((subnet, index) => {
+  //         subnet.hosts.forEach((host, index) => {
+  //           res.data.forEach((hostRes, index) => {
+  //             if (host.host === hostRes.host) {
+  //               host["status"] = hostRes.status;
+  //               if (parseInt(hostRes.status) < 100) {
+  //                 flag = false;
+  //               }
+  //               else {
+  //                 flag = true;
+  //               }
+  //             }
+  //           });
+  //         });
+  //       });
+  //     });
+  //     if (flag) {
+  //       clearInterval(this.state.intervalId);
+
+  //       this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
+  //     }
+  //     this.setState({
+  //       Networks: NetworksData,
+  //     });
+  //   });
+  // }
+
+
 
   //Creating SaveNetwork-----------------------------------------------------------------
   async _SaveBuild() {
-    this.handleAlertCloseSave();
     console.log(
       "Here the data for host Current is saved",
       this.state.hostCurrents
@@ -339,7 +356,7 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!" })
+      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!" ,ShowAlertSave:false})
     });
   }
 
@@ -363,7 +380,7 @@ export default class BluePrint extends Component {
 
   }
 
-  // Draging and Drop
+  // Draging and Drop Functionality
   drag(ev, host, index, subnetname, nw_name) {
     let data = {
       host: host,
@@ -437,101 +454,116 @@ export default class BluePrint extends Component {
   }
 
 
-  ///Handling Alerts---------------------------------------------------------------------
-  handleAlertOpenReset() {
-    this.setState({
-      ShowAlertReset: true
-    })
-  }
-
-  handleAlertCloseReset() {
-    this.setState({
-      ShowAlertReset: false
-    })
-  }
-
-
-  handleAlertOpenBuild() {
-    this.setState({
-      ShowAlertBuild: true
-    })
-  }
-
-  handleAlertCloseBuild() {
-    this.setState({
-      ShowAlertBuild: false
-    })
-  }
-
-  handleAlertOpenSave() {
-    this.setState({
-      ShowAlertSave: true
-    })
-  }
-
-  handleAlertCloseSave() {
-    this.setState({
-      ShowAlertSave: false
-    })
-  }
-
-  ///Closing Alert
-  closeAlertUpdate() {
-    this.setState({
-      showUpdateAlert: false
-    })
-  }
-
   //BluePrintNetworkBuild-------------------------------------------------------------------------
   async _BlueprintNetworkBuild() {
 console.log("Network Build");
     var data = {
       project: this.state.project,
     };
-    await PostService(BLUEPRINT_NETWROK_BUILD, data).then((res) => {
+    console.log("Sending",data);
+    await PostService(BLUEPRINT_NETWORK_BUILD, data).then((res) => {
       console.log("data from response of Network Build post", res.data);
+      var interval = setInterval(this.getStatus, 60000);
+      this.setState({ intervalId: interval });
+      //Check status and Status should be 60
     });
+    
   }
 
   //BlueprintHostClone-------------------------------------------------------------------------
-  async _BlueprintHostClone() {
-    console.log("Network Clone");
-    // var data = {
-    //   project: this.state.project,
-    //   machines: hostData,
-    // };
-    // console.log(data);
-    // await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
-    //   console.log("data from response of Network Build post", res.data);
-    // });
+  async _BlueprintHostClone(hostName) {
+    console.log("Network Clone",hostName);
+    var data = {
+      project: this.state.project,
+      hostname: hostName,
+    };
+    console.log(data);
+    await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
+      console.log("data from response of Network Build post", res.data);
+      var interval = setInterval(this.getStatus, 60000);
+      this.setState({ intervalId: interval });
+    });
   }
 
   //BlueprintHostConvert-------------------------------------------------------------------------
-  async _BlueprintHostConvert() {
-    console.log("Network Convert");
-    // var data = {
-    //   project: this.state.project,
-    //   machines: hostData,
-    // };
-    // console.log(data);
-    // await PostService(BLUEPRINT_HOST_CONVERT, data).then((res) => {
-    //   console.log("data from response of Network Build post", res.data);
-    // });
+  async _BlueprintHostConvert(hostName) {
+    console.log("Network Convert",hostName);
+    var data = {
+      project: this.state.project,
+      hostname: hostName,
+    };
+    console.log(data);
+    await PostService(BLUEPRINT_HOST_CONVERT, data).then((res) => {
+      console.log("data from response of Network Build post", res.data);
+      var interval = setInterval(this.getStatus, 60000);
+      this.setState({ intervalId: interval });
+    });
   }
 
   //BlueprintHostBuild-------------------------------------------------------------------------
-  async _BlueprintHostBuild() {
-    console.log("Network Build");
-    // var data = {
-    //   project: this.state.project,
-    //   machines: hostData,
-    // };
-    // console.log(data);
-    // await PostService(BLUEPRINT_HOST_BUILD, data).then((res) => {
-    //   console.log("data from response of Network Build post", res.data);
-    // });
+  async _BlueprintHostBuild(hostName) {
+    console.log("Network Build",hostName);
+    var data = {
+      project: this.state.project,
+      hostname: hostName,
+    };
+    console.log(data);
+    await PostService(BLUEPRINT_HOST_BUILD, data).then((res) => {
+      console.log("data from response of Network Build post", res.data);
+      var interval = setInterval(this.getStatus, 60000);
+      this.setState({ intervalId: interval });
+    });
   }
 
+  // Getting Status Migration------------------------------------------------
+  getStatus() {
+    let data1 = {
+      project: this.state.project,
+    };
+    GetServiceWithData(BLUEPRINT_STATUS, data1).then((res) => {
+      console.log("Response For Status", res);
+      let flag = false;
+      let NetworksData = this.state.Networks;
+      //Setting the host status
+      NetworksData.forEach((Network, index) => {
+        Network.subnets.forEach((subnet, index) => {
+          subnet.hosts.forEach((host, index) => {
+            res.data.forEach((hostRes, index) => {
+              if (host.host === hostRes.host) {
+                console.log(hostRes.status);
+                // host["BtStatus"] = hostRes.status;
+                console.log("Status of Button",host["BtStatus"]);
+                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] ==="BuildNetwork") ||  (parseInt(hostRes.status) < 25 && host["BtStatus"] ==="clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] ==="convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] ==="Build") ) {
+                  flag = false;
+                }
+                else {
+                  flag = true;
+                  if(host["BtStatus"] === "BuildNetwork"){
+                    host["BtStatus"] ="clone"
+                    console.log(host["BtStatus"]);
+                  }
+                  else if(host["BtStatus"] === "clone"){
+                    host["BtStatus"] ="convert";
+                  }
+                  else if(host["BtStatus"] === "convert"){
+                    host["BtStatus"] ="build";
+                  }
+                }
+              }
+            });
+          });
+        });
+      });
+      if (flag) {
+    
+        clearInterval(this.state.intervalId);
+        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
+      }
+      this.setState({
+        Networks: NetworksData,
+      });
+    });
+  }
 
 
   render() {
@@ -585,7 +617,7 @@ console.log("Network Build");
               </Card.Body>
             </Card>
 
-            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
+            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={()=>  this.setState({showUpdateAlert: false})} dismissible>
               <p>{this.state.showUpdateMessage}</p>
             </Alert>
 
@@ -682,7 +714,8 @@ console.log("Network Build");
                 variant="success"
                 className="media-body py-3 mr-40px text-success bt-main"
                 // onClick={this._SaveBuild.bind(this)}
-                onClick={this.handleAlertOpenSave.bind(this)}
+                // onClick={this.handleAlertOpenSave.bind(this)}
+                onClick={()=>  this.setState({ShowAlertSave: true}) }
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
@@ -692,7 +725,7 @@ console.log("Network Build");
                 variant="primary"
                 className="media-body py-3 mr-40px text-primary  bt-main"
                 // onClick={this._createBuild.bind(this)}
-                onClick={this.handleAlertOpenBuild.bind(this)}
+                onClick={()=>  this.setState({ShowAlertBuild: true})}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
@@ -702,7 +735,7 @@ console.log("Network Build");
                 variant="danger"
                 className="media-body py-3 text-danger  bt-main"
                 // onClick={this._Reset.bind(this)}
-                onClick={this.handleAlertOpenReset.bind(this)}
+                onClick={()=> this.setState({ShowAlertReset: true})}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
@@ -715,7 +748,7 @@ console.log("Network Build");
           {/* Reset Alert */}
 
           <Modal show={this.state.ShowAlertReset}
-            onHide={this.handleAlertCloseReset.bind(this)}
+            onHide={()=> this.setState({ShowAlertReset: false})}
           >
             <Modal.Header closeButton>
               <Modal.Title>Reset Project</Modal.Title>
@@ -723,7 +756,7 @@ console.log("Network Build");
             <Modal.Body>Do you want to Reset?</Modal.Body>
             <Modal.Footer>
               <Button variant="secondary"
-                onClick={this.handleAlertCloseReset.bind(this)}
+                onClick={()=> this.setState({ShowAlertReset: false})}
               >
                 Close
           </Button>
@@ -740,7 +773,7 @@ console.log("Network Build");
           {/* Build Alert */}
 
           <Modal show={this.state.ShowAlertBuild}
-            onHide={this.handleAlertCloseBuild.bind(this)}
+            onHide={()=>  this.setState({ShowAlertBuild: false})}
           >
             <Modal.Header closeButton>
               <Modal.Title>Build Project</Modal.Title>
@@ -748,7 +781,7 @@ console.log("Network Build");
             <Modal.Body>Do you want to Build?</Modal.Body>
             <Modal.Footer>
               <Button variant="secondary"
-                onClick={this.handleAlertCloseBuild.bind(this)}
+                onClick={()=>  this.setState({ShowAlertBuild: false})}
               >
                 Close
           </Button>
@@ -765,7 +798,7 @@ console.log("Network Build");
 
           {/* Save Alert */}
           <Modal show={this.state.ShowAlertSave}
-            onHide={this.handleAlertCloseSave.bind(this)}
+            onHide={()=>  this.setState({ShowAlertSave: false })}
           >
             <Modal.Header closeButton>
               <Modal.Title>Save BluePrint</Modal.Title>
@@ -773,7 +806,8 @@ console.log("Network Build");
             <Modal.Body>Do you want to Save?</Modal.Body>
             <Modal.Footer>
               <Button variant="secondary"
-                onClick={this.handleAlertCloseSave.bind(this)}
+                // onClick={this.handleAlertCloseSave.bind(this)}
+                onClick={()=>  this.setState({ShowAlertSave: false})}
               >
                 Close
           </Button>
