@@ -19,4 +19,5 @@ def set_aws_creds(project):
         return True
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
         return False

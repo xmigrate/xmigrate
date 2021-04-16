@@ -120,6 +120,7 @@ def create_blueprint():
       except Exception as e:
         print("Boss you have to see this!!")
         print(e)
+        logger(str(e),"warning")
       finally:
         con.close()
     return render_template('discover.html',machines=Post.objects,result=BluePrint.objects)

@@ -15,4 +15,5 @@ def add_servers():
       add_nodes(nodes,user,password)
     except Exception as e:
       print(e)
+      logger(str(e),"warning")
   return render_template('index.html', title='Home')

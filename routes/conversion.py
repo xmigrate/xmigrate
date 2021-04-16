@@ -15,5 +15,6 @@ def start_conversion():
         start_ami_creation(bucket_name,img_name)
       except Exception as e:
         print("Boss you have to see this error: "+str(e))
+        logger(str(e),"warning")
     con.close()
     return jsonify({'status': 'Success'})

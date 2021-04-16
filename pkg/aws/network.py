@@ -84,6 +84,7 @@ async def create_nw(project):
           subnet_build = build_subnet(host['subnet'],updated_host['vpc_id'],updated_host['route_table'], project)
   except Exception as e:
     print(repr(e))
+    logger(str(e),"warning")
     return False
   finally:
     con.close()

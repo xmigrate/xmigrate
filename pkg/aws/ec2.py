@@ -85,6 +85,8 @@ def get_vm_types(project):
         flag = True
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
+
         flag = False
     finally:
         con.close()

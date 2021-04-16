@@ -136,6 +136,7 @@ async def start_ami_creation(project):
       bucket_name = bucket['bucket']
    except Exception as e:
       print(repr(e))
+      logger(str(e),"warning")
    finally:
       con.close()
    for image in images:

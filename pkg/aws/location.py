@@ -8,4 +8,5 @@ def get_locations(access_key,secret_key):
         return regions,True 
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
         return regions, False

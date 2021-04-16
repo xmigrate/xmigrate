@@ -162,4 +162,5 @@ async def adhoc_image_conversion(project):
             except Exception as e:
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))
+                logger(str(e),"warning")
     con.close()
