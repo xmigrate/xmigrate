@@ -28,6 +28,7 @@ def fetch_hosts(project):
         return response
     except Exception as e:
         print("Reading from db failed: "+repr(e))
+        logger(str(e),"warning")
         con.close()
         return {"msg":"Failed fetching details"}
 
@@ -47,6 +48,7 @@ def update_hosts(project,machines):
         return True
     except Exception as e:
         print(repr(e))
+        logger(str(e),"warning")
         con.close()
         return False
 
@@ -75,4 +77,5 @@ def fetch_all_hosts(project):
         return {'networks':network_objects}
     except Exception as e:
         print(e)
+        logger(str(e),"warning")
 

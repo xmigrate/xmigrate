@@ -24,6 +24,7 @@ def start_building():
           BluePrint.objects(network=vpc).update(status='VPC created')
         except Exception as e:
           print("Something went wrong while creating vpc: "+str(e))
+          logger(str(e),"warning")
     machines = json.loads(BluePrint.objects.to_json())
     for machine in machines:
       subnet = machine['subnet']
@@ -36,6 +37,8 @@ def start_building():
           BluePrint.objects(subnet=subnet).update(status='Subnet created')
         except Exception as e:
           print("Something went wrong while creating subnet: "+str(e))
+          logger(str(e),"warning")
+
     machines = json.loads(BluePrint.objects.to_json())
     for machine in machines:
       subnet_id = machine['subnet_id']
@@ -47,5 +50,7 @@ def start_building():
          BluePrint.objects(host=hostname).update(status='Completed build')
        except Exception as e:
          print("Something went wrong while building the machine "+hostname+' '+str(e))
+        logger(str(e),"warning")
+
     con.close()
     return jsonify({'status': 'Success'})

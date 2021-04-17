@@ -108,6 +108,7 @@ def update_blueprint(machines,p):
         except Exception as e:
             print("Boss you have to see this!!")
             print(e)
+            logger(str(e),"warning")
             return False
         finally:
             con.close()
@@ -122,6 +123,7 @@ def create_nw_layout(cidr,p):
         print("Deleted objects")
     except Exception as e:
         print("See the error:" + str(e))
+        logger(str(e),"warning")
     network_cidr_updated = update_nw_cidr(p)
     if network_cidr_updated:
         machines, subnet_updated = update_subnet(cidr,p)
@@ -141,6 +143,7 @@ def create_nw(cidr,project,name):
         return True
     except Exception as e:
         print(str(e))
+        logger(str(e),"warning")
         con.close()
         return False
 
@@ -153,6 +156,7 @@ def delete_nw(project,name):
         return True
     except Exception as e:
         print(str(e))
+        logger(str(e),"warning")
         con.close()
         return False
 
@@ -164,6 +168,7 @@ def delete_subnet(project,name, nw_name):
         return True
     except Exception as e:
         print(str(e))
+        logger(str(e),"warning")
         con.close()
         return False
 
@@ -175,6 +180,7 @@ def fetch_nw(project):
         con.close()
         return result
     except Exception as e:
+        logger(str(e),"warning")
         con.close()
         result = {"msg":"Failed to retrieve network details"}
         return result
@@ -190,6 +196,7 @@ def fetch_subnet(project,network):
         con.close()
         return result
     except Exception as e:
+        logger(str(e),"warning")
         con.close()
         result = {"msg":"Failed to retrieve network details"}
         return result
@@ -213,11 +220,13 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
                     con.close()
                 except Exception as e:
                     print("Error while updating BluePrint: "+str(e))
+                    logger(str(e),"warning")
                     con.close()
             return True       
         else:
             return True
     except Exception as e:
         print("Error while updating Subnet: "+str(e))
+        logger(str(e),"warning")
         con.close()
         return False
