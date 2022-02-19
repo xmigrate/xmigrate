@@ -119,31 +119,31 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     subscription_id = Project.objects(name=project)[0]['subscription_id']
     creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
     compute_client = ComputeManagementClient(creds,subscription_id)
-    con.close()
-    async_creation = compute_client.images.create_or_update(
-        rg_name,
-        disk_name,
-        {
-            'location': location,
-            'storage_profile': {
-            'os_disk': {
-                'os_type': 'Linux',
-                'os_state': "Generalized",
-                'blob_uri': uri,
-                'caching': "ReadWrite",
-                'storage_account_type': 'StandardSSD_LRS'
-                
-            }
-            },
-            'hyper_vgeneration': 'V1'
-        }
-    )
-    image_resource = async_creation.result()
     try:
+        async_creation = compute_client.images.create_or_update(
+            rg_name,
+            disk_name,
+            {
+                'location': location,
+                'storage_profile': {
+                'os_disk': {
+                    'os_type': 'Linux',
+                    'os_state': "Generalized",
+                    'blob_uri': uri,
+                    'caching': "ReadWrite",
+                    'storage_account_type': 'StandardSSD_LRS'
+                    
+                }
+                },
+                'hyper_vgeneration': 'V1'
+            }
+        )
+        image_resource = async_creation.result()
         BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
+        logger("Disk created: "+repr(e),"info")
     except Exception as e:
-        print("disk creation updation failed: "+repr(e))
-        logger("Disk creation updation failed: "+repr(e),"warning")
+        logger("Disk creation failed: "+repr(e),"error")
+        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='-40')
     finally:
         con.close()
 
