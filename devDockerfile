@@ -3,7 +3,6 @@ FROM node AS stage
 WORKDIR /app
 COPY ./UI .
 WORKDIR /app/xmigrate-ui
-RUN yarn && yarn build
 
 FROM ubuntu:18.04
 
@@ -26,11 +25,15 @@ RUN mkdir -p ./logs/ansible/ && mkdir osdisks && touch ./logs/ansible/log.txt &&
 
 COPY requirements.txt requirements.txt
 
-RUN python3.7 -m easy_install --upgrade pyOpenSSL
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
+RUN python3.7 -m pip install -U pip
+
+RUN python3.7 -m pip install setuptools-rust
+
+RUN python3.7 -m pip install --no-use-pep517 --upgrade pyOpenSSL
 
 RUN python3.7 -m pip install -r requirements.txt 
-
-COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 
 RUN apt update -y 
 RUN apt install -y git
@@ -39,5 +42,4 @@ COPY . .
 RUN rm -rf UI
 ENV AZCOPY_BUFFER_GB=0.3
 EXPOSE 80
-ENTRYPOINT ["/bin/sh", "./scripts/start.sh"]
 
