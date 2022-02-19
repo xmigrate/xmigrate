@@ -1,14 +1,11 @@
 setuptools
 wheel
-# netifaces
-# netaddr
-# psutil
 mongoengine
 flask
-ansible
+ansible==3.0.0
 pygtail
-boto3
-python-dotenv
+boto3==1.17.22
+python-dotenv==0.15.0
 azure-common==1.1.25
 azure-core==1.7.0
 azure-mgmt-common==0.20.0
@@ -21,9 +18,9 @@ azure-mgmt-subscription==0.6.0
 azure-storage-common==1.4.2
 azure-storage-blob==12.5.0
 azure-cli-core
-flask_cors
-keyrings.alt
+flask_cors==3.0.10
+keyrings.alt==3.0
 PyJWT==v1.7.1
-Quart-CORS
-quart_jwt_extended
-dnspython
+Quart-CORS==0.3.0
+quart_jwt_extended==0.0.3
+dnspython==2.1.0
