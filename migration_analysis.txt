@@ -365,11 +365,13 @@ invalid response
 
 Status codes
 ------------
-
+Vnet created: 5 | -5 Vnet creation failed
 Started cloning : 10
-Cloning completed: 25
-Start converting: 32
-Conversion completed: 36
+Cloning completed: 25 | -25 Cloning failed
+Download started: 30 | -30 Download failed
+Start converting: 35 | -35 Conversion failed
+Conversion completed: 36 | -36 Conversion failed
+Disk created: 40 | -40 Disk creation failed
 Network created: 43
 Subnet created: 60
 Start VM creation: 95
