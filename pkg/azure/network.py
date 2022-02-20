@@ -15,23 +15,25 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
     con = create_db_con()
     created = Network.objects(cidr=cidr, project=project)[0]['created']
     if not created:
-        client_id = Project.objects(name=project)[0]['client_id']
-        secret = Project.objects(name=project)[0]['secret']
-        tenant_id = Project.objects(name=project)[0]['tenant_id']
-        subscription_id = Project.objects(name=project)[0]['subscription_id']
-        creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
-        network_client = NetworkManagementClient(creds,subscription_id)
-        poller = network_client.virtual_networks.create_or_update(rg_name, vnet_name, {
-                                                                "location": location, "address_space": {"address_prefixes": [cidr]}})
-        vnet_result = poller.result()
-        print(
-            "Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
         try:
+            client_id = Project.objects(name=project)[0]['client_id']
+            secret = Project.objects(name=project)[0]['secret']
+            tenant_id = Project.objects(name=project)[0]['tenant_id']
+            subscription_id = Project.objects(name=project)[0]['subscription_id']
+            creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
+            network_client = NetworkManagementClient(creds,subscription_id)
+            poller = network_client.virtual_networks.create_or_update(rg_name, vnet_name, {
+                                                                    "location": location, "address_space": {"address_prefixes": [cidr]}})
+            vnet_result = poller.result()
+            print(
+                "Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
+            
             BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='5')
             Network.objects(cidr=cidr, project=project).update(created=True, upsert=True)
         except Exception as e:
             print("Vnet creation failed to save: "+repr(e))
             logger("Vnet creation failed to save: "+repr(e),"warning")
+            BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='-5')
             return False
         finally:
             con.close()

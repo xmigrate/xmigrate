@@ -28,13 +28,13 @@ async def download_worker(osdisk_raw,project,host):
             process1 = await asyncio.create_subprocess_shell(command1, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
             BluePrint.objects(project=project,host=host).update(status='30')
-            con.close()
             return True
         else:
             return True
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")
+        BluePrint.objects(project=project,host=host).update(status='-30')
         return False
     finally:
         con.close()
@@ -66,6 +66,7 @@ async def upload_worker(osdisk_raw,project,host):
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")
+        BluePrint.objects(project=project,host=host).update(status='-36')
         os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
     finally:
         con.close()
@@ -96,6 +97,7 @@ async def conversion_worker(osdisk_raw,project,host):
             logger("Conversion completed "+osdisk_raw,"warning")
         except Exception as e:
             print(str(e))
+            BluePrint.objects(project=project,host=host).update(status='-35')
             logger(str(e),"warning")
             file_size = '0'
         finally:

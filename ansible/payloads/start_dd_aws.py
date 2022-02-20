@@ -32,7 +32,10 @@ class BluePrint(Document):
     }
 
 BluePrint.objects(host=hostname,project=project).update(status='10')
-os.system('sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://'+bucket+'/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA --profile '+project)
-
-BluePrint.objects(host=hostname, project=project).update(status='25')
-con.close()
+try:
+    os.system('sudo dd if=/dev/xvda bs=1M status=progress | aws s3 cp - s3://'+bucket+'/$HOSTNAME.img --sse AES256 --storage-class STANDARD_IA --profile '+project)
+    BluePrint.objects(host=hostname, project=project).update(status='25')
+except:
+    BluePrint.objects(host=hostname, project=project).update(status='-25')
+finally:
+    con.close()
