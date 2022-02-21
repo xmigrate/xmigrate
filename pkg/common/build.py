@@ -167,7 +167,7 @@ async def start_host_build(project,hostname):
                 print("ec2 creation failed")
                 logger("ec2 creation failed","error")
 
-
+# ADD GCP condition
 async def start_build(project):
     con = create_db_con()
     p = Project.objects(name=project)
