@@ -32,11 +32,15 @@ def network_info():
 
 
 def disk_info():
-  root_disk =''
-  for i in psutil.disk_partitions():
-    if i.mountpoint == '/':
-      root_disk = i.device.rstrip('1234567890')
-  return root_disk
+    '''
+    This function will fetch the disk details and return in this format 
+    [{'/dev/sda': '/'}, {'/dev/sdb': '/mnt'}]
+    '''
+    root_disk=[]
+    for i in psutil.disk_partitions():
+        if i.fstype == 'ext4':
+            root_disk.append({i.device.rstrip('1234567890'): i.mountpoint})
+    return root_disk
 
 
 def ports_info():
@@ -96,9 +100,9 @@ class Discover(Document):
     cores = StringField(max_length=2)
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
-    disk = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
     public_ip = StringField(required=True, max_length=150)
+    disk_details = ListField()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
@@ -113,12 +117,11 @@ def main():
     result = network_info()
     result['ports'] = ports_info()
     cores = str(len(cpuinfo().keys()))
-    disk = disk_info()
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
     try:
         Discover.objects(project=project,host=socket.gethostname()).update(host=socket.gethostname(),public_ip=public_ip, ip=result['ip'], subnet=result['subnet'], network=result['network'],
-                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info(), upsert=True)
+                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disk_info(), upsert=True)
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
