@@ -37,6 +37,12 @@ from routes.storage import *
 from routes.auth import *
 from routes.locations import *
 from routes.vm_types import *
+# from routes.test import *
+
+#Exception
+from exception import exception
+app.register_error_handler(404, exception.page_not_found)
+app.register_error_handler(Exception, exception.internal_server_error)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)
