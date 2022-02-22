@@ -21,6 +21,7 @@ class BluePrint(Document):
     vm_id = StringField(required=False, max_length=200)
     project = StringField(required=True, max_length=50)
     nic_id = StringField(max_length=200)
+    disk_clone = MapField()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}

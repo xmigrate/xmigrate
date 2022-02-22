@@ -22,7 +22,7 @@ class Discover(Document):
     cores = StringField(max_length=2)
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=150)
-    disk = StringField(required=True, max_length=150)
+    disk_details = MapField()
     project = StringField(required=True, max_length=150)
     public_ip = StringField(required=True, max_length=150)
     meta = {
@@ -52,17 +52,28 @@ class BluePrint(Document):
     vm_id = StringField(required=False, max_length=200)
     project = StringField(required=True, max_length=50)
     nic_id = StringField(max_length=200)
+    disk_clone = MapField()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
         ]
     }
     
-osdisk = Discover.objects(host=hostname,project=project)[0]['disk']
-try:
-    BluePrint.objects(host=hostname,project=project).update(status='10')
-    os.system('sudo dd if='+osdisk+' bs=1M status=progress | azcopy copy "'+url+hostname+'.raw?'+sas+'" --from-to PipeBlob')
-    BluePrint.objects(host=hostname, project=project).update(status='25')
-except:
-    BluePrint.objects(host=hostname, project=project).update(status='-25')
+disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
+disk_mnt = disks.keys()
+BluePrint.objects(host=hostname,project=project).update(status='10')
+output=''
+for mnt in disk_mnt:
+    try:
+        BluePrint.objects(host=hostname,project=project).update(disk_clone[mnt]['status']='10')
+        output = os.popen('sudo dd if='+disks[mnt]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path'.raw?'+sas+'" --from-to PipeBlob').read()
+        mnt_path = mnt.replace("/","-slash")
+        # os.system('sudo dd if='+disks[mnt]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path'.raw?'+sas+'" --from-to PipeBlob')
+        BluePrint.objects(host=hostname, project=project).update(status='25')
+        BluePrint.objects(host=hostname,project=project).update(disk_clone[mnt]['status']='100')
+        BluePrint.objects(host=hostname,project=project).update(disk_clone[mnt]['status_msg']=output)
+    except:
+        BluePrint.objects(host=hostname,project=project).update(disk_clone[mnt]['status']='-1')
+        BluePrint.objects(host=hostname,project=project).update(disk_clone[mnt]['status_msg']=output)
+        BluePrint.objects(host=hostname, project=project).update(status='-25')
 con.close()

@@ -9,7 +9,7 @@ class Discover(Document):
     cores = StringField(max_length=2)
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=150)
-    disk_details = ListField()
+    disk_details = MapField()
     project = StringField(required=True, max_length=150)
     public_ip = StringField(required=True, max_length=150)
     meta = {

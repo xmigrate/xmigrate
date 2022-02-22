@@ -36,10 +36,10 @@ def disk_info():
     This function will fetch the disk details and return in this format 
     [{'/dev/sda': '/'}, {'/dev/sdb': '/mnt'}]
     '''
-    root_disk=[]
+    root_disk=dict()
     for i in psutil.disk_partitions():
         if i.fstype == 'ext4':
-            root_disk.append({i.device.rstrip('1234567890'): i.mountpoint})
+            root_disk[i.mountpoint] = i.device.rstrip('1234567890')
     return root_disk
 
 
@@ -102,7 +102,7 @@ class Discover(Document):
     ram = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
     public_ip = StringField(required=True, max_length=150)
-    disk_details = ListField()
+    disk_details = MapField()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
