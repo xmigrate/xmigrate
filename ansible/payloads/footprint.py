@@ -7,6 +7,7 @@ from os import getenv
 from mongoengine import *
 from collections import OrderedDict
 import sys
+import os
 
 niface = 'eth0'
 
@@ -34,12 +35,18 @@ def network_info():
 def disk_info():
     '''
     This function will fetch the disk details and return in this format 
-    [{'/dev/sda': '/'}, {'/dev/sdb': '/mnt'}]
+    [{'filesystem': 'ext4', 'disk_size': 8259014656, 'uuid': 'c3d76fc4', 'dev': '/dev/xvda', 'mnt_path': '/'}]
     '''
-    root_disk=dict()
+    root_disk=[]
     for i in psutil.disk_partitions():
-        if i.fstype == 'ext4':
-            root_disk[i.mountpoint] = i.device.rstrip('1234567890')
+        disk_blkid=''
+        if i.fstype in ['ext4','xfs']:
+            disk_uuid = os.popen('sudo blkid '+ i.device.rstrip("1234567890")).read()
+            for x in disk_uuid.split(" "):
+                if "UUID" in x.upper():
+                    disk_blkid = x.split("=")[1].replace('"','')
+            disk_size = psutil.disk_usage(i.mountpoint).total
+            root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
     return root_disk
 
 
@@ -102,7 +109,7 @@ class Discover(Document):
     ram = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
     public_ip = StringField(required=True, max_length=150)
-    disk_details = MapField()
+    disk_details = ListField()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
