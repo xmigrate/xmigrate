@@ -52,7 +52,7 @@ class BluePrint(Document):
     vm_id = StringField(required=False, max_length=200)
     project = StringField(required=True, max_length=50)
     nic_id = StringField(max_length=200)
-    disk_clone = DictField()
+    disk_clone = ListField()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
@@ -60,20 +60,33 @@ class BluePrint(Document):
     }
     
 disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
-BluePrint.objects(host=hostname,project=project).update(status='10')
+BluePrint.objects(host=hostname,project=project).update(status='22')
 output=''
-
-for disk in disks:
-    try:
-        BluePrint.objects(host=hostname,project=project).update(disk_clone[disk["dev"]]['status']='10')
-        mnt_path = disk['mnt_path']
-        mnt_path = mnt.replace("/","-slash")
-        output = os.popen('sudo dd if='+disk["dev"]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path'.raw?'+sas+'" --from-to PipeBlob').read()
-        # os.system('sudo dd if='+disks[mnt]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path'.raw?'+sas+'" --from-to PipeBlob')
-        BluePrint.objects(host=hostname, project=project).update(status='25')
-        BluePrint.objects(host=hostname,project=project).update(disk_clone[disk["dev"]]['status']='100')
-        BluePrint.objects(host=hostname,project=project).update(disk_clone[disk["dev"]]['status_msg']=output)
-    except:
-        BluePrint.objects(host=hostname,project=project).update(disk_clone[disk["dev"]]['status']='-1')
-        BluePrint.objects(host=hostname,project=project).update(disk_clone[disk["dev"]]['status_msg']=output)
-        BluePrint.objects(host=hostname, project=project).update(status='-25')
+disk_clone_data = []
+try:
+    for disk in disks:
+        try:
+            current_disk = {"dev":disk['dev'], "status":"10"}
+            disk_clone_data.append(current_disk)
+            BluePrint.objects(host=hostname,project=project).update(disk_clone=disk_clone_data)
+            mnt_path = disk['mnt_path']
+            mnt_path = mnt_path.replace("/","-slash")
+            output = os.popen('sudo dd if='+disk["dev"]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path+'.raw?'+sas+'" --from-to PipeBlob').read()
+            # os.system('sudo dd if='+disks[mnt]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path'.raw?'+sas+'" --from-to PipeBlob')
+            for i in disk_clone_data:
+                if i['dev']==disk['dev']:
+                    i['status'] = "100"
+                    i['status_msg'] = output
+            BluePrint.objects(host=hostname,project=project).update(disk_clone=disk_clone_data)
+        except Exception as e:
+            print(str(e))
+            for i in disk_clone_data:
+                if i['dev']==disk['dev']:
+                    i['status'] = "-1"
+                    i['status_msg'] = output
+            BluePrint.objects(host=hostname,project=project).update(disk_clone=disk_clone_data)
+    BluePrint.objects(host=hostname, project=project).update(status='25')
+except:  
+    BluePrint.objects(host=hostname, project=project).update(status='-25')
+finally:
+    con.close()
