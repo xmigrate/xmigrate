@@ -24,15 +24,18 @@ async def start_downloading(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"
-            try:
-                await cw.download_worker(osdisk_raw,project,machine['host'])  
-            except Exception as e:
-                print("Download failed for "+osdisk_raw)
-                print(str(e))
-                logger("Download failed for "+osdisk_raw,"warning")
-                logger("Here is the error: "+str(e),"warning")
-                return False
+            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            for disk in disks:
+                disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
+                print(disk_raw)
+                try:
+                    await cw.download_worker(disk_raw,project,machine['host'])  
+                except Exception as e:
+                    print("Download failed for "+disk_raw)
+                    print(str(e))
+                    logger("Download failed for "+disk_raw,"warning")
+                    logger("Here is the error: "+str(e),"warning")
+                    return False
         con.close()
         return True
     
@@ -45,15 +48,18 @@ async def start_conversion(project,hostname):
         else:
             machines = BluePrint.objects(project=project, host=hostname)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"
-            try:
-                await cw.conversion_worker(osdisk_raw,project,machine['host'])  
-            except Exception as e:
-                print("Conversion failed for "+osdisk_raw)
-                print(str(e))
-                logger("Conversion failed for "+osdisk_raw,"warning")
-                logger("Here is the error: "+str(e),"warning")
-                return False
+            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            for disk in disks:
+                disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
+                print(disk_raw)
+                try:
+                    await cw.conversion_worker(disk_raw,project,machine['host'])  
+                except Exception as e:
+                    print("Conversion failed for "+disk_raw)
+                    print(str(e))
+                    logger("Conversion failed for "+disk_raw,"warning")
+                    logger("Here is the error: "+str(e),"warning")
+                    return False
         con.close()
         return True
 
@@ -62,15 +68,18 @@ async def start_uploading(project):
     if Project.objects(name=project)[0]['provider'] == "azure":
         machines = BluePrint.objects(project=project)
         for machine in machines:
-            osdisk_raw = machine['host']+".raw"
-            try:
-                await cw.upload_worker(osdisk_raw,project,machine['host'])  
-            except Exception as e:
-                print("Upload failed for "+osdisk_raw)
-                print(str(e))
-                logger("Upload failed for "+osdisk_raw,"warning")
-                logger("Here is the error: "+str(e),"warning")
-                return False
+            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            for disk in disks:
+                disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
+                print(disk_raw)
+                try:
+                    await cw.upload_worker(disk_raw,project,machine['host'])  
+                except Exception as e:
+                    print("Upload failed for "+disk_raw)
+                    print(str(e))
+                    logger("Upload failed for "+disk_raw,"warning")
+                    logger("Here is the error: "+str(e),"warning")
+                    return False
         con.close()
         return True
 
@@ -111,7 +120,7 @@ async def start_cloning(project, hostname):
         return not flag
 
 
-async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
+async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_path, storage_account):
     con = create_db_con()
     client_id = Project.objects(name=project)[0]['client_id']
     secret = Project.objects(name=project)[0]['secret']
@@ -119,31 +128,48 @@ async def create_disk_worker(project,rg_name,uri,disk_name,location,f):
     subscription_id = Project.objects(name=project)[0]['subscription_id']
     creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
     compute_client = ComputeManagementClient(creds,subscription_id)
+    async_creation = ''
     try:
-        async_creation = compute_client.images.create_or_update(
-            rg_name,
-            disk_name,
-            {
-                'location': location,
-                'storage_profile': {
-                'os_disk': {
-                    'os_type': 'Linux',
-                    'os_state': "Generalized",
-                    'blob_uri': uri,
-                    'caching': "ReadWrite",
-                    'storage_account_type': 'StandardSSD_LRS'
-                    
+        if mnt_path == "slash":
+            async_creation = compute_client.images.create_or_update(
+                rg_name,
+                disk_name,
+                {
+                    'location': location,
+                    'storage_profile': {
+                    'os_disk': {
+                        'os_type': 'Linux',
+                        'os_state': "Generalized",
+                        'blob_uri': uri,
+                        'caching': "ReadWrite",
+                        'storage_account_type': 'StandardSSD_LRS'
+                        
+                    }
+                    },
+                    'hyper_vgeneration': 'V1'
                 }
-                },
-                'hyper_vgeneration': 'V1'
-            }
-        )
+            )
+        else:
+            async_creation = compute_client.disks.create_or_update(
+                rg_name,
+                disk_name,
+                {
+                    'location': location,
+                    'creation_data': {
+                        'create_option': DiskCreateOption.import_enum,
+                        'storageAccountId': "subscriptions/"+subscription_id+"/resourceGroups/"+rg_name+"/providers/Microsoft.Storage/storageAccounts/"+storage_account,
+                        'source_uri': uri
+                    },
+                }
+            )
         image_resource = async_creation.result()
-        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='40')
-        logger("Disk created: "+repr(e),"info")
+        print(image_resource)
+        BluePrint.objects(project=project, host=disk_name.split("-")[0]).update(status='40')
+        Disk.objects(project=project, host=disk_name.split("-")[0], mnt_path=mnt_path).update(disk_id=disk_name)
+        logger("Disk created: "+ str(image_resource),"info")
     except Exception as e:
         logger("Disk creation failed: "+repr(e),"error")
-        BluePrint.objects(project=project, host=disk_name).update(image_id=disk_name,status='-40')
+        BluePrint.objects(project=project, host=disk_name).update(status='-40')
     finally:
         con.close()
 
@@ -157,7 +183,7 @@ async def create_disk(project, hostname):
     for disk in disks:
         vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
-        await create_disk_worker(project,rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'])
+        await create_disk_worker(project,rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'],disk['mnt_path'], storage_account)
     return True
         
     
