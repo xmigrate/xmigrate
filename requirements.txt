@@ -1,6 +1,6 @@
 setuptools
 wheel
-mongoengine
+mongoengine==0.23.1
 flask
 ansible==3.0.0
 pygtail

@@ -7,6 +7,7 @@ from os import getenv
 from mongoengine import *
 from collections import OrderedDict
 import sys
+import os
 
 niface = 'eth0'
 
@@ -32,11 +33,21 @@ def network_info():
 
 
 def disk_info():
-  root_disk =''
-  for i in psutil.disk_partitions():
-    if i.mountpoint == '/':
-      root_disk = i.device.rstrip('1234567890')
-  return root_disk
+    '''
+    This function will fetch the disk details and return in this format 
+    [{'filesystem': 'ext4', 'disk_size': 8259014656, 'uuid': 'c3d76fc4', 'dev': '/dev/xvda', 'mnt_path': '/'}]
+    '''
+    root_disk=[]
+    for i in psutil.disk_partitions():
+        disk_blkid=''
+        if i.fstype in ['ext4','xfs']:
+            disk_uuid = os.popen('sudo blkid '+ i.device.rstrip("1234567890")).read()
+            for x in disk_uuid.split(" "):
+                if "UUID" in x.upper():
+                    disk_blkid = x.split("=")[1].replace('"','')
+            disk_size = psutil.disk_usage(i.mountpoint).total
+            root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+    return root_disk
 
 
 def ports_info():
@@ -96,9 +107,9 @@ class Discover(Document):
     cores = StringField(max_length=2)
     cpu_model = StringField(required=True, max_length=150)
     ram = StringField(required=True, max_length=50)
-    disk = StringField(required=True, max_length=50)
     project = StringField(required=True, max_length=50)
     public_ip = StringField(required=True, max_length=150)
+    disk_details = ListField()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
@@ -113,12 +124,11 @@ def main():
     result = network_info()
     result['ports'] = ports_info()
     cores = str(len(cpuinfo().keys()))
-    disk = disk_info()
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
     try:
         Discover.objects(project=project,host=socket.gethostname()).update(host=socket.gethostname(),public_ip=public_ip, ip=result['ip'], subnet=result['subnet'], network=result['network'],
-                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk=disk_info(), upsert=True)
+                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disk_info(), upsert=True)
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)

@@ -62,7 +62,7 @@ async def upload_worker(osdisk_raw,project,host):
         await process3.wait()
         os.popen('echo "VHD uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
-        Disk.objects(host=host,project=project).update_one(vhd=osdisk_vhd, file_size=str(file_size), upsert=True)
+        Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split("-")[1].split(".")[0]).update_one(vhd=osdisk_vhd, file_size=str(file_size), upsert=True)
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")
@@ -89,7 +89,7 @@ async def conversion_worker(osdisk_raw,project,host):
             print("Start converting")
             print(path)
             os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
-            command2 = "qemu-img convert -f raw -o subformat=fixed -O vpc "+path+" "+vhd_path
+            command2 = "qemu-img convert -f raw -o subformat=fixed,force_size -O vpc "+path+" "+vhd_path
             process2 = await asyncio.create_subprocess_shell(command2, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process2.wait()
             await upload_worker(osdisk_raw,project,host)
