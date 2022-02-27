@@ -4,11 +4,14 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.compute import ComputeManagementClient
 from model.project import *
 from model.blueprint import *
+from model.disk import *
 from utils.dbconn import *
 from azure.common.credentials import ServicePrincipalCredentials
 from utils.logger import *
+from azure.mgmt.compute.models import DiskCreateOptionTypes
 
-def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project):
+
+def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks):
     con = create_db_con()
     client_id = Project.objects(name=project)[0]['client_id']
     secret = Project.objects(name=project)[0]['secret']
@@ -17,13 +20,31 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
     creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
     compute_client = ComputeManagementClient(creds,subscription_id)
     con.close()
+    managed_disks = []
+
+    lun=1
+    for disk in data_disks:
+        disk_client = compute_client.disks.get(rg_name, disk)
+        managed_disks.append({
+            'lun': lun, 
+            'name': disk_client.name,
+            'create_option': DiskCreateOptionTypes.attach,
+            'managed_disk': {
+                'id': disk_client.id
+            }
+        })
+        lun = lun + 1
+        
+    
     print(
         "Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
     print(nic_id)
+
     poller = compute_client.virtual_machines.create_or_update(rg_name, vm_name,
                                                               {
                                                                   "location": location,
                                                                   "storage_profile": {
+                                                                      "data_disks": managed_disks,
                                                                       "image_reference": {
                                                                           'id': '/subscriptions/' + subscription_id + '/resourceGroups/' + rg_name + '/providers/Microsoft.Compute/images/'+image_name
                                                                       }
@@ -48,8 +69,9 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
     print("Provisioned virtual machine")
     try:
         con = create_db_con()
-        BluePrint.objects(project=project, image_id=image_name).update(vm_id=vm_result.name,status='100')
+        BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status='100')
     except Exception as e:
+        BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status='-100')
         print("VM creation updation failed: "+repr(e))
         logger("VM creation updation failed: "+repr(e),"warning")
     finally:
@@ -62,14 +84,22 @@ async def create_vm(project, hostname):
     location = Project.objects(name=project)[0]['location']
     subscription_id = Project.objects(name=project)[0]['subscription_id']
     username = "xmigrate"
-    password = "Xmigrate@13"
+    password = "Xmigrate@321"
     machines = BluePrint.objects(project=project, host=hostname)
     for machine in machines:
+        disks = Disk.objects(project=project, host=machine['host'])
+        data_disks = []
+        image_name = ''
+        for disk in disks:
+            if disk['mnt_path'] == 'slash':
+                image_name = disk['disk_id']
+            else:
+                data_disks.append(disk['disk_id'])
         vm_name = machine['host']
         vm_type = machine['machine_type']
         nic_id = machine['nic_id']
-        image_name = machine['image_id']
-        create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project)
+        
+        create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks)
     con.close()
 
 

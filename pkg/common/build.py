@@ -83,19 +83,22 @@ async def call_start_convert(project,hostname):
     await asyncio.create_task(start_convert(project,hostname))
 
 async def start_convert(project,hostname):
-    con = create_db_con()
     p = Project.objects(name=project)
     if len(p) > 0:
         if p[0]['provider'] == "azure":
-            logger("Conversion started","info")
+            logger("Download started","info")
+            print("****************Download started*****************")
+            image_downloaded = await disk.start_downloading(project)
             print("****************Conversion awaiting*****************")
-            converted =  await disk.start_conversion(project,hostname)
-            if converted:
-                print("****************Conversion completed*****************")
-                logger("Disk Conversion completed","info")
-            else:
-                print("Disk Conversion failed")
-                logger("Disk Conversion failed","error")
+            logger("Conversion started","info")
+            if image_downloaded:
+                converted =  await disk.start_conversion(project,hostname)
+                if converted:
+                    print("****************Conversion completed*****************")
+                    logger("Disk Conversion completed","info")
+                else:
+                    print("Disk Conversion failed")
+                    logger("Disk Conversion failed","error")
         elif p[0]['provider'] == "aws":
             logger("Conversion started","info")
             print("****************Conversion awaiting*****************")
