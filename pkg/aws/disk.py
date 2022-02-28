@@ -6,6 +6,7 @@ from model.discover import *
 import asyncio
 from asyncio.subprocess import PIPE, STDOUT 
 from model.discover import *
+from model.project import *
 
 async def start_cloning(project, hostname):
     con = create_db_con()
@@ -13,10 +14,10 @@ async def start_cloning(project, hostname):
         bucket = Bucket.objects(project=project)[0]['bucket']
         accesskey = Bucket.objects(project=project)[0]['access_key']
         secret_key = Bucket.objects(project=project)[0]['secret_key']
-        public_ip = Discover.objects(name=project,host=hostname)[0]['public_ip']
-        user = Discover.objects(name=project,host=hostname)[0]['user']
+        public_ip = Discover.objects(project=project,host=hostname)[0]['public_ip']
+        user = Project.objects(name=project)[0]['username']
     except Exception as e:
-        print("Error occurred: "+sre(e))
+        print("Error occurred: "+str(e))
     load_dotenv()
     mongodb = os.getenv('MONGO_DB')
     current_dir = os.getcwd()
