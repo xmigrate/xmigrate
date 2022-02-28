@@ -1,13 +1,11 @@
 .Discover{
     .discover-logs{
-        overflow-y: scroll;
-        overflow-X: scroll;
+        overflow-y: hidden;
+        overflow-X: hidden;
         background-color: #444444;
         color:#81b214;
     }
-    .discover-fancy{
 
-    }
     .clrg{
         height: 30rem;
     }

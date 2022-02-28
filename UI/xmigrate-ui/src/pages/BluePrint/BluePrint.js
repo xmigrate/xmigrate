@@ -34,6 +34,7 @@ import {
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
 import NetworkTableRow from "../../components/Table/NetworkTable";
+import HostTable from "../../components/Table/HostTable";
 export default class BluePrint extends Component {
   constructor(props) {
     super();
@@ -55,7 +56,8 @@ export default class BluePrint extends Component {
       ShowAlertBuild: false,
       ShowAlertSave: false,
       showUpdateAlert: false,
-      showUpdateMessage: ""
+      showUpdateMessage: "",
+      expandedHost: false
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -99,17 +101,17 @@ export default class BluePrint extends Component {
     await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, data).then((res) => {
       console.log("Response Data of New Blueprint host", res.data.networks);
       NetworksDatas = res.data.networks;
-     NetworksDatas.forEach((Network, index) => {
+      NetworksDatas.forEach((Network, index) => {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
-            if(host["status"]=== "20"){
+            if (host["status"] === "20") {
               host["BtStatus"] = "clone";
-            }else if(host["status"] === "25"){
+            } else if (host["status"] === "25") {
               host["BtStatus"] = "convert";
-            }else if(host["status"] === "35"){
+            } else if (host["status"] === "35") {
               host["BtStatus"] = "build";
             }
-            else{
+            else {
               host["BtStatus"] = "BuildNetwork";
             }
             let hostCurrent = {};
@@ -122,7 +124,7 @@ export default class BluePrint extends Component {
         });
       });
     });
-    console.log("Network Data:",NetworksDatas);
+    console.log("Network Data:", NetworksDatas);
     //Setting the State
     this.setState({
       Networks: NetworksDatas,
@@ -150,7 +152,7 @@ export default class BluePrint extends Component {
           cpu: data.cpu_model,
           core: data.cores,
           ram: data.ram,
-          disk: data.disk,
+          disk: data.disk_details
         })
       );
     });
@@ -356,7 +358,7 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!" ,ShowAlertSave:false})
+      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!", ShowAlertSave: false })
     });
   }
 
@@ -456,23 +458,23 @@ export default class BluePrint extends Component {
 
   //BluePrintNetworkBuild-------------------------------------------------------------------------
   async _BlueprintNetworkBuild() {
-console.log("Network Build");
+    console.log("Network Build");
     var data = {
       project: this.state.project,
     };
-    console.log("Sending",data);
+    console.log("Sending", data);
     await PostService(BLUEPRINT_NETWORK_BUILD, data).then((res) => {
       console.log("data from response of Network Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
       this.setState({ intervalId: interval });
       //Check status and Status should be 60
     });
-    
+
   }
 
   //BlueprintHostClone-------------------------------------------------------------------------
   async _BlueprintHostClone(hostName) {
-    console.log("Network Clone",hostName);
+    console.log("Network Clone", hostName);
     var data = {
       project: this.state.project,
       hostname: hostName,
@@ -487,7 +489,7 @@ console.log("Network Build");
 
   //BlueprintHostConvert-------------------------------------------------------------------------
   async _BlueprintHostConvert(hostName) {
-    console.log("Network Convert",hostName);
+    console.log("Network Convert", hostName);
     var data = {
       project: this.state.project,
       hostname: hostName,
@@ -502,7 +504,7 @@ console.log("Network Build");
 
   //BlueprintHostBuild-------------------------------------------------------------------------
   async _BlueprintHostBuild(hostName) {
-    console.log("Network Build",hostName);
+    console.log("Network Build", hostName);
     var data = {
       project: this.state.project,
       hostname: hostName,
@@ -532,21 +534,21 @@ console.log("Network Build");
               if (host.host === hostRes.host) {
                 console.log(hostRes.status);
                 // host["BtStatus"] = hostRes.status;
-                console.log("Status of Button",host["BtStatus"]);
-                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] ==="BuildNetwork") ||  (parseInt(hostRes.status) < 25 && host["BtStatus"] ==="clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] ==="convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] ==="Build") ) {
+                console.log("Status of Button", host["BtStatus"]);
+                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") || (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "Build")) {
                   flag = false;
                 }
                 else {
                   flag = true;
-                  if(host["BtStatus"] === "BuildNetwork"){
-                    host["BtStatus"] ="clone"
+                  if (host["BtStatus"] === "BuildNetwork") {
+                    host["BtStatus"] = "clone"
                     console.log(host["BtStatus"]);
                   }
-                  else if(host["BtStatus"] === "clone"){
-                    host["BtStatus"] ="convert";
+                  else if (host["BtStatus"] === "clone") {
+                    host["BtStatus"] = "convert";
                   }
-                  else if(host["BtStatus"] === "convert"){
-                    host["BtStatus"] ="build";
+                  else if (host["BtStatus"] === "convert") {
+                    host["BtStatus"] = "build";
                   }
                 }
               }
@@ -555,7 +557,7 @@ console.log("Network Build");
         });
       });
       if (flag) {
-    
+
         clearInterval(this.state.intervalId);
         this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
       }
@@ -564,6 +566,8 @@ console.log("Network Build");
       });
     });
   }
+
+
 
 
   render() {
@@ -598,26 +602,15 @@ console.log("Network Build");
                       <th>Disk</th>
                     </tr>
                   </thead>
-                  <tbody>
                     {this.state.hosts.map((data, index) => (
-                      <tr className="tData" key={index}>
-                        <td>{data.id}</td>
-                        <td>{data.hostname}</td>
-                        <td>{data.ip}</td>
-                        <td>{data.subnet}</td>
-                        <td>{data.network}</td>
-                        <td>{data.cpu}</td>
-                        <td>{data.core}</td>
-                        <td>{data.ram}</td>
-                        <td>{data.disk}</td>
-                      </tr>
+                      <HostTable key={index} index={index} data={data}/>
                     ))}
-                  </tbody>
+
                 </Table>
               </Card.Body>
             </Card>
 
-            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={()=>  this.setState({showUpdateAlert: false})} dismissible>
+            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
               <p>{this.state.showUpdateMessage}</p>
             </Alert>
 
@@ -684,27 +677,27 @@ console.log("Network Build");
                         </tr>
                       </tbody>
                     ) : (
-                        this.state.Networks.map((NetworkData, index) => (
-                          <NetworkTableRow
-                            key={index}
-                            index={index + 1}
-                            Network={NetworkData}
-                            VMS={this.state.VMS}
-                            handleChange={this.handleChange}
-                            CreateSubnet={this.CreateSubnet}
-                            DeleteNetwork={this.DeleteNetwork}
-                            DeleteSubnet={this.DeleteSubnet}
-                            handleVM={this.handleVM}
-                            drag={this.drag}
-                            dragStart={this.state.dragStart}
-                            allowDrop={this.allowDrop}
-                            drop={this.drop}
-                            BlueprintHostClone={this._BlueprintHostClone}
-                            BlueprintHostConvert={this._BlueprintHostConvert}
-                            BlueprintHostBuild={this._BlueprintHostBuild}
-                          />
-                        ))
-                      )}
+                      this.state.Networks.map((NetworkData, index) => (
+                        <NetworkTableRow
+                          key={index}
+                          index={index + 1}
+                          Network={NetworkData}
+                          VMS={this.state.VMS}
+                          handleChange={this.handleChange}
+                          CreateSubnet={this.CreateSubnet}
+                          DeleteNetwork={this.DeleteNetwork}
+                          DeleteSubnet={this.DeleteSubnet}
+                          handleVM={this.handleVM}
+                          drag={this.drag}
+                          dragStart={this.state.dragStart}
+                          allowDrop={this.allowDrop}
+                          drop={this.drop}
+                          BlueprintHostClone={this._BlueprintHostClone}
+                          BlueprintHostConvert={this._BlueprintHostConvert}
+                          BlueprintHostBuild={this._BlueprintHostBuild}
+                        />
+                      ))
+                    )}
                   </Table>
                 </Container>
               </Card.Body>
@@ -715,7 +708,7 @@ console.log("Network Build");
                 className="media-body py-3 mr-40px text-success bt-main"
                 // onClick={this._SaveBuild.bind(this)}
                 // onClick={this.handleAlertOpenSave.bind(this)}
-                onClick={()=>  this.setState({ShowAlertSave: true}) }
+                onClick={() => this.setState({ ShowAlertSave: true })}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
@@ -725,7 +718,7 @@ console.log("Network Build");
                 variant="primary"
                 className="media-body py-3 mr-40px text-primary  bt-main"
                 // onClick={this._createBuild.bind(this)}
-                onClick={()=>  this.setState({ShowAlertBuild: true})}
+                onClick={() => this.setState({ ShowAlertBuild: true })}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
@@ -735,7 +728,7 @@ console.log("Network Build");
                 variant="danger"
                 className="media-body py-3 text-danger  bt-main"
                 // onClick={this._Reset.bind(this)}
-                onClick={()=> this.setState({ShowAlertReset: true})}
+                onClick={() => this.setState({ ShowAlertReset: true })}
                 disabled={this.state.BuildStatus}
                 size="lg"
               >
@@ -748,7 +741,7 @@ console.log("Network Build");
           {/* Reset Alert */}
 
           <Modal show={this.state.ShowAlertReset}
-            onHide={()=> this.setState({ShowAlertReset: false})}
+            onHide={() => this.setState({ ShowAlertReset: false })}
           >
             <Modal.Header closeButton>
               <Modal.Title>Reset Project</Modal.Title>
@@ -756,15 +749,15 @@ console.log("Network Build");
             <Modal.Body>Do you want to Reset?</Modal.Body>
             <Modal.Footer>
               <Button variant="secondary"
-                onClick={()=> this.setState({ShowAlertReset: false})}
+                onClick={() => this.setState({ ShowAlertReset: false })}
               >
                 Close
-          </Button>
+              </Button>
               <Button variant="primary"
                 onClick={this._Reset.bind(this)}
               >
                 Reset
-          </Button>
+              </Button>
             </Modal.Footer>
           </Modal>
 
@@ -773,7 +766,7 @@ console.log("Network Build");
           {/* Build Alert */}
 
           <Modal show={this.state.ShowAlertBuild}
-            onHide={()=>  this.setState({ShowAlertBuild: false})}
+            onHide={() => this.setState({ ShowAlertBuild: false })}
           >
             <Modal.Header closeButton>
               <Modal.Title>Build Project</Modal.Title>
@@ -781,16 +774,16 @@ console.log("Network Build");
             <Modal.Body>Do you want to Build?</Modal.Body>
             <Modal.Footer>
               <Button variant="secondary"
-                onClick={()=>  this.setState({ShowAlertBuild: false})}
+                onClick={() => this.setState({ ShowAlertBuild: false })}
               >
                 Close
-          </Button>
+              </Button>
               <Button variant="primary"
                 // onClick={this._createBuild.bind(this)}
                 onClick={this._BlueprintNetworkBuild.bind(this)}
               >
                 Build
-          </Button>
+              </Button>
             </Modal.Footer>
           </Modal>
 
@@ -798,7 +791,7 @@ console.log("Network Build");
 
           {/* Save Alert */}
           <Modal show={this.state.ShowAlertSave}
-            onHide={()=>  this.setState({ShowAlertSave: false })}
+            onHide={() => this.setState({ ShowAlertSave: false })}
           >
             <Modal.Header closeButton>
               <Modal.Title>Save BluePrint</Modal.Title>
@@ -807,15 +800,15 @@ console.log("Network Build");
             <Modal.Footer>
               <Button variant="secondary"
                 // onClick={this.handleAlertCloseSave.bind(this)}
-                onClick={()=>  this.setState({ShowAlertSave: false})}
+                onClick={() => this.setState({ ShowAlertSave: false })}
               >
                 Close
-          </Button>
+              </Button>
               <Button variant="primary"
                 onClick={this._SaveBuild.bind(this)}
               >
                 Save
-          </Button>
+              </Button>
             </Modal.Footer>
           </Modal>
         </div>

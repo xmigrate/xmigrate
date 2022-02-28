@@ -5,8 +5,15 @@
   .SubnetRow:hover {
     background-color: #e6e6e6;
   }
+
+}
+.HostTable{
   .HostRow{
     border-top: 1px solid #ebebec;
     border-bottom: 1px solid #ebebec;
+  }
+  .HostRow:hover{
+    background-color: #e6e6e6;
+  
   }
 }

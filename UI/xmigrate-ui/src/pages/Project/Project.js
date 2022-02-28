@@ -2,10 +2,10 @@ import React, { Component } from "react";
 import { Form, Container, Col, Row, Card, Button } from "react-bootstrap";
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
 import { FaAngleRight, FaAws, 
-  // FaCloud
+  FaCloud
  } from "react-icons/fa";
 import { SiMicrosoftazure, 
-  // SiGooglecloud 
+   SiGooglecloud 
 } from "react-icons/si";
 import PostService from "../../services/PostService";
 import "./Project.scss";
@@ -173,7 +173,7 @@ export default class Project extends Component {
                       display: this.state.loader === true || this.state.status === "Storage"  ? " none" : "block",
                     }}
                   >
-                    <Form.Group className="register bg-blue">
+                    <Form.Group className="register bg-blue mb-3">
                       <Form.Label>Project Name</Form.Label>
                       <Form.Control
                         type="text"
@@ -220,17 +220,17 @@ export default class Project extends Component {
                           </Card.Body>
                         </Card>
                       </Col>
-                      {/* <Col className={"ProviderCol"+ (this.state.input.provider == "GoogleCloud" ? ' active' : '')}>
+                       <Col className={"ProviderCol"+ (this.state.input.provider == "GoogleCloud" ? ' active' : '')}>
                         <Card>
                           <Card.Body className="Provider" onClick={()=>this.handleProvider("GoogleCloud")}>
                             <SiGooglecloud size={50} />
                           </Card.Body>
                         </Card>
-                      </Col> */}
+                      </Col> 
                     </Row>
 
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -247,7 +247,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -264,7 +264,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "aws"
@@ -281,7 +281,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -298,7 +298,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "aws"
@@ -316,7 +316,7 @@ export default class Project extends Component {
                     </Form.Group>
             
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -333,7 +333,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure" &&
@@ -351,7 +351,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.status === "Create Project"
@@ -376,7 +376,7 @@ export default class Project extends Component {
                     <Button
                       type="submit"
                       className="btn btn-primary
-                       col-lg-12"
+                       col-lg-12 mb-3"
                     >
                       {this.state.status}
                       <FaAngleRight size={20} />
@@ -391,7 +391,7 @@ export default class Project extends Component {
                     }}
                   >
                         <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "aws"
@@ -407,7 +407,7 @@ export default class Project extends Component {
                         name="bucket"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue"
+                    <Form.Group className="register bg-blue mb-3"
                      style={{
                       display:
                         this.state.input.provider === "azure"
@@ -422,7 +422,7 @@ export default class Project extends Component {
                         name="storage"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue"  style={{
+                    <Form.Group className="register bg-blue mb-3"  style={{
                       display:
                         this.state.input.provider === "azure"
                           ? " block"
@@ -436,7 +436,7 @@ export default class Project extends Component {
                         name="container"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue"  style={{
+                    <Form.Group className="register bg-blue mb-3"  style={{
                       display:
                         this.state.input.provider === "azure"
                           ? " block"
