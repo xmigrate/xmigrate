@@ -2,6 +2,7 @@ import os, sys, time
 from mongoengine import *
 from model.discover import *
 from model.blueprint import *
+from model.disk import *
 from utils.dbconn import *
 from model.storage import Bucket
 from model.project import *
@@ -10,7 +11,7 @@ from pkg.aws import creds
 import boto3
 from utils.logger import *
 
-async def start_ami_creation_worker(bucket_name, image_name, project):
+async def start_ami_creation_worker(bucket_name, image_name, project, disk_containers):
    con = create_db_con()
    access_key = Project.objects(name=project)[0]['access_key']
    secret_key = Project.objects(name=project)[0]['secret_key']
@@ -83,23 +84,14 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
    try:
       client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=region)
       response = client.import_image(
-         DiskContainers=[
-            {
-                  'Description': 'Xmigrate',
-                  'Format': 'RAW',
-                  'UserBucket': {
-                     'S3Bucket': bucket_name,
-                     'S3Key': image_name
-                  }
-            },
-         ],
+         DiskContainers=disk_containers,
          TagSpecifications=[
          {
                'ResourceType': 'import-image-task',
                'Tags': [
                   {
                      'Key': 'Name',
-                     'Value': image_name
+                     'Value': image_name.split("-")[0]
                   },
                ]
          },
@@ -118,8 +110,14 @@ async def start_ami_creation_worker(bucket_name, image_name, project):
             )
             if response['ImportImageTasks'][0]['Status'] == "completed":
                ami_id = import_task_id
-               BluePrint.objects(host=image_name.replace('.img','')).update(image_id=ami_id)
-               BluePrint.objects(host=image_name.replace('.img','')).update(status='35')
+               print(response)
+               BluePrint.objects(host=image_name.split("-")[0], project=project).update(image_id=ami_id)
+               BluePrint.objects(host=image_name.split("-")[0], project=project).update(status='35')
+               for import_task in response['ImportImageTasks']:
+                  for snapshot_detail in import_task['SnapshotDetails']:
+                     Disk.objects(host=image_name.split("-")[0], project=project).update(
+                        file_size=snapshot_detail['DiskImageSize'], disk_id=snapshot_detail['SnapshotId'], 
+                        vhd=snapshot_detail['UserBucket']['S3Key'], mnt_path=snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0], upsert=True)
                break
             else:
                await asyncio.sleep(60)
@@ -149,8 +147,19 @@ async def start_ami_creation(project, hostname):
       con.close()
    for host in hosts:
       disks = Discover.objects(project=project,host=host['host'])[0]['disk_details']
+      disk_containers = [] 
       for disk in disks:
          image_name = host['host']+disk['mnt_path'].replace("/","-slash")+'.img'
          print(image_name)
-         await start_ami_creation_worker(bucket_name, image_name, project)
+         disk_containers.append(
+            {
+               'Description': 'Xmigrate',
+               'Format': 'RAW',
+               'UserBucket': {
+                     'S3Bucket': bucket_name,
+                     'S3Key': image_name
+               }
+            }
+         )
+      await start_ami_creation_worker(bucket_name, image_name, project, disk_containers)
    return True
