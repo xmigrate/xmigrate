@@ -98,7 +98,6 @@ export default class NetworkTableRow extends Component {
                           as="select"
                           size="sm"
                           name="Security"
-                          custom
                           onChange={this.props.handleChange}
                         >
                           <option value="Public">Public</option>

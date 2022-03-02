@@ -71,6 +71,9 @@
     border-top: 0px;
   }
   .table thead th {
-    border-bottom:0px;
+    border-bottom:1px;
    }
+   .table > :not(:first-child) {
+    border-top: 0px;
+  }
 }

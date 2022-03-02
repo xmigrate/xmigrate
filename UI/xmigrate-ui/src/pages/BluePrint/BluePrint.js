@@ -466,7 +466,7 @@ export default class BluePrint extends Component {
     await PostService(BLUEPRINT_NETWORK_BUILD, data).then((res) => {
       console.log("data from response of Network Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval });
+      this.setState({ intervalId: interval,ShowAlertBuild:false });
       //Check status and Status should be 60
     });
 

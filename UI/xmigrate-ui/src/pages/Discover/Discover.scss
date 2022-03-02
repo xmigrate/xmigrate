@@ -1,9 +1,10 @@
 .Discover{
     .discover-logs{
-        overflow-y: hidden;
-        overflow-X: hidden;
+        overflow-y: scroll;
+        overflow-X: scroll;
         background-color: #444444;
         color:#81b214;
+        scrollbar-color: #81b214 #444444;
     }
 
     .clrg{
