@@ -1,0 +1,18 @@
+### list vpc
+GET http://localhost:8000/gcp-test/network/list
+
+#### create VPC
+GET http://localhost:8000/gcp-test/network/create/test-vpc
+
+
+#### get VPC
+GET http://localhost:8000/gcp-test/network/get/test-vpc
+
+### delete vpc
+GET http://localhost:8000/gcp-test/network/delete/test-vpc
+
+### list subnet
+GET http://localhost:8000/gcp-test/subnet/list
+
+### create subnet
+GET http://localhost:8000/gcp-test/subnet/create/snet-01

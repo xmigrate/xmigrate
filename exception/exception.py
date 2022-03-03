@@ -1,9 +1,9 @@
-from __main__ import app
-from quart import jsonify
+from pkg.gcp.gcp import REGIONS
 
 
-def internal_server_error(msg):
-    return jsonify({'status': '500','message': str(msg)}), 500
-
-def page_not_found(msg):
-    return jsonify({'status': '404','message': str(msg)}), 404
+class GcpRegionNotFound(Exception):
+    def __init__(self,region ,message="not a valid region. try the following " + ", ".join(REGIONS)) -> None:
+        self.message = message
+        self.region = region
+        super().__init__(self.message)
+    pass
