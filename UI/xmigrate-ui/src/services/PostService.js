@@ -10,8 +10,14 @@ export default function PostService(API, data) {
     }
     let response = Axios.post(API, data, config).catch(error=>{
         console.log("Here");
-        if(error.response.status === 401 ){
-            window.location.replace("/");
+        if(error.message === "Network Error"){
+            window.location.replace("/404");
+        }
+        else if(error.response.status === 401 ){
+            console.log("401");
+            return error.response.status;
+            //  window.alert("Unauthorised login!!!");
+            //  window.location.replace("/");
         }
         else if(error.response.status === 404){
             window.location.replace("/404");
@@ -20,6 +26,9 @@ export default function PostService(API, data) {
         }
         else if(error.response.status === 400 ){
             window.location.replace("/400");
+        }
+        else if(error.response === undefined){
+            window.location.replace("/500");
         }
         else{
             console.error(error);

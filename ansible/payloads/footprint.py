@@ -40,6 +40,8 @@ def disk_info():
     root_disk=[]
     for i in psutil.disk_partitions():
         disk_blkid=''
+        if 'lv' in i.device:
+            continue
         if i.fstype in ['ext4','xfs']:
             disk_uuid = os.popen('sudo blkid '+ i.device.rstrip("1234567890")).read()
             for x in disk_uuid.split(" "):

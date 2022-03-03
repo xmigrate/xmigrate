@@ -92,7 +92,6 @@ render(){
                               defaultValue={host.machine_type}
                               as="select"
                               size="sm"
-                              custom
                               onChange={(e)=>this.props.handleVM(e,host)}
                             >
                      {this.state.VMS.map((VM) => (

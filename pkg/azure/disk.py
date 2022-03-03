@@ -130,7 +130,7 @@ async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_
     compute_client = ComputeManagementClient(creds,subscription_id)
     async_creation = ''
     try:
-        if mnt_path == "slash":
+        if mnt_path in ["slash","slashboot"]:
             async_creation = compute_client.images.create_or_update(
                 rg_name,
                 disk_name,

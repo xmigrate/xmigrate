@@ -2,10 +2,10 @@ import React, { Component } from "react";
 import { Form, Container, Col, Row, Card, Button } from "react-bootstrap";
 import MainHeaderComponent from "../../components/MainHeaderComponent/MainHeaderComponent";
 import { FaAngleRight, FaAws, 
-  // FaCloud
+  FaCloud
  } from "react-icons/fa";
 import { SiMicrosoftazure, 
-  // SiGooglecloud 
+   SiGooglecloud 
 } from "react-icons/si";
 import PostService from "../../services/PostService";
 import "./Project.scss";
@@ -27,9 +27,11 @@ export default class Project extends Component {
       errors: {},
       locations: [],
       loader: false,
+      GcpFile:{}
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleFileChange = this.handleFileChange.bind(this);
   }
   handleChange(event) {
     let input = this.state.input;
@@ -38,6 +40,20 @@ export default class Project extends Component {
       input,
     });
   }
+
+  handleFileChange(e) {
+    const cancel = !e.target.files.length;
+    if (cancel) return;
+    console.log(e.target.files[0]);
+    const fileReader = new FileReader();
+    fileReader.readAsText(e.target.files[0], "UTF-8");
+    fileReader.onload = e =>{ 
+    var GCP_Json = e.target.result
+    this.setState({GcpFile : GCP_Json})
+  };
+   
+  }
+
   handleProvider(text) {
     let input = this.state.input;
     input["provider"] = text;
@@ -173,7 +189,8 @@ export default class Project extends Component {
                       display: this.state.loader === true || this.state.status === "Storage"  ? " none" : "block",
                     }}
                   >
-                    <Form.Group className="register bg-blue">
+              
+                    <Form.Group className="register bg-blue mb-3">
                       <Form.Label>Project Name</Form.Label>
                       <Form.Control
                         type="text"
@@ -220,17 +237,53 @@ export default class Project extends Component {
                           </Card.Body>
                         </Card>
                       </Col>
-                      {/* <Col className={"ProviderCol"+ (this.state.input.provider == "GoogleCloud" ? ' active' : '')}>
+                       <Col className={"ProviderCol"+ (this.state.input.provider === "GoogleCloud" ? ' active' : '')}>
                         <Card>
                           <Card.Body className="Provider" onClick={()=>this.handleProvider("GoogleCloud")}>
                             <SiGooglecloud size={50} />
                           </Card.Body>
                         </Card>
-                      </Col> */}
+                      </Col> 
                     </Row>
+                    <Form.Group
+                      className="register bg-blue mb-3"
+                      style={{
+                        display:
+                          this.state.input.provider === "GoogleCloud"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
+                      <Form.Label>Project Id</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Project Id"
+                        name="Project_id"
+                      />
+                    </Form.Group>
 
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
+                      style={{
+                        display:
+                          this.state.input.provider === "GoogleCloud"
+                            ? " block"
+                            : "none",
+                      }}
+                    >
+                      <Form.Label>Upload Service Account Json File</Form.Label>
+                      <Form.Control
+                        type="file"
+                        placeholder="Upload Json Document"
+                        onChange={(e)=>this.handleFileChange(e)}
+                        name="ServiceAccountJson"
+                        accept=".json"
+                      />
+                    </Form.Group>
+
+                    <Form.Group
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -247,7 +300,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -264,7 +317,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "aws"
@@ -281,7 +334,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -298,7 +351,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "aws"
@@ -316,7 +369,7 @@ export default class Project extends Component {
                     </Form.Group>
             
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure"
@@ -333,7 +386,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "azure" &&
@@ -351,7 +404,7 @@ export default class Project extends Component {
                       />
                     </Form.Group>
                     <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.status === "Create Project"
@@ -376,12 +429,15 @@ export default class Project extends Component {
                     <Button
                       type="submit"
                       className="btn btn-primary
-                       col-lg-12"
+                       col-lg-12 mb-3"
                     >
                       {this.state.status}
                       <FaAngleRight size={20} />
                     </Button>
                   </Form>
+
+
+
                   {/* Form For Storage */}
                   <Form
                     onSubmit={this.handleSubmit}
@@ -391,7 +447,7 @@ export default class Project extends Component {
                     }}
                   >
                         <Form.Group
-                      className="register bg-blue"
+                      className="register bg-blue mb-3"
                       style={{
                         display:
                           this.state.input.provider === "aws"
@@ -407,7 +463,7 @@ export default class Project extends Component {
                         name="bucket"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue"
+                    <Form.Group className="register bg-blue mb-3"
                      style={{
                       display:
                         this.state.input.provider === "azure"
@@ -422,7 +478,7 @@ export default class Project extends Component {
                         name="storage"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue"  style={{
+                    <Form.Group className="register bg-blue mb-3"  style={{
                       display:
                         this.state.input.provider === "azure"
                           ? " block"
@@ -436,7 +492,7 @@ export default class Project extends Component {
                         name="container"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue"  style={{
+                    <Form.Group className="register bg-blue mb-3"  style={{
                       display:
                         this.state.input.provider === "azure"
                           ? " block"

@@ -3,17 +3,13 @@ body, html {
     font-style: normal;
     font-weight: normal;
         height: 100%;
-        background-color: #E5E5E5 !important;
+   
       }
       html
       {
         scroll-behavior: smooth; 
       }
 .SignIn{
-    .CardSingin{
-        border: 0 !important;
-        border-radius: 0rem !important;
-      }
   .FormStyle{
     padding: 2em;
   }
@@ -35,5 +31,8 @@ body, html {
     font-style: normal;
     font-weight: normal !important;
     font-size: 30px;
+  }
+  .login{
+    margin-top: 2rem;
   }
 }

@@ -62,6 +62,7 @@ export default class SignIn extends Component {
     });
     await PostService(LOGIN, data).then((res) => {
       let input = {};
+      console.log(res);
       if(res===401){
         errors["Authentication"] = "Invalid Authentication";
         input["UserId"] = "";
@@ -181,11 +182,11 @@ export default class SignIn extends Component {
                     </Form.Group>
                     <Button
                       type="submit"
-                      className="btn btn-secondary col-lg-12"
+                      className="btn btn-secondary col-lg-12 login"
                     >
                       Login<FaAngleRight size={20}/>
                     </Button>
-                    <div className="text-danger">{this.state.errors.Authentication}</div>
+                    <div className="text-danger">{this.state.errors.Authentication}{}</div>
                     <div>
                     <div className="forgotPassword float-left">
                       <span className="btn text-muted">Forgot Password?</span>
