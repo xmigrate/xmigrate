@@ -115,9 +115,9 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
                BluePrint.objects(host=image_name.split("-")[0], project=project).update(status='35')
                for import_task in response['ImportImageTasks']:
                   for snapshot_detail in import_task['SnapshotDetails']:
-                     Disk.objects(host=image_name.split("-")[0], project=project).update(
-                        file_size=snapshot_detail['DiskImageSize'], disk_id=snapshot_detail['SnapshotId'], 
-                        vhd=snapshot_detail['UserBucket']['S3Key'], mnt_path=snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0], upsert=True)
+                     Disk.objects(host=image_name.split("-")[0], project=project, mnt_path=snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0]).update(
+                        file_size=str(snapshot_detail['DiskImageSize']), disk_id=snapshot_detail['SnapshotId'], 
+                        vhd=snapshot_detail['UserBucket']['S3Key'], upsert=True)
                break
             else:
                await asyncio.sleep(60)
