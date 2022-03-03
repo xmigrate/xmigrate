@@ -19,6 +19,8 @@ from pkg.aws import ami
 from pkg.aws import network as awsnw
 from pkg.aws import ec2
 
+from pkg.gcp import network as gcpnw
+
 import asyncio
 
 async def call_start_build(project):
@@ -118,6 +120,7 @@ async def call_build_network(project):
     await asyncio.create_task(start_network_build(project))
 
 
+# why we are not return anything from here?
 async def start_network_build(project):
     con = create_db_con()
     p = Project.objects(name=project)
@@ -139,6 +142,14 @@ async def start_network_build(project):
         elif p[0]['provider'] == "aws":
             logger("Network creation started","info")
             network_created = await awsnw.create_nw(project)
+            if network_created:
+                logger("Network creation completed","info")
+            else:
+                print("Network creation failed")
+                logger("Network creation failed","error")
+        elif p[0]['provider'] == "gcp":
+            logger("Network creation started","info")
+            network_created = await gcpnw.create_nw(project)
             if network_created:
                 logger("Network creation completed","info")
             else:
@@ -170,7 +181,6 @@ async def start_host_build(project,hostname):
                 print("ec2 creation failed")
                 logger("ec2 creation failed","error")
 
-# ADD GCP condition
 async def start_build(project):
     con = create_db_con()
     p = Project.objects(name=project)

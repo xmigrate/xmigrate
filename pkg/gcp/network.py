@@ -1,4 +1,8 @@
 from typing import List
+from mongoengine import *
+from model.blueprint import *
+from model.project import *
+from utils.dbconn import *
 
 from exception.exception import GcpRegionNotFound
 
@@ -73,3 +77,19 @@ def create_subnet(project_id, service_account_json, network_name, region, name, 
     request = service.subnetworks().insert(project=project_id, region=region, body=subnetwork_body)
     response = request.execute()
     return response
+
+
+async def create_nw(project):
+    try:
+        con = create_db_con()
+        location = Project.objects(name=project)[0]['location']
+        name = Project.objects(name=project)[0]['name']
+        project_id = Project.objects(name=project)[0]['project_id']
+        service_account_json = Project.objects(name=project)[0]['service_account']
+        
+    except Exception as e:
+        print(repr(e))
+        return False
+    finally:
+        con.close()
+        return True
