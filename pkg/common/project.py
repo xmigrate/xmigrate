@@ -2,6 +2,7 @@ from utils.dbconn import *
 from model.project import *
 import os
 
+
 def get_project(name, user):
     con = create_db_con()
     print(name)
@@ -24,7 +25,8 @@ async def create_project(data, user):
         client_id = data['client_id']
         secret = data['secret_id']
         tenant_id = data['tenant_id']
-        post = Project(name=name, provider=provider, users=users, location=location, resource_group=resource_group, subscription_id=subscription_id, client_id=client_id, secret=secret, tenant_id=tenant_id)
+        post = Project(name=name, provider=provider, users=users, location=location, resource_group=resource_group,
+                       subscription_id=subscription_id, client_id=client_id, secret=secret, tenant_id=tenant_id)
     elif provider == 'aws':
         aws_dir = os.path.expanduser('~/.aws')
         if not os.path.exists(aws_dir):
@@ -33,13 +35,22 @@ async def create_project(data, user):
         access_key = data['access_key']
         secret_key = data['secret_key']
         location = data['location']
-        credentials_str = '['+name+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
+        credentials_str = '['+name+']\naws_access_key_id = ' + \
+            access_key+'\n' + 'aws_secret_access_key = '+secret_key
         with open(aws_dir+'/credentials', 'w+') as writer:
             writer.write(credentials_str)
         config_str = '[profile '+name+']\nregion = '+location+'\noutput = json'
         with open(aws_dir+'/config', 'w+') as writer:
             writer.write(config_str)
-        post = Project(name=name, provider=provider, users=users, location=location, access_key=access_key, secret_key=secret_key)
+        post = Project(name=name, provider=provider, users=users,
+                       location=location, access_key=access_key, secret_key=secret_key)
+    elif provider == 'gcp':
+        location = data['location']
+        name = data['name']
+        project_id = data['project_id']
+        service_account = data['service_account']
+        post = Project(name=name, provider=provider, users=users, location=location,
+                       gcp_project_id=project_id, service_account=service_account)
     try:
         post.save()
         return True
@@ -73,6 +84,13 @@ async def update_project(data, user):
             location = data['location']
             Project.objects(name=name, users__contains=user).update(
                 location=location, access_key=access_key, secret_key=secret_key)
+        elif provider == 'gcp':
+            location = data['location']
+            name = data['name']
+            project_id = data['project_id']
+            service_account_json = data['service_account']
+            Project.objects(name=name, users__contains=user).update(
+                location=location, gcp_project_id=project_id, service_account=service_account_json)
         return True
     except Exception as e:
         print("Boss you have to see this!!")
