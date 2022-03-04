@@ -46,3 +46,8 @@ def login_using_service_account(service_account_json):
 def get_service_compute_v1(service_account_json):
     credentials = login_using_service_account(service_account_json)
     return discovery.build('compute', 'v1', credentials=credentials)
+
+def get_service_cloudtasks_v2(service_account_json):
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_json)
+    return discovery.build('cloudtasks', 'v2', credentials=credentials)
