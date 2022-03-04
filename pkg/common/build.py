@@ -106,7 +106,7 @@ async def start_convert(project,hostname):
             print("****************Conversion awaiting*****************")
             logger("AMI creation started","info")
             ami_created = await ami.start_ami_creation(project,hostname)
-            if converted:
+            if ami_created:
                 print("****************Conversion completed*****************")
                 logger("Conversion completed","info")
                 logger("AMI creation completed:"+str(ami_created),"info")
