@@ -9,7 +9,7 @@ from quart_jwt_extended import jwt_required, get_jwt_identity
 
 
 @app.route('/locations/get', methods=['POST'])
-# @jwt_required
+@jwt_required
 async def locations_get():
     if request.method == 'POST':
         data = await request.get_json()
