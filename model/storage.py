@@ -23,3 +23,14 @@ class Bucket(Document):
             {'fields': ('bucket', 'project'), 'unique': True}
         ]
     }
+
+
+class GcpBucket(Document):
+    project = StringField(required=True, max_length=20)
+    bucket = StringField(required=True)
+    service_account = StringField(required=True)
+    meta = {
+        'indexes': [
+            {'fields': ('bucket', 'project'), 'unique': True}
+        ]
+    }
