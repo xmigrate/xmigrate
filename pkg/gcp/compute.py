@@ -1,0 +1,97 @@
+from mongoengine import *
+from model.blueprint import *
+from model.disk import *
+from utils.dbconn import *
+from model.project import *
+from .gcp import get_service_compute_v1
+from .gcp import REGIONS
+from .network import get_vpc
+from .network import get_subnet
+
+
+def list_machine_type(project_id, service_account_json, zone):
+    service = get_service_compute_v1(service_account_json)
+    request = service.machineTypes().list(project=project_id, zone=zone)
+    machine_types = []
+    while request is not None:
+        response = request.execute()
+
+        for machine_type in response['items']:
+            machine_types.append(machine_type['name'])
+        request = service.machineTypes().list_next(
+            previous_request=request, previous_response=response)
+    return machine_types
+
+
+def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_source, machine_type, network, subnet, additional_disk=[]):
+    service = get_service_compute_v1(service_account_json)
+    vm_type = "zones/"+zone_name+"/machineTypes/"+machine_type
+    network = get_vpc(project_id, service_account_json, network)['selfLink']
+    subnet = get_subnet(project_id, service_account_json,
+                        subnet, region)['selfLink']
+    # image_response = compute.images().getFromFamily(
+    #     project='debian-cloud', family='debian-9').execute()
+    # source_disk_image = image_response['selfLink']
+    disks = [
+        {
+            'boot': True,
+            'autoDelete': True,
+            "initializeParams": {
+                "sourceImage": os_source
+            }
+        }
+    ]
+    disks.append(additional_disk)
+    instance_body = {
+        "name": vm_name,
+        "networkInterfaces": [],
+        "machineType": vm_type,
+        "disks": disks,
+        'networkInterfaces': [{
+            'network': network,
+            'subnetwork': subnet,
+            'accessConfigs': [
+                {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
+            ]
+        }]
+
+    }
+    request = service.instances().insert(
+        project=project_id, zone=zone_name, body=instance_body)
+    response = request.execute()
+    return response
+
+
+async def build_compute(project, hostname):
+    try:
+        con = create_db_con()
+        hosts = BluePrint.objects(project=project, host=hostname)
+
+        location = Project.objects(name=project)[0]['location']
+        project_id = Project.objects(name=project)[0]['project_id']
+        service_account = Project.objects(name=project)[0]['service_account']
+
+        for host in hosts:
+            machine_type = host['machine_type']
+            public_route = host['public_route']
+            image_id = host['image_id']
+            subnet = host['subnet_id']
+            network = host['vpc_id']
+            try:
+                BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='95')
+                vm = create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, [])
+                print(vm)
+                ## todo watch vm status 
+                con.close()
+                return True
+            except Exception as e:
+                print(e)
+                con.close()
+                return False
+        return True
+    except Exception as e:
+        print(str(e))
+        print(repr(e))
+        return False
+    finally:
+        con.close()

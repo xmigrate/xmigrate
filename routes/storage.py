@@ -28,9 +28,9 @@ async def storage_create():
                 project, bucket, secret_key, access_key)
         elif provider == 'gcp':
             bucket = data['bucket']
-            service_account = data['service_account']
-            storage_created = gbk.create_bucket(
-                project, bucket, service_account)
+            secret_key = data['secret_key']
+            access_key = data['access_key']
+            storage_created = gbk.create_bucket(project, bucket, access_key,secret_key)
         if storage_created:
             return jsonify({'status': '200'})
         else:
@@ -70,9 +70,10 @@ async def storage_update():
                 project, bucket, secret_key, access_key)
         elif provider == 'gcp':
             bucket = data['bucket']
-            service_account = data['service_account']
+            secret_key = data['secret_key']
+            access_key = data['access_key']
             storage_updated = gbk.update_bucket(
-                project, bucket, service_account)
+                project, bucket, access_key,secret_key)
         if storage_updated:
             return jsonify({'status': '200'})
         else:
