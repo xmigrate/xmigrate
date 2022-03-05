@@ -11,6 +11,7 @@ import time
 
 from pkg.azure import network
 from pkg.aws import disk as awsdisk
+from pkg.gcp import disk as gcpdisk
 from pkg.azure import disk
 from pkg.azure import resource_group
 from pkg.azure import compute
@@ -80,6 +81,16 @@ async def start_cloning(project,hostname):
                 else:
                     print("Disk cloning failed")
                     logger("Disk cloning failed","error")
+            elif p[0]['provider'] == "gcp":
+                logger("Cloning started","info")
+                print("****************Cloning awaiting*****************")
+                cloning_completed = await gcpdisk.start_cloning(project,hostname)
+                if cloning_completed:
+                    print("****************Cloning completed*****************")
+                    logger("Cloning completed","info")
+                else:
+                    print("Disk cloning failed")
+                    logger("Disk cloning failed","error")
 
 async def call_start_convert(project,hostname):
     await asyncio.create_task(start_convert(project,hostname))
@@ -113,7 +124,18 @@ async def start_convert(project,hostname):
             else:
                 print("Disk Conversion failed")
                 logger("Disk Conversion failed","error")
-
+        elif p[0]['provider'] == "gcp":
+            logger("Conversion started","info")
+            print("****************Conversion awaiting*****************")
+            logger("GCP Image creation started","info")
+            ami_created = await ami.start_ami_creation(project,hostname)
+            if ami_created:
+                print("****************Conversion completed*****************")
+                logger("Conversion completed","info")
+                logger("AMI creation completed:"+str(ami_created),"info")
+            else:
+                print("Disk Conversion failed")
+                logger("Disk Conversion failed","error")
 
 
 async def call_build_network(project):

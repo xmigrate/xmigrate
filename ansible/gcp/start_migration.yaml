@@ -1,0 +1,18 @@
+- name : Starting migration
+  become: true
+  become_method: sudo
+  hosts: nodes
+  gather_facts: no
+  force_handlers: True
+  tasks:
+  - name: <== Deploy payload ==>
+    copy:
+      src: "../payloads/start_dd_gcp.py"
+      dest: "/tmp/start.py"
+  - name: <== Executing payload ==>
+    shell: "python3 /tmp/start.py {{ bucket }} {{ access_key }} {{ secret_key }} '{{ mongodb }}' {{ project }}"
+    register: st
+    become: True
+  - name: Message
+    debug:
+      var: st
