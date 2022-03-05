@@ -27,8 +27,10 @@ class Bucket(Document):
 
 class GcpBucket(Document):
     project = StringField(required=True, max_length=20)
+    project_id= StringField(required=True, max_length=150)
+    secret_key = StringField(required=True, max_length=150)
+    access_key = StringField(required=True, max_length=150)
     bucket = StringField(required=True)
-    service_account = StringField(required=True)
     meta = {
         'indexes': [
             {'fields': ('bucket', 'project'), 'unique': True}

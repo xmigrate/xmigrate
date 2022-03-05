@@ -37,3 +37,5 @@ yarn-error.log*
 app.log
 token.json
 venv
+
+request.http
