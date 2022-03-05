@@ -15,6 +15,7 @@ from pkg.gcp import disk as gcpdisk
 from pkg.azure import disk
 from pkg.azure import resource_group
 from pkg.azure import compute
+from pkg.gcp import compute as gcp_compute
 
 from pkg.aws import ami
 from pkg.aws import network as awsnw
@@ -202,6 +203,15 @@ async def start_host_build(project,hostname):
             else:
                 print("ec2 creation failed")
                 logger("ec2 creation failed","error")
+        elif p[0]['provider'] == "gcp":
+            logger("gcp vm creation started","info")
+            vm_created = await gcp_compute.build_compute(project, hostname)
+            if vm_created:
+                logger("ec2 creation completed","info")
+            else:
+                print("ec2 creation failed")
+                logger("ec2 creation failed","error")
+
 
 async def start_build(project):
     con = create_db_con()

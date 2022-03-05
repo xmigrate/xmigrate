@@ -2,7 +2,9 @@ from typing import List
 from mongoengine import *
 from model.blueprint import *
 from model.project import *
+from model.network import *
 from utils.dbconn import *
+from utils.logger import *
 
 from exception.exception import GcpRegionNotFound
 
@@ -64,6 +66,13 @@ def list_subnet(project_id, service_account_json, network_name, region):
     return res
 
 
+def get_subnet(project_id, service_account_json, subnet_name, region):
+    service = get_service_compute_v1(service_account_json)
+    request = service.subnetworks().get(project=project_id, region=region, subnetwork=subnet_name)
+    response = request.execute()
+    return response
+
+
 def create_subnet(project_id, service_account_json, network_name, region, name, cidr):
     if region not in REGIONS:
         raise GcpRegionNotFound(region)
@@ -74,22 +83,75 @@ def create_subnet(project_id, service_account_json, network_name, region, name, 
         "network": network["selfLink"],
         "ipCidrRange": cidr
     }
-    request = service.subnetworks().insert(project=project_id, region=region, body=subnetwork_body)
+    request = service.subnetworks().insert(
+        project=project_id, region=region, body=subnetwork_body)
     response = request.execute()
     return response
 
 
 async def create_nw(project):
-    try:
+
+    con = create_db_con()
+    location = Project.objects(name=project)[0]['location']
+    project_id = Project.objects(name=project)[0]['project_id']
+    service_account_json = Project.objects(name=project)[0]['service_account']
+
+    machines = BluePrint.objects(project=project)
+
+    vpc = []
+    subnet = []
+    for machine in machines:
+        vpc.append(machine['network'])
+        subnet.append(machine['subnet'])
+
+    vpc = list(set(vpc))
+    vpc_created = []
+    
+    for network_name in vpc:
+        print("Provisioning a vpc...some operations might take a minute or two.")
         con = create_db_con()
-        location = Project.objects(name=project)[0]['location']
-        name = Project.objects(name=project)[0]['name']
-        project_id = Project.objects(name=project)[0]['project_id']
-        service_account_json = Project.objects(name=project)[0]['service_account']
-        
-    except Exception as e:
-        print(repr(e))
+        created = Network.objects(nw_name=network_name, project=project)[0]['created']
+        if not created:
+            try:
+                res = create_vpc(project_id, service_account_json, network_name)
+                BluePrint.objects(network=network_name, project=project).update(vpc_id=res.targetLink, status='5')
+                Network.objects(nw_name=network_name, project=project).update(created=True, upsert=True)
+            except Exception as e:
+                print("Vnet creation failed to save: "+repr(e))
+                logger("Vnet creation failed to save: "+repr(e), "warning")
+                BluePrint.objects(network=network_name, project=project).update(vpc_id=res, status='-5')
+                vpc_created.append(False)
+            finally:
+                con.close()
+            vpc_created.append(True)
+        else:
+            vpc_created.append(True)
+    c = 0
+    if False in vpc_created:
         return False
-    finally:
-        con.close()
-        return True
+    else:
+        subnet = list(set(subnet))
+        subnet_created = []
+        for i in subnet:
+            print("Provisioning a subnet...some operations might take a minute or two.")
+            con = create_db_con()
+            created = Subnet.objects(cidr=i, project=project)[0]['created']
+            if not created:
+                try:
+                    subnet_name = project+"subnet"+str(c)
+                    subnet_result = create_subnet(project_id, service_account_json,network_name, location, subnet_name, i)
+                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result.targetLink),status='10')
+                    Subnet.objects(cidr=i, project=project).update(created=True, upsert=True)
+                except Exception as e:
+                    print("Subnet creation failed to save: "+repr(e))
+                    logger("Subnet creation failed to save: "+repr(e), "warning")
+                    subnet_created.append(False) 
+                finally:
+                    con.close()
+                subnet_created.append(True) 
+            else:
+                subnet_created.append(True) 
+        if False in subnet_created:
+            return False      
+    con.close()
+    return True
