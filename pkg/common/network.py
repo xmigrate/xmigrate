@@ -6,6 +6,7 @@ from model.project import *
 from model.network import *
 import json
 from collections import defaultdict
+import traceback
 
 def update_nw_cidr(p):
     machines = json.loads(Discover.objects(project=p).to_json())
@@ -214,11 +215,13 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
             machines = Discover.objects(project=project)
             for machine in machines:
                 try:
-                    BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=nw[0]['cidr'],
+                    network_cidr= nw[0]['nw_name'] if nw[0]['cidr'] == None else nw[0]['cidr']               
+                    BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=network_cidr,
                          ports=machine['ports'], cores=str(machine['cores']), public_route=subnet_type, cpu_model=machine['cpu_model'], ram=str(machine['ram']), machine_type='', status='0', upsert=True)
                     con.close()
                 except Exception as e:
-                    print("Error while updating BluePrint: "+str(e))
+                    # print(traceback.format_exc())
+                    print("Error while updating BluePrint: "+repr(e))
                     con.close()
             return True       
         else:
