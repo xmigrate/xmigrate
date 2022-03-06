@@ -126,17 +126,19 @@ async def start_convert(project,hostname):
                 print("Disk Conversion failed")
                 logger("Disk Conversion failed","error")
         elif p[0]['provider'] == "gcp":
-            logger("Conversion started","info")
+            logger("Download started","info")
+            print("****************Download started*****************")
+            image_downloaded = await gcpdisk.start_downloading(project)
             print("****************Conversion awaiting*****************")
-            logger("GCP Image creation started","info")
-            ami_created = await ami.start_ami_creation(project,hostname)
-            if ami_created:
-                print("****************Conversion completed*****************")
-                logger("Conversion completed","info")
-                logger("AMI creation completed:"+str(ami_created),"info")
-            else:
-                print("Disk Conversion failed")
-                logger("Disk Conversion failed","error")
+            logger("Conversion started","info")
+            if image_downloaded:
+                converted =  await gcpdisk.start_conversion(project,hostname)
+                if converted:
+                    print("****************Conversion completed*****************")
+                    logger("Disk Conversion completed","info")
+                else:
+                    print("Disk Conversion failed")
+                    logger("Disk Conversion failed","error")
 
 
 async def call_build_network(project):
