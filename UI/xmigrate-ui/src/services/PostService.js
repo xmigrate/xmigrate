@@ -22,13 +22,15 @@ export default function PostService(API, data) {
         else if(error.response.status === 404){
             window.location.replace("/404");
      } else if(error.response.status === 500){
-            window.location.replace("/500");
+         console.log(error.response);
+          window.location.replace("/500");
         }
         else if(error.response.status === 400 ){
             window.location.replace("/400");
         }
         else if(error.response === undefined){
-            window.location.replace("/500");
+            console.log(error.response);
+         window.location.replace("/500");
         }
         else{
             console.error(error);
