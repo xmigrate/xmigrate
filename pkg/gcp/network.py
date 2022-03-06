@@ -1,3 +1,4 @@
+import time
 from typing import List
 from mongoengine import *
 from model.blueprint import *
@@ -32,7 +33,7 @@ def get_vpc(project_id, service_account_json, network_name):
     return response
 
 
-def create_vpc(project_id, service_account_json, network_name):
+def create_vpc(project_id, service_account_json, network_name, wait_for_creation=False):
     service = get_service_compute_v1(service_account_json)
     network_body = {
         "name": network_name,
@@ -40,6 +41,15 @@ def create_vpc(project_id, service_account_json, network_name):
     }
     request = service.networks().insert(project=project_id, body=network_body)
     response = request.execute()
+    if wait_for_creation:
+        while True:
+            result = service.globalOperations().get(project=project_id, operation=response['name']).execute()
+            if result['status'] == 'DONE':
+                print("done.")
+                if 'error' in result:
+                    raise Exception(result['error'])
+                return result
+            time.sleep(1)
     return response
 
 
@@ -113,7 +123,7 @@ async def create_nw(project):
         created = Network.objects(nw_name=network_name, project=project)[0]['created']
         if not created:
             try:
-                res = create_vpc(project_id, service_account_json, network_name)
+                res = create_vpc(project_id, service_account_json, network_name, True)
                 BluePrint.objects(network=network_name, project=project).update(vpc_id=res['targetLink'], status='5')
                 Network.objects(nw_name=network_name, project=project).update(created=True, upsert=True)
             except Exception as e:
