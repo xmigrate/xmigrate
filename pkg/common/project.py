@@ -50,7 +50,8 @@ async def create_project(data, user):
         project_id = data['project_id']
         service_account = data['service_account']
         post = Project(name=name, provider=provider, users=users, location=location,
-                       gcp_project_id=project_id, service_account=service_account)
+                           service_account=service_account, gcp_project_id=project_id)
+
     try:
         post.save()
         return True
