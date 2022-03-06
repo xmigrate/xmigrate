@@ -472,7 +472,18 @@ export default class Project extends Component {
                             : "none",
                       }}
                     >
-                      <Form.Label>S3 Bucket</Form.Label>
+                      <Form.Label  style={{
+                        display:
+                          this.state.input.provider === "aws" 
+                            ? "block"
+                            : "none",
+                      }}>S3 Bucket</Form.Label>
+                       <Form.Label  style={{
+                        display:
+                          this.state.input.provider === "gcp" 
+                            ? "block"
+                            : "none",
+                      }}>GCS Bucket</Form.Label>
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
@@ -509,7 +520,20 @@ export default class Project extends Component {
                         name="container"
                       />
                     </Form.Group>
-
+                    <Form.Group className="register bg-blue mb-3"  style={{
+                      display:
+                        this.state.input.provider === "azure"  || this.state.input.provider ==="gcp"
+                          ? " block"
+                          : "none",
+                    }}>
+                      <Form.Label>Access Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Access key"
+                        name="access_key"
+                      />
+                    </Form.Group>
                     <Form.Group
                       className="register bg-blue mb-3"
                       style={{
@@ -527,20 +551,7 @@ export default class Project extends Component {
                         name="secret_key"
                       />
                     </Form.Group>
-                    <Form.Group className="register bg-blue mb-3"  style={{
-                      display:
-                        this.state.input.provider === "azure"  || this.state.input.provider ==="gcp"
-                          ? " block"
-                          : "none",
-                    }}>
-                      <Form.Label>Access Key</Form.Label>
-                      <Form.Control
-                        type="text"
-                        onChange={this.handleChange}
-                        placeholder="Access key"
-                        name="access_key"
-                      />
-                    </Form.Group>
+                   
                     <Button
                       type="submit"
                       className="btn btn-primary
