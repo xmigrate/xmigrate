@@ -2,6 +2,7 @@ from utils.dbconn import *
 from utils.converter import *
 from model.discover import *
 from model.blueprint import *
+from model.project import *
 from model.network import *
 import json
 from collections import defaultdict
@@ -133,16 +134,21 @@ def create_nw_layout(cidr,p):
     return blueprint_updated
 
 
-def create_nw(cidr,project,name):
+def create_nw(project,name,cidr):
     con = create_db_con()
+    provider = Project.objects(name=project)[0]['provider']
+    print(provider)
     try:
-        Network.objects(project=project,nw_name=name).update(cidr=cidr,nw_name=name,upsert=True)
-        con.close()
+        if provider == 'gcp':
+            Network.objects(project=project,nw_name=name).update(nw_name=name,upsert=True)
+        else:
+            Network.objects(project=project,nw_name=name).update(cidr=cidr,nw_name=name,upsert=True)
         return True
     except Exception as e:
         print(str(e))
-        con.close()
         return False
+    finally:
+         con.close()
 
 def delete_nw(project,name):
     con = create_db_con()
@@ -209,7 +215,7 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
             for machine in machines:
                 try:
                     BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=nw[0]['cidr'],
-                         ports=machine['ports'], cores=machine['cores'], public_route=subnet_type, cpu_model=machine['cpu_model'], ram=machine['ram'], machine_type='', status='0', upsert=True)
+                         ports=machine['ports'], cores=str(machine['cores']), public_route=subnet_type, cpu_model=machine['cpu_model'], ram=str(machine['ram']), machine_type='', status='0', upsert=True)
                     con.close()
                 except Exception as e:
                     print("Error while updating BluePrint: "+str(e))

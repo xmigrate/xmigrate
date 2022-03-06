@@ -63,7 +63,7 @@
 
   - name: Configure gsutil credentials
     template:
-      src: "ansible/gcp/templates/.boto.j2"
+      src: "./templates/.boto.j2"
       dest: "~/.boto"
 
   - name: <==Deploy payload==>

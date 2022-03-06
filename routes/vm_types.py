@@ -1,8 +1,10 @@
 from __main__ import app
 import os
+from platform import machine
 from quart import jsonify, request
 from pkg.azure import compute
 from pkg.aws import ec2
+from pkg.gcp import compute as gce
 from quart_jwt_extended import jwt_required, get_jwt_identity
 from model.project import *
 from utils.dbconn import *
@@ -19,6 +21,8 @@ async def vms_get():
             machine_types, flag = compute.get_vm_types(project)
         elif provider == 'aws':
             machine_types, flag = ec2.get_vm_types(project)
+        elif provider == 'gcp':
+            machine_types, flag = gce.get_vm_types(project)
         if flag:
             return jsonify({'status': '200', 'machine_types': machine_types})
         else:
