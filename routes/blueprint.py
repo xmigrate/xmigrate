@@ -32,10 +32,10 @@ async def get_blueprint():
 async def create_nw():
     if request.method == 'POST':
         data = await request.get_json()
-        network = data['cidr']
+        network = data['cidr'] if 'cidr' in data.keys() else ''
         project = data['project']
         name = data['name']
-        network_layout_created = netutils.create_nw(network,project,name)
+        network_layout_created = netutils.create_nw(project,name,network)
         if network_layout_created:
             return  jsonify({'status': '200'})
         else:

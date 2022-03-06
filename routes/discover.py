@@ -2,6 +2,7 @@ from __main__ import app
 from utils.dbconn import *
 from model.discover import *
 from model.project import *
+from model.storage import *
 from pkg.common import nodes as n
 import os
 from quart import jsonify, request
@@ -16,6 +17,7 @@ async def discover():
     current_dir = os.getcwd()
     if request.method == 'POST':
         data = await request.get_json()
+        print(data)
         provider = data['provider']
         nodes = data["hosts"]
         username = data["username"]
@@ -44,5 +46,13 @@ async def discover():
         return jsonify({'status': '200'})
     elif provider == "azure":
         os.popen('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
+        return jsonify({'status': '200'})
+    elif provider == "gcp":
+        storage = GcpBucket.objects(project=project)[0]
+        project_id = storage['project_id']
+        gs_access_key_id = storage['access_key']
+        gs_secret_access_key = storage['secret_key']
+        print('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/gcp/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+' gs_access_key_id='+gs_access_key_id+' gs_secret_access_key='+gs_secret_access_key+' project_id='+project_id+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
+        os.popen('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/gcp/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+' gs_access_key_id='+gs_access_key_id+' gs_secret_access_key='+gs_secret_access_key+' project_id='+project_id+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
         return jsonify({'status': '200'})
     return jsonify({'status': '500'})

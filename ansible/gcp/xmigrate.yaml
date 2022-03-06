@@ -1,0 +1,5 @@
+- hosts: all
+  gather_facts: true
+- name: executing redhat 8 playbook
+  import_playbook: gcp_env_setup_redhat_8.yaml
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version >= '7'

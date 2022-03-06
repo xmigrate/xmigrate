@@ -22,6 +22,23 @@ def list_machine_type(project_id, service_account_json, zone):
             previous_request=request, previous_response=response)
     return machine_types
 
+def get_vm_types(project):
+    location = ''
+    machine_types = []
+    try:
+        con = create_db_con()
+        service_account = Project.objects(name=project)[0]['service_account']
+        location = Project.objects(name=project)[0]['location']
+        project_id = Project.objects(name=project)[0]['gcp_project_id']
+        machine_types = list_machine_type(project_id, service_account, location+'-a')
+        flag = True
+    except Exception as e:
+        print(repr(e))
+        flag = False
+    finally:
+        con.close()
+    return machine_types, flag
+
 
 def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_source, machine_type, network, subnet, additional_disk=[]):
     service = get_service_compute_v1(service_account_json)

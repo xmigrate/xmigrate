@@ -6,7 +6,6 @@ from pkg.gcp import network as gcp_network
 from pkg.gcp import location
 from pkg.gcp import compute
 
-
 # remove this once db integration finished
 with open('token.json', 'r') as f:
     service_account_json = json.load(f)

@@ -27,7 +27,7 @@ export default class Project extends Component {
       errors: {},
       locations: [],
       loader: false,
-      GcpFile:{}
+      service_account:{}
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -48,10 +48,12 @@ export default class Project extends Component {
     const fileReader = new FileReader();
     fileReader.readAsText(e.target.files[0], "UTF-8");
     fileReader.onload = e =>{ 
-    var GCP_Json = e.target.result
-    this.setState({GcpFile : GCP_Json})
+      
+    var GCP_Json = JSON.parse(e.target.result);
+    console.log(GCP_Json);
+    this.setState({service_account : GCP_Json})
   };
-   
+   console.log(this.state);
   }
 
   handleProvider(text) {
@@ -88,8 +90,18 @@ export default class Project extends Component {
           resource_group: this.state.input["resource_group"],
         };
       }
+      else if(this.state.input["provider"] === "gcp"){
+        data = {
+          name: this.state.input["name"],
+          provider: this.state.input["provider"],
+          project_id: this.state.input["project_id"],
+          service_account: this.state.service_account,
+          location: this.state.input["location"]
+        };
+      }
 
       console.log(data);
+
       this.setState({
         loader: true,
       });
@@ -98,16 +110,12 @@ export default class Project extends Component {
           console.log(res.data);
           this.setState({
             locations: res.data.locations,
-          });
-          this.setState({
             status: "Create Project",
-          });
-          this.setState({
             loader: false,
           });
         });
       } else if (this.state.status === "Create Project") {
-        console.log(data);
+        console.log("Create project",data);
         await PostService(CREATEPROJECT, data).then((res) => {
           console.log(res);
           this.setState({
@@ -132,6 +140,15 @@ export default class Project extends Component {
             project: this.state.input["name"],
             storage: this.state.input["storage"],
             container: this.state.input["container"],
+            access_key: this.state.input["access_key"],
+          };
+        }else if (this.state.input["provider"] === "gcp") {
+          dataProvider = {
+            project_id: this.state.input["project_id"],
+            provider: this.state.input["provider"],
+            project: this.state.input["name"],
+            bucket:this.state.input["bucket"],
+            secret_key: this.state.input["secret_key"],
             access_key: this.state.input["access_key"],
           };
         }
@@ -237,9 +254,9 @@ export default class Project extends Component {
                           </Card.Body>
                         </Card>
                       </Col>
-                       <Col className={"ProviderCol"+ (this.state.input.provider === "GoogleCloud" ? ' active' : '')}>
+                       <Col className={"ProviderCol"+ (this.state.input.provider === "gcp" ? ' active' : '')}>
                         <Card>
-                          <Card.Body className="Provider" onClick={()=>this.handleProvider("GoogleCloud")}>
+                          <Card.Body className="Provider" onClick={()=>this.handleProvider("gcp")}>
                             <SiGooglecloud size={50} />
                           </Card.Body>
                         </Card>
@@ -249,7 +266,7 @@ export default class Project extends Component {
                       className="register bg-blue mb-3"
                       style={{
                         display:
-                          this.state.input.provider === "GoogleCloud"
+                          this.state.input.provider === "gcp"
                             ? " block"
                             : "none",
                       }}
@@ -258,8 +275,8 @@ export default class Project extends Component {
                       <Form.Control
                         type="text"
                         onChange={this.handleChange}
-                        placeholder="Project Id"
-                        name="Project_id"
+                        placeholder="project Id"
+                        name="project_id"
                       />
                     </Form.Group>
 
@@ -267,7 +284,7 @@ export default class Project extends Component {
                       className="register bg-blue mb-3"
                       style={{
                         display:
-                          this.state.input.provider === "GoogleCloud"
+                          this.state.input.provider === "gcp"
                             ? " block"
                             : "none",
                       }}
@@ -337,7 +354,7 @@ export default class Project extends Component {
                       className="register bg-blue mb-3"
                       style={{
                         display:
-                          this.state.input.provider === "azure"
+                          this.state.input.provider === "azure"  
                             ? " block"
                             : "none",
                       }}
@@ -354,7 +371,7 @@ export default class Project extends Component {
                       className="register bg-blue mb-3"
                       style={{
                         display:
-                          this.state.input.provider === "aws"
+                          this.state.input.provider === "aws" 
                             ? " block"
                             : "none",
                       }}
@@ -439,7 +456,7 @@ export default class Project extends Component {
 
 
                   {/* Form For Storage */}
-                  <Form
+                  <Form className="FormStyle"
                     onSubmit={this.handleSubmit}
                     style={{
                       display:
@@ -450,7 +467,7 @@ export default class Project extends Component {
                       className="register bg-blue mb-3"
                       style={{
                         display:
-                          this.state.input.provider === "aws"
+                          this.state.input.provider === "aws"  || this.state.input.provider ==="gcp"
                             ? "block"
                             : "none",
                       }}
@@ -492,9 +509,27 @@ export default class Project extends Component {
                         name="container"
                       />
                     </Form.Group>
+
+                    <Form.Group
+                      className="register bg-blue mb-3"
+                      style={{
+                        display:
+                          this.state.input.provider === "gcp" 
+                            ? " block"
+                            : "none",
+                      }}
+                    >
+                      <Form.Label>Secret Key</Form.Label>
+                      <Form.Control
+                        type="text"
+                        onChange={this.handleChange}
+                        placeholder="Secret key"
+                        name="secret_key"
+                      />
+                    </Form.Group>
                     <Form.Group className="register bg-blue mb-3"  style={{
                       display:
-                        this.state.input.provider === "azure"
+                        this.state.input.provider === "azure"  || this.state.input.provider ==="gcp"
                           ? " block"
                           : "none",
                     }}>
