@@ -45,6 +45,7 @@ export default class BluePrint extends Component {
       dragStart: false,
       cidr: "",
       project: props.CurrentPro.name,
+      provider: props.CurrentPro.provider,
       status: "loading",
       VMS: [],
       hosts: [],
@@ -72,7 +73,7 @@ export default class BluePrint extends Component {
     this._BlueprintHostConvert = this._BlueprintHostConvert.bind(this);
     this._BlueprintHostBuild = this._BlueprintHostBuild.bind(this);
   }
-
+ 
   async GettingData() {
     this.setState({
       status: "loading",
@@ -630,6 +631,7 @@ export default class BluePrint extends Component {
                           name="NetworkName"
                         />
                       </Col>
+                    {this.state.provider ==='gcp'?<></>:
                       <Col>
                         <Form.Control
                           size="md"
@@ -639,6 +641,7 @@ export default class BluePrint extends Component {
                           name="NetworkCIDR"
                         />
                       </Col>
+                           }
                       <Col>
                         <Button
                           className=" media-body successGreen"
@@ -660,7 +663,7 @@ export default class BluePrint extends Component {
                       <tr>
                         <th scope="col"></th>
                         <th scope="col">NETWORK</th>
-                        <th scope="col">CIDR</th>
+                        {this.state.provider ==='gcp'?<></>: <th scope="col">CIDR</th>}
                         <th scope="col"></th>
                         <th className="col-5"></th>
                       </tr>
@@ -680,6 +683,7 @@ export default class BluePrint extends Component {
                       this.state.Networks.map((NetworkData, index) => (
                         <NetworkTableRow
                           key={index}
+                          Provider = {this.state.provider}
                           index={index + 1}
                           Network={NetworkData}
                           VMS={this.state.VMS}
@@ -695,6 +699,7 @@ export default class BluePrint extends Component {
                           BlueprintHostClone={this._BlueprintHostClone}
                           BlueprintHostConvert={this._BlueprintHostConvert}
                           BlueprintHostBuild={this._BlueprintHostBuild}
+
                         />
                       ))
                     )}

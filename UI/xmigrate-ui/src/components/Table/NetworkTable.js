@@ -47,7 +47,7 @@ export default class NetworkTableRow extends Component {
 </IconContext.Provider> :  <icon.BsCaretRightFill /> } 
            </td>
           <td >{this.props.Network.nw_name}</td>
-          <td >{this.props.Network.cidr}</td>
+          {this.props.Provider ==='gcp'?<></>:   <td >{this.props.Network.cidr}</td>}
           <td  onClick={()=>this.props.DeleteNetwork(this.state.Network)}>
             <svg
               width="1em"
