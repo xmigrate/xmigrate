@@ -93,7 +93,7 @@ async def create_nw(project):
 
     con = create_db_con()
     location = Project.objects(name=project)[0]['location']
-    project_id = Project.objects(name=project)[0]['project_id']
+    project_id = Project.objects(name=project)[0]['gcp_project_id']
     service_account_json = Project.objects(name=project)[0]['service_account']
 
     machines = BluePrint.objects(project=project)
@@ -114,7 +114,7 @@ async def create_nw(project):
         if not created:
             try:
                 res = create_vpc(project_id, service_account_json, network_name)
-                BluePrint.objects(network=network_name, project=project).update(vpc_id=res.targetLink, status='5')
+                BluePrint.objects(network=network_name, project=project).update(vpc_id=res['targetLink'], status='5')
                 Network.objects(nw_name=network_name, project=project).update(created=True, upsert=True)
             except Exception as e:
                 print("Vnet creation failed to save: "+repr(e))
@@ -140,7 +140,7 @@ async def create_nw(project):
                 try:
                     subnet_name = project+"subnet"+str(c)
                     subnet_result = create_subnet(project_id, service_account_json,network_name, location, subnet_name, i)
-                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result.targetLink),status='10')
+                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result['targetLink']),status='10')
                     Subnet.objects(cidr=i, project=project).update(created=True, upsert=True)
                 except Exception as e:
                     print("Subnet creation failed to save: "+repr(e))

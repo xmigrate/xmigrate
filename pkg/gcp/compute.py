@@ -30,7 +30,9 @@ def get_vm_types(project):
         service_account = Project.objects(name=project)[0]['service_account']
         location = Project.objects(name=project)[0]['location']
         project_id = Project.objects(name=project)[0]['gcp_project_id']
-        machine_types = list_machine_type(project_id, service_account, location+'-a')
+        machines = list_machine_type(project_id, service_account, location+'-a')
+        for machine in machines:
+            machine_types.append({'vm_name': machine})
         flag = True
     except Exception as e:
         print(repr(e))
