@@ -1,4 +1,3 @@
-import time
 from typing import List
 from mongoengine import *
 from model.blueprint import *
@@ -6,7 +5,7 @@ from model.project import *
 from model.network import *
 from utils.dbconn import *
 from utils.logger import *
-
+import asyncio
 from exception.exception import GcpRegionNotFound
 
 from .gcp import get_service_compute_v1
@@ -33,7 +32,7 @@ def get_vpc(project_id, service_account_json, network_name):
     return response
 
 
-def create_vpc(project_id, service_account_json, network_name, wait_for_creation=False):
+async def create_vpc(project_id, service_account_json, network_name, wait_for_creation=False):
     service = get_service_compute_v1(service_account_json)
     network_body = {
         "name": network_name,
@@ -49,7 +48,7 @@ def create_vpc(project_id, service_account_json, network_name, wait_for_creation
                 if 'error' in result:
                     raise Exception(result['error'])
                 return result
-            time.sleep(1)
+            await asyncio.sleep(1)
     return response
 
 
@@ -123,13 +122,13 @@ async def create_nw(project):
         created = Network.objects(nw_name=network_name, project=project)[0]['created']
         if not created:
             try:
-                res = create_vpc(project_id, service_account_json, network_name, True)
-                BluePrint.objects(network=network_name, project=project).update(vpc_id=res['targetLink'], status='5')
+                res = await create_vpc(project_id, service_account_json, network_name, True)
+                BluePrint.objects(network=network_name, project=project).update(vpc_id=res['targetLink'], status='10')
                 Network.objects(nw_name=network_name, project=project).update(created=True, upsert=True)
             except Exception as e:
                 print("Vnet creation failed to save: "+repr(e))
                 logger("Vnet creation failed to save: "+repr(e), "warning")
-                BluePrint.objects(network=network_name, project=project).update(vpc_id=res, status='-5')
+                BluePrint.objects(network=network_name, project=project).update(vpc_id=res, status='-10')
                 vpc_created.append(False)
             finally:
                 con.close()
@@ -150,9 +149,10 @@ async def create_nw(project):
                 try:
                     subnet_name = project+"subnet"+str(c)
                     subnet_result = create_subnet(project_id, service_account_json,network_name, location, subnet_name, i)
-                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result['targetLink']),status='10')
+                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result['targetLink']),status='20')
                     Subnet.objects(cidr=i, project=project).update(created=True, upsert=True)
                 except Exception as e:
+                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result['targetLink']),status='-20')
                     print("Subnet creation failed to save: "+repr(e))
                     logger("Subnet creation failed to save: "+repr(e), "warning")
                     subnet_created.append(False) 

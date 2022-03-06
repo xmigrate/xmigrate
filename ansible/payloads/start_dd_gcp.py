@@ -32,7 +32,7 @@ class Discover(Document):
 
 class BluePrint(Document):
     host = StringField(required=True, max_length=200, unique=True)
-    ip = StringField(required=True, unique=True)
+    ip = StringField(required=True)
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
     ports = ListField()
@@ -64,7 +64,7 @@ try:
             BluePrint.objects(host=hostname,project=project).update(disk_clone=disk_clone_data)
             mnt_path = disk['mnt_path']
             mnt_path = mnt_path.replace("/","-slash")
-            output = os.popen('sudo dd if='+disk["dev"]+' bs=4M status=progress | gsutil cp - gs://'+bucket+'/'+hostname+mnt_path+'.img').read()
+            output = os.popen('sudo dd if='+disk["dev"]+' bs=4M status=progress | gsutil cp - gs://'+bucket+'/'+hostname+mnt_path+'.raw').read()
             for i in disk_clone_data:
                 if i['dev']==disk['dev']:
                     i['status'] = "100"

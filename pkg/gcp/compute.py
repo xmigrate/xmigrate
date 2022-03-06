@@ -62,7 +62,7 @@ def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_s
     ]
     disks.append(additional_disk)
     instance_body = {
-        "name": vm_name,
+        "name": vm_name.replace('.','-'),
         "networkInterfaces": [],
         "machineType": vm_type,
         "disks": disks,
@@ -87,15 +87,15 @@ async def build_compute(project, hostname):
         hosts = BluePrint.objects(project=project, host=hostname)
 
         location = Project.objects(name=project)[0]['location']
-        project_id = Project.objects(name=project)[0]['project_id']
+        project_id = Project.objects(name=project)[0]['gcp_project_id']
         service_account = Project.objects(name=project)[0]['service_account']
 
         for host in hosts:
             machine_type = host['machine_type']
             public_route = host['public_route']
             image_id = host['image_id']
-            subnet = host['subnet_id']
-            network = host['vpc_id']
+            subnet = host['subnet_id'].split('v1')[1].split('/')[-1]
+            network = host['vpc_id'].split('v1')[1].split('/')[-1]
             try:
                 BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='95')
                 vm = create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, [])

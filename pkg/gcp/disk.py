@@ -18,13 +18,13 @@ from pathlib import Path
 async def start_image_creation_worker(project, disk_containers, host):
     con = create_db_con()
     location = Project.objects(name=project)[0]['location']
-    project_id = Project.objects(name=project)[0]['project_id']
+    project_id = Project.objects(name=project)[0]['gcp_project_id']
     service_account = Project.objects(name=project)[0]['service_account']
     service = get_service_compute_v1(service_account)
     for disk in disk_containers:
         if disk['os_disk']:
             disk_body = {
-                "name": host,
+                "name": host.replace('.','-'),
                 "description": "Disk's migrated using xmigrate",
                 "rawDisk": {
                     "source": disk['image_path']
@@ -43,8 +43,18 @@ async def start_image_creation_worker(project, disk_containers, host):
                 ]
                 }
             request = service.images().insert(
-                project=project_id, zone=location+'-a', body=disk_body)
+                project=project_id, body=disk_body)
             response = request.execute()
+            print(response)
+            while True:
+                result = service.globalOperations().get(project=project_id, operation=response['name']).execute()
+                print(result)
+                if result['status'] == 'DONE':
+                    print("done.")
+                    if 'error' in result:
+                        raise Exception(result['error'])
+                    return result
+                await asyncio.sleep(1)
         else:
             disk_body = {
                 "name": host,
@@ -59,6 +69,16 @@ async def start_image_creation_worker(project, disk_containers, host):
             request = service.disks().insert(
                 project=project_id, zone=location+'-a', body=disk_body)
             response = request.execute()
+            print(response)
+            while True:
+                result = service.zoneOperations().get(project=project_id, zone=location+'-a', operation=response['name']).execute()
+                print(result)
+                if result['status'] == 'DONE':
+                    print("done.")
+                    if 'error' in result:
+                        raise Exception(result['error'])
+                    return result
+                await asyncio.sleep(1)
 
 async def start_image_creation(project, hostname):
    con = create_db_con()
@@ -86,7 +106,7 @@ async def start_image_creation(project, hostname):
             {
                 'image_path': 'https://storage.googleapis.com/'+bucket_name+'/'+image_name,
                 'os_disk': os_disk,
-                'disk_size': disk['file_size']
+                'disk_size': disk['disk_size']
             }
          )
       await start_image_creation_worker(project, disk_containers, host['host'])
@@ -132,11 +152,12 @@ async def download_worker(osdisk_raw,project,host):
     bucket = GcpBucket.objects(project=project)[0]['bucket']
     secret_key = GcpBucket.objects(project=project)[0]['secret_key']
     access_key = GcpBucket.objects(project=project)[0]['access_key']
-    project_id = GcpBucket.objects(project=project)[0]['gcp_project_id']
+    project_id = GcpBucket.objects(project=project)[0]['project_id']
     
     try:
         cur_path = os.getcwd()
-        path = cur_path+"/osdisks/"+osdisk_raw
+        path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')+"/disk.raw"
+
         boto_path = cur_path+"/ansible/"+project+"/.boto"
         if not os.path.exists(boto_path):
             with open(cur_path+"/ansible/"+"gcp/templates/.boto.j2") as file_:
@@ -146,7 +167,8 @@ async def download_worker(osdisk_raw,project,host):
                 fh.write(rendered_boto)
         if not os.path.exists(path):
             os.popen('echo "download started"> ./logs/ansible/migration_log.txt')
-            command = 'gsutil cp gs://'+bucket+'/'+osdisk_raw + ' ' +path
+            command = 'BOTO_CONFIG='+boto_path +' gsutil cp gs://'+bucket+'/'+osdisk_raw + ' ' +path
+            print(command)
             os.popen('echo '+command+'>> ./logs/ansible/migration_log.txt')
             process1 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
@@ -168,17 +190,18 @@ async def upload_worker(osdisk_raw,project,host):
     bucket = GcpBucket.objects(project=project)[0]['bucket']
     secret_key = GcpBucket.objects(project=project)[0]['secret_key']
     access_key = GcpBucket.objects(project=project)[0]['access_key']
-    project_id = GcpBucket.objects(project=project)[0]['gcp_project_id']
+    project_id = GcpBucket.objects(project=project)[0]['project_id']
     pipe_result = ''
     file_size = '0'
+    cur_path = os.getcwd()
+    boto_path = cur_path+"/ansible/"+project+"/.boto"
     try:
         osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
-        cur_path = os.getcwd()
-        tar_path = cur_path+"/osdisks/"+osdisk_tar
+        tar_path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')+"/"+osdisk_tar
         file_size = Path(tar_path).stat().st_size 
         os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
         os.popen('echo "tar uploading" >> ./logs/ansible/migration_log.txt')
-        command = 'gsutil cp ' + tar_path+ ' gs://'+bucket+'/'+osdisk_tar
+        command = 'BOTO_CONFIG='+boto_path +' gsutil cp ' + tar_path+ ' gs://'+bucket+'/'+osdisk_tar
         process3 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process3.wait()
         os.popen('echo "tar uploaded" >> ./logs/ansible/migration_log.txt')
@@ -200,12 +223,12 @@ async def conversion_worker(osdisk_raw,project,host):
         try:
             osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
             cur_path = os.getcwd()
-            path = cur_path+"/osdisks/"+osdisk_raw
-            tar_path = cur_path+"/osdisks/"+osdisk_tar
+            path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')
+            tar_path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')+"/"+osdisk_tar
             print("Start compressing")
             print(path)
             os.popen('echo "start compressing">> ./logs/ansible/migration_log.txt')
-            command = "tar --format=oldgnu -Sczf "+ tar_path+" "+path
+            command = "tar --format=oldgnu -Sczf "+ tar_path+" -C "+path+" disk.raw"
             process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process2.wait()
             await upload_worker(osdisk_raw,project,host)

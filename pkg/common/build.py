@@ -207,12 +207,17 @@ async def start_host_build(project,hostname):
                 logger("ec2 creation failed","error")
         elif p[0]['provider'] == "gcp":
             logger("gcp vm creation started","info")
-            vm_created = await gcp_compute.build_compute(project, hostname)
-            if vm_created:
-                logger("ec2 creation completed","info")
+            disk_created = await gcpdisk.start_image_creation(project, hostname)
+            if disk_created:
+                vm_created = await gcp_compute.build_compute(project, hostname)
+                if vm_created:
+                    logger("gcp vm creation completed","info")
+                else:
+                    print("gcp vm creation failed")
+                    logger("gcp vm creation failed","error")
             else:
-                print("ec2 creation failed")
-                logger("ec2 creation failed","error")
+                print("gcp disk creation failed")
+                logger("gcp disk creation failed","error")
 
 
 async def start_build(project):
