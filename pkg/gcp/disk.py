@@ -1,4 +1,5 @@
 from email.mime import image
+from googleapiclient.errors import HttpError
 from utils.dbconn import *
 import os
 from model.blueprint import *
@@ -13,6 +14,7 @@ from .gcp import get_service_compute_v1
 from utils.logger import *
 from jinja2 import Template
 from pathlib import Path
+
 
 
 async def start_image_creation_worker(project, disk_containers, host):
@@ -44,8 +46,14 @@ async def start_image_creation_worker(project, disk_containers, host):
                 }
             request = service.images().insert(
                 project=project_id, body=disk_body)
-            response = request.execute()
-            print(response)
+            try:
+                response = request.execute()
+                print(response)
+            except HttpError as e:
+                if e.resp.status == 409:
+                    print("image already created")
+                    BluePrint.objects(host=host, project=project).update(image_id='projects/'+project_id+'/global/images/'+host.replace('.','-'))
+                    continue
             while True:
                 result = service.globalOperations().get(project=project_id, operation=response['name']).execute()
                 print(result)
@@ -53,6 +61,8 @@ async def start_image_creation_worker(project, disk_containers, host):
                     print("done.")
                     if 'error' in result:
                         raise Exception(result['error'])
+                    BluePrint.objects(host=host, project=project).update(image_id=result['targetLink'])
+                    BluePrint.objects(host=host, project=project).update(status='40')
                     return result
                 await asyncio.sleep(1)
         else:
@@ -68,8 +78,13 @@ async def start_image_creation_worker(project, disk_containers, host):
                 }
             request = service.disks().insert(
                 project=project_id, zone=location+'-a', body=disk_body)
-            response = request.execute()
-            print(response)
+            try:
+                response = request.execute()
+                print(response)
+            except HttpError as e:
+                if e.resp.status == 409:
+                    print("disk already created")
+                    continue
             while True:
                 result = service.zoneOperations().get(project=project_id, zone=location+'-a', operation=response['name']).execute()
                 print(result)
@@ -77,6 +92,8 @@ async def start_image_creation_worker(project, disk_containers, host):
                     print("done.")
                     if 'error' in result:
                         raise Exception(result['error'])
+                    Disk.objects(host=host, project=project, vhd=disk['image_path'].split('/')[-1]).update(disk_id=result['targetLink'])
+                    BluePrint.objects(host=host, project=project).update(status='42')
                     return result
                 await asyncio.sleep(1)
 
