@@ -37,7 +37,7 @@ from routes.storage import *
 from routes.auth import *
 from routes.locations import *
 from routes.vm_types import *
-from routes.gcp_test import *
+
 
 #Exception
 from exception import handler
