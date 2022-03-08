@@ -1,4 +1,5 @@
 import Axios from 'axios';
+import {APPURL} from './Services';
 // import { LOGINURL } from './Services';
 
 export default function PostService(API, data) {
@@ -14,10 +15,14 @@ export default function PostService(API, data) {
             window.location.replace("/404");
         }
         else if(error.response.status === 401 ){
-            console.log("401");
-            return error.response.status;
-            //  window.alert("Unauthorised login!!!");
-            //  window.location.replace("/");
+            if(window.location.href === APPURL  ){
+                console.log("401");
+                return error.response.status;
+            }else{
+              window.location.replace("/401");
+            }
+           
+      
         }
         else if(error.response.status === 404){
             window.location.replace("/404");
