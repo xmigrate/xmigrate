@@ -64,7 +64,7 @@ try:
             BluePrint.objects(host=hostname,project=project).update(disk_clone=disk_clone_data)
             mnt_path = disk['mnt_path']
             mnt_path = mnt_path.replace("/","-slash")
-            output = os.popen('sudo dd if='+disk["dev"]+' bs=4M status=progress | gsutil cp - gs://'+bucket+'/'+hostname+mnt_path+'.raw').read()
+            output = os.popen('sudo dd if='+disk["dev"]+' bs=4M status=progress | BOTO_CONFIG=/root/.boto /usr/local/bin/gsutil cp - gs://'+bucket+'/'+hostname+mnt_path+'.raw').read()
             for i in disk_clone_data:
                 if i['dev']==disk['dev']:
                     i['status'] = "100"

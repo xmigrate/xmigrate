@@ -128,7 +128,7 @@ async def start_convert(project,hostname):
         elif p[0]['provider'] == "gcp":
             logger("Download started","info")
             print("****************Download started*****************")
-            image_downloaded = await gcpdisk.start_downloading(project)
+            image_downloaded = await gcpdisk.start_downloading(project,hostname)
             print("****************Conversion awaiting*****************")
             logger("Conversion started","info")
             if image_downloaded:
