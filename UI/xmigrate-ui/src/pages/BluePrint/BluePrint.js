@@ -58,7 +58,8 @@ export default class BluePrint extends Component {
       ShowAlertSave: false,
       showUpdateAlert: false,
       showUpdateMessage: "",
-      expandedHost: false
+      expandedHost: false,
+      BuildNetworkStart:false
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -379,7 +380,7 @@ export default class BluePrint extends Component {
     });
     //Getting all details if any
     this.GettingData();
-    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!" })
+    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!",BuildNetworkStart:false })
 
   }
 
@@ -467,7 +468,7 @@ export default class BluePrint extends Component {
     await PostService(BLUEPRINT_NETWORK_BUILD, data).then((res) => {
       console.log("data from response of Network Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval,ShowAlertBuild:false });
+      this.setState({ intervalId: interval,ShowAlertBuild:false,BuildNetworkStart:true });
       //Check status and Status should be 60
     });
 
@@ -611,9 +612,10 @@ export default class BluePrint extends Component {
               </Card.Body>
             </Card>
 
-            <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
+
+             <Alert id="message" className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
               <p>{this.state.showUpdateMessage}</p>
-            </Alert>
+            </Alert> 
 
             {/* HereTable */}
 
@@ -710,7 +712,7 @@ export default class BluePrint extends Component {
             <div className="mt-4 d-flex justify-content-between">
               <Button
                 variant="success"
-                className="media-body py-3 mr-40px text-success bt-main"
+                className="media-body py-3 mr-40px text-success bt-main btn-Blueprint"
                 // onClick={this._SaveBuild.bind(this)}
                 // onClick={this.handleAlertOpenSave.bind(this)}
                 onClick={() => this.setState({ ShowAlertSave: true })}
@@ -721,17 +723,17 @@ export default class BluePrint extends Component {
               </Button>
               <Button
                 variant="primary"
-                className="media-body py-3 mr-40px text-primary  bt-main"
+                className="media-body py-3 mr-40px text-primary  bt-main btn-Blueprint"
                 // onClick={this._createBuild.bind(this)}
                 onClick={() => this.setState({ ShowAlertBuild: true })}
-                disabled={this.state.BuildStatus}
+                disabled={this.state.BuildStatus || this.state.BuildNetworkStart}
                 size="lg"
               >
                 Build Network <icon.BsPlay />
               </Button>
               <Button
                 variant="danger"
-                className="media-body py-3 text-danger  bt-main"
+                className="media-body py-3 text-danger  bt-main btn-Blueprint"
                 // onClick={this._Reset.bind(this)}
                 onClick={() => this.setState({ ShowAlertReset: true })}
                 disabled={this.state.BuildStatus}

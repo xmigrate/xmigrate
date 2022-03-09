@@ -32,7 +32,7 @@ toggleExpander = (e) => {
 
 render(){
     return(
-        <tbody>
+        <tbody  className="Subnet">
             <tr onClick={this.toggleExpander}  className="SubnetRow tData">
             <td >{ this.state.expanded ? <IconContext.Provider value={{ color: "#1DA1F2" }}>
   <div>
@@ -66,13 +66,13 @@ render(){
             this.state.expanded && (
                 <tr className="expandable " key="tr-expander"  onDrop={(e)=>this.props.drop(e,this.state.Subnet,this.state.nw_name)} onDragOver={(e)=>this.props.allowDrop(e)}>
                     <td className="uk-background-muted" colSpan={6}>
-                    <Row className="font-weight-bold py-3 ml-1">
-                              <Col xs={{ span: 1 }}></Col>
-                              <Col xs={{ span: 3 }}>HOSTNAME</Col>
-                              <Col xs={{ span: 2 }}>IP</Col>
-                              <Col xs={{ span: 2 }}>MACHINE TYPE</Col>
-                              <Col xs={{ span: 2 }}>ACTION</Col>
-                              {/* <Col xs={{ span: 1 }}>STATUS</Col> */}
+                    <Row className="font-weight-bold py-3 ml-1  ">
+                              
+                              <Col className="rdColCenter" xs={{ span: 3 }}>HOSTNAME</Col>
+                              <Col  className="rdColCenter" xs={{ span: 2 }}>IP</Col>
+                              <Col className="rdColCenter" xs={{ span: 2 }}>MACHINE TYPE</Col>
+                              <Col className="rdColCenter" xs={{ span: 3 }}>ACTION</Col>
+                               <Col className="rdColCenter" xs={{ span: 1 }}>STATUS</Col> 
                             </Row>
                             {this.props.Subnet.hosts === undefined || this.props.Subnet.hosts.length === 0  ? (
                   <h6 className="text-center text-muted">
@@ -81,10 +81,10 @@ render(){
                   ) : (
                     this.props.Subnet.hosts.map((host, index) => (
                       <Row className=" py-3 HostRow" key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
-                      <Col xs={{ span: 1 }}></Col>
-                       <Col xs={{ span: 3 }}>{host.host}</Col>
-                      <Col xs={{ span: 2 }}>{host.ip}</Col> 
-                      <Col xs={{ span: 2 }}>
+                    
+                       <Col className="rdColCenter" xs={{ span: 3 }}>{host.host}</Col>
+                      <Col className="rdColCenter" xs={{ span: 2 }}>{host.ip}</Col> 
+                      <Col className="rdColCenter"  xs={{ span: 2 }}>
                         <Form>
                           <Form.Group controlId="select-machine-type">
                             <Form.Control
@@ -103,7 +103,7 @@ render(){
                           </Form.Group>
                         </Form> 
                       </Col>
-                      <Col>   
+                      <Col className="rdColCenter" xs={{ span: 3 }}>   
                 
                        <Button
                       className=" media-body"
@@ -114,7 +114,7 @@ render(){
                     >
                       Clone
                     </Button>
-                   ----------
+                   ----
                                    <Button
                       className=" media-body"
                       variant="danger"
@@ -124,7 +124,7 @@ render(){
                     >
                       Convert
                     </Button>
-                    ---------
+                    ----
                     <Button
                       className=" media-body"
                       variant="primary"
@@ -134,7 +134,7 @@ render(){
                     >
                       Build
                     </Button></Col>
-                     {/* <Col xs={{ span: 1 }}>{host.status}</Col> */}
+                     <Col className="rdColCenter" xs={{ span: 1 }}>{host.status}</Col> 
                     </Row>
                     ))
                   )}

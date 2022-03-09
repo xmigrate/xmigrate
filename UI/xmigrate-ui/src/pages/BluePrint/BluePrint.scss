@@ -76,4 +76,15 @@
    .table > :not(:first-child) {
     border-top: 0px;
   }
+  .btn-Blueprint:disabled{
+    background-color: whitesmoke;
+  }
+  #message {
+    position: fixed;
+    top: 50%;
+    left: 30%;
+    width: 50%;
+    z-index:9999; 
+    border-radius: .3rem;
+}
 }
