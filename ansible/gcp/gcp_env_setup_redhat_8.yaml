@@ -88,7 +88,7 @@
       backrefs: true
       path: /etc/default/grub
       regexp: "^(GRUB_CMDLINE_LINUX=\".*)\"$"
-      line: '\1 console=ttyS0,38400n8d"'
+      line: 'GRUB_CMDLINE_LINUX="console=ttyS0,38400n8d console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"'
     when: grub_cmdline_check.found == 0
   
   - name: remove-kernel param
