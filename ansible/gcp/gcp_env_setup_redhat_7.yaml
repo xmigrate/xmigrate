@@ -6,11 +6,6 @@
   gather_facts: no
   force_handlers: True
   tasks:
-  - name: Download get-pip file
-    get_url:
-      url: https://bootstrap.pypa.io/get-pip.py
-      dest: /tmp/get-pip.py
-      mode: 0750
   - block:
     - name: Install Python3
       yum:
@@ -23,10 +18,12 @@
       yum:
         name: gcc
         state: latest
-    - name: Install python36-devel
-      yum:
-        name: python36-devel
-        state: latest
+    - name: upgrade pip3
+      shell: pip3 install --upgrade pip
+    # - name: Install python36-devel
+    #   yum:
+    #     name: python36-devel
+    #     state: latest
     rescue:
     - name: Update yum.. older way
       shell: "sudo yum update -y"
@@ -40,6 +37,7 @@
     - name: Install Python packages
       pip:
         name: "{{ item }}"
+        executable: pip3
       with_items:
         - gsutil
         - netifaces
@@ -49,6 +47,7 @@
         - python-dotenv
         - dnspython
         - pyasn1==0.4.6
+      
     rescue:
     - name: Install python packages
       shell: "sudo pip3 install {{ item }}"

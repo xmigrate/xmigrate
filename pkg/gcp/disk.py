@@ -284,7 +284,7 @@ async def start_conversion(project,hostname):
         con.close()
         return True
 
-async def start_downloading(project):
+async def start_downloading(project,hostname):
     con = create_db_con()
     if Project.objects(name=project)[0]['provider'] == "gcp":
         machines = BluePrint.objects(project=project)

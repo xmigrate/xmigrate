@@ -18,7 +18,7 @@
           NETWORKING=yes
           HOSTNAME=localhost.localdomain
         dest: /etc/sysconfig/network
-​
+
     - name: network-script-ifcfg-eth0 ispresent
       command: grep -Fxq "DEVICE=eth0
           ONBOOT=yes
@@ -54,12 +54,12 @@
           - /dev/null
           - /etc/udev/rules.d/75-persistent-net-generator.rules
       when: false ## do not run this tasks
-​
+
     - name: delete-70-persistent-net.rules
       file:
         path: /etc/udev/rules.d/70-persistent-net.rules
         state: absent
-​
+
     - name: network-service-start-boot
       command:
         argv:
@@ -115,7 +115,7 @@
         line: |
           ClientAliveInterval 180
       when: false
-​
+
     - name: update-vm
       command:
         argv: 
@@ -135,7 +135,7 @@
           - chkconfig
           - waagent
           - "on"
-​
+
     - name: config-swap
       lineinfile: 
         path: /etc/waagent.conf 
@@ -145,7 +145,7 @@
                 ResourceDisk.MountPoint=/mnt/resource
                 ResourceDisk.EnableSwap=y
                 ResourceDisk.SwapSizeMB=2048    ## NOTE: set this to whatever you need it to be.
-​
+
     - name: Unregister the subscription 
       command:
         argv:

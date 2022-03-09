@@ -12,7 +12,7 @@ class BluePrint(Document):
     ram = StringField(required=True, max_length=50)
     machine_type = StringField(required=True, max_length=150)
     status = StringField(required=False, max_length=100)
-    image_id = StringField(required=False, max_length=100)
+    image_id = StringField(required=False, max_length=500)
     vpc_id = StringField(required=False, max_length=100)
     subnet_id = StringField(required=False, max_length=200)
     public_route = BooleanField(required=False)

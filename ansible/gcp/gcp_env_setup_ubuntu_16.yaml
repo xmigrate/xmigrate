@@ -6,62 +6,49 @@
   gather_facts: no
   force_handlers: True
   tasks:
-  - name: Download get-pip file
-    get_url:
-      url: https://bootstrap.pypa.io/get-pip.py
-      dest: /tmp/get-pip.py
-      mode: 0750
   - block:
-    - name: Install Python3
-      yum:
-        name: python3
-        state: latest
+    - name: Install Python
+      apt:
+        pkg:
+        - python3-dev
+        - libffi-dev
         update_cache: yes
       become: true
       become_method: sudo
+    - name: upgrade pip3
+      shell: wget https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3.5
     - name: Install GCC
-      yum:
+      apt:
         name: gcc
         state: latest
-    - name: Install python36-devel
-      yum:
-        name: python36-devel
-        state: latest
     rescue:
-    - name: Update yum.. older way
-      shell: "sudo yum update -y"
+    - name: Update apt.. older way
+      shell: "sudo apt update -y"
     - name: Install Python-devel.. older way
-      shell: "sudo yum install python3 python36-devel -y"
+      shell: "sudo apt install python3 python3-pip -y"
     - name: Install GCC .. older way
-      shell: "sudo yum install gcc -y"
+      shell: "sudo apt install gcc -y"
     tags:
         - devel  
   - block:
     - name: Install Python packages
       pip:
-        name: "{{ item }}"
-      with_items:
-        - gsutil
-        - netifaces
-        - netaddr
-        - mongoengine
-        - psutil
-        - python-dotenv
-        - dnspython
-        - pyasn1==0.4.6
+        name: ['gsutil', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython']
+        executable: /home/ubuntu/.local/bin/pip3
+      become_user: ubuntu
     rescue:
     - name: Install python packages
-      shell: "sudo pip3 install {{ item }}"
+      shell: "/home/ubuntu/.local/bin/pip3 install {{ item }}"
       with_items:
         - gsutil
         - netifaces
         - netaddr
         - mongoengine
         - psutil
+        - pyasn1
         - python-dotenv
         - dnspython
-        - pyasn1==0.4.6
-
+      become_user: ubuntu
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"
@@ -88,7 +75,7 @@
       backrefs: true
       path: /etc/default/grub
       regexp: "^(GRUB_CMDLINE_LINUX=\".*)\"$"
-      line: 'GRUB_CMDLINE_LINUX="console=ttyS0,38400n8d console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"'
+      line: '\1 console=ttyS0,38400n8d"'
     when: grub_cmdline_check.found == 0
   
   - name: remove-kernel param
@@ -104,14 +91,14 @@
       regexp: 'splashimage'
   - block:
     - name: <==Update grub config==>
-      shell: "sudo grub-mkconfig -o /boot/grub/grub.cfg"
+      shell: "sudo update-grub"
       register: grubout
       become: True
       tags:
         - grubupdate
     rescue:
     - name: <==Trying Update grub2 config==>
-      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      shell: "sudo update-grub2"
       register: grubout
       become: True
       tags:
@@ -125,9 +112,9 @@
       - deploy
 
   - name: <==Executing payload==>
-    shell: "python3 /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+    shell: "python3.5 /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
     register: st
-    become: True
+    become_user: ubuntu
     tags:
       - exec
 
