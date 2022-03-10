@@ -1,8 +1,9 @@
 from __main__ import app
 from quart import jsonify
-
+from utils.logger import *
 
 def internal_server_error(msg):
+    logger(msg,"error")
     return jsonify({'status': '500','message': str(msg)}), 500
 
 def page_not_found(msg):

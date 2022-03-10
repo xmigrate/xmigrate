@@ -28,13 +28,15 @@ COPY requirements.txt requirements.txt
 
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
-RUN python3.7 -m pip install -U pip
+RUN python3.7 -m pip install -U pip --no-cache-dir
 
-RUN python3.7 -m pip install setuptools-rust
+RUN python3.7 -m pip install setuptools-rust --no-cache-dir
 
-RUN python3.7 -m pip install --no-use-pep517 --upgrade pyOpenSSL
+RUN python3.7 -m pip install --no-use-pep517 --upgrade pyOpenSSL --no-cache-dir
 
-RUN python3.7 -m pip install -r requirements.txt 
+RUN python3.7 -m pip install -r requirements.txt --no-cache-dir
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/lib/apt/ /var/cache
 
 COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 

@@ -100,6 +100,7 @@ async def build_compute(project, hostname):
                 BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='95')
                 vm = create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, [])
                 print(vm)
+                BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='100')
                 ## todo watch vm status 
                 con.close()
                 return True

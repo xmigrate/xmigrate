@@ -31,8 +31,8 @@ async def locations_get():
         elif provider == 'gcp':
             service_account = data['service_account']
             project_id = data['project_id']
-            regions, flag = gcpregions.get_regions(service_account, project_id)
+            reg, flag = gcpregions.get_regions(service_account, project_id)
             if flag:
-                return jsonify({'status': '200', 'locations': regions})
+                return jsonify({'status': '200', 'locations': reg})
             else:
-                return jsonify({'status': '500', 'locations': regions, 'message':"wrong credentials"})
+                return jsonify({'status': '500', 'locations': reg, 'message':"wrong credentials"})
