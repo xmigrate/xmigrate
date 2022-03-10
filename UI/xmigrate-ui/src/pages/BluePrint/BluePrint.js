@@ -141,7 +141,7 @@ export default class BluePrint extends Component {
       VMS: VMSDATA,
       hostCurrents: hostCurrents,
       status: "loaded",
-      BuildNetworkBtnDis: true
+      BuildNetworkBtnDis: BuildNetworkBtnDisflag
     });
   }
 
@@ -571,7 +571,7 @@ export default class BluePrint extends Component {
       if (flag) {
 
         clearInterval(this.state.intervalId);
-        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
+        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Network Successfull!!" })
       }
       this.setState({
         Networks: NetworksData,
