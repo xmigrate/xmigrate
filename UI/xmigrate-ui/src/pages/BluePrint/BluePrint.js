@@ -530,6 +530,7 @@ export default class BluePrint extends Component {
 
   // Getting Status Migration------------------------------------------------
   getStatus() {
+    let UpdateMessage ;
     let data1 = {
       project: this.state.project,
     };
@@ -553,14 +554,21 @@ export default class BluePrint extends Component {
                 else {
                   flag = true;
                   if (host["BtStatus"] === "BuildNetwork") {
+                    UpdateMessage = "Build Network Successfull!!";
                     host["BtStatus"] = "clone"
                     console.log(host["BtStatus"]);
                   }
                   else if (host["BtStatus"] === "clone") {
+                    UpdateMessage = "Clone Completed Successfull!!";
                     host["BtStatus"] = "convert";
                   }
                   else if (host["BtStatus"] === "convert") {
+                    UpdateMessage = "Convert Completed Successfull!!";
                     host["BtStatus"] = "build";
+                  }
+                  else if(host["BtStatus"] === "build"){
+                    UpdateMessage = "Build Completed Successfull!!";
+                    host["BtStatus"] = "BuildNetwork";
                   }
                 }
               }
@@ -571,7 +579,7 @@ export default class BluePrint extends Component {
       if (flag) {
 
         clearInterval(this.state.intervalId);
-        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Network Successfull!!" })
+        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: UpdateMessage })
       }
       this.setState({
         Networks: NetworksData,
