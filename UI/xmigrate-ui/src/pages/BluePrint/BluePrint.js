@@ -108,12 +108,12 @@ export default class BluePrint extends Component {
       NetworksDatas.forEach((Network, index) => {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
-            status = host["status"];
-            if (host["status"] === "20") {
+            status = parseInt(host["status"]);
+            if (parseInt(host["status"]) === 20 ) {
               host["BtStatus"] = "clone";
-            } else if (host["status"] === "25") {
+            } else if (parseInt(host["status"]) === 25 ) {
               host["BtStatus"] = "convert";
-            } else if (host["status"] === "35") {
+            } else if (parseInt(host["status"]) === 35) {
               host["BtStatus"] = "build";
             }
             else {
@@ -132,7 +132,7 @@ export default class BluePrint extends Component {
     console.log("Network Data:", NetworksDatas);
    console.log("Status:",status);
    let BuildNetworkBtnDisflag = false;
-   if(status>19 | status == 20 ){
+   if(status>19 | status === 20 ){
     BuildNetworkBtnDisflag = true;
    }
     //Setting the State
@@ -548,7 +548,7 @@ export default class BluePrint extends Component {
                 host["status"] = hostRes.status;
                 // host["BtStatus"] = hostRes.status;
                 console.log("Status of Button", host["BtStatus"]);
-                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") || (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "Build")) {
+                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") || (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "build")) {
                   flag = false;
                 }
                 else {
