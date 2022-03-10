@@ -59,7 +59,7 @@ export default class BluePrint extends Component {
       showUpdateAlert: false,
       showUpdateMessage: "",
       expandedHost: false,
-      BuildNetworkStart:false
+      BuildNetworkBtnDis:false
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -92,6 +92,7 @@ export default class BluePrint extends Component {
 
     let VMSDATA;
     let hostCurrents = [];
+    let status ;
     //Getting the VMS  Details------------
     await GetServiceWithData(BLUEPRINTNET_GET_VMS, data).then((res) => {
       VMSDATA = res.data.machine_types;
@@ -103,9 +104,11 @@ export default class BluePrint extends Component {
     await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, data).then((res) => {
       console.log("Response Data of New Blueprint host", res.data.networks);
       NetworksDatas = res.data.networks;
+      
       NetworksDatas.forEach((Network, index) => {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
+            status = host["status"];
             if (host["status"] === "20") {
               host["BtStatus"] = "clone";
             } else if (host["status"] === "25") {
@@ -127,12 +130,18 @@ export default class BluePrint extends Component {
       });
     });
     console.log("Network Data:", NetworksDatas);
+   console.log("Status:",status);
+   let BuildNetworkBtnDisflag = false;
+   if(status>19 | status == 20 ){
+    BuildNetworkBtnDisflag = true;
+   }
     //Setting the State
     this.setState({
       Networks: NetworksDatas,
       VMS: VMSDATA,
       hostCurrents: hostCurrents,
       status: "loaded",
+      BuildNetworkBtnDis: true
     });
   }
 
@@ -380,7 +389,7 @@ export default class BluePrint extends Component {
     });
     //Getting all details if any
     this.GettingData();
-    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!",BuildNetworkStart:false })
+    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!",BuildNetworkBtnDis:false })
 
   }
 
@@ -468,7 +477,7 @@ export default class BluePrint extends Component {
     await PostService(BLUEPRINT_NETWORK_BUILD, data).then((res) => {
       console.log("data from response of Network Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval,ShowAlertBuild:false,BuildNetworkStart:true });
+      this.setState({ intervalId: interval,ShowAlertBuild:false,BuildNetworkBtnDis:true });
       //Check status and Status should be 60
     });
 
@@ -535,6 +544,7 @@ export default class BluePrint extends Component {
             res.data.forEach((hostRes, index) => {
               if (host.host === hostRes.host) {
                 console.log(hostRes.status);
+                host["status"] = hostRes.status;
                 // host["BtStatus"] = hostRes.status;
                 console.log("Status of Button", host["BtStatus"]);
                 if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") || (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "Build")) {
@@ -584,6 +594,10 @@ export default class BluePrint extends Component {
     } else {
       return (
         <div className="BluePrint media-body background-primary">
+
+<Alert id="message" className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
+              <p>{this.state.showUpdateMessage}</p>
+            </Alert> 
           <Container className="py-4 ">
             <h4 className="p-0 m-0 HeadingPage">Blueprint</h4>
 
@@ -613,9 +627,7 @@ export default class BluePrint extends Component {
             </Card>
 
 
-             <Alert id="message" className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
-              <p>{this.state.showUpdateMessage}</p>
-            </Alert> 
+         
 
             {/* HereTable */}
 
@@ -726,7 +738,7 @@ export default class BluePrint extends Component {
                 className="media-body py-3 mr-40px text-primary  bt-main btn-Blueprint"
                 // onClick={this._createBuild.bind(this)}
                 onClick={() => this.setState({ ShowAlertBuild: true })}
-                disabled={this.state.BuildStatus || this.state.BuildNetworkStart}
+                disabled={this.state.BuildStatus || this.state.BuildNetworkBtnDis}
                 size="lg"
               >
                 Build Network <icon.BsPlay />
