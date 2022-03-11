@@ -9,7 +9,8 @@ import {
   Row,
   Col,
   Modal,
-  Alert
+  Alert,
+  Toast
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
 import { GetServiceWithData } from "../../services/GetService";
@@ -603,9 +604,17 @@ export default class BluePrint extends Component {
       return (
         <div className="BluePrint media-body background-primary">
 
-<Alert id="message" className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
+{/* <Alert id="message" className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
               <p>{this.state.showUpdateMessage}</p>
-            </Alert> 
+            </Alert>  */}
+
+            <Toast id="message" show={this.state.showUpdateAlert} onClose={() => this.setState({ showUpdateAlert: false })}>
+          <Toast.Header>
+            <strong className="me-auto">Alert</strong>
+          </Toast.Header>
+          <Toast.Body>{this.state.showUpdateMessage}</Toast.Body>
+        </Toast>
+
           <Container className="py-4 ">
             <h4 className="p-0 m-0 HeadingPage">Blueprint</h4>
 
