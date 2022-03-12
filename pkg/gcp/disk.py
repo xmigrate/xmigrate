@@ -63,11 +63,11 @@ async def start_image_creation_worker(project, disk_containers, host):
                         raise Exception(result['error'])
                     BluePrint.objects(host=host, project=project).update(image_id=result['targetLink'])
                     BluePrint.objects(host=host, project=project).update(status='40')
-                    return result
+                    break
                 await asyncio.sleep(1)
         else:
             disk_body = {
-                "name": host,
+                "name": host.replace('.','-'),
                 "description": "Disk's migrated using xmigrate",
                 # "sizeGb": string,
                 "sourceStorageObject": disk['image_path'],
@@ -85,6 +85,8 @@ async def start_image_creation_worker(project, disk_containers, host):
                 if e.resp.status == 409:
                     print("disk already created")
                     continue
+                else:
+                    print(e)
             while True:
                 result = service.zoneOperations().get(project=project_id, zone=location+'-a', operation=response['name']).execute()
                 print(result)
@@ -94,7 +96,7 @@ async def start_image_creation_worker(project, disk_containers, host):
                         raise Exception(result['error'])
                     Disk.objects(host=host, project=project, vhd=disk['image_path'].split('/')[-1]).update(disk_id=result['targetLink'])
                     BluePrint.objects(host=host, project=project).update(status='42')
-                    return result
+                    break
                 await asyncio.sleep(1)
 
 async def start_image_creation(project, hostname):
@@ -223,7 +225,7 @@ async def upload_worker(osdisk_raw,project,host):
         await process3.wait()
         os.popen('echo "tar uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
-        Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split("-")[1].split(".")[0]).update_one(vhd=osdisk_tar, file_size=str(file_size), upsert=True)
+        Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split('.raw')[0].split('-')[-1]).update_one(vhd=osdisk_tar, file_size=str(file_size), upsert=True)
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")

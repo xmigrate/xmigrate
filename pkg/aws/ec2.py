@@ -54,8 +54,8 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
     for instance in running_instances:
         ip = instance.public_ip_address
     try:
-        BluePrint.objects(image_id=amiid).update(vm_id=instances[0].id, ip=ip)
-        BluePrint.objects(image_id=amiid).update(status='100')
+        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(vm_id=str(instances[0].id), ip=str(ip))
+        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='100')
     except Exception as e:
         print(repr(e))
     finally:
@@ -64,11 +64,9 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
 
 async def build_ec2(project, hostname):
     try:
-        print(project)
         con = create_db_con()
         hosts = BluePrint.objects(project=project, host=hostname)
         for host in hosts:
-            print(host['machine_type'])
             await create_machine(project,host['subnet_id'],host['image_id'],host['machine_type'], hostname)
         con.close()
         return True

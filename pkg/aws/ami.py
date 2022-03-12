@@ -11,7 +11,7 @@ from pkg.aws import creds
 import boto3
 from utils.logger import *
 
-async def start_ami_creation_worker(bucket_name, image_name, project, disk_containers):
+async def start_ami_creation_worker(bucket_name, image_name, project, disk_containers, hostname):
    con = create_db_con()
    access_key = Project.objects(name=project)[0]['access_key']
    secret_key = Project.objects(name=project)[0]['secret_key']
@@ -80,8 +80,9 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
       )
    except Exception as e:
       print(str(e))
-      BluePrint.objects(project=project, host=image_name.split("-")[0]).update(status='-1')
+      BluePrint.objects(project=project, host=hostname).update(status='-1')
    try:
+      print("Importing image")
       client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=region)
       response = client.import_image(
          DiskContainers=disk_containers,
@@ -91,15 +92,14 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
                'Tags': [
                   {
                      'Key': 'Name',
-                     'Value': image_name.split("-")[0]
+                     'Value': hostname
                   },
                ]
          },
       ]
       )
-      
       import_task_id = response['ImportTaskId']
-      BluePrint.objects(host=image_name.split("-")[0]).update(status='30')
+      BluePrint.objects(host=hostname).update(status='30')
       logger("AMI creation started: "+import_task_id,"info")
       if len(import_task_id) > 0:
          while True:
@@ -110,21 +110,25 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
             )
             if response['ImportImageTasks'][0]['Status'] == "completed":
                ami_id = import_task_id
-               print(response)
-               BluePrint.objects(host=image_name.split("-")[0], project=project).update(image_id=ami_id)
-               BluePrint.objects(host=image_name.split("-")[0], project=project).update(status='35')
+               BluePrint.objects(host=hostname, project=project).update(image_id=ami_id)
+               BluePrint.objects(host=hostname, project=project).update(status='35')
                for import_task in response['ImportImageTasks']:
                   for snapshot_detail in import_task['SnapshotDetails']:
-                     Disk.objects(host=image_name.split("-")[0], project=project, mnt_path=snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0]).update(
+                     Disk.objects(host=hostname, project=project, mnt_path=snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0]).update(
                         file_size=str(snapshot_detail['DiskImageSize']), disk_id=snapshot_detail['SnapshotId'], 
                         vhd=snapshot_detail['UserBucket']['S3Key'], upsert=True)
+               break
+            elif response['ImportImageTasks'][0]['Status'] == "deleted":
+               BluePrint.objects(host=hostname, project=project).update(status='-35')
+               logger(response['ImportImageTasks'][0]['StatusMessage'],'error')
+               print(response['ImportImageTasks'][0]['StatusMessage'])
                break
             else:
                await asyncio.sleep(60)
    except Exception as e:
       print(str(e))
       logger("Error while creating AMI:"+str(e),"error")
-      BluePrint.objects(host=image_name.replace('.img','')).update(status='-35')
+      BluePrint.objects(host=hostname, project=project).update(status='-35')
    finally:
       con.close()
 
@@ -161,5 +165,5 @@ async def start_ami_creation(project, hostname):
                }
             }
          )
-      await start_ami_creation_worker(bucket_name, image_name, project, disk_containers)
+      await start_ami_creation_worker(bucket_name, image_name, project, disk_containers, hostname)
    return True
