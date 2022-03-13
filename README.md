@@ -42,7 +42,7 @@ Ansible is used to prepare the servers ready for migration. MongoDB is used to s
 docker run -d --name xmigrate -p 80:80 -e MONGO_DB="mongodb+srv://$MONGOUSER:$MONGOPASS@xmigrate.ao93h.mongodb.net/migration?retryWrites=true&w=majority" xmigrate/xmigrate:beta_v0.2.0
 ```
 ## OS compatiability matrix
-We currently support server's with below OS verisions
+We currently support server's with below OS versions
 
 |           | Redhat 7 | Redhat 8 | Ubuntu 18.04 |
 |-----------|----------|----------|--------------|
