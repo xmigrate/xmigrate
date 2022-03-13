@@ -11,10 +11,10 @@ WORKDIR /app
 
 RUN apt update -y 
 RUN apt install -y python3.7
-RUN apt install -y python3-pip
+RUN apt install -y python3-pip qemu-utils
 RUN apt install -y wget nginx
 
-RUN wget http://launchpadlibrarian.net/422997913/qemu-utils_2.0.0+dfsg-2ubuntu1.46_amd64.deb && apt install ./qemu-utils_2.0.0+dfsg-2ubuntu1.46_amd64.deb -y
+# RUN wget http://launchpadlibrarian.net/422997913/qemu-utils_2.0.0+dfsg-2ubuntu1.46_amd64.deb && apt install ./qemu-utils_2.0.0+dfsg-2ubuntu1.46_amd64.deb -y
 
 RUN wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
     tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
@@ -28,13 +28,15 @@ COPY requirements.txt requirements.txt
 
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
-RUN python3.7 -m pip install -U pip
+RUN python3.7 -m pip install -U pip --no-cache-dir
 
-RUN python3.7 -m pip install setuptools-rust
+RUN python3.7 -m pip install setuptools-rust --no-cache-dir
 
-RUN python3.7 -m pip install --no-use-pep517 --upgrade pyOpenSSL
+RUN python3.7 -m pip install --no-use-pep517 --upgrade pyOpenSSL --no-cache-dir
 
-RUN python3.7 -m pip install -r requirements.txt 
+RUN python3.7 -m pip install -r requirements.txt --no-cache-dir
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/lib/apt/ /var/cache
 
 COPY --from=stage /app/xmigrate-ui/build /usr/share/nginx/html/
 

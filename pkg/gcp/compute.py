@@ -60,7 +60,7 @@ def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_s
             }
         }
     ]
-    disks.append(additional_disk)
+    disks.extend(additional_disk)
     instance_body = {
         "name": vm_name.replace('.','-'),
         "networkInterfaces": [],
@@ -96,10 +96,26 @@ async def build_compute(project, hostname):
             image_id = host['image_id']
             subnet = host['subnet_id'].split('v1')[1].split('/')[-1]
             network = host['vpc_id'].split('v1')[1].split('/')[-1]
+            disks = Disk.objects(host=hostname, project=project)
+            extra_disks = []
+            for disk in disks:
+                if disk["mnt_path"] in ["slash", "slashboot"]:
+                    continue
+                else:
+                    extra_disks.append(
+                        {
+                            'boot': True if disk["mnt_path"] in ["slash", "slashboot"] else False,
+                            'autoDelete': True,
+                            "source": disk['disk_id']
+                        }
+                    )
+            print("Extra disks!!")
+            print(extra_disks)
             try:
                 BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='95')
-                vm = create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, [])
+                vm = create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, extra_disks)
                 print(vm)
+                BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='100')
                 ## todo watch vm status 
                 con.close()
                 return True
