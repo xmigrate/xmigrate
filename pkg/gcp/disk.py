@@ -67,7 +67,7 @@ async def start_image_creation_worker(project, disk_containers, host):
                 await asyncio.sleep(1)
         else:
             disk_body = {
-                "name": host.replace('.','-'),
+                "name": host.replace('.','-')+"-"+disk["mnt_path"],
                 "description": "Disk's migrated using xmigrate",
                 # "sizeGb": string,
                 "sourceStorageObject": disk['image_path'],
@@ -125,7 +125,8 @@ async def start_image_creation(project, hostname):
             {
                 'image_path': 'https://storage.googleapis.com/'+bucket_name+'/'+image_name,
                 'os_disk': os_disk,
-                'disk_size': disk['disk_size']
+                'disk_size': disk['disk_size'],
+                'mnt_path': disk['mnt_path'].replace('/','slash')
             }
          )
       await start_image_creation_worker(project, disk_containers, host['host'])
