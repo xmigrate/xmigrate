@@ -24,19 +24,26 @@ xmigrate is a web application which run as a container in your local machine.
 All the web-services and payloads are written in python. 
 Ansible is used to prepare the servers ready for migration. MongoDB is used to store user, project, cloud environment and other metadata related to the VM which needs to be migrated.
 
-## Future roadmap
+## Current release
 
-We are passionately working towards the completion of xmigrate project to have the following features,
+We have shipped xmigrate with the below features in our latest beta [release](https://hub.docker.com/layers/xmigrate/xmigrate/beta_v0.2.0/images/sha256-93e8066e599e56dfe05145a9b63dab487383350812d1798c14b71506b6719858?context=explore) 
 
-- Any to AWS server migration
-- Any to GCP server migration
-- Any to Azure server migration
-- Support for following linux distros
-  - Redhat
-  - Fedora
-  - Centos
-- Multi disk support
-- VM to container migration
+- Any to AWS server migration*
+- Any to GCP server migration*
+- Any to Azure server migration*
+- Migration of servers with multiple disk
+
+<aside>
+💡 Note*: As a user you need to ensure the server which you are migrating is eligible to be migrated to the target cloud
+</aside>
+
+## 🚀How to deploy? 
+
+```bash
+docker run -d --name xmigrate -p 80:80 -e MONGO_DB="mongodb+srv://$MONGOUSER:$MONGOPASS@xmigrate.ao93h.mongodb.net/migration?retryWrites=true&w=majority" xmigrate/xmigrate:beta_v0.2.0
+```
+
+
 
 Stay tuned for more updates. Join our [community](https://xmigrate.slack.com/) and start collaborating 🎉
 
