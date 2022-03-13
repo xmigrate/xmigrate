@@ -11,6 +11,7 @@ We have shipped xmigrate with the below features in our latest beta [release](ht
 
 - Environment discovery
 - Automatic network creation and server deployment
+- Multiple cloud environment support
 - Agentless discovery and migration
 - Any to AWS server migration*
 - Any to GCP server migration*
@@ -18,7 +19,7 @@ We have shipped xmigrate with the below features in our latest beta [release](ht
 - Migration of servers with multiple disk
 
 
-> 💡 Note: *As a user you need to ensure the server which you are migrating is eligible to be migrated to the target cloud
+> 💡 *As a user you need to ensure the server which you are migrating is eligible to be migrated to the target cloud. We will add precheck scripts in discovery phase before preparing the server for migration in coming release.
 
 
 ## Tech stack
@@ -33,17 +34,23 @@ All the web-services and payloads are written in python.
 Ansible is used to prepare the servers ready for migration. MongoDB is used to store user, project, cloud environment and other metadata related to the VM which needs to be migrated.
 
 ## Future Roadmap
-- Removal ofpublic mongodb dependency
-
-<br>
+- Removal of public mongodb dependency
 
 ## 🚀How to deploy? 
 
 ```bash
 docker run -d --name xmigrate -p 80:80 -e MONGO_DB="mongodb+srv://$MONGOUSER:$MONGOPASS@xmigrate.ao93h.mongodb.net/migration?retryWrites=true&w=majority" xmigrate/xmigrate:beta_v0.2.0
 ```
+## OS compatiability matrix
+We currently support server's with below OS verisions
 
+|           | Redhat 7 | Redhat 8 | Ubuntu 18.04 |
+|-----------|----------|----------|--------------|
+| **AWS**   |          |   ✅     |              |
+| **Azure** |          |           |       ✅       |
+| **GCP**   |   ✅     |          |              |
 
+We are adding support for more OS's soon.
 
 Stay tuned for more updates. Join our [community](https://xmigrate.slack.com/) and start collaborating 🎉
 
