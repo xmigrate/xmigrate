@@ -9,7 +9,6 @@ import {
   Row,
   Col,
   Modal,
-  Alert,
   Toast
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
@@ -60,7 +59,8 @@ export default class BluePrint extends Component {
       showUpdateAlert: false,
       showUpdateMessage: "",
       expandedHost: false,
-      BuildNetworkBtnDis:false
+      BuildNetworkBtnDis:false,
+      hostAlert:"Alert"
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -370,7 +370,7 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!", ShowAlertSave: false })
+      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!", ShowAlertSave: false,hostAlert:"Alert" })
     });
   }
 
@@ -390,7 +390,7 @@ export default class BluePrint extends Component {
     });
     //Getting all details if any
     this.GettingData();
-    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!",BuildNetworkBtnDis:false })
+    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!",BuildNetworkBtnDis:false ,hostAlert:"Alert"})
 
   }
 
@@ -532,6 +532,7 @@ export default class BluePrint extends Component {
   // Getting Status Migration------------------------------------------------
   getStatus() {
     let UpdateMessage ;
+    let hostAlert;
     let data1 = {
       project: this.state.project,
     };
@@ -555,19 +556,23 @@ export default class BluePrint extends Component {
                 else {
                   flag = true;
                   if (host["BtStatus"] === "BuildNetwork") {
+                    hostAlert = host.host;
                     UpdateMessage = "Build Network Successfull!!";
                     host["BtStatus"] = "clone"
                     console.log(host["BtStatus"]);
                   }
                   else if (host["BtStatus"] === "clone") {
+                    hostAlert = host.host;
                     UpdateMessage = "Clone Completed Successfull!!";
                     host["BtStatus"] = "convert";
                   }
                   else if (host["BtStatus"] === "convert") {
+                    hostAlert = host.host;
                     UpdateMessage = "Convert Completed Successfull!!";
                     host["BtStatus"] = "build";
                   }
                   else if(host["BtStatus"] === "build"){
+                    hostAlert = host.host;
                     UpdateMessage = "Build Completed Successfull!!";
                     host["BtStatus"] = "BuildNetwork";
                   }
@@ -580,7 +585,7 @@ export default class BluePrint extends Component {
       if (flag) {
 
         clearInterval(this.state.intervalId);
-        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: UpdateMessage })
+        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: UpdateMessage,hostAlert: hostAlert})
       }
       this.setState({
         Networks: NetworksData,
@@ -610,7 +615,7 @@ export default class BluePrint extends Component {
 
             <Toast id="message" show={this.state.showUpdateAlert} onClose={() => this.setState({ showUpdateAlert: false })}>
           <Toast.Header>
-            <strong className="me-auto">Alert</strong>
+            <strong className="me-auto">{this.state.hostAlert}</strong>
           </Toast.Header>
           <Toast.Body>{this.state.showUpdateMessage}</Toast.Body>
         </Toast>
@@ -624,7 +629,7 @@ export default class BluePrint extends Component {
                 <Table responsive borderless>
                   <thead>
                     <tr className="tName">
-                      <th></th>
+                    <th></th>
                       <th>Hostname</th>
                       <th>IP</th>
                       <th>Subnet</th>
@@ -632,7 +637,6 @@ export default class BluePrint extends Component {
                       <th>CPU Model</th>
                       <th>Core</th>
                       <th>Ram</th>
-                      <th>Disk</th>
                     </tr>
                   </thead>
                     {this.state.hosts.map((data, index) => (
