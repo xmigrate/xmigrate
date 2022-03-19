@@ -17,7 +17,6 @@ export default function HostTable(props) {
   </div>
 </IconContext.Provider> :  <BsCaretRightFill /> } 
            </td>
-        <td>{props.data.id}</td>
         <td>{props.data.hostname}</td>
         <td>{props.data.ip}</td>
         <td>{props.data.subnet}</td>
