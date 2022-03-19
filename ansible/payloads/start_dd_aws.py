@@ -31,7 +31,7 @@ class Discover(Document):
     }
 
 class BluePrint(Document):
-    host = StringField(required=True, max_length=200, unique=True)
+    host = StringField(required=True, max_length=200)
     ip = StringField(required=True)
     subnet = StringField(required=True, max_length=50)
     network = StringField(required=True, max_length=50)
