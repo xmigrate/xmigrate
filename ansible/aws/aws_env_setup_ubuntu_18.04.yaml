@@ -49,6 +49,7 @@
         - psutil
         - python-dotenv
         - dnspython
+        - requests
     rescue:
     - name: Install python packages
       shell: "sudo pip3 install {{ item }}"
@@ -60,6 +61,7 @@
         - psutil
         - dotenv
         - dnspython
+        - requests
 
 
   - name: Create .aws directory

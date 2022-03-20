@@ -47,6 +47,7 @@
         - python-dotenv
         - dnspython
         - pyasn1==0.4.6
+        - requests
       
     rescue:
     - name: Install python packages
@@ -60,6 +61,7 @@
         - python-dotenv
         - dnspython
         - pyasn1==0.4.6
+        - requests
 
   - name: Configure gsutil credentials
     template:
