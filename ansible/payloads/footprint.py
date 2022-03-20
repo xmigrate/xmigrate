@@ -4,7 +4,11 @@ import socket
 import psutil
 from dotenv import load_dotenv
 from os import getenv
-from mongoengine import *
+# from mongoengine import *
+import requests
+import json
+from mongoengine import StringField
+from mongoengine import ListField
 from collections import OrderedDict
 import sys
 import os
@@ -99,6 +103,37 @@ def meminfo():
             meminfo[line.split(':')[0]] = line.split(':')[1].strip()
     return meminfo
 
+server_con_string = sys.argv[2]
+
+class Document():
+    def __init__(self, *args, **values):
+        print(self)
+
+    @classmethod
+    def objects(self, **values):
+        for key in values:
+            setattr(self, key, values[key])
+        return self
+
+    @classmethod
+    def update(self, **kwargs):
+        url = server_con_string+"/master/status/update"
+        jsonObj = {}
+        for i in dir(self):
+            if i.startswith('_'):
+                continue
+            jsonObj[i] = getattr(self, i)
+            if(str(getattr(self, i)).startswith('<')):
+                jsonObj[i] = None    
+        data = {
+            'classObj': jsonObj,
+            'classType': self.__name__,
+            'data': kwargs
+        }
+        headers = {'Accept-Encoding': 'UTF-8', 'Content-Type': 'application/json', 'Accept': '*/*'}
+        req = requests.post(url, data=json.dumps(data),headers=headers)
+        print(req.text)
+        return self
 
 class Discover(Document):
     host = StringField(required=True, max_length=200 )
@@ -122,7 +157,7 @@ def main():
     db_con_string = sys.argv[2]
     project = sys.argv[1]
     public_ip = sys.argv[3]
-    con = connect(host=db_con_string)
+    # con = connect(host=db_con_string)
     result = network_info()
     result['ports'] = ports_info()
     cores = str(len(cpuinfo().keys()))
@@ -134,8 +169,8 @@ def main():
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
-    finally:
-        con.close()
+    # finally:
+        # con.close()
 
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@ async def discover():
         password = data["password"]
         project = data["project"]
         load_dotenv()
-        mongodb = os.getenv('MONGO_DB')
+        mongodb = os.getenv('BASE_URL')
         if n.add_nodes(nodes,username,password, project) == False:
             return jsonify({'status': '500'})
     if provider == "aws":
