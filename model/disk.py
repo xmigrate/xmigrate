@@ -10,6 +10,6 @@ class Disk(Document):
     disk_id = StringField(required=True, max_length=550)
     meta = {
         'indexes': [
-            {'fields': ('host', 'project'), 'unique': True}
+            {'fields': ('host', 'project', 'mnt_path'), 'unique': True}
         ]
     }
