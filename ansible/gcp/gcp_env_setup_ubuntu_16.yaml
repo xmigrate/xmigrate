@@ -33,7 +33,7 @@
   - block:
     - name: Install Python packages
       pip:
-        name: ['gsutil', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython']
+        name: ['gsutil', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython','requests']
         executable: /home/ubuntu/.local/bin/pip3
       become_user: ubuntu
     rescue:
@@ -48,6 +48,7 @@
         - pyasn1
         - python-dotenv
         - dnspython
+        - requests
       become_user: ubuntu
   - name: Configure gsutil credentials
     template:
