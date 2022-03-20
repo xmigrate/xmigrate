@@ -13,9 +13,15 @@ from collections import OrderedDict
 import sys
 import os
 
-niface = 'eth0'
 
+    niface = 'eth0'
 
+    addrs = psutil.net_if_addrs()
+
+    for i in addrs.keys():
+        if addrs[i][0].address.split('.')[0] in ['192', '172', '10']:
+            print(i)
+            niface = i
 
 def network_info():
     ifaces = netifaces.interfaces()
