@@ -3,7 +3,8 @@ import {
     Form,
     Row,
     Col,
-    Button
+    Button,
+    Spinner
   } from "react-bootstrap";
   import * as icon from "react-icons/all";
 import { IconContext } from "react-icons";
@@ -112,7 +113,10 @@ render(){
                       disabled={host["BtStatus"] !=="clone"}
                       onClick={()=>this.props.BlueprintHostClone(host.host)}
                     >
-                      Clone
+                      {
+                         host["BtProgress"] === "cloneStarted" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <>Clone</>
+                      }
+                      
                     </Button>
                    ----
                                    <Button
