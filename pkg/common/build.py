@@ -11,13 +11,17 @@ import time
 
 from pkg.azure import network
 from pkg.aws import disk as awsdisk
+from pkg.gcp import disk as gcpdisk
 from pkg.azure import disk
 from pkg.azure import resource_group
 from pkg.azure import compute
+from pkg.gcp import compute as gcp_compute
 
 from pkg.aws import ami
 from pkg.aws import network as awsnw
 from pkg.aws import ec2
+
+from pkg.gcp import network as gcpnw
 
 import asyncio
 
@@ -78,43 +82,70 @@ async def start_cloning(project,hostname):
                 else:
                     print("Disk cloning failed")
                     logger("Disk cloning failed","error")
+            elif p[0]['provider'] == "gcp":
+                logger("Cloning started","info")
+                print("****************Cloning awaiting*****************")
+                cloning_completed = await gcpdisk.start_cloning(project,hostname)
+                if cloning_completed:
+                    print("****************Cloning completed*****************")
+                    logger("Cloning completed","info")
+                else:
+                    print("Disk cloning failed")
+                    logger("Disk cloning failed","error")
 
 async def call_start_convert(project,hostname):
     await asyncio.create_task(start_convert(project,hostname))
 
 async def start_convert(project,hostname):
-    con = create_db_con()
     p = Project.objects(name=project)
     if len(p) > 0:
         if p[0]['provider'] == "azure":
-            logger("Conversion started","info")
+            logger("Download started","info")
+            print("****************Download started*****************")
+            image_downloaded = await disk.start_downloading(project)
             print("****************Conversion awaiting*****************")
-            converted =  await disk.start_conversion(project,hostname)
-            if converted:
-                print("****************Conversion completed*****************")
-                logger("Disk Conversion completed","info")
-            else:
-                print("Disk Conversion failed")
-                logger("Disk Conversion failed","error")
+            logger("Conversion started","info")
+            if image_downloaded:
+                converted =  await disk.start_conversion(project,hostname)
+                if converted:
+                    print("****************Conversion completed*****************")
+                    logger("Disk Conversion completed","info")
+                else:
+                    print("Disk Conversion failed")
+                    logger("Disk Conversion failed","error")
         elif p[0]['provider'] == "aws":
             logger("Conversion started","info")
             print("****************Conversion awaiting*****************")
             logger("AMI creation started","info")
             ami_created = await ami.start_ami_creation(project,hostname)
-            if converted:
+            if ami_created:
                 print("****************Conversion completed*****************")
                 logger("Conversion completed","info")
                 logger("AMI creation completed:"+str(ami_created),"info")
             else:
                 print("Disk Conversion failed")
                 logger("Disk Conversion failed","error")
-
+        elif p[0]['provider'] == "gcp":
+            logger("Download started","info")
+            print("****************Download started*****************")
+            image_downloaded = await gcpdisk.start_downloading(project,hostname)
+            print("****************Conversion awaiting*****************")
+            logger("Conversion started","info")
+            if image_downloaded:
+                converted =  await gcpdisk.start_conversion(project,hostname)
+                if converted:
+                    print("****************Conversion completed*****************")
+                    logger("Disk Conversion completed","info")
+                else:
+                    print("Disk Conversion failed")
+                    logger("Disk Conversion failed","error")
 
 
 async def call_build_network(project):
     await asyncio.create_task(start_network_build(project))
 
 
+# why we are not return anything from here?
 async def start_network_build(project):
     con = create_db_con()
     p = Project.objects(name=project)
@@ -136,6 +167,14 @@ async def start_network_build(project):
         elif p[0]['provider'] == "aws":
             logger("Network creation started","info")
             network_created = await awsnw.create_nw(project)
+            if network_created:
+                logger("Network creation completed","info")
+            else:
+                print("Network creation failed")
+                logger("Network creation failed","error")
+        elif p[0]['provider'] == "gcp":
+            logger("Network creation started","info")
+            network_created = await gcpnw.create_nw(project)
             if network_created:
                 logger("Network creation completed","info")
             else:
@@ -166,6 +205,19 @@ async def start_host_build(project,hostname):
             else:
                 print("ec2 creation failed")
                 logger("ec2 creation failed","error")
+        elif p[0]['provider'] == "gcp":
+            logger("gcp vm creation started","info")
+            disk_created = await gcpdisk.start_image_creation(project, hostname)
+            if disk_created:
+                vm_created = await gcp_compute.build_compute(project, hostname)
+                if vm_created:
+                    logger("gcp vm creation completed","info")
+                else:
+                    print("gcp vm creation failed")
+                    logger("gcp vm creation failed","error")
+            else:
+                print("gcp disk creation failed")
+                logger("gcp disk creation failed","error")
 
 
 async def start_build(project):

@@ -1,6 +1,6 @@
 setuptools
 wheel
-mongoengine
+mongoengine==0.23.1
 flask
 ansible==3.0.0
 pygtail
@@ -24,3 +24,9 @@ PyJWT==v1.7.1
 Quart-CORS==0.3.0
 quart_jwt_extended==0.0.3
 dnspython==2.1.0
+google-cloud-compute==1.0.0
+google-cloud-storage==2.1.0
+google-api-python-client==2.37.0
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==0.4.6
+gsutil==5.7

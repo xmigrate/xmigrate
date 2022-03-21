@@ -7,11 +7,12 @@
   tasks:
   - name: <== Deploy payload ==>
     copy:
-      src: "../payloads/start_dd_aws.py"
+      src: "../payloads/start_dd_gcp.py"
       dest: "/tmp/start.py"
   - name: <== Executing payload ==>
     shell: "python3 /tmp/start.py {{ bucket }} {{ access_key }} {{ secret_key }} '{{ mongodb }}' {{ project }}"
     register: st
+    become_user: root
     become: True
   - name: Message
     debug:

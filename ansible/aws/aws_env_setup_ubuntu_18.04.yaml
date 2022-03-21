@@ -11,34 +11,32 @@
       dest: /tmp/get-pip.py
       mode: 0750
   - block:
-    - name: Install Python3
-      yum:
-        name: python3
+    - name: Install Python3.6
+      apt:
+        name: python3.6
         state: latest
         update_cache: yes
       become: true
       become_method: sudo
     - name: Install GCC
-      yum:
+      apt:
         name: gcc
         state: latest
     - name: Install python36-devel
-      yum:
-        name: python36-devel
-        state: latest
+      apt:
+        name: python3-pip
+        state: latest 
     rescue:
-    - name: Update yum.. older way
-      shell: "sudo yum update -y"
+    - name: Update apt.. older way
+      shell: "sudo apt update -y"
     - name: Install Python-devel.. older way
-      shell: "sudo yum install python3 python36-devel -y"
+      shell: "sudo apt install python3 python3 -y"
     - name: Install GCC .. older way
-      shell: "sudo yum install gcc -y"
+      shell: "sudo apt install gcc -y"
     tags:
         - devel
-
-          #  - name: Install pip
-          #    shell: "sudo python /tmp/get-pip.py"
-  
+  # - name: Install pip
+  #   shell: "sudo apt install pip -y"
   - block:
     - name: Install Python packages
       pip:
@@ -61,9 +59,10 @@
         - netaddr
         - mongoengine
         - psutil
-        - python-dotenv
+        - dotenv
         - dnspython
         - requests
+
 
   - name: Create .aws directory
     file:

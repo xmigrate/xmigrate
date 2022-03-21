@@ -5,6 +5,12 @@
   gather_facts: no
   force_handlers: True
   tasks:
+  - name: mirrorlist
+    shell: "sudo sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*"
+  - name: mirrorlist
+    shell: "sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*"  
+  - name: yum update
+    shell: "sudo yum update -y"    
   - name: Download get-pip file
     get_url:
       url: https://bootstrap.pypa.io/get-pip.py

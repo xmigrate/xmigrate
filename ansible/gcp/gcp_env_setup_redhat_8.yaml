@@ -1,0 +1,141 @@
+- name : Configure gsutil and required packages and deploy and execute the payload
+  become: yes
+  become_method: sudo
+  become_user: root
+  hosts: nodes
+  gather_facts: no
+  force_handlers: True
+  tasks:
+  - name: Download get-pip file
+    get_url:
+      url: https://bootstrap.pypa.io/get-pip.py
+      dest: /tmp/get-pip.py
+      mode: 0750
+  - block:
+    - name: Install Python3
+      yum:
+        name: python3
+        state: latest
+        update_cache: yes
+      become: true
+      become_method: sudo
+    - name: Install GCC
+      yum:
+        name: gcc
+        state: latest
+    - name: Install python36-devel
+      yum:
+        name: python36-devel
+        state: latest
+    rescue:
+    - name: Update yum.. older way
+      shell: "sudo yum update -y"
+    - name: Install Python-devel.. older way
+      shell: "sudo yum install python3 python36-devel -y"
+    - name: Install GCC .. older way
+      shell: "sudo yum install gcc -y"
+    tags:
+        - devel  
+  - block:
+    - name: Install Python packages
+      pip:
+        name: "{{ item }}"
+      with_items:
+        - gsutil
+        - netifaces
+        - netaddr
+        - mongoengine
+        - psutil
+        - python-dotenv
+        - dnspython
+        - pyasn1==0.4.6
+        - requests
+
+    rescue:
+    - name: Install python packages
+      shell: "sudo pip3 install {{ item }}"
+      with_items:
+        - gsutil
+        - netifaces
+        - netaddr
+        - mongoengine
+        - psutil
+        - python-dotenv
+        - dnspython
+        - pyasn1==0.4.6
+        - requests
+
+  - name: Configure gsutil credentials
+    template:
+      src: "./templates/.boto.j2"
+      dest: "~/.boto"
+  - name: check if splash is configured in the boot command
+    lineinfile:
+      backup: true
+      path: /etc/default/grub
+      regexp: '^GRUB_CMDLINE_LINUX=".*console=ttyS0,38400n8d'
+      state: absent
+    check_mode: true
+    register: grub_cmdline_check
+    changed_when: false
+
+  - name: Backup /etc/default/grub  
+    ansible.builtin.copy:
+      src: /etc/default/grub
+      dest: /etc/default/grub.xmigrate
+      remote_src: yes
+    when: grub_cmdline_check.found == 0
+    
+  - name: Add required kernel command line arguments
+    lineinfile:
+      backrefs: true
+      path: /etc/default/grub
+      regexp: "^(GRUB_CMDLINE_LINUX=\".*)\"$"
+      line: 'GRUB_CMDLINE_LINUX="console=ttyS0,38400n8d console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"'
+    when: grub_cmdline_check.found == 0
+  
+  - name: remove-kernel param
+    replace:
+      path: "/etc/default/grub" 
+      regexp: 'rhgb quiet'
+      replace: ''
+
+  - name: Make sure splashimage= is not in the /etc/default/grub
+    lineinfile:
+      path: /etc/default/grub
+      state: absent
+      regexp: 'splashimage'
+  - block:
+    - name: <==Update grub config==>
+      shell: "sudo grub-mkconfig -o /boot/grub/grub.cfg"
+      register: grubout
+      become: True
+      tags:
+        - grubupdate
+    rescue:
+    - name: <==Trying Update grub2 config==>
+      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      register: grubout
+      become: True
+      tags:
+        - grubupdate
+
+  - name: <==Deploy payload==>
+    copy:
+      src: "../payloads/footprint.py"
+      dest: "/tmp/footprint.py"
+    tags:
+      - deploy
+
+  - name: <==Executing payload==>
+    shell: "python3 /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+    register: st
+    become: True
+    tags:
+      - exec
+
+  - name: Debug
+    debug:
+      var: st
+    tags:
+      - msg

@@ -37,6 +37,16 @@ from routes.storage import *
 from routes.auth import *
 from routes.locations import *
 from routes.vm_types import *
+from routes.master import *
+
+
+#Exception
+from exception import handler
+from exception.exception import GcpRegionNotFound
+app.register_error_handler(404, handler.page_not_found)
+app.register_error_handler(Exception, handler.internal_server_error)
+app.register_error_handler(GcpRegionNotFound, handler.bad_request)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

@@ -55,7 +55,7 @@ def build_subnet(cidr,vpcid,route,project):
       subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
       try:
         con = create_db_con()
-        BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='7')
+        BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='20')
         Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
         route_table.associate_with_subnet(SubnetId=subnet.id)
         con.close()
@@ -81,7 +81,7 @@ async def create_nw(project):
           BluePrint.objects(project=project, network=host['network']).update(vpc_id = network[0]['vpc_id'], status='5')
           subnet = BluePrint.objects(project=project, network = host['network'], subnet = host['subnet'], subnet_id__exists = True)
           if len(subnet) > 0:
-            BluePrint.objects(project=project, network=host['network'], subnet=host['subnet']).update(subnet_id = subnet[0]['subnet_id'],status='7')
+            BluePrint.objects(project=project, network=host['network'], subnet=host['subnet']).update(subnet_id = subnet[0]['subnet_id'],status='20')
           else:
             updated_host = BluePrint.objects(project=project, network=host['network'], host=host['host'])[0]
             subnet_build = build_subnet(updated_host['subnet'],updated_host['vpc_id'],updated_host['route_table'], project)

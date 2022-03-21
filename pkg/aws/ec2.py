@@ -1,16 +1,18 @@
 from mongoengine import *
 from model.blueprint import *
+from model.disk import *
 import boto3
 from utils.dbconn import *
 import asyncio
 from model.project import *
 from pkg.aws import creds
 
-async def create_machine(project,subnet_id,ami_id,machine_type):
+async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
     con = create_db_con()
     access_key = Project.objects(name=project)[0]['access_key']
     secret_key = Project.objects(name=project)[0]['secret_key']
     location = Project.objects(name=project)[0]['location']
+    public_route = True if BluePrint.objects(project=project, image_id=ami_id)[0]['public_route'] == "true" else False
     con.close()
     session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
     ec2 = session.resource('ec2')
@@ -19,8 +21,32 @@ async def create_machine(project,subnet_id,ami_id,machine_type):
     filters = [{'Name':'name','Values':[ami_id]}]
     response = client.describe_images(Filters=filters)
     ami_id = response['Images'][0]['ImageId']
-    BluePrint.objects(image_id=amiid).update(status='95')
-    instances = ec2.create_instances(ImageId=ami_id, InstanceType=machine_type, MaxCount=1, MinCount=1, NetworkInterfaces=[{'SubnetId': subnet_id, 'DeviceIndex': 0, 'AssociatePublicIpAddress': True}])
+    disks = Disk.objects(project=project,host=hostname)
+    vol_ids = []
+    for disk in disks:
+        if disk['mnt_path'] not in ['slash', 'slashboot']:
+            dev_id = ord('f')
+            vol_ids.append(
+                {
+                'DeviceName': '/dev/sd'+chr(dev_id),
+                'Ebs': {
+                    'DeleteOnTermination': True,
+                    'SnapshotId': disk['disk_id'],
+                    'VolumeType': 'gp3',
+                    'Encrypted': False
+                },
+              },
+            )
+            dev_id = dev_id + 1
+    BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='95')
+    instances = ec2.create_instances(
+        BlockDeviceMappings=vol_ids,
+        ImageId=ami_id, 
+        InstanceType=machine_type, 
+        MaxCount=1, 
+        MinCount=1, 
+        NetworkInterfaces=[{'SubnetId': subnet_id, 'DeviceIndex': 0, 'AssociatePublicIpAddress': public_route}]
+        )
     instances[0].wait_until_running()
     instance_id = instances[0].id
     running_instances = ec2.instances.filter(InstanceIds=[instance_id])
@@ -28,8 +54,8 @@ async def create_machine(project,subnet_id,ami_id,machine_type):
     for instance in running_instances:
         ip = instance.public_ip_address
     try:
-        BluePrint.objects(image_id=amiid).update(vm_id=instances[0].id, ip=ip)
-        BluePrint.objects(image_id=amiid).update(status='100')
+        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(vm_id=str(instances[0].id), ip=str(ip))
+        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='100')
     except Exception as e:
         print(repr(e))
     finally:
@@ -38,12 +64,10 @@ async def create_machine(project,subnet_id,ami_id,machine_type):
 
 async def build_ec2(project, hostname):
     try:
-        print(project)
         con = create_db_con()
         hosts = BluePrint.objects(project=project, host=hostname)
         for host in hosts:
-            print(host['machine_type'])
-            await create_machine(project,host['subnet_id'],host['image_id'],host['machine_type'])
+            await create_machine(project,host['subnet_id'],host['image_id'],host['machine_type'], hostname)
         con.close()
         return True
     except Exception as e:
