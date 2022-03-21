@@ -1,9 +1,10 @@
 import os
-# from mongoengine import *
+from mongoengine import *
 import requests
 import json
 from mongoengine import StringField
 from mongoengine import ListField
+from mongoengine import BooleanField
 from collections import OrderedDict
 import socket
 import sys
@@ -11,7 +12,7 @@ import sys
 
 db_con_string = sys.argv[3]
 server_con_string = sys.argv[3]
-# con = connect(host=db_con_string)
+con = connect(host=db_con_string)
 url = sys.argv[1]
 sas = sys.argv[2]
 project = sys.argv[4]
@@ -19,35 +20,35 @@ project = sys.argv[4]
 
 hostname = socket.gethostname()
 
-class Document():
-    def __init__(self, *args, **values):
-        print(self)
+# class Document():
+#     def __init__(self, *args, **values):
+#         print(self)
 
-    @classmethod
-    def objects(self, **values):
-        for key in values:
-            setattr(self, key, values[key])
-        return self
+#     @classmethod
+#     def objects(self, **values):
+#         for key in values:
+#             setattr(self, key, values[key])
+#         return self
 
-    @classmethod
-    def update(self, **kwargs):
-        url = server_con_string+"/master/status/update"
-        jsonObj = {}
-        for i in dir(self):
-            if i.startswith('_'):
-                continue
-            jsonObj[i] = getattr(self, i)
-            if(str(getattr(self, i)).startswith('<')):
-                jsonObj[i] = None    
-        data = {
-            'classObj': jsonObj,
-            'classType': self.__name__,
-            'data': kwargs
-        }
-        headers = {'Accept-Encoding': 'UTF-8', 'Content-Type': 'application/json', 'Accept': '*/*'}
-        req = requests.post(url, data=json.dumps(data),headers=headers)
-        print(req.text)
-        return self
+#     @classmethod
+#     def update(self, **kwargs):
+#         url = server_con_string+"/master/status/update"
+#         jsonObj = {}
+#         for i in dir(self):
+#             if i.startswith('_'):
+#                 continue
+#             jsonObj[i] = getattr(self, i)
+#             if(str(getattr(self, i)).startswith('<')):
+#                 jsonObj[i] = None    
+#         data = {
+#             'classObj': jsonObj,
+#             'classType': self.__name__,
+#             'data': kwargs
+#         }
+#         headers = {'Accept-Encoding': 'UTF-8', 'Content-Type': 'application/json', 'Accept': '*/*'}
+#         req = requests.post(url, data=json.dumps(data),headers=headers)
+#         print(req.text)
+#         return self
 
 class Discover(Document):
     host = StringField(required=True, max_length=200 )
@@ -124,5 +125,5 @@ try:
     BluePrint.objects(host=hostname, project=project).update(status='25')
 except:  
     BluePrint.objects(host=hostname, project=project).update(status='-25')
-# finally:
-#     con.close()
+finally:
+    con.close()
