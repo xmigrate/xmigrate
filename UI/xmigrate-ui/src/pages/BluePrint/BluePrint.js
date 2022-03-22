@@ -112,17 +112,17 @@ export default class BluePrint extends Component {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
             status = parseInt(host["status"]);
-            if (parseInt(host["status"]) === 20) {
+            if (parseInt(host["status"]) < 25 && parseInt(host["status"]) >= 20) {
               host["BtStatus"] = "clone";
               host["BtProgress"] = "cloneCompleted";
-            } else if (parseInt(host["status"]) === 25) {
+            } else if (parseInt(host["status"]) >= 25 && parseInt(host["status"]) < 35) {
               host["BtStatus"] = "convert";
               host["BtProgress"] = "convertCompleted";
-            } else if (parseInt(host["status"]) === 35) {
+            } else if (parseInt(host["status"]) >= 35 && parseInt(host["status"]) < 100 ) {
               host["BtStatus"] = "build";
               host["BtProgress"] = "buildCompleted";
             }
-            else {
+            else if(parseInt(host["status"]) === 0){
               host["BtStatus"] = "BuildNetwork";
             }
             let hostCurrent = {};
@@ -498,7 +498,7 @@ export default class BluePrint extends Component {
     };
     console.log(data);
     //Updating progress to load spinner
-    let NetworksData = this.state.NetworkData;
+    let NetworksData = this.state.Networks;
     NetworksData.forEach((Network, index) => {
       Network.subnets.forEach((subnet, index) => {
         subnet.hosts.forEach((host, index) => {
@@ -509,9 +509,9 @@ export default class BluePrint extends Component {
       })
       })
     await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
+      console.log("data from response of  Clone post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval ,NetworkData:NetworksData});
+      this.setState({ intervalId: interval ,Networks:NetworksData});
     });
   }
 
@@ -522,11 +522,23 @@ export default class BluePrint extends Component {
       project: this.state.project,
       hostname: hostName,
     };
-    console.log(data);
+     //Updating progress to load spinner
+     let NetworksData = this.state.Networks;
+     NetworksData.forEach((Network, index) => {
+       Network.subnets.forEach((subnet, index) => {
+         subnet.hosts.forEach((host, index) => {
+           if(host.host === hostName){
+             host["BtProgress"] = "convertStarted";
+           }
+         })
+       })
+       })
+    console.log("Networks Data",NetworksData);
+    console.log("Hostname",hostName);
     await PostService(BLUEPRINT_HOST_CONVERT, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
+      console.log("data from response of Network Convert post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval });
+      this.setState({ intervalId: interval ,Networks:NetworksData});
     });
   }
 
@@ -537,11 +549,22 @@ export default class BluePrint extends Component {
       project: this.state.project,
       hostname: hostName,
     };
+      //Updating progress to load spinner
+      let NetworksData = this.state.Networks;
+      NetworksData.forEach((Network, index) => {
+        Network.subnets.forEach((subnet, index) => {
+          subnet.hosts.forEach((host, index) => {
+            if(host.host === hostName){
+              host["BtProgress"] = "buildStarted";
+            }
+          })
+        })
+        })
     console.log(data);
     await PostService(BLUEPRINT_HOST_BUILD, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
+      console.log("data from response of  Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval });
+      this.setState({ intervalId: interval ,Networks:NetworksData});
     });
   }
 

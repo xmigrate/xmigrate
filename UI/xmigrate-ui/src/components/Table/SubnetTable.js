@@ -110,11 +110,11 @@ render(){
                       className=" media-body"
                       variant="success"
                       size="sm"
-                      disabled={host["BtStatus"] !=="clone"}
+                      disabled={host["BtStatus"] !=="clone" || host["BtProgress"] === "cloneStarted"}
                       onClick={()=>this.props.BlueprintHostClone(host.host)}
                     >
                       {
-                         host["BtProgress"] === "cloneStarted" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <>Clone</>
+                         host["BtProgress"] === "cloneStarted" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <> Clone</>
                       }
                       
                     </Button>
@@ -123,20 +123,24 @@ render(){
                       className=" media-body"
                       variant="danger"
                       size="sm"
-                      disabled={host["BtStatus"] !=="convert"}
+                      disabled={host["BtStatus"] !=="convert" || host["BtProgress"] === "convertStarted"}
                       onClick={()=>this.props.BlueprintHostConvert(host.host)}
                     >
-                      Convert
+                     {
+                         host["BtProgress"] === "convertStarted" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <> Convert</>
+                      }
                     </Button>
                     ----
                     <Button
                       className=" media-body"
                       variant="primary"
                       size="sm"
-                      disabled={host["BtStatus"] !== "build"}
+                      disabled={host["BtStatus"] !== "build" || host["BtProgress"] === "buildStarted"}
                       onClick={()=>this.props.BlueprintHostBuild(host.host)}
                     >
-                      Build
+                      {
+                         host["BtProgress"] === "buildStarted" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <> Build</>
+                      }
                     </Button></Col>
                      <Col className="rdColCenter" xs={{ span: 1 }}>{host.status}</Col> 
                     </Row>
