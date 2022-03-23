@@ -48,6 +48,11 @@ class Document():
         print(req.text)
         return self
 
+def getDisks(project, hostname):
+    url = server_con_string+"/master/disks/get/" + project + "/" + hostname
+    req = requests.get(url)
+    return json.loads(req.text)
+
 class Discover(Document):
     host = StringField(required=True, max_length=200 )
     ip = StringField(required=True)
@@ -86,7 +91,9 @@ class BluePrint(Document):
         ]
     }
 
-disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
+# disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
+diskData = getDisks(project=project, hostname=hostname)
+disks = diskData['data']
 BluePrint.objects(host=hostname,project=project).update(status='22')
 
 output=''
