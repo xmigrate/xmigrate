@@ -36,3 +36,17 @@ async def master_status_update():
     finally:
         con.close()
     return jsonify({'status': '200'}), 200
+
+@app.route("/master/disks/get/<project>/<hostname>", methods=['GET'])
+async def get_disks(project, hostname):
+    con = create_db_con()
+    disks = []
+    try:
+        disks=  Discover.objects(host=hostname,project=project)[0]['disk_details']
+    except Exception as e:
+        print(e)
+        con.close()
+        return jsonify({'status': '500', 'message': str(e)}), 500
+    con.close()
+    return jsonify({'status': '200','data': disks}), 200
+
