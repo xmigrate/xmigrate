@@ -9,7 +9,8 @@ import {
   Row,
   Col,
   Modal,
-  Toast
+  Toast,
+  Spinner
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
 import { GetServiceWithData } from "../../services/GetService";
@@ -59,8 +60,9 @@ export default class BluePrint extends Component {
       showUpdateAlert: false,
       showUpdateMessage: "",
       expandedHost: false,
-      BuildNetworkBtnDis:false,
-      hostAlert:"Alert"
+      BuildNetworkBtnDis: false,
+      hostAlert: "Alert",
+      buttonStatus: ""
     };
     this.handleChange = this.handleChange.bind(this);
     this.CreateSubnet = this.CreateSubnet.bind(this);
@@ -75,7 +77,7 @@ export default class BluePrint extends Component {
     this._BlueprintHostConvert = this._BlueprintHostConvert.bind(this);
     this._BlueprintHostBuild = this._BlueprintHostBuild.bind(this);
   }
- 
+
   async GettingData() {
     this.setState({
       status: "loading",
@@ -93,7 +95,7 @@ export default class BluePrint extends Component {
 
     let VMSDATA;
     let hostCurrents = [];
-    let status ;
+    let status;
     //Getting the VMS  Details------------
     await GetServiceWithData(BLUEPRINTNET_GET_VMS, data).then((res) => {
       VMSDATA = res.data.machine_types;
@@ -105,19 +107,22 @@ export default class BluePrint extends Component {
     await GetServiceWithData(BLUEPRINTNET_HOST_GET_URL, data).then((res) => {
       console.log("Response Data of New Blueprint host", res.data.networks);
       NetworksDatas = res.data.networks;
-      
+
       NetworksDatas.forEach((Network, index) => {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
             status = parseInt(host["status"]);
-            if (parseInt(host["status"]) === 20 ) {
+            if (parseInt(host["status"]) < 25 && parseInt(host["status"]) >= 20) {
               host["BtStatus"] = "clone";
-            } else if (parseInt(host["status"]) === 25 ) {
+              host["BtProgress"] = "cloneCompleted";
+            } else if (parseInt(host["status"]) >= 25 && parseInt(host["status"]) < 35) {
               host["BtStatus"] = "convert";
-            } else if (parseInt(host["status"]) === 35) {
+              host["BtProgress"] = "convertCompleted";
+            } else if (parseInt(host["status"]) >= 35 && parseInt(host["status"]) < 100 ) {
               host["BtStatus"] = "build";
+              host["BtProgress"] = "buildCompleted";
             }
-            else {
+            else if(parseInt(host["status"]) === 0){
               host["BtStatus"] = "BuildNetwork";
             }
             let hostCurrent = {};
@@ -131,11 +136,11 @@ export default class BluePrint extends Component {
       });
     });
     console.log("Network Data:", NetworksDatas);
-   console.log("Status:",status);
-   let BuildNetworkBtnDisflag = false;
-   if(status>19 | status === 20 ){
-    BuildNetworkBtnDisflag = true;
-   }
+    console.log("Status:", status);
+    let BuildNetworkBtnDisflag = false;
+    if (status > 19 | status === 20) {
+      BuildNetworkBtnDisflag = true;
+    }
     //Setting the State
     this.setState({
       Networks: NetworksDatas,
@@ -370,13 +375,13 @@ export default class BluePrint extends Component {
     console.log(data);
     await PostService(BLUEPRINT_SAVE, data).then((res) => {
       console.log("data from response of Build post", res.data);
-      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull!!", ShowAlertSave: false,hostAlert:"Alert" })
+      this.setState({ showUpdateAlert: true, showUpdateMessage: "Save Blueprint Successfull.", ShowAlertSave: false, hostAlert: "Alert" })
     });
   }
 
   //--------------Reset the Network Table
   async _Reset() {
-    this.handleAlertCloseReset();
+    // this.handleAlertCloseReset();
     console.log("Reseting....");
     var NetworksData = this.state.Networks;
     NetworksData.forEach((Network, index) => {
@@ -390,7 +395,7 @@ export default class BluePrint extends Component {
     });
     //Getting all details if any
     this.GettingData();
-    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull!!",BuildNetworkBtnDis:false ,hostAlert:"Alert"})
+    this.setState({ showUpdateAlert: true, showUpdateMessage: "Reset Successfull.", BuildNetworkBtnDis: false, hostAlert: "Alert", ShowAlertReset: false })
 
   }
 
@@ -478,7 +483,7 @@ export default class BluePrint extends Component {
     await PostService(BLUEPRINT_NETWORK_BUILD, data).then((res) => {
       console.log("data from response of Network Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval,ShowAlertBuild:false,BuildNetworkBtnDis:true });
+      this.setState({ intervalId: interval, ShowAlertBuild: false, BuildNetworkBtnDis: true, buttonStatus: "BuildProgress" });
       //Check status and Status should be 60
     });
 
@@ -492,10 +497,21 @@ export default class BluePrint extends Component {
       hostname: hostName,
     };
     console.log(data);
+    //Updating progress to load spinner
+    let NetworksData = this.state.Networks;
+    NetworksData.forEach((Network, index) => {
+      Network.subnets.forEach((subnet, index) => {
+        subnet.hosts.forEach((host, index) => {
+          if(host.host === hostName){
+            host["BtProgress"] = "cloneStarted";
+          }
+        })
+      })
+      })
     await PostService(BLUEPRINT_HOST_CLONE, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
+      console.log("data from response of  Clone post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval });
+      this.setState({ intervalId: interval ,Networks:NetworksData});
     });
   }
 
@@ -506,11 +522,23 @@ export default class BluePrint extends Component {
       project: this.state.project,
       hostname: hostName,
     };
-    console.log(data);
+     //Updating progress to load spinner
+     let NetworksData = this.state.Networks;
+     NetworksData.forEach((Network, index) => {
+       Network.subnets.forEach((subnet, index) => {
+         subnet.hosts.forEach((host, index) => {
+           if(host.host === hostName){
+             host["BtProgress"] = "convertStarted";
+           }
+         })
+       })
+       })
+    console.log("Networks Data",NetworksData);
+    console.log("Hostname",hostName);
     await PostService(BLUEPRINT_HOST_CONVERT, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
+      console.log("data from response of Network Convert post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval });
+      this.setState({ intervalId: interval ,Networks:NetworksData});
     });
   }
 
@@ -521,17 +549,28 @@ export default class BluePrint extends Component {
       project: this.state.project,
       hostname: hostName,
     };
+      //Updating progress to load spinner
+      let NetworksData = this.state.Networks;
+      NetworksData.forEach((Network, index) => {
+        Network.subnets.forEach((subnet, index) => {
+          subnet.hosts.forEach((host, index) => {
+            if(host.host === hostName){
+              host["BtProgress"] = "buildStarted";
+            }
+          })
+        })
+        })
     console.log(data);
     await PostService(BLUEPRINT_HOST_BUILD, data).then((res) => {
-      console.log("data from response of Network Build post", res.data);
+      console.log("data from response of  Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
-      this.setState({ intervalId: interval });
+      this.setState({ intervalId: interval ,Networks:NetworksData});
     });
   }
 
   // Getting Status Migration------------------------------------------------
   getStatus() {
-    let UpdateMessage ;
+    let UpdateMessage;
     let hostAlert;
     let data1 = {
       project: this.state.project,
@@ -564,16 +603,19 @@ export default class BluePrint extends Component {
                   else if (host["BtStatus"] === "clone") {
                     hostAlert = host.host;
                     UpdateMessage = "Clone Completed Successfull!!";
+                    host["BtProgress"] = "cloneCompleted";
                     host["BtStatus"] = "convert";
                   }
                   else if (host["BtStatus"] === "convert") {
                     hostAlert = host.host;
                     UpdateMessage = "Convert Completed Successfull!!";
+                    host["BtProgress"] = "convertCompleted";
                     host["BtStatus"] = "build";
                   }
-                  else if(host["BtStatus"] === "build"){
+                  else if (host["BtStatus"] === "build") {
                     hostAlert = host.host;
                     UpdateMessage = "Build Completed Successfull!!";
+                    host["BtProgress"] = "buildCompleted";
                     host["BtStatus"] = "BuildNetwork";
                   }
                 }
@@ -585,11 +627,13 @@ export default class BluePrint extends Component {
       if (flag) {
 
         clearInterval(this.state.intervalId);
-        this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: UpdateMessage,hostAlert: hostAlert})
+        this.setState({ Networks: NetworksData,BuildStatus: false, showUpdateAlert: true, showUpdateMessage: UpdateMessage, hostAlert: hostAlert, buttonStatus: "BuildCompleted" })
       }
+      else{
       this.setState({
         Networks: NetworksData,
       });
+    }
     });
   }
 
@@ -609,16 +653,16 @@ export default class BluePrint extends Component {
       return (
         <div className="BluePrint media-body background-primary">
 
-{/* <Alert id="message" className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
+          {/* <Alert id="message" className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={() => this.setState({ showUpdateAlert: false })} dismissible>
               <p>{this.state.showUpdateMessage}</p>
             </Alert>  */}
 
-            <Toast id="message" show={this.state.showUpdateAlert} onClose={() => this.setState({ showUpdateAlert: false })}>
-          <Toast.Header>
-            <strong className="me-auto">{this.state.hostAlert}</strong>
-          </Toast.Header>
-          <Toast.Body>{this.state.showUpdateMessage}</Toast.Body>
-        </Toast>
+          <Toast id="message" show={this.state.showUpdateAlert} onClose={() => this.setState({ showUpdateAlert: false })}>
+            <Toast.Header>
+              <strong className="me-auto">{this.state.hostAlert}</strong>
+            </Toast.Header>
+            <Toast.Body>{this.state.showUpdateMessage}</Toast.Body>
+          </Toast>
 
           <Container className="py-4 ">
             <h4 className="p-0 m-0 HeadingPage">Blueprint</h4>
@@ -629,7 +673,7 @@ export default class BluePrint extends Component {
                 <Table responsive borderless>
                   <thead>
                     <tr className="tName">
-                    <th></th>
+                      <th></th>
                       <th>Hostname</th>
                       <th>IP</th>
                       <th>Subnet</th>
@@ -639,16 +683,16 @@ export default class BluePrint extends Component {
                       <th>Ram</th>
                     </tr>
                   </thead>
-                    {this.state.hosts.map((data, index) => (
-                      <HostTable key={index} index={index} data={data}/>
-                    ))}
+                  {this.state.hosts.map((data, index) => (
+                    <HostTable key={index} index={index} data={data} />
+                  ))}
 
                 </Table>
               </Card.Body>
             </Card>
 
 
-         
+
 
             {/* HereTable */}
 
@@ -666,17 +710,17 @@ export default class BluePrint extends Component {
                           name="NetworkName"
                         />
                       </Col>
-                    {this.state.provider ==='gcp'?<></>:
-                      <Col>
-                        <Form.Control
-                          size="md"
-                          onChange={this.handleChange}
-                          type="text"
-                          placeholder="Input Network CIDR"
-                          name="NetworkCIDR"
-                        />
-                      </Col>
-                           }
+                      {this.state.provider === 'gcp' ? <></> :
+                        <Col>
+                          <Form.Control
+                            size="md"
+                            onChange={this.handleChange}
+                            type="text"
+                            placeholder="Input Network CIDR"
+                            name="NetworkCIDR"
+                          />
+                        </Col>
+                      }
                       <Col>
                         <Button
                           className=" media-body successGreen"
@@ -698,7 +742,7 @@ export default class BluePrint extends Component {
                       <tr>
                         <th scope="col"></th>
                         <th scope="col">NETWORK</th>
-                        {this.state.provider ==='gcp'?<></>: <th scope="col">CIDR</th>}
+                        {this.state.provider === 'gcp' ? <></> : <th scope="col">CIDR</th>}
                         <th scope="col"></th>
                         <th className="col-5"></th>
                       </tr>
@@ -718,7 +762,7 @@ export default class BluePrint extends Component {
                       this.state.Networks.map((NetworkData, index) => (
                         <NetworkTableRow
                           key={index}
-                          Provider = {this.state.provider}
+                          Provider={this.state.provider}
                           index={index + 1}
                           Network={NetworkData}
                           VMS={this.state.VMS}
@@ -761,8 +805,10 @@ export default class BluePrint extends Component {
                 onClick={() => this.setState({ ShowAlertBuild: true })}
                 disabled={this.state.BuildStatus || this.state.BuildNetworkBtnDis}
                 size="lg"
-              >
-                Build Network <icon.BsPlay />
+              >{
+                  this.state.buttonStatus === "BuildProgress" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <>Build Network <icon.BsPlay /></>
+
+                }
               </Button>
               <Button
                 variant="danger"
