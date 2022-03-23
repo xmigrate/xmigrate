@@ -144,7 +144,7 @@ async def start_cloning(project, hostname):
     except Exception as e:
         print("Error occurred: "+str(e))
     load_dotenv()
-    mongodb = os.getenv('MONGO_DB')
+    mongodb = os.getenv('BASE_URL')
     current_dir = os.getcwd()
     print("/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/gcp/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\"")
     if hostname == "all":
