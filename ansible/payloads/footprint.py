@@ -48,6 +48,7 @@ def disk_info():
     [{'filesystem': 'ext4', 'disk_size': 8259014656, 'uuid': 'c3d76fc4', 'dev': '/dev/xvda', 'mnt_path': '/'}]
     '''
     root_disk=[]
+    dev_names=[]
     for i in psutil.disk_partitions():
         disk_blkid=''
         if 'lv' in i.device:
@@ -58,7 +59,12 @@ def disk_info():
                 if "UUID" in x.upper():
                     disk_blkid = x.split("=")[1].replace('"','')
             disk_size = psutil.disk_usage(i.mountpoint).total
-            root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+            if len(root_disk)<=0:
+                root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                dev_names.append(i.device.rstrip('1234567890'))
+            elif i.device.rstrip('1234567890') not in dev_names:
+                root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                dev_names.append(i.device.rstrip('1234567890'))
     return root_disk
 
 
