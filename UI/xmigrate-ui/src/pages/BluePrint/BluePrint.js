@@ -112,13 +112,13 @@ export default class BluePrint extends Component {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
             status = parseInt(host["status"]);
-            if (parseInt(host["status"]) < 25 && parseInt(host["status"]) >= 20) {
+            if ((parseInt(host["status"]) > -25 && parseInt(host["status"]) <= -20) || parseInt(host["status"]) === 20) {
               host["BtStatus"] = "clone";
               host["BtProgress"] = "cloneCompleted";
-            } else if (parseInt(host["status"]) >= 25 && parseInt(host["status"]) < 35) {
+            } else if ((parseInt(host["status"]) <= -25 && parseInt(host["status"]) > -35) || parseInt(host["status"]) === 25) {
               host["BtStatus"] = "convert";
               host["BtProgress"] = "convertCompleted";
-            } else if (parseInt(host["status"]) >= 35 && parseInt(host["status"]) < 100 ) {
+            } else if ((parseInt(host["status"]) <= -35 && parseInt(host["status"]) > -100 ) ||parseInt(host["status"]) === 35){
               host["BtStatus"] = "build";
               host["BtProgress"] = "buildCompleted";
             }

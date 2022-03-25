@@ -42,4 +42,10 @@
   .ProviderCol.active{
     color:#0082FF;
   }
+  #message {
+    position: fixed;
+    right: 5%;
+    z-index:9999; 
+    border-radius: .3rem;
+}
 }
