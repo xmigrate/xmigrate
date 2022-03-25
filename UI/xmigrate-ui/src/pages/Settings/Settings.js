@@ -7,13 +7,16 @@ import {
   Form,
   Row,
   Col,
-  Alert
+  Alert,
+  Toast
 } from "react-bootstrap";
-import { FaAngleRight, FaAws,
+import {
+  FaAngleRight, FaAws,
   //  FaCloud 
-  } from "react-icons/fa";
-import { SiMicrosoftazure, 
-  // SiGooglecloud 
+} from "react-icons/fa";
+import {
+  SiMicrosoftazure,
+  SiGooglecloud
 } from "react-icons/si";
 import {
   BLUEPRINT_GET_STORAGE,
@@ -23,10 +26,11 @@ import { GetServiceWithData } from "../../services/GetService";
 import PostService from "../../services/PostService";
 export default class Settings extends Component {
   constructor(props) {
-   super(props);
+    super(props);
     console.log("The props Received:", props.CurrentPro);
     let input = {};
     input["name"] = props.CurrentPro.name;
+    input["project_id"] = props.CurrentPro.gcp_project_id;
     input["subscription_id"] = props.CurrentPro.subscription_id;
     input["provider"] = props.CurrentPro.provider;
     input["resource_group"] = props.CurrentPro.resource_group;
@@ -41,7 +45,8 @@ export default class Settings extends Component {
     input["access_key_azure"] = "";
     input["bucket"] = "";
     input["access_key_aws_storage"] = "";
-    input["secret_key_aws_storage"]="";
+    input["secret_key_aws_storage"] = "";
+
 
     this.state = {
       project: props.CurrentPro.name,
@@ -49,7 +54,7 @@ export default class Settings extends Component {
       status: "Verify",
       errors: {},
       locations: [],
-      showUpdateAlert:false
+      showUpdateAlert: false
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleProvider = this.handleProvider.bind(this);
@@ -100,7 +105,7 @@ export default class Settings extends Component {
 
   async handleStorageUpdate(event) {
     event.preventDefault();
-    var data ={};
+    var data = {};
     if (this.state.input.provider === "aws") {
       data = {
         provider: this.state.input.provider,
@@ -109,7 +114,7 @@ export default class Settings extends Component {
         access_key: this.state.input.access_key_aws_storage,
         secret_key: this.state.input.secret_key_aws_storage
       }
-    } else {
+    } else if (this.state.input.provider === "azure"){
       data = {
         provider: this.state.input.provider,
         project: this.state.input.name,
@@ -118,11 +123,20 @@ export default class Settings extends Component {
         access_key: this.state.input.access_key_azure
       }
     }
+    else if(this.state.input.provider === "gcp"){
+      data = {
+        provider: this.state.input.provider,
+        project: this.state.input.name,
+        bucket: this.state.input.bucket,
+        access_key: this.state.input.access_key_azure,
+        secret_key:this.state.input.secret_key_aws_storage
+      }
+    }
     console.log(data);
     await PostService(BLUEPRINT_UPDATE_STORAGE, data).then((res) => {
       console.log(res);
       this.setState({
-        showUpdateAlert:true
+        showUpdateAlert: true
       })
     })
 
@@ -135,27 +149,33 @@ export default class Settings extends Component {
     return isValid;
   }
 
-  closeAlertUpdate(){
-    this.setState({
-      showUpdateAlert:false
-    })
-  }
+
 
   render() {
     return (
-      
+
       <div className=" Settings media-body background-primary ">
-   
+
         <Container className="py-5 ">
-        <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
-        <p>Updated!!</p>
-      </Alert>
+          
+        <Toast id="message" show={this.state.showUpdateAlert} onClose={() => this.setState({ showUpdateAlert: false })}>
+            <Toast.Header>
+              <strong className="me-auto"> Alert</strong>
+            </Toast.Header>
+            <Toast.Body><p>Updated</p></Toast.Body>
+          </Toast>
+
+          {/* Commenting Alert Old */}
+          {/* <Alert className="m-2" show={this.state.showUpdateAlert} variant="primary" onClose={this.closeAlertUpdate.bind(this)} dismissible>
+            <p>Updated!!</p>
+          </Alert> */}
+
           <h4 className="p-0 m-0">Project Settings</h4>
           <Row className="py-5 ">
             <Col md="6" className="bg-white shadow-sm rounded ">
               <div className="p-3 d-flex flex-column justify-content-between h-100">
                 <Form className="FormStyle" >
-                  <Form.Group className="register bg-blue">
+                  <Form.Group className="register bg-blue mb-3">
                     <Form.Label>Project Name</Form.Label>
                     <Form.Control
                       type="text"
@@ -168,6 +188,21 @@ export default class Settings extends Component {
                       name="name"
                     />
                   </Form.Group>
+                  {this.state.input.provider === "gcp" ?
+                    <Form.Group className="register bg-blue mb-3">
+                      <Form.Label>Project id</Form.Label>
+                      <Form.Control
+                        type="text"
+                        id="ProjectName"
+                        onChange={this.handleChange}
+                        aria-describedby="ProjectId"
+                        placeholder="Project id"
+                        disabled={true}
+                        value={this.state.input.project_id}
+                        name="projectid"
+                      />
+                    </Form.Group> : null}
+
                   <Form.Group>
                     <Form.Label>Select Provider</Form.Label>
                   </Form.Group>
@@ -202,13 +237,13 @@ export default class Settings extends Component {
                         </Card.Body>
                       </Card>
                     </Col>
-                    {/* <Col className={"ProviderCol"+ (this.state.input.provider == "GoogleCloud" ? ' active' : '')}>
-                        <Card>
-                          <Card.Body className="Provider" onClick={()=>this.handleProvider("GoogleCloud")}>
-                            <SiGooglecloud size={50} />
-                          </Card.Body>
-                        </Card>
-                      </Col> */}
+                    <Col className={"ProviderCol" + (this.state.input.provider === "gcp" ? ' active' : '')}>
+                      <Card>
+                        <Card.Body className="Provider" onClick={() => this.handleProvider("GoogleCloud")}>
+                          <SiGooglecloud size={50} />
+                        </Card.Body>
+                      </Card>
+                    </Col>
                   </Row>
 
                   <Form.Group
@@ -251,7 +286,7 @@ export default class Settings extends Component {
                   </Form.Group>
 
                   <Form.Group
-                    className="register bg-blue"
+                    className="register bg-blue mb-3"
                     style={{
                       display:
                         this.state.input.provider === "azure"
@@ -270,7 +305,7 @@ export default class Settings extends Component {
                     />
                   </Form.Group>
                   <Form.Group
-                    className="register bg-blue"
+                    className="register bg-blue mb-3"
                     style={{
                       display:
                         this.state.input.provider === "aws" ? " block" : "none",
@@ -287,7 +322,7 @@ export default class Settings extends Component {
                     />
                   </Form.Group>
                   <Form.Group
-                    className="register bg-blue"
+                    className="register bg-blue mb-3"
                     style={{
                       display:
                         this.state.input.provider === "aws" ? " block" : "none",
@@ -304,7 +339,7 @@ export default class Settings extends Component {
                     />
                   </Form.Group>
                   <Form.Group
-                    className="register bg-blue"
+                    className="register bg-blue mb-3"
                     style={{
                       display:
                         this.state.input.provider === "azure"
@@ -323,7 +358,7 @@ export default class Settings extends Component {
                     />
                   </Form.Group>
                   <Form.Group
-                    className="register bg-blue"
+                    className="register bg-blue mb-3"
                     style={{
                       display:
                         this.state.input.provider === "azure" &&
@@ -384,7 +419,7 @@ export default class Settings extends Component {
                 <Form className="FormStyle" onSubmit={this.handleStorageUpdate}>
 
                   {/* AZURE */}
-                  <Form.Group className="register bg-blue"
+                  <Form.Group className="register bg-blue mb-3"
                     style={{
                       display:
                         this.state.input.provider === "azure" ? " block" : "none",
@@ -398,7 +433,7 @@ export default class Settings extends Component {
                       name="storage"
                     />
                   </Form.Group>
-                  <Form.Group className="register bg-blue"
+                  <Form.Group className="register bg-blue mb-3"
                     style={{
                       display:
                         this.state.input.provider === "azure" ? " block" : "none",
@@ -414,7 +449,7 @@ export default class Settings extends Component {
                     />
                   </Form.Group>
 
-                  <Form.Group className="register bg-blue" style={{
+                  <Form.Group className="register bg-blue mb-3" style={{
                     display:
                       this.state.input.provider === "azure" ? " block" : "none",
                   }}>
@@ -430,7 +465,7 @@ export default class Settings extends Component {
 
                   {/* AWS */}
 
-                  <Form.Group className="register bg-blue" style={{
+                  <Form.Group className="register bg-blue mb-3" style={{
                     display:
                       this.state.input.provider === "aws" ? " block" : "none",
                   }}>
@@ -443,7 +478,7 @@ export default class Settings extends Component {
                       name="bucket"
                     />
                   </Form.Group>
-                  <Form.Group className="register bg-blue" style={{
+                  <Form.Group className="register bg-blue mb-3" style={{
                     display:
                       this.state.input.provider === "aws" ? " block" : "none",
                   }}>
@@ -456,7 +491,7 @@ export default class Settings extends Component {
                       name="access_key"
                     />
                   </Form.Group>
-                  <Form.Group className="register bg-blue" style={{
+                  <Form.Group className="register bg-blue mb-3" style={{
                     display:
                       this.state.input.provider === "aws" ? " block" : "none",
                   }}>
@@ -470,13 +505,60 @@ export default class Settings extends Component {
                     />
                   </Form.Group>
 
+                  {/* GCP */}
+
+                  <Form.Group className="register bg-blue mb-3" style={{
+                    display:
+                      this.state.input.provider === "gcp" ? " block" : "none",
+                  }}>
+                    <Form.Label>Bucket</Form.Label>
+                    <Form.Control
+                      type="text"
+                      onChange={this.handleChange}
+                      placeholder="bucket"
+                      value={this.state.input.bucket}
+                      name="bucket"
+                    />
+                  </Form.Group>
+
+                  <Form.Group className="register bg-blue mb-3" style={{
+                    display:
+                      this.state.input.provider === "gcp" ? " block" : "none",
+                  }}>
+                    <Form.Label>Access Key</Form.Label>
+                    <Form.Control
+                      type="text"
+                      onChange={this.handleChange}
+                      placeholder="Access key"
+                      value={this.state.input.access_key_aws_storage}
+                      name="access_key"
+                    />
+                  </Form.Group>
+
+
+
+                  <Form.Group className="register bg-blue mb-3" style={{
+                    display:
+                      this.state.input.provider === "gcp" ? " block" : "none",
+                  }}>
+                    <Form.Label>Secret Key</Form.Label>
+                    <Form.Control
+                      type="text"
+                      onChange={this.handleChange}
+                      placeholder="Secret key"
+                      value={this.state.input.secret_key_aws_storage}
+                      name="secret_key"
+                    />
+                  </Form.Group>
+
+
                   <Button
                     type="submit"
                     className="btn btn-primary
                        col-lg-12"
                   >
                     Update
-                      <FaAngleRight size={20} />
+                    <FaAngleRight size={20} />
                   </Button>
                 </Form>
               </div>
