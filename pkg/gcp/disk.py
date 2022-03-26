@@ -239,7 +239,8 @@ async def upload_worker(osdisk_raw,project,host):
 async def conversion_worker(osdisk_raw,project,host):
     downloaded = await download_worker(osdisk_raw,project,host)
     if downloaded:
-        con = create_db_con()        
+        con = create_db_con()
+        BluePrint.objects(project=project,host=host).update(status='32')        
         try:
             osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
             cur_path = os.getcwd()
@@ -258,10 +259,10 @@ async def conversion_worker(osdisk_raw,project,host):
             print(str(e))
             BluePrint.objects(project=project,host=host).update(status='-35')
             logger(str(e),"warning")
-        finally:
-            con.close() 
     else:
+        BluePrint.objects(project=project,host=host).update(status='-32')
         logger("Downloading image failed","warning")
+    con.close()
 
 
 async def start_conversion(project,hostname):
