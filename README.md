@@ -42,7 +42,7 @@ Ansible is used to prepare the servers ready for migration. MongoDB is used to s
 ```bash
 docker-compose up -d
 ```
-Run the above command and access xmigrate on httP://localhost:8000
+Run the above command and access xmigrate on http://localhost:8000
 
 ## OS compatiability matrix
 We currently support server's with below OS versions
