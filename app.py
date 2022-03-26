@@ -29,7 +29,6 @@ from routes.status import *
 from routes.server import *
 from routes.index import *
 from routes.discover import *
-from routes.cloning import *
 from routes.build import *
 from routes.blueprint import *
 from routes.project import *

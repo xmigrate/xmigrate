@@ -10,11 +10,10 @@
     get_url:
       url: https://bootstrap.pypa.io/get-pip.py
       dest: /tmp/get-pip.py
-      mode: 0750    
-  - name: epel
-    shell: "sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+      mode: 0750  
+  - name: Enable EPEL repo
+    shell: sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
     ignore_errors: yes
-    
   - block:
     - name: Install Python3
       yum:
@@ -29,15 +28,13 @@
         state: latest
     - name: Install python3-devel
       yum:
-        name: python36-devel
-        state: latest
         name: python34-devel.x86_64
         state: latest
     rescue:
     - name: Update yum.. older way
       shell: "sudo yum update -y"
     - name: Install Python-devel.. older way
-      shell: "sudo yum install python3 python36-devel -y"
+      shell: "sudo yum install python3 python34-devel.x86_64 -y"
     - name: Install GCC .. older way
       shell: "sudo yum install gcc -y"
     tags:
@@ -46,7 +43,9 @@
           #  - name: Install pip
           #    shell: "sudo python /tmp/get-pip.py"
   
-  - block:
+  - block:        
+    - name: upgrade pip3
+      shell: sudo pip3 install --upgrade pip
     - name: Install Python packages
       pip:
         name: "{{ item }}"

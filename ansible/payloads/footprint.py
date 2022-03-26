@@ -54,17 +54,28 @@ def disk_info():
         if 'lv' in i.device:
             continue
         if i.fstype in ['ext4','xfs']:
-            disk_uuid = os.popen('sudo blkid '+ i.device.rstrip("1234567890")).read()
-            for x in disk_uuid.split(" "):
-                if "UUID" in x.upper():
-                    disk_blkid = x.split("=")[1].replace('"','')
-            disk_size = psutil.disk_usage(i.mountpoint).total
-            if len(root_disk)<=0:
-                root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
-                dev_names.append(i.device.rstrip('1234567890'))
-            elif i.device.rstrip('1234567890') not in dev_names:
-                root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
-                dev_names.append(i.device.rstrip('1234567890'))
+            if "nvme" not in i.device:
+                disk_uuid = os.popen('sudo blkid '+ i.device.rstrip("1234567890")).read()
+                for x in disk_uuid.split(" "):
+                    if "UUID" in x.upper():
+                        disk_blkid = x.split("=")[1].replace('"','')
+                disk_size = psutil.disk_usage(i.mountpoint).total
+                if len(root_disk)<=0:
+                    root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                    dev_names.append(i.device.rstrip('1234567890'))
+                elif i.device.rstrip('1234567890') not in dev_names:
+                    root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                    dev_names.append(i.device.rstrip('1234567890'))
+            else:
+                disk_size = psutil.disk_usage(i.mountpoint).total
+                disk_uuid = os.popen('sudo blkid '+ i.device[0:-2]).read()
+                if len(root_disk)<=0:
+                    if len(i.device.split('/')[2]) > 6:
+                        root_disk.append({"mnt_path":i.mountpoint,"dev":i.device[0:-2],"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                        dev_names.append(i.device[0:-2])
+                    elif i.device[0:-2] not in dev_names:
+                        root_disk.append({"mnt_path":i.mountpoint,"dev":i.device[0:-2],"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                        dev_names.append(i.device[0:-2])
     return root_disk
 
 
