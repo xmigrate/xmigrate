@@ -34,7 +34,8 @@ All the web-services and payloads are written in python.
 Ansible is used to prepare the servers ready for migration. MongoDB is used to store user, project, cloud environment and other metadata related to the VM which needs to be migrated.
 
 ## Future Roadmap
-- Removal of public mongodb dependency
+- Support for more OS versions
+- Support for GPT boot volume to AWS
 
 ## 🚀How to deploy? 
 
@@ -44,11 +45,11 @@ docker run -d --name xmigrate -p 80:80 -e MONGO_DB="mongodb+srv://$MONGOUSER:$MO
 ## OS compatiability matrix
 We currently support server's with below OS versions
 
-|           | Redhat 7 | Redhat 8 | Ubuntu 18.04 |
-|-----------|----------|----------|--------------|
-| **AWS**   |          |   ✅     |              |
-| **Azure** |          |           |       ✅       |
-| **GCP**   |   ✅     |          |              |
+|           | Redhat 7 | Redhat 8 | Ubuntu 18.04 | CentOS 7 | CentOS 8 |  
+|-----------|----------|----------|--------------|----------|----------|
+| **AWS**   |    ✅    |   ✅    |     ✅       |   ✅    |   ✅     |
+| **Azure** |          |          |       ✅     |          |          |
+| **GCP**   |   ✅     |          |              |          |          |
 
 We are adding support for more OS's soon.
 
