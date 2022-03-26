@@ -112,18 +112,27 @@ export default class BluePrint extends Component {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
             status = parseInt(host["status"]);
-            if ((parseInt(host["status"]) > -25 && parseInt(host["status"]) <= -20) || parseInt(host["status"]) === 20) {
+            if ((status > -25 && status <= -20) || status === 20) {
               host["BtStatus"] = "clone";
               host["BtProgress"] = "cloneCompleted";
-            } else if ((parseInt(host["status"]) <= -25 && parseInt(host["status"]) > -35) || parseInt(host["status"]) === 25) {
+            } else if ((status <= -25 && status > -35) || status === 25) {
               host["BtStatus"] = "convert";
               host["BtProgress"] = "convertCompleted";
-            } else if ((parseInt(host["status"]) <= -35 && parseInt(host["status"]) > -100 ) ||parseInt(host["status"]) === 35){
+            } else if ((status <= -35 && status > -100 ) ||status === 35){
               host["BtStatus"] = "build";
               host["BtProgress"] = "buildCompleted";
             }
-            else if(parseInt(host["status"]) === 0){
+            else if(status === 0){
               host["BtStatus"] = "BuildNetwork";
+            }
+
+            if(status >20 && status <25 ){
+              host["BtProgress"] = "cloneStarted";
+            }
+            else if(status >25 && status <35){
+              host["BtProgress"] = "convertStarted";
+            }else if(status >25 && status >100 ){
+              host["BtProgress"] = "buildStarted";
             }
             let hostCurrent = {};
             hostCurrent["hostname"] = host.host;
@@ -138,7 +147,12 @@ export default class BluePrint extends Component {
     console.log("Network Data:", NetworksDatas);
     console.log("Status:", status);
     let BuildNetworkBtnDisflag = false;
-    if (status > 19 | status === 20) {
+    if (status >= 20) {
+      BuildNetworkBtnDisflag = true;
+    }
+    let btStatus;
+    if(status <20 && status >0){
+      btStatus = "BuildProgress"
       BuildNetworkBtnDisflag = true;
     }
     //Setting the State
@@ -147,7 +161,8 @@ export default class BluePrint extends Component {
       VMS: VMSDATA,
       hostCurrents: hostCurrents,
       status: "loaded",
-      BuildNetworkBtnDis: BuildNetworkBtnDisflag
+      BuildNetworkBtnDis: BuildNetworkBtnDisflag,
+      buttonStatus :btStatus
     });
   }
 
