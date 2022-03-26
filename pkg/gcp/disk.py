@@ -144,7 +144,7 @@ async def start_cloning(project, hostname):
     except Exception as e:
         print("Error occurred: "+str(e))
     load_dotenv()
-    mongodb = os.getenv('MONGO_DB')
+    mongodb = os.getenv('BASE_URL')
     current_dir = os.getcwd()
     print("/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/gcp/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\"")
     if hostname == "all":
@@ -239,7 +239,8 @@ async def upload_worker(osdisk_raw,project,host):
 async def conversion_worker(osdisk_raw,project,host):
     downloaded = await download_worker(osdisk_raw,project,host)
     if downloaded:
-        con = create_db_con()        
+        con = create_db_con()
+        BluePrint.objects(project=project,host=host).update(status='32')        
         try:
             osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
             cur_path = os.getcwd()
@@ -258,10 +259,10 @@ async def conversion_worker(osdisk_raw,project,host):
             print(str(e))
             BluePrint.objects(project=project,host=host).update(status='-35')
             logger(str(e),"warning")
-        finally:
-            con.close() 
     else:
+        BluePrint.objects(project=project,host=host).update(status='-32')
         logger("Downloading image failed","warning")
+    con.close()
 
 
 async def start_conversion(project,hostname):

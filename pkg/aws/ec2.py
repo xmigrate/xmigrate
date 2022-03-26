@@ -58,6 +58,7 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
         BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='100')
     except Exception as e:
         print(repr(e))
+        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='-100')
     finally:
         con.close()
 
@@ -99,7 +100,6 @@ def get_vm_types(project):
         location = Project.objects(name=project)[0]['location']
         client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=location)
         for ec2_type in ec2_instance_types(client,location):
-            print(ec2_type)
             cores = ''
             if 'DefaultCores' in ec2_type['VCpuInfo'].keys():
                 cores = ec2_type['VCpuInfo']['DefaultCores']

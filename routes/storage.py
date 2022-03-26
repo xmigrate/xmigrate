@@ -47,6 +47,8 @@ async def storage_get():
             return jsonify(st.get_storage(name))
         elif provider == "aws":
             return jsonify(bk.get_storage(name))
+        elif provider == "gcp":
+            return jsonify(gbk.get_storage(name))
 
 
 @app.route('/storage/update', methods=['POST'])

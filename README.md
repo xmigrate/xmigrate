@@ -7,7 +7,7 @@ Migration can be done from DC to DC, DC to cloud, Cloud to DC, Cloud to Cloud.
 
 ## Current release
 
-We have shipped xmigrate with the below features in our latest beta [release](https://hub.docker.com/layers/xmigrate/xmigrate/beta_v0.2.0/images/sha256-93e8066e599e56dfe05145a9b63dab487383350812d1798c14b71506b6719858?context=explore) 
+We have shipped xmigrate with the below features in our latest beta [release](https://hub.docker.com/layers/xmigrate/xmigrate/beta_v0.3.0/images/sha256-93e8066e599e56dfe05145a9b63dab487383350812d1798c14b71506b6719858?context=explore) 
 
 - Environment discovery
 - Automatic network creation and server deployment
@@ -34,21 +34,24 @@ All the web-services and payloads are written in python.
 Ansible is used to prepare the servers ready for migration. MongoDB is used to store user, project, cloud environment and other metadata related to the VM which needs to be migrated.
 
 ## Future Roadmap
-- Removal of public mongodb dependency
+- Support for more OS versions
+- Support for GPT boot volume to AWS
 
 ## 🚀How to deploy? 
 
 ```bash
-docker run -d --name xmigrate -p 80:80 -e MONGO_DB="mongodb+srv://$MONGOUSER:$MONGOPASS@xmigrate.ao93h.mongodb.net/migration?retryWrites=true&w=majority" xmigrate/xmigrate:beta_v0.2.0
+docker-compose up -d
 ```
+Run the above command and access xmigrate on httP://localhost:8000
+
 ## OS compatiability matrix
 We currently support server's with below OS versions
 
-|           | Redhat 7 | Redhat 8 | Ubuntu 18.04 |
-|-----------|----------|----------|--------------|
-| **AWS**   |          |   ✅     |              |
-| **Azure** |          |           |       ✅       |
-| **GCP**   |   ✅     |          |              |
+|           | Redhat 7 | Redhat 8 | Ubuntu 18.04 | CentOS 7 | CentOS 8 |  
+|-----------|----------|----------|--------------|----------|----------|
+| **AWS**   |    ✅    |   ✅    |     ✅       |   ✅    |   ✅     |
+| **Azure** |          |          |       ✅     |          |          |
+| **GCP**   |   ✅     |          |              |          |          |
 
 We are adding support for more OS's soon.
 

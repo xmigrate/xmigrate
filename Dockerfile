@@ -1,9 +1,10 @@
-FROM node AS stage
+FROM node:12.22 AS stage
 
 WORKDIR /app
 COPY ./UI .
 WORKDIR /app/xmigrate-ui
-RUN yarn && yarn build
+RUN npm install
+RUN npm run build
 
 FROM ubuntu:18.04
 
@@ -13,8 +14,6 @@ RUN apt update -y
 RUN apt install -y python3.7
 RUN apt install -y python3-pip qemu-utils
 RUN apt install -y wget nginx
-
-# RUN wget http://launchpadlibrarian.net/422997913/qemu-utils_2.0.0+dfsg-2ubuntu1.46_amd64.deb && apt install ./qemu-utils_2.0.0+dfsg-2ubuntu1.46_amd64.deb -y
 
 RUN wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
     tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \

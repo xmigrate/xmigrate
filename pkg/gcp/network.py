@@ -149,10 +149,10 @@ async def create_nw(project):
                 try:
                     subnet_name = project+"subnet"+str(c)
                     subnet_result = create_subnet(project_id, service_account_json,network_name, location, subnet_name, i)
-                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result['targetLink']),status='20')
+                    BluePrint.objects(subnet=i,project=project).update(subnet_id=str(subnet_result['targetLink']),status='20')
                     Subnet.objects(cidr=i, project=project).update(created=True, upsert=True)
                 except Exception as e:
-                    BluePrint.objects(subnet=i).update(subnet_id=str(subnet_result['targetLink']),status='-20')
+                    BluePrint.objects(subnet=i,project=project).update(subnet_id=str(subnet_result['targetLink']),status='-20')
                     print("Subnet creation failed to save: "+repr(e))
                     logger("Subnet creation failed to save: "+repr(e), "warning")
                     subnet_created.append(False) 

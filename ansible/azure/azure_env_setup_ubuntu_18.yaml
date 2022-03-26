@@ -169,7 +169,7 @@
     - block:
       - name: Install Python packages
         pip:
-          name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython']
+          name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython', 'requests']
         become: true
         become_user: root
       rescue:
@@ -184,6 +184,7 @@
           - pyasn1
           - python-dotenv
           - dnspython
+          - requests
         become: true
         become_user: root
 

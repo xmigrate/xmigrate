@@ -95,7 +95,7 @@ async def start_cloning(project, hostname):
         sas_token = sas.generate_sas_token(storage,accesskey)
         url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
         load_dotenv()
-        mongodb = os.getenv('MONGO_DB')
+        mongodb = os.getenv('BASE_URL')
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
         if hostname == "all":
