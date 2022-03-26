@@ -11,4 +11,8 @@
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '8'   
 - name: executing redhat 7 playbook
   import_playbook: aws_env_setup_redhat_7.yaml
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == '7'    
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == '7' 
+- name: executing ubuntu 18.04 playbook
+  import_playbook: aws_env_setup_ubuntu_18.04.yaml
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '18'
+   

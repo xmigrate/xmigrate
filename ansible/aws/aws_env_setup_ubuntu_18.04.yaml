@@ -5,19 +5,12 @@
   gather_facts: no
   force_handlers: True
   tasks:
-  - name: Download get-pip file
-    get_url:
-      url: https://bootstrap.pypa.io/get-pip.py
-      dest: /tmp/get-pip.py
-      mode: 0750
   - block:
     - name: Install Python3.6
       apt:
         name: python3.6
         state: latest
         update_cache: yes
-      become: true
-      become_method: sudo
     - name: Install GCC
       apt:
         name: gcc
@@ -26,21 +19,33 @@
       apt:
         name: python3-pip
         state: latest 
+    - name: Upgrade to AWS linux kernel
+      apt:
+        name: linux-aws-lts-18.04
+        state: latest 
     rescue:
     - name: Update apt.. older way
       shell: "sudo apt update -y"
     - name: Install Python-devel.. older way
-      shell: "sudo apt install python3 python3 -y"
+      shell: "sudo apt install python3 python3-pip -y"
     - name: Install GCC .. older way
       shell: "sudo apt install gcc -y"
+    - name: Upgrade to AWS linux kernel
+      shell: "sudo apt install linux-aws-lts-18.04 -y"
     tags:
         - devel
   # - name: Install pip
   #   shell: "sudo apt install pip -y"
   - block:
+    - name: Install and upgrade pip
+      pip:
+        name: pip
+        extra_args: --upgrade
+        executable: pip3
     - name: Install Python packages
       pip:
         name: "{{ item }}"
+        executable: pip3
       with_items:
         - awscli
         - netifaces
@@ -59,7 +64,7 @@
         - netaddr
         - mongoengine
         - psutil
-        - dotenv
+        - python-dotenv
         - dnspython
         - requests
 

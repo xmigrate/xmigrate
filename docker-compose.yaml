@@ -9,7 +9,7 @@ services:
       MONGODB_ROOT_PASSWORD: example
       MONGODB_DATABASE: migration
     volumes:
-      - mongo:/data/db
+      - mongo:/bitnami/mongodb
 
   mongo-express:
     image: mongo-express
@@ -26,7 +26,7 @@ services:
   app:
     image: xmigrate/xmigrate:latest
     ports:
-      - 8080:80
+      - 8000:80
     environment:
       MONGO_DB: mongodb://root:example@mongo:27017/migration?authSource=admin
       BASE_URL: http://localhost:8000

@@ -20,6 +20,7 @@ def build_vpc(cidr,public_route, project):
     #vpc.create_tags(Tags=[{"Key": "Name", "Value": "default_vpc"}])
     vpc.wait_until_available()
     try:
+      print(vpc)
       con = create_db_con()
       BluePrint.objects(network=cidr, project=project).update(vpc_id = vpc.id, status='5')
       if public_route:
@@ -54,6 +55,7 @@ def build_subnet(cidr,vpcid,route,project):
       route_table = ec2.RouteTable(route)
       subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
       try:
+        print(subnet)
         con = create_db_con()
         BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='20')
         Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
