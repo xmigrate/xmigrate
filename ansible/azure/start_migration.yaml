@@ -1,6 +1,5 @@
 - name : Starting migration
   become: true
-  remote_user: ubuntu
   become_method: sudo
   hosts: nodes
   gather_facts: no
