@@ -2,67 +2,10 @@
   become: yes
   become_method: sudo
   become_user: root
-  hosts: nodes
+  hosts: all
   gather_facts: no
   force_handlers: True
   tasks:
-  - block:
-    - name: Install Python3
-      yum:
-        name: python3
-        state: latest
-        update_cache: yes
-      become: true
-      become_method: sudo
-    - name: Install GCC
-      yum:
-        name: gcc
-        state: latest
-    - name: upgrade pip3
-      shell: pip3 install --upgrade pip
-    # - name: Install python36-devel
-    #   yum:
-    #     name: python36-devel
-    #     state: latest
-    rescue:
-    - name: Update yum.. older way
-      shell: "sudo yum update -y"
-    - name: Install Python-devel.. older way
-      shell: "sudo yum install python3 python36-devel -y"
-    - name: Install GCC .. older way
-      shell: "sudo yum install gcc -y"
-    tags:
-        - devel  
-  - block:
-    - name: Install Python packages
-      pip:
-        name: "{{ item }}"
-        executable: pip3
-      with_items:
-        - gsutil
-        - netifaces
-        - netaddr
-        - mongoengine
-        - psutil
-        - python-dotenv
-        - dnspython
-        - pyasn1==0.4.6
-        - requests
-      
-    rescue:
-    - name: Install python packages
-      shell: "sudo pip3 install {{ item }}"
-      with_items:
-        - gsutil
-        - netifaces
-        - netaddr
-        - mongoengine
-        - psutil
-        - python-dotenv
-        - dnspython
-        - pyasn1==0.4.6
-        - requests
-
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"
@@ -120,13 +63,14 @@
 
   - name: <==Deploy payload==>
     copy:
-      src: "../payloads/footprint.py"
-      dest: "/tmp/footprint.py"
+      src: "../payloads/footprint/footprint"
+      dest: "/tmp/footprint"
+      mode: a+x
     tags:
       - deploy
 
   - name: <==Executing payload==>
-    shell: "python3 /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
     register: st
     become: True
     tags:
