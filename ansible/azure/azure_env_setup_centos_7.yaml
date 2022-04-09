@@ -1,0 +1,141 @@
+- name : Preparing the VM to be migrated to Azure
+  become: true
+  become_method: sudo
+  hosts: all
+  force_handlers: True
+  tasks:
+    - name: Create a file
+      file: path=/etc/sysconfig/network state=touch  
+    - name: Copy content to file
+      copy: content="NETWORKING=yes
+                     HOSTNAME=localhost.localdomain \n" dest=/etc/sysconfig/network  
+    - name: Create a file
+      file: path=/etc/sysconfig/network-scripts/ifcfg-eth0 state=touch  
+    - name: Copy content to file
+      copy: content="DEVICE=eth0
+                     ONBOOT=yes
+                     BOOTPROTO=dhcp
+                     TYPE=Ethernet
+                     USERCTL=no
+                     PEERDNS=yes
+                     IPV6INIT=no
+                     NM_CONTROLLED=no \n" dest=/etc/sysconfig/network-scripts/ifcfg-eth0
+
+    - name: modify udev
+      shell: "ln -sf /dev/null /etc/udev/rules.d/75-persistent-net-generator.rules"
+      become_user: root
+      become_method: sudo 
+    
+    - name: releasever
+      get_url:
+        url: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os&infra=$infra
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+        mode: 0750  
+    - name: releasever updates
+      get_url:
+        url: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=updates&infra=$infra
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+        mode: 0750
+    - name: releasever extras
+      get_url:
+        url: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=extras&infra=$infra
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+        mode: 0750
+    - name: releasever plus
+      get_url:
+        url: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=centosplus&infra=$infra
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+        mode: 0750 
+
+    - name: clear yum data
+      shell: "yum clean all -y"
+  
+    - name: yum update
+      shell: "yum -y update"  
+  
+
+    - name: Update grub entry
+      shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,net.ifnames=0\"
+      ' /etc/default/grub"
+      become: true
+      become_user: root
+    - name:  grub rebuild
+      shell: " sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      become: true
+      become_user: root  
+    
+    - name: rebuild
+      shell: "sudo dracut -f -v"
+
+    - name: Install azure linux agent
+      shell: "sudo yum install WALinuxAgent -y"
+      # yum:
+      #   name: walinuxagent
+      #   state: latest
+      #   become_method: sudo    
+    - name: Install azure linux agent
+      yum:
+        name: python-pyasn1
+        state: latest
+    
+    - name: install azure linux agent
+      shell: "sudo systemctl enable waagent"  
+  
+    - name: Install cloud init, netplan.io and walinuxagent.. older way
+      shell: "sudo yum install cloud-init netplan.io walinuxagent -y"
+      become: true
+      become_user: root
+
+    
+    - name: configure waagent
+      shell: "sudo sed -i 's/Provisioning.UseCloudInit=n/Provisioning.UseCloudInit=y/g' /etc/waagent.conf"
+
+    - name: configure waagent
+      shell: "sudo sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf"
+       
+    - name: Adding mounts
+      shell: "sed -i '/ - mounts/d' /etc/cloud/cloud.cfg"
+      become: true
+      become_method: sudo
+    - name: Adding mounts
+      shell: "sed -i '/ - disk_setup/d' /etc/cloud/cloud.cfg"
+      become: true  
+    - name: Adding mounts
+      shell: "sed -i '/cloud_init_modules/a\\ - mounts' /etc/cloud/cloud.cfg"
+      become: true
+    - name: Adding mounts
+      shell: "sed -i '/cloud_init_modules/a\\ - disk_setup' /etc/cloud/cloud.cfg"
+      become: true
+    - name: Modify waagent.conf
+      shell: "sudo sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf"
+    - name: Modify waagent.conf
+      shell: "sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf"
+    - name: Deprovision waagent
+      shell: |
+        sudo rm -f /var/log/waagent.log
+        sudo cloud-init clean
+        sudo waagent -force -deprovision
+        rm -f ~/.bash_history
+        export HISTSIZE=0
+      become: true
+      become_user: root
+    - name: <==Deploy payload==>
+      copy:
+        src: "../payloads/footprint.py"
+        dest: "/tmp/footprint.py"
+      tags:
+        - deploy
+    - name: <==Executing payload==>
+      shell: "python /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+      register: st
+      become: True
+      tags:
+        - exec
+
+    - name: Debug
+      debug:
+        var: st
+      tags:
+        - msg
+
+
