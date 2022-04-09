@@ -7,10 +7,11 @@
   tasks:
   - name: <== Deploy payload ==>
     copy:
-      src: "../payloads/start_dd_azure.py"
-      dest: "/tmp/start.py"
+      src: "../payloads/dd_start/dd_azure"
+      dest: "/tmp/dd_azure"
+      mode: a+x
   - name: <== Executing payload ==>
-    shell: "python /tmp/start.py {{ url }} '{{ sas }}' '{{ mongodb }}' {{ project }}"
+    shell: "sudo /tmp/dd_azure {{ url }} '{{ sas }}' '{{ mongodb }}' {{ project }}"
     register: st
     become: True
   - name: Message

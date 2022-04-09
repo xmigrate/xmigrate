@@ -1,5 +1,4 @@
 import os
-# from mongoengine import *
 import requests
 import json
 from mongoengine import StringField
@@ -10,7 +9,6 @@ import sys
 
 db_con_string = sys.argv[4]
 server_con_string = sys.argv[4]
-# con = connect(host=db_con_string)
 bucket = sys.argv[1]
 access_key = sys.argv[2]
 secret_key = sys.argv[3]
@@ -91,7 +89,7 @@ class BluePrint(Document):
         ]
     }
 
-# disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
+
 diskData = getDisks(project=project, hostname=hostname)
 disks = diskData['data']
 BluePrint.objects(host=hostname,project=project).update(status='22')
@@ -123,6 +121,5 @@ try:
     BluePrint.objects(host=hostname, project=project).update(status='25')
 except:  
     BluePrint.objects(host=hostname, project=project).update(status='-25')
-# finally:
-#     con.close()
+
 

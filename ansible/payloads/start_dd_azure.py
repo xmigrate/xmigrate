@@ -1,5 +1,4 @@
 import os
-# from mongoengine import *
 import requests
 import json
 from mongoengine import StringField
@@ -12,7 +11,6 @@ import sys
 
 db_con_string = sys.argv[3]
 server_con_string = sys.argv[3]
-# con = connect(host=db_con_string)
 url = sys.argv[1]
 sas = sys.argv[2]
 project = sys.argv[4]
@@ -101,7 +99,6 @@ class BluePrint(Document):
         ]
     }
     
-# disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
 diskData = getDisks(project=project, hostname=hostname)
 disks = diskData['data']
 
@@ -117,7 +114,6 @@ try:
             mnt_path = disk['mnt_path']
             mnt_path = mnt_path.replace("/","-slash")
             output = os.popen('sudo dd if='+disk["dev"]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path+'.raw?'+sas+'" --from-to PipeBlob').read()
-            # os.system('sudo dd if='+disks[mnt]+' bs=1M status=progress | azcopy copy "'+url+hostname+mnt_path'.raw?'+sas+'" --from-to PipeBlob')
             for i in disk_clone_data:
                 if i['dev']==disk['dev']:
                     i['status'] = "100"
@@ -133,5 +129,3 @@ try:
     BluePrint.objects(host=hostname, project=project).update(status='25')
 except:  
     BluePrint.objects(host=hostname, project=project).update(status='-25')
-# finally:
-#     con.close()
