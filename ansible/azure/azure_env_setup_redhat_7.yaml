@@ -31,7 +31,7 @@
       check_mode: no
       ignore_errors: yes
       changed_when: no
-​
+
     - name: network-script-ifcfg-eth0
       register: checkmyconf
       lineinfile:
