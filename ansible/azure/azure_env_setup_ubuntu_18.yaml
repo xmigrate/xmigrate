@@ -1,7 +1,7 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
-  hosts: nodes
+  hosts: all
   force_handlers: True
   tasks:
     - name: Backup sources list

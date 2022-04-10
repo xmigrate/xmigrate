@@ -14,9 +14,7 @@ server_con_string = sys.argv[3]
 url = sys.argv[1]
 sas = sys.argv[2]
 project = sys.argv[4]
-
-
-hostname = socket.gethostname()
+hostname = sys.argv[5]
 
 class Document():
     def __init__(self, *args, **values):

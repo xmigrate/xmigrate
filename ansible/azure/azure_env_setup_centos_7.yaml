@@ -11,6 +11,8 @@
             HOSTNAME=localhost.localdomain
         dest: /etc/sysconfig/network
         force: yes
+      become: yes
+      become_user: root
  
     - name: Copy content to file
       copy: 
@@ -80,9 +82,13 @@
 
     - name: clear yum data
       command: "yum clean all"
+      become: yes
+      become_user: root
   
     - name: upgrade all packages to latest
       yum: name=* state=latest
+      become: yes
+      become_user: root
   
 
     - name: Update grub entry
@@ -115,17 +121,22 @@
           - gdisk 
           - hyperv-daemons
         state: latest
-      become_method: sudo    
+      become_method: sudo   
+      become: yes
+      become_user: root 
     
     - name: Enable azure linux agent
       systemd: 
         name: waagent
         enabled: yes
+      become: yes
+      become_user: root
 
     - name: Configure waagent for cloud-init
       shell: |
         sed -i 's/Provisioning.UseCloudInit=n/Provisioning.UseCloudInit=y/g' /etc/waagent.conf
         sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf
+        sed -i 's/Provisioning.RegenerateSshHostKeyPair=y/Provisioning.RegenerateSshHostKeyPair=n/g' /etc/waagent.conf
         echo "Adding mounts and disk_setup to init stage"
         sed -i '/ - mounts/d' /etc/cloud/cloud.cfg
         sed -i '/ - disk_setup/d' /etc/cloud/cloud.cfg
@@ -154,7 +165,25 @@
         sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf
       become: yes
       become_user: root
-    
+
+    - name: Removing wagent logs and files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /var/log/waagent.log
+      become: yes
+      become_user: root
+
+    - name: Deprovision waagent
+      shell: |
+        cloud-init clean --logs --seed
+        waagent -force -deprovision
+        rm -f ~/.bash_history
+        export HISTSIZE=0
+      become: yes
+      become_user: root
+  
     - name: Install azcopy
       copy:
         src: /usr/bin/azcopy

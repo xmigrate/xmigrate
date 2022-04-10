@@ -99,9 +99,9 @@ async def start_cloning(project, hostname):
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
         if hostname == "all":
-            command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas="+sas_token+" mongodb="+mongodb+ " project="+project+"\""
+            command = "ANSIBLE_HOST_KEY_CHECKING=False /usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas='"+sas_token+"' mongodb="+mongodb+ " project="+project+" hostname="+hostname+"\""
         else:
-            command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas="+sas_token+" mongodb="+mongodb+ " project="+project+"\" --limit "+public_ip+" --user "+user+" --become-user "+user+" --become-method sudo"
+            command = "ANSIBLE_HOST_KEY_CHECKING=False /usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas='"+sas_token+"' mongodb="+mongodb+ " project="+project+" hostname="+hostname+"\" --limit "+public_ip+" --user "+user+" --become-user "+user+" --become-method sudo"
             print(command)
             logger(command,"warning")
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
@@ -164,8 +164,8 @@ async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_
             )
         image_resource = async_creation.result()
         print(image_resource)
-        BluePrint.objects(project=project, host=disk_name.split("-")[0]).update(status='40')
-        Disk.objects(project=project, host=disk_name.split("-")[0], mnt_path=mnt_path).update(disk_id=disk_name)
+        BluePrint.objects(project=project, host="-".join(disk_name.split("-")[0:-1])).update(status='40')
+        Disk.objects(project=project, host="-".join(disk_name.split("-")[0:-1]), mnt_path=mnt_path).update(disk_id=disk_name)
         logger("Disk created: "+ str(image_resource),"info")
     except Exception as e:
         logger("Disk creation failed: "+repr(e),"error")
