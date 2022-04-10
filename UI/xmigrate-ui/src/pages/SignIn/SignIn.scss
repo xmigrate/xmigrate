@@ -16,7 +16,7 @@ body, html {
   .card-head {
 
     background-color: #0082FF ;
-    padding: 4rem 1rem 1rem 2rem;
+    padding: 4rem 40px 1rem 40px;
     border-radius: .3rem .3rem 0 0 ;
     color: white;
   
@@ -32,7 +32,22 @@ body, html {
     font-weight: normal !important;
     font-size: 30px;
   }
-  .login{
-    margin-top: 2rem;
+  .CardSingin{
+    border-radius: .28rem;
   }
+  .login{
+    margin-top: 24px;
+  }
+  .passSpa{
+    margin-top:16px;
+  }
+  .forgotPassword{
+    padding-left: 0px;
+  }
+  .spaceCard{
+    padding: 8px;
+  }
+.iconLogin{
+  padding-left: 4px;
+}
 }

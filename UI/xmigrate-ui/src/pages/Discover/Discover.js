@@ -116,13 +116,13 @@ export default class Discover extends Component {
 
         return (
             <div className="Discover media-body background-primary ">
-                <Container className="py-5 ">
+                <Container className="py-5 containterDiscover">
                     <h4 className="p-0 m-0 HeadingPage">
                         Add IP’s of your servers to be migrated
                     </h4>
 
                     <Row className="py-5 ">
-                        <Col md={{ span: 5 }} className="bg-white shadow-sm rounded clrg">
+                        <Col md={{ span: 4 }} className="bg-white shadow-sm rounded ">
                             <div className="m-3 d-flex flex-column justify-content-between h-100">
 
                                 <div id="discover-menu" className={` ${this.state.showDiscoverMenu ? "" : "d-none"} `}>
@@ -169,7 +169,8 @@ export default class Discover extends Component {
                                 </div>
                             </div>
                         </Col>
-                        <Col md={{ span: 6, offset: 1 }} className="shadow-sm rounded bg-white d-flex flex-column p-0 clrg">
+                        <Col md={{ span: 8 }} className="p-0 clrg">
+                            <div className="shadow-sm   ml-5 rounded bg-white d-flex flex-column clrg ">
                             <div className="p-3 d-flex justify-content-between">
                                 <span>
                                     {this.state.disableGoToBlueprint ?
@@ -198,6 +199,7 @@ export default class Discover extends Component {
                             <div className="background-primary media-body p-3 discover-logs" >
                                 {this.state.message}
                                 <div ref={this.messagesEndRef}></div>
+                            </div>
                             </div>
                         </Col>
                     </Row>

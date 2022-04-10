@@ -1,88 +1,94 @@
 .BluePrint {
-  // background-color: #eeecec;
-  .select-blueprint-edit {
-    border-radius: 100px;
-    color: #5c5c5c;
-    background-color: #e6e6e6;
+  .containerBlurpeint{
+    padding-right: 40px;
+    padding-left: 40px;
   }
-
-  tr.expandable > td {
-    
-    padding: 0;
-  }
-
-  tr.expandable > td > .inner {
-    // margin: 15px;
-    overflow: hidden;
-  }
-  //Css Table loading
-  .bi-trash-fill:hover {
-    color: 0082ff;
-    cursor: pointer;
-  }
-  .blueprint-edit-table {
-    padding-right: 0px;
-    padding-left: 0px;
-  }
-
-
-
-  .blurprintTable {
-    .card-body {
-      padding: 0px;
+  
+    // background-color: #eeecec;
+    .select-blueprint-edit {
+      border-radius: 100px;
+      color: #5c5c5c;
+      background-color: #e6e6e6;
     }
+  
+    tr.expandable > td {
+      
+      padding: 0;
+    }
+  
+    tr.expandable > td > .inner {
+      // margin: 15px;
+      overflow: hidden;
+    }
+    //Css Table loading
+    .bi-trash-fill:hover {
+      color: 0082ff;
+      cursor: pointer;
+    }
+    .blueprint-edit-table {
+      padding-right: 0px;
+      padding-left: 0px;
+    }
+  
+  
+  
+    .blurprintTable {
+      .card-body {
+        padding: 0px;
+      }
+    }
+    .bt-main {
+      background-color: whitesmoke;
+    }
+    .bt-main:focus {
+      background-color: whitesmoke;
+    }
+    .bt-main:hover {
+      background-color: gainsboro;
+    }
+    .tName {
+      font-family: Ubuntu;
+      font-style: normal;
+      font-weight: bold;
+      font-size: 16px;
+      line-height: 18px;
+    }
+    .tData {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 16px;
+      line-height: 19px;
+      color: rgba(51, 51, 51, 0.8);
+      border-top: 1px solid #ebebec;
+      border-bottom: 1px solid #ebebec;
+    }
+    .card-header {
+      border: 0;
+      font-family: Ubuntu;
+      font-style: normal;
+      font-weight: bold;
+    }
+    .successGreen{
+      background-color:  #47B881;
+    }
+    .table td,
+    .table th {
+      border-top: 0px;
+    }
+    .table thead th {
+      border-bottom:1px;
+     }
+     .table > :not(:first-child) {
+      border-top: 0px;
+    }
+    .btn-Blueprint:disabled{
+      background-color: whitesmoke;
+    }
+    #message {
+      position: fixed;
+      right: 5%;
+      z-index:9999; 
+      border-radius: .3rem;
   }
-  .bt-main {
-    background-color: whitesmoke;
   }
-  .bt-main:focus {
-    background-color: whitesmoke;
-  }
-  .bt-main:hover {
-    background-color: gainsboro;
-  }
-  .tName {
-    font-family: Ubuntu;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 16px;
-    line-height: 18px;
-  }
-  .tData {
-    font-style: normal;
-    font-weight: normal;
-    font-size: 16px;
-    line-height: 19px;
-    color: rgba(51, 51, 51, 0.8);
-    border-top: 1px solid #ebebec;
-    border-bottom: 1px solid #ebebec;
-  }
-  .card-header {
-    border: 0;
-    font-family: Ubuntu;
-    font-style: normal;
-    font-weight: bold;
-  }
-  .successGreen{
-    background-color:  #47B881;
-  }
-  .table td,
-  .table th {
-    border-top: 0px;
-  }
-  .table thead th {
-    border-bottom:1px;
-   }
-   .table > :not(:first-child) {
-    border-top: 0px;
-  }
-  .btn-Blueprint:disabled{
-    background-color: whitesmoke;
-  }
-  #message {
-    position: fixed;
-    right: 5%;
-    z-index:9999; 
-    border-radius: .3rem;
-}
-}
+  
