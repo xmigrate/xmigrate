@@ -78,6 +78,7 @@ export default class BluePrint extends Component {
     this._BlueprintHostBuild = this._BlueprintHostBuild.bind(this);
   }
 
+  //Fethcing the Data From Backend
   async GettingData() {
     this.setState({
       status: "loading",
@@ -111,6 +112,14 @@ export default class BluePrint extends Component {
       NetworksDatas.forEach((Network, index) => {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
+            if(host["status"]===undefined){
+              status = 0;
+            }
+            else{
+
+                host["disk_clone_status"] = 0;
+              }
+             
             status = parseInt(host["status"]);
             if ((status > -25 && status <= -20) || status === 20) {
               host["BtStatus"] = "clone";
@@ -140,6 +149,7 @@ export default class BluePrint extends Component {
             hostCurrent["subnet"] = host.subnet;
             hostCurrent["machine_type"] = host.machine_type;
             hostCurrents.push(hostCurrent);
+          
           });
         });
       });
@@ -166,6 +176,7 @@ export default class BluePrint extends Component {
     });
   }
 
+  //When Compoent Mount Intial Calls
   async componentDidMount() {
     var data = {
       project: this.state.project,
@@ -328,46 +339,6 @@ export default class BluePrint extends Component {
   }
 
 
-  //OLd Getting Status Migration------------------------------------------------
-  // getStatus() {
-  //   let data1 = {
-  //     project: this.state.project,
-  //   };
-  //   GetServiceWithData(BLUEPRINT_STATUS, data1).then((res) => {
-  //     console.log("Response For Status", res);
-  //     let flag;
-  //     let NetworksData = this.state.Networks;
-  //     //Setting the host status
-  //     NetworksData.forEach((Network, index) => {
-  //       Network.subnets.forEach((subnet, index) => {
-  //         subnet.hosts.forEach((host, index) => {
-  //           res.data.forEach((hostRes, index) => {
-  //             if (host.host === hostRes.host) {
-  //               host["status"] = hostRes.status;
-  //               if (parseInt(hostRes.status) < 100) {
-  //                 flag = false;
-  //               }
-  //               else {
-  //                 flag = true;
-  //               }
-  //             }
-  //           });
-  //         });
-  //       });
-  //     });
-  //     if (flag) {
-  //       clearInterval(this.state.intervalId);
-
-  //       this.setState({ BuildStatus: false, showUpdateAlert: true, showUpdateMessage: "Build Successfull!!" })
-  //     }
-  //     this.setState({
-  //       Networks: NetworksData,
-  //     });
-  //   });
-  // }
-
-
-
   //Creating SaveNetwork-----------------------------------------------------------------
   async _SaveBuild() {
     console.log(
@@ -487,7 +458,6 @@ export default class BluePrint extends Component {
 
   }
 
-
   //BluePrintNetworkBuild-------------------------------------------------------------------------
   async _BlueprintNetworkBuild() {
     console.log("Network Build");
@@ -529,6 +499,8 @@ export default class BluePrint extends Component {
       this.setState({ intervalId: interval ,Networks:NetworksData});
     });
   }
+
+
 
   //BlueprintHostConvert-------------------------------------------------------------------------
   async _BlueprintHostConvert(hostName) {
@@ -600,6 +572,8 @@ export default class BluePrint extends Component {
           subnet.hosts.forEach((host, index) => {
             res.data.forEach((hostRes, index) => {
               if (host.host === hostRes.host) {
+                
+              
                 console.log(hostRes.status);
                 host["status"] = hostRes.status;
                 // host["BtStatus"] = hostRes.status;
@@ -634,7 +608,9 @@ export default class BluePrint extends Component {
                     host["BtStatus"] = "BuildNetwork";
                   }
                 }
-              }
+                }
+
+              
             });
           });
         });
@@ -660,9 +636,9 @@ export default class BluePrint extends Component {
     const isLoadingNetwork = Networks.length === 0;
     if (this.state.status === "loading") {
       return (
-        <Container>
+        <div className="BluePrint media-body background-primary">
           <Loader />
-        </Container>
+        </div>
       );
     } else {
       return (
@@ -679,7 +655,7 @@ export default class BluePrint extends Component {
             <Toast.Body>{this.state.showUpdateMessage}</Toast.Body>
           </Toast>
 
-          <Container className="py-4 ">
+          <div className="py-4 containerBlurpeint">
             <h4 className="p-0 m-0 HeadingPage">Blueprint</h4>
 
             <Card className="mt-4 p-2">
@@ -793,7 +769,6 @@ export default class BluePrint extends Component {
                           BlueprintHostClone={this._BlueprintHostClone}
                           BlueprintHostConvert={this._BlueprintHostConvert}
                           BlueprintHostBuild={this._BlueprintHostBuild}
-
                         />
                       ))
                     )}
@@ -836,7 +811,7 @@ export default class BluePrint extends Component {
                 Reset <icon.BsArrowRepeat />
               </Button>
             </div>
-          </Container>
+          </div>
 
 
           {/* Reset Alert */}
