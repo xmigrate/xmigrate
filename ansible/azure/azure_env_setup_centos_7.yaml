@@ -192,6 +192,16 @@
       become_user: root
       become_method: sudo
 
+    - name: Create resolv.conf
+      copy: 
+        content:  | 
+            nameserver 8.8.8.8
+            nameserver 1.1.1.1
+        dest: /etc/resolv.conf
+        force: yes
+      become: yes
+      become_user: root
+
     - name: <==Deploy payload==>
       copy:
         src: "../payloads/footprint/footprint"

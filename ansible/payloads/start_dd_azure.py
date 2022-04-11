@@ -1,10 +1,6 @@
 import os
 import requests
 import json
-from mongoengine import StringField
-from mongoengine import ListField
-from mongoengine import BooleanField
-from collections import OrderedDict
 import socket
 import sys
 
@@ -52,17 +48,17 @@ def getDisks(project, hostname):
     return json.loads(req.text)
 
 class Discover(Document):
-    host = StringField(required=True, max_length=200 )
-    ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=150)
-    network = StringField(required=True, max_length=150)
-    ports = ListField()
-    cores = StringField(max_length=2)
-    cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=150)
-    disk_details = ListField()
-    project = StringField(required=True, max_length=150)
-    public_ip = StringField(required=True, max_length=150)
+    host = str()
+    ip = str()
+    subnet = str()
+    network = str()
+    ports = list()
+    cores = str()
+    cpu_model = str()
+    ram = str()
+    disk_details = list()
+    project = str()
+    public_ip = str()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
@@ -71,26 +67,26 @@ class Discover(Document):
 
 
 class BluePrint(Document):
-    host = StringField(required=True, max_length=200)
-    ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=50)
-    network = StringField(required=True, max_length=50)
-    ports = ListField()
-    cores = StringField(max_length=2)
-    cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=50)
-    machine_type = StringField(required=True, max_length=150)
-    status = StringField(required=False, max_length=100)
-    image_id = StringField(required=False, max_length=100)
-    vpc_id = StringField(required=False, max_length=100)
-    subnet_id = StringField(required=False, max_length=200)
-    public_route = BooleanField(required=False)
-    ig_id = StringField(required=False, max_length=100)
-    route_table = StringField(required=False, max_length=100)
-    vm_id = StringField(required=False, max_length=200)
-    project = StringField(required=True, max_length=50)
-    nic_id = StringField(max_length=200)
-    disk_clone = ListField()
+    host = str()
+    ip = str()
+    subnet = str()
+    network = str()
+    ports = list()
+    cores = str()
+    cpu_model = str()
+    ram = str()
+    machine_type = str()
+    status = str()
+    image_id = str()
+    vpc_id = str()
+    subnet_id = str()
+    public_route = bool()
+    ig_id = str()
+    route_table = str()
+    vm_id = str()
+    project = str()
+    nic_id = str()
+    disk_clone = list()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
