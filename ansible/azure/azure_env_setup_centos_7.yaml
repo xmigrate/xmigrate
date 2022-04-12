@@ -166,14 +166,16 @@
       become: yes
       become_user: root
 
-    - name: Removing wagent logs and files
-      file:
-        path: "{{ item }}"
-        state: absent
-      with_items:
-        - /var/log/waagent.log
-      become: yes
-      become_user: root
+    # - name: Removing wagent logs and files
+    #   file:
+    #     path: "{{ item }}"
+    #     state: absent
+    #   with_items:
+    #     - /var/log/waagent.log
+    #     - /var/lib/cloud/
+    #     - /var/lib/waagent/
+    #   become: yes
+    #   become_user: root
 
     - name: Deprovision waagent
       shell: |
