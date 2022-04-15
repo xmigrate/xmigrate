@@ -29,7 +29,7 @@ services:
       - 8000:80
     environment:
       MONGO_DB: mongodb://root:example@mongo:27017/migration?authSource=admin
-      BASE_URL: http://localhost:8000
+      BASE_URL: http://<you server ip>:8000/api
     depends_on:
      - mongo
 
