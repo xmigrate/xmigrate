@@ -29,7 +29,7 @@
       src: "../payloads/start_dd_azure.py"
       dest: "/tmp/start.py"
   - name: <== Executing payload ==>
-    shell: "python /tmp/start.py {{ url }} '{{ sas }}' {{ mongodb }} {{ project }} {{ hostname }}"
+    shell: "python3 /tmp/start.py {{ url }} '{{ sas }}' {{ mongodb }} {{ project }} {{ hostname }}"
     register: st
     become: True
   - name: Message
