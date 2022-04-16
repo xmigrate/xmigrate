@@ -1,17 +1,35 @@
 - name : Starting migration
   become: true
-  remote_user: ubuntu
   become_method: sudo
   hosts: nodes
   gather_facts: no
   force_handlers: True
   tasks:
+  # - block:
+  #   - name: Install python-pip
+  #     pip:
+  #       name: ['mongoengine', 'requests']
+  #     become: true
+  #     become_user: root
+  #   - name: Install Python packages
+  #     pip:
+  #       name: ['mongoengine', 'requests']
+  #     become: true
+  #     become_user: root
+  #   rescue:
+  #   - name: Install python packages
+  #     shell: "sudo pip install {{ item }}"
+  #     with_items:
+  #       - mongoengine
+  #       - requests
+  #     become: true
+  #     become_user: root
   - name: <== Deploy payload ==>
     copy:
       src: "../payloads/start_dd_azure.py"
       dest: "/tmp/start.py"
   - name: <== Executing payload ==>
-    shell: "python /tmp/start.py {{ url }} '{{ sas }}' '{{ mongodb }}' {{ project }}"
+    shell: "python3 /tmp/start.py {{ url }} '{{ sas }}' {{ mongodb }} {{ project }} {{ hostname }}"
     register: st
     become: True
   - name: Message

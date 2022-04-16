@@ -1,16 +1,11 @@
 import os
-# from mongoengine import *
 import requests
 import json
-from mongoengine import StringField
-from mongoengine import ListField
-from collections import OrderedDict
 import socket
 import sys
 
 db_con_string = sys.argv[4]
 server_con_string = sys.argv[4]
-# con = connect(host=db_con_string)
 bucket = sys.argv[1]
 access_key = sys.argv[2]
 secret_key = sys.argv[3]
@@ -54,44 +49,51 @@ def getDisks(project, hostname):
     return json.loads(req.text)
 
 class Discover(Document):
-    host = StringField(required=True, max_length=200 )
-    ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=150)
-    network = StringField(required=True, max_length=150)
-    ports = ListField()
-    cores = StringField(max_length=2)
-    cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=150)
-    disk_details = ListField()
-    project = StringField(required=True, max_length=150)
-    public_ip = StringField(required=True, max_length=150)
+    host = str()
+    ip = str()
+    subnet = str()
+    network = str()
+    ports = list()
+    cores = str()
+    cpu_model = str()
+    ram = str()
+    disk_details = list()
+    project = str()
+    public_ip = str()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
         ]
     }
+
 
 class BluePrint(Document):
-    host = StringField(required=True, max_length=200, unique=True)
-    ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=50)
-    network = StringField(required=True, max_length=50)
-    ports = ListField()
-    cores = StringField(max_length=2)
-    cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=50)
-    machine_type = StringField(required=True, max_length=150)
-    status = StringField(required=False, max_length=100)
-    ami_id = StringField(required=False, max_length=100)
-    project = StringField(required=True, max_length=50)
-    disk_clone = ListField()
+    host = str()
+    ip = str()
+    subnet = str()
+    network = str()
+    ports = list()
+    cores = str()
+    cpu_model = str()
+    ram = str()
+    machine_type = str()
+    status = str()
+    image_id = str()
+    vpc_id = str()
+    subnet_id = str()
+    public_route = bool()
+    ig_id = str()
+    route_table = str()
+    vm_id = str()
+    project = str()
+    nic_id = str()
+    disk_clone = list()
     meta = {
         'indexes': [
             {'fields': ('host', 'project'), 'unique': True}
         ]
     }
 
-# disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
 diskData = getDisks(project=project, hostname=hostname)
 disks = diskData['data']
 BluePrint.objects(host=hostname,project=project).update(status='22')
@@ -123,6 +125,4 @@ try:
     BluePrint.objects(host=hostname, project=project).update(status='25')
 except:  
     BluePrint.objects(host=hostname, project=project).update(status='-25')
-# finally:
-#     con.close()
 

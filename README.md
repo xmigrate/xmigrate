@@ -50,7 +50,7 @@ We currently support server's with below OS versions
 |           | Redhat 7 | Redhat 8 | Ubuntu 18.04 | CentOS 7 | CentOS 8 |  
 |-----------|----------|----------|--------------|----------|----------|
 | **AWS**   |    ✅    |   ✅    |     ✅       |   ✅    |   ✅     |
-| **Azure** |          |          |       ✅     |          |          |
+| **Azure** |          |          |     ✅       |   ✅    |          |
 | **GCP**   |   ✅     |          |              |          |          |
 
 We are adding support for more OS's soon.

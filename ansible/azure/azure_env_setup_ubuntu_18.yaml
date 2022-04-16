@@ -1,7 +1,7 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
-  hosts: nodes
+  hosts: all
   force_handlers: True
   tasks:
     - name: Backup sources list
@@ -166,36 +166,37 @@
       become: true
       become_user: root
 
-    - block:
-      - name: Install Python packages
-        pip:
-          name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython', 'requests']
-        become: true
-        become_user: root
-      rescue:
-      - name: Install python packages
-        shell: "sudo pip install {{ item }}"
-        with_items:
-          - awscli
-          - netifaces
-          - netaddr
-          - mongoengine
-          - psutil
-          - pyasn1
-          - python-dotenv
-          - dnspython
-          - requests
-        become: true
-        become_user: root
+    # - block:
+    #   - name: Install Python packages
+    #     pip:
+    #       name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython', 'requests']
+    #     become: true
+    #     become_user: root
+    #   rescue:
+    #   - name: Install python packages
+    #     shell: "sudo pip install {{ item }}"
+    #     with_items:
+    #       - awscli
+    #       - netifaces
+    #       - netaddr
+    #       - mongoengine
+    #       - psutil
+    #       - pyasn1
+    #       - python-dotenv
+    #       - dnspython
+    #       - requests
+    #     become: true
+    #     become_user: root
 
     - name: <==Deploy payload==>
       copy:
-        src: "../payloads/footprint.py"
-        dest: "/tmp/footprint.py"
+        src: "../payloads/footprint/footprint"
+        dest: "/tmp/footprint"
+        mode: a+x
       tags:
         - deploy
     - name: <==Executing payload==>
-      shell: "python /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+      shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
       register: st
       become: True
       tags:

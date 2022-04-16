@@ -5,9 +5,15 @@
         background-color: #444444;
         color:#81b214;
         scrollbar-color: #81b214 #444444;
+        white-space: pre-line;
     }
 
     .clrg{
-        height: 30rem;
+        height: 65vh;
+    }
+    .containterDiscover{
+        max-width: 100%;
+        padding-left: 40px;
+        padding-right: 40px;
     }
 }

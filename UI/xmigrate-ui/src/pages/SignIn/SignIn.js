@@ -152,8 +152,8 @@ export default class SignIn extends Component {
                   <h3>Sign In</h3>
                   <p className="sub">Cloud migration made easy</p>
                 </Card.Header>
-               <Card.Body>
-                 
+               <Card.Body className="p-0 pb-4">
+                 <div className="spaceCard">
                    <Form className="FormStyle" onSubmit={this.handleSubmit}>
                     <Form.Group className="register bg-blue">
                       <Form.Label >User Name</Form.Label>
@@ -167,7 +167,7 @@ export default class SignIn extends Component {
                         name="UserId"
                       />
                     </Form.Group>
-                    <Form.Group>
+                    <Form.Group className="passSpa">
                       <Form.Label >
                         Password
                       </Form.Label>
@@ -184,20 +184,21 @@ export default class SignIn extends Component {
                       type="submit"
                       className="btn btn-secondary col-lg-12 login"
                     >
-                      Login<FaAngleRight size={20}/>
+                      Login   <span className="iconLogin"><FaAngleRight size={20}/></span>
                     </Button>
                     <div className="text-danger">{this.state.errors.Authentication}{}</div>
                     <div>
                     <div className="forgotPassword float-left">
-                      <span className="btn text-muted">Forgot Password?</span>
+                      <span className=" btn text-muted pl-0">Forgot Password?</span>
                     </div>
                     <div className="forgotPassword float-right">
                     <Link  to="/SignUp" >
-                      <span className="btn text-muted">SignUp</span>
+                      <span className="btn text-muted pr-0">SignUp</span>
                       </Link>
                     </div>
                     </div>
                   </Form>  
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
