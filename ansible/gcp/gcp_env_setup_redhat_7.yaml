@@ -6,6 +6,19 @@
   gather_facts: no
   force_handlers: True
   tasks:
+  - block:
+    - name: Install Python packages
+      pip:
+        name: "{{ item }}"
+      with_items:
+        - gsutil
+
+    rescue:
+    - name: Install python packages
+      shell: "sudo pip3 install {{ item }}"
+      with_items:
+        - gsutil
+
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"

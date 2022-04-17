@@ -9,3 +9,9 @@
 - name: executing ubuntu 16.04 playbook
   import_playbook: gcp_env_setup_ubuntu_16.yaml
   when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '16'
+- name: executing ubuntu 18.04 playbook
+  import_playbook: gcp_env_setup_ubuntu_18.yaml
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '18'
+- name: executing ubuntu 20.04 playbook
+  import_playbook: gcp_env_setup_ubuntu_20.yaml
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '20'

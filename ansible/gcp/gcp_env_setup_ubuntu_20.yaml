@@ -2,23 +2,33 @@
   become: yes
   become_method: sudo
   become_user: root
-  hosts: nodes
+  hosts: all
   gather_facts: no
   force_handlers: True
   tasks:
   - block:
+    - name: Install Python pip
+      apt:
+        pkg:
+        - python3-pip
+        update_cache: yes
+    rescue:
+    - name: Update apt.. older way
+      shell: "sudo apt update -y"
+    - name: Install Python-devel.. older way
+      shell: "sudo apt install python3-pip -y"  
+  - block:
     - name: Install Python packages
       pip:
-        name: "{{ item }}"
-      with_items:
-        - gsutil
-
+        name: ['gsutil']
+        executable: /usr/bin/pip3
+      
     rescue:
     - name: Install python packages
-      shell: "sudo pip3 install {{ item }}"
+      shell: "sudo /usr/bin/pip3 install {{ item }}"
       with_items:
         - gsutil
-
+      
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"
@@ -45,7 +55,7 @@
       backrefs: true
       path: /etc/default/grub
       regexp: "^(GRUB_CMDLINE_LINUX=\".*)\"$"
-      line: 'GRUB_CMDLINE_LINUX="console=ttyS0,38400n8d console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"'
+      line: '\1 console=ttyS0,38400n8d"'
     when: grub_cmdline_check.found == 0
   
   - name: remove-kernel param
@@ -61,14 +71,14 @@
       regexp: 'splashimage'
   - block:
     - name: <==Update grub config==>
-      shell: "sudo grub-mkconfig -o /boot/grub/grub.cfg"
+      shell: "sudo update-grub"
       register: grubout
       become: True
       tags:
         - grubupdate
     rescue:
     - name: <==Trying Update grub2 config==>
-      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      shell: "sudo update-grub2"
       register: grubout
       become: True
       tags:

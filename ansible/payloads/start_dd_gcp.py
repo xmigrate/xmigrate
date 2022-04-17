@@ -3,6 +3,7 @@ import requests
 import json
 import socket
 import sys
+import subprocess as sp
 
 db_con_string = sys.argv[4]
 server_con_string = sys.argv[4]
@@ -101,6 +102,8 @@ BluePrint.objects(host=hostname,project=project).update(status='22')
 output=''
 disk_clone_data = []
 
+gsutil = sp.getoutput('which gsutil')
+
 try:
     for disk in disks:
         try:
@@ -109,7 +112,7 @@ try:
             BluePrint.objects(host=hostname,project=project).update(disk_clone=disk_clone_data)
             mnt_path = disk['mnt_path']
             mnt_path = mnt_path.replace("/","-slash")
-            output = os.popen('sudo dd if='+disk["dev"]+' bs=4M status=progress | BOTO_CONFIG=/root/.boto /usr/local/bin/gsutil cp - gs://'+bucket+'/'+hostname+mnt_path+'.raw').read()
+            output = os.popen('sudo dd if='+disk["dev"]+' bs=4M status=progress | BOTO_CONFIG=/root/.boto '+ gsutil +' cp - gs://'+bucket+'/'+hostname+mnt_path+'.raw').read()
             for i in disk_clone_data:
                 if i['dev']==disk['dev']:
                     i['status'] = "100"
