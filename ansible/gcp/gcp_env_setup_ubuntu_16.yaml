@@ -2,54 +2,41 @@
   become: yes
   become_method: sudo
   become_user: root
-  hosts: nodes
+  hosts: all
   gather_facts: no
   force_handlers: True
   tasks:
   - block:
-    - name: Install Python
+    - name: Install Python and dependencies for gsutil
       apt:
         pkg:
         - python3-dev
+        - python3-setuptools 
         - libffi-dev
+        - gcc
         update_cache: yes
       become: true
       become_method: sudo
     - name: upgrade pip3
-      shell: wget https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3.5
-    - name: Install GCC
-      apt:
-        name: gcc
-        state: latest
+      shell: "wget https://bootstrap.pypa.io/pip/3.5/get-pip.py | sudo python3.5"
     rescue:
     - name: Update apt.. older way
       shell: "sudo apt update -y"
     - name: Install Python-devel.. older way
-      shell: "sudo apt install python3 python3-pip -y"
-    - name: Install GCC .. older way
-      shell: "sudo apt install gcc -y"
+      shell: "sudo apt install gcc python3-dev python3-setuptools libffi-dev -y"
     tags:
-        - devel  
+      - devel  
   - block:
     - name: Install Python packages
       pip:
-        name: ['gsutil', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython','requests']
-        executable: /home/ubuntu/.local/bin/pip3
-      become_user: ubuntu
+        name: ['gsutil']
+        executable: /usr/local/bin/pip3
     rescue:
     - name: Install python packages
-      shell: "/home/ubuntu/.local/bin/pip3 install {{ item }}"
+      shell: "sudo /usr/local/bin/pip3 install {{ item }}"
       with_items:
         - gsutil
-        - netifaces
-        - netaddr
-        - mongoengine
-        - psutil
-        - pyasn1
-        - python-dotenv
-        - dnspython
-        - requests
-      become_user: ubuntu
+      
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"
@@ -107,15 +94,15 @@
 
   - name: <==Deploy payload==>
     copy:
-      src: "../payloads/footprint.py"
-      dest: "/tmp/footprint.py"
+      src: "../payloads/footprint/footprint"
+      dest: "/tmp/footprint"
+      mode: a+x
     tags:
       - deploy
-
   - name: <==Executing payload==>
-    shell: "python3.5 /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
     register: st
-    become_user: ubuntu
+    become: True
     tags:
       - exec
 
