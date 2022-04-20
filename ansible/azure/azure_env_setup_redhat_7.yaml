@@ -1,42 +1,22 @@
-- name: Preparing the VM to be migrated to Azure
+- name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
-  hosts: nodes
+  hosts: all
   force_handlers: True
   tasks:
-    - name: uninstall-NetworkManager
-      yum:
-        name: NetworkManager
-        state: removed
-    - name: create-sysconfig-network-file
-      file:
-        path: /etc/sysconfig/network
-        state: touch
-    - name: add-sysconfig-network
-      copy:
-        content: |
-          NETWORKING=yes
-          HOSTNAME=localhost.localdomain
+    - name: Copy content to file
+      copy: 
+        content:  | 
+            NETWORKING=yes
+            HOSTNAME=localhost.localdomain
         dest: /etc/sysconfig/network
+        force: yes
+      become: yes
+      become_user: root
 
-    - name: network-script-ifcfg-eth0 ispresent
-      command: grep -Fxq "DEVICE=eth0
-          ONBOOT=yes
-          BOOTPROTO=dhcp
-          TYPE=Ethernet
-          USERCTL=no
-          PEERDNS=yes
-          IPV6INIT=no" /etc/sysconfig/network-scripts/ifcfg-eth0
-      register: checkmyconf
-      check_mode: no
-      ignore_errors: yes
-      changed_when: no
-
-    - name: network-script-ifcfg-eth0
-      register: checkmyconf
-      lineinfile:
-        path: /etc/sysconfig/network-scripts/ifcfg-eth0
-        line: |
+    - name: Copy content to file
+      copy: 
+        content: |
           DEVICE=eth0
           ONBOOT=yes
           BOOTPROTO=dhcp
@@ -44,122 +24,155 @@
           USERCTL=no
           PEERDNS=yes
           IPV6INIT=no
-      when: checkmyconf.rc == 0 ## do not run this tasks
-    
-    - name: remove-udev-rules
-      command:
-        argv:
-          - ln
-          - -s
-          - /dev/null
-          - /etc/udev/rules.d/75-persistent-net-generator.rules
-      when: false ## do not run this tasks
+          NM_CONTROLLED=no
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+        force: yes
+      become: yes
+      become_user: root
 
-    - name: delete-70-persistent-net.rules
-      file:
-        path: /etc/udev/rules.d/70-persistent-net.rules
-        state: absent
-
-    - name: network-service-start-boot
-      command:
-        argv:
-          - subscription-manager 
-          - register 
-          - --auto-attach 
-          - --username=XXX 
-          - --password=XXX
-      when: false
-    - name: Register-subscription
-      command:
-        argv:
-          - echo
-          - hi
-      when: false
+    - name: Ensure that the network service will start at boot time
+      shell: "sudo systemctl enable network"
+      become: yes
+      become_user: root  
+    # - name: register redhat subscription
+    #   shell: "subscription-manager register --auto-attach --username=Xmigrate --password=Xmigrate@123"  
+    #   become: yes
+    #   become_method: sudo
+    #   become_user: root
     
-    - name: add-WALinuxAgent-repo
-      command:
-        argv:
-          - subscription-manager
-          - repos
-          - --enable=rhel-6-server-extras-rpms 
-      when: false
+    - name: grub configure
+      shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,earlyprintk=ttyS0,net.ifnames=0\"
+      ' /etc/default/grub"
+      become: true
+      become_user: root
+    - name: grub configure
+      shell: "sed -i '/GRUB_TERMINAL_OUTPUT_DEFAULT/c\\GRUB_TERMINAL_OUTPUT_DEFAULT=\"serial console\"
+      ' /etc/default/grub"
+      become: true
+      become_user: root  
+    - name: grub configure
+      shell: "sed -i '/GRUB_SERIAL_COMMAND_DEFAULT/c\\GRUB_SERIAL_COMMAND_DEFAULT=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\"
+      ' /etc/default/grub"
+      become: true
+      become_user: root  
     
-    - name: install-WALinuxAgent
-      command:
-        argv:
-          - yum 
-          - install 
-          - -y
-          - WALinuxAgent
-​
-    - name: Create-kernel-boot 
-      file:
-        path: /boot/grub/menu.lst
-        state: touch
-      when: false
-    - name: Modify-kernel-boot 
-      lineinfile:
-        path: /boot/grub/menu.lst
-        line: |
-          console=ttyS0 earlyprintk=ttyS0 rootdelay=300
-      when: false
-    - name: remove-kernel param
-      replace:
-        path: /boot/grub/menu.lst
-        regexp: 'rhgb quiet crashkernel=auto'
-        replace: ''
-      when: false
+    - name: rebuild the grub configuration
+      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"  
     - name: configure-secure-shell
       lineinfile:
         path: /etc/ssh/sshd_config
         line: |
-          ClientAliveInterval 180
-      when: false
+          ClientAliveInterval 180  
+    # - name: Enable the extras repository
+    #   shell: "subscription-manager repos --enable=rhel-7-server-extras-rpms"
+    #   become: yes
+    #   become_user: root 
+    - name: epel-release-latest-7
+      shell: sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+      ignore_errors: True
+      
+    - name: ntfs
+      shell: sudo yum install ntfs-3g -y  
+    - name: Download file
+      get_url:
+        url: "https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm"
+        dest: /tmp/Walinuxagent.rpm
+        mode: 0750 
+    # - name: ntfs
+    #   shell: yum install ntfs-3g     
+    - name: Install package.
+      yum:
+         name: /tmp/Walinuxagent.rpm
+         state: present
+   
+            
+    - name: Install azure linux agent
+      yum:
+        name: 
+          # - WALinuxAgent
+          - python-pyasn1
+          - cloud-init
+          - cloud-utils-growpart
+          - gdisk 
+          - hyperv-daemons
+        state: latest
+      become_method: sudo   
+      become: yes
+      become_user: root 
+    - name: Enable azure linux agent
+      systemd: 
+        name: waagent
+        enabled: yes
+      become: yes
+      become_user: root  
+    - name: Enable cloud init
+      systemd: 
+        name: cloud-init
+        enabled: yes
+      become: yes
+      become_user: root      
+    - name: Configure waagent for cloud-init
+      shell: |
+        sed -i 's/Provisioning.Agent=auto/Provisioning.Agent=cloud-init/g' /etc/waagent.conf
+        sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf
+        sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf
+        echo "Adding mounts and disk_setup to init stage"
+        sed -i '/ - mounts/d' /etc/cloud/cloud.cfg
+        sed -i '/ - disk_setup/d' /etc/cloud/cloud.cfg
+        sed -i '/cloud_init_modules/a\\ - mounts' /etc/cloud/cloud.cfg
+        sed -i '/cloud_init_modules/a\\ - disk_setup' /etc/cloud/cloud.cfg
+        echo "Allow only Azure datasource, disable fetching network setting via IMDS"
+        cat > /etc/cloud/cloud.cfg.d/91-azure_datasource.cfg <<EOF
+        datasource_list: [ Azure ]
+        datasource:
+            Azure:
+                apply_network_config: False
+        EOF
+        if [[ -f /mnt/resource/swapfile ]]; then
+        echo "Removing swapfile" #RHEL uses a swapfile by defaul
+        swapoff /mnt/resource/swapfile
+        rm /mnt/resource/swapfile -f
+        fi
+        echo "Add console log file"
+        cat >> /etc/cloud/cloud.cfg.d/05_logging.cfg <<EOF
 
-    - name: update-vm
-      command:
-        argv: 
-          - yum
-          - update
-          - -y
-    - name: install-azure-agent
-      command:
-        argv: 
-          - yum
-          - install
-          - -y
-          - WALinuxAgent
-    - name: start-waagent
-      command:
-        argv:
-          - chkconfig
-          - waagent
-          - "on"
+        # This tells cloud-init to redirect its stdout and stderr to
+        # 'tee -a /var/log/cloud-init-output.log' so the user can see output
+        # there without needing to look on the console.
+        output: {all: '| tee -a /var/log/cloud-init-output.log'}
+        EOF
+        # ResourceDisk.Format=n
+        # ResourceDisk.EnableSwap=n
+      become: yes
+      become_user: root
+  
+    # - name: subscription unregister
+    #   shell: "sudo subscription-manager unregister"
+    - name: Deprovision waagent
+      shell: |
+        cloud-init clean --logs --seed
+        waagent -force -deprovision
+        rm -f ~/.bash_history
+        export HISTSIZE=0
+      become: yes
+      become_user: root
 
-    - name: config-swap
-      lineinfile: 
-        path: /etc/waagent.conf 
-        line: |
-                ResourceDisk.Format=y
-                ResourceDisk.Filesystem=ext4
-                ResourceDisk.MountPoint=/mnt/resource
-                ResourceDisk.EnableSwap=y
-                ResourceDisk.SwapSizeMB=2048    ## NOTE: set this to whatever you need it to be.
+    - name: <==Deploy payload==>
+      copy:
+        src: "../payloads/footprint/footprint"
+        dest: "/tmp/footprint"
+        mode: a+x
+      tags:
+        - deploy
+    - name: <==Executing payload==>
+      shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+      register: st
+      become: True
+      tags:
+        - exec
 
-    - name: Unregister the subscription 
-      command:
-        argv:
-          = subscription-manager
-          - unregister
-    - name: deprovision-for-creating-general-image
-      command:
-        argv:
-          - waagent 
-          - -force 
-          - -deprovision
-      when: false
-    - name: deprovision-export
-      command:
-        argv:
-          - export
-          - HISTSIZE=0
+    - name: Debug
+      debug:
+        var: st
+      tags:
+        - msg
