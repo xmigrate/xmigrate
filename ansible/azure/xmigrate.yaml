@@ -1,14 +1,18 @@
 - hosts: all
   gather_facts: yes
-- name: executing ubuntu 18.04 playbook
-  import_playbook: azure_env_setup_ubuntu_18.yaml
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '18'
+  
 - name: executing centos 7 playbook
   import_playbook: azure_env_setup_centos_7.yaml
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '7' 
+
 - name: executing redhat 7 playbook
   import_playbook: azure_env_setup_redhat_7.yaml
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == '7'   
+
 - name: executing ubuntu 16.04 playbook
   import_playbook: azure_env_setup_ubuntu_16.yaml
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '16'  
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '16'
+
+- name: executing ubuntu 18.04 playbook
+  import_playbook: azure_env_setup_ubuntu_18.yaml
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '18'
