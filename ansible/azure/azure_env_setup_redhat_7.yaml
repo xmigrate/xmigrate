@@ -34,11 +34,6 @@
       shell: "sudo systemctl enable network"
       become: yes
       become_user: root  
-    # - name: register redhat subscription
-    #   shell: "subscription-manager register --auto-attach --username=Xmigrate --password=Xmigrate@123"  
-    #   become: yes
-    #   become_method: sudo
-    #   become_user: root
     
     - name: grub configure
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,earlyprintk=ttyS0,net.ifnames=0\"
@@ -57,48 +52,38 @@
       become_user: root  
     
     - name: rebuild the grub configuration
-      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"  
+      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+
     - name: configure-secure-shell
       lineinfile:
         path: /etc/ssh/sshd_config
         line: |
           ClientAliveInterval 180  
-    # - name: Enable the extras repository
-    #   shell: "subscription-manager repos --enable=rhel-7-server-extras-rpms"
-    #   become: yes
-    #   become_user: root 
+      become: yes
+      become_user: root
+
     - name: epel-release-latest-7
-      shell: sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+      shell: sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
       ignore_errors: True
       
-    - name: ntfs
-      shell: sudo yum install ntfs-3g -y  
-    - name: Download file
-      get_url:
-        url: "https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm"
-        dest: /tmp/Walinuxagent.rpm
-        mode: 0750 
-    # - name: ntfs
-    #   shell: yum install ntfs-3g     
-    - name: Install package.
-      yum:
-         name: /tmp/Walinuxagent.rpm
-         state: present
-   
-            
-    - name: Install azure linux agent
+    - name: Install azure linux agent other tools
       yum:
         name: 
-          # - WALinuxAgent
           - python-pyasn1
           - cloud-init
           - cloud-utils-growpart
           - gdisk 
           - hyperv-daemons
+          - ntfs-3g
         state: latest
       become_method: sudo   
       become: yes
       become_user: root 
+
+    - name: Download file
+      shell: sudo yum install https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm -y
+      ignore_errors: yes
+
     - name: Enable azure linux agent
       systemd: 
         name: waagent
@@ -116,6 +101,7 @@
         sed -i 's/Provisioning.Agent=auto/Provisioning.Agent=cloud-init/g' /etc/waagent.conf
         sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf
         sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf
+        sed -i 's/Provisioning.RegenerateSshHostKeyPair=y/Provisioning.RegenerateSshHostKeyPair=n/g' /etc/waagent.conf
         echo "Adding mounts and disk_setup to init stage"
         sed -i '/ - mounts/d' /etc/cloud/cloud.cfg
         sed -i '/ - disk_setup/d' /etc/cloud/cloud.cfg
@@ -146,8 +132,6 @@
       become: yes
       become_user: root
   
-    # - name: subscription unregister
-    #   shell: "sudo subscription-manager unregister"
     - name: Deprovision waagent
       shell: |
         cloud-init clean --logs --seed

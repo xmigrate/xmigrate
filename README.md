@@ -49,9 +49,9 @@ We currently support server's with below OS versions
 
 |           | Redhat 7 | Redhat 8 | CentOS 7 | Ubuntu 16.04 | Ubuntu 18.04 | Ubuntu 20.04 |
 |-----------|----------|----------|----------|--------------|--------------|--------------|
-| **AWS**   |  ✅      |   ✅     |   ✅    |              |     ✅      |              |
-| **Azure** |          |          |    ✅    |              |     ✅      |              |
-| **GCP**   |  ✅      |    ✅    |          |     ✅      |     ✅      |      ✅      |
+| **AWS**   |  ✅      |   ✅    |   ✅    |              |     ✅      |              |
+| **Azure** |  ✅      |          |    ✅    |              |     ✅      |              |
+| **GCP**   |  ✅      |    ✅   |          |     ✅      |     ✅      |      ✅      |
 
 > 💡 Make sure your `/etc/fstab` entries looks like this
 `UUID=d35fe619-1d06-4ace-9fe3-169baad3e421 /                       xfs     defaults,discard        1 1`
