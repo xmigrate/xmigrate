@@ -9,15 +9,20 @@
       shell: "cp /etc/apt/sources.list /etc/apt/sources.list.bak"
       become_user: root
       become_method: sudo
-    - name: apt update
-      shell: "sudo apt update" 
-    - name: python-pip
-      shell: "sudo apt install python3-pip"    
+    - name: Install azcopy
+      shell: |
+        wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
+        tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
+        mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin && \
+        sudo chmod 777 /usr/bin/azcopy
+      become_user: root
+
     - block:
       - name: Installing azure tools and python
         apt:
           pkg:
           - python
+          - python3-pip
           - linux-azure
           - linux-image-azure
           - linux-headers-azure
@@ -35,10 +40,9 @@
         shell: "apt update -y"
         become: true
       - name: Failback installation "Installing azure tools and python"
-        shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure unzip -y"
+        shell: "apt install python python3-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure unzip -y"
         become: true
     
-
     - name: Update grub entry
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"
       ' /etc/default/grub"
@@ -149,28 +153,6 @@
       become: true
       become_user: root
       ignore_errors: True
-
-    # - block:
-    #   - name: Install Python packages
-    #     pip:
-    #       name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython', 'requests']
-    #     become: true
-    #     become_user: root
-    #   rescue:
-    #   - name: Install python packages
-    #     shell: "sudo pip install {{ item }}"
-    #     with_items:
-    #       - awscli
-    #       - netifaces
-    #       - netaddr
-    #       - mongoengine
-    #       - psutil
-    #       - pyasn1
-    #       - python-dotenv
-    #       - dnspython
-    #       - requests
-    #     become: true
-    #     become_user: root
 
     - name: <==Deploy payload==>
       copy:

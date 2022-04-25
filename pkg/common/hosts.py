@@ -1,6 +1,7 @@
 from utils.dbconn import *
 from model.blueprint import *
 from model.network import *
+from model.project import *
 
 def fetch_hosts(project):
     try:
@@ -38,11 +39,15 @@ def update_hosts(project,machines):
         for machine in machines:
             subnet = Subnet.objects(project=project, cidr = machine['subnet'])
             network = Network.objects(project=project, nw_name = subnet[0]['nw_name'])
+            provider = Project.objects(name=project)[0]['provider']
             if machine['public_route'] == 'Public':
                 machine['public_route'] = True
             elif machine['public_route'] == 'Private':
                 machine['public_route'] = False
-            BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['cidr'])
+            if provider == 'gcp':
+                BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['nw_name'])
+            else:
+                BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['cidr'])
         con.close()
         return True
     except Exception as e:
