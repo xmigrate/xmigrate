@@ -15,3 +15,6 @@
 - name: executing ubuntu 20.04 playbook
   import_playbook: gcp_env_setup_ubuntu_20.yaml
   when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '20'
+- name: executing centos 7 playbook
+  import_playbook: gcp_env_setup_centos_7.yaml
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '7'  
