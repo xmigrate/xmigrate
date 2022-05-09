@@ -124,6 +124,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
                print(response['ImportImageTasks'][0]['StatusMessage'])
                break
             else:
+               print(response)
                await asyncio.sleep(60)
    except Exception as e:
       print(str(e))

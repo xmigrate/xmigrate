@@ -1,3 +1,4 @@
+
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
@@ -7,6 +8,7 @@
     - name: Backup sources list
       shell: "cp /etc/apt/sources.list /etc/apt/sources.list.bak"
       become_user: root
+      become_method: sudo
     - name: Install azcopy
       shell: |
         wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
@@ -14,12 +16,13 @@
         mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin && \
         sudo chmod 777 /usr/bin/azcopy
       become_user: root
+
     - block:
       - name: Installing azure tools and python
         apt:
           pkg:
           - python
-          - python-pip
+          - python3-pip
           - linux-azure
           - linux-image-azure
           - linux-headers-azure
@@ -31,47 +34,56 @@
           update_cache: yes
         become: true
         become_user: root
-        
+        ignore_errors: True 
       rescue:
       - name: Update Accepted
         shell: "apt update -y"
         become: true
       - name: Failback installation "Installing azure tools and python"
-        shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure unzip -y"
+        shell: "apt install python python3-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure unzip -y"
         become: true
-
+    
     - name: Update grub entry
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"
       ' /etc/default/grub"
       become: true
       become_user: root
       ignore_errors: True
-    
-    - name: Update apt.. older way
-      shell: "apt update"
-      become: true
-      become_method: sudo
-      become_user: root
-    - name: Install cloud init older way
-      shell: "sudo apt install cloud-init -y"
-      become: true
-      become_user: root
-    - name: Install netplan.io  older way
-      shell: "sudo apt-get install netplan -y"
-      become: true
-      become_user: root
-    - name: Install walinuxagent.. older way
-      shell: "sudo apt install walinuxagent -y"
-      become: true
-      become_user: root 
-      ignore_errors: True
-    - name: Stopping walinuxagent .. older way
-      shell: "systemctl stop walinuxagent"
-      become: true
-      become_user: root
+
+    - block:
+      - name: Install cloud init, netplan and walinuxagent
+        apt:
+          pkg:
+          - cloud-init
+          - netplan.io
+          - walinuxagent
+          update_cache: yes
+        become: true
+        become_user: root
+        ignore_errors: True
+      - name: Stopping walinuxagent
+        systemd:
+          name: walinuxagent
+          state: stopped
+        become: true
+        become_user: root
+        
+      rescue:
+      - name: Update apt.. older way
+        shell: "apt update -y"
+        become: true
+        become_user: root
+      - name: Install cloud init, netplan.io and walinuxagent.. older way
+        shell: "apt install cloud-init netplan.io walinuxagent -y"
+        become: true
+        become_user: root
+      - name: Stopping walinuxagent .. older way
+        shell: "systemctl stop walinuxagent"
+        become: true
+        become_user: root
       tags:
         - devel
-      ignore_errors: True
+      ignore_errors: True  
     - name: Remove cloud configuration files
       file:
         path: "{{ item }}"
@@ -84,7 +96,7 @@
       become: true
       become_user: root
       ignore_errors: True
-   
+  
     - name: Update walinuxagent config
       shell: |
         sudo sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf;

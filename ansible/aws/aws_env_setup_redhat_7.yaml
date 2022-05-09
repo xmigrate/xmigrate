@@ -5,72 +5,13 @@
   gather_facts: no
   force_handlers: True
   tasks:
- 
-  - name: Download get-pip file
-    get_url:
-      url: https://bootstrap.pypa.io/get-pip.py
-      dest: /tmp/get-pip.py
-      mode: 0750  
-  - name: Enable EPEL repo
-    shell: sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
-    ignore_errors: yes
-  - block:
-    - name: Install Python3
-      yum:
-        name: python3
-        state: latest
-        update_cache: yes
-      become: true
-      become_method: sudo
-    - name: Install GCC
-      yum:
-        name: gcc
-        state: latest
-    - name: Install python3-devel
-      yum:
-        name: python34-devel.x86_64
-        state: latest
-    rescue:
-    - name: Update yum.. older way
-      shell: "sudo yum update -y"
-    - name: Install Python-devel.. older way
-      shell: "sudo yum install python3 python34-devel.x86_64 -y"
-    - name: Install GCC .. older way
-      shell: "sudo yum install gcc -y"
-    tags:
-        - devel
-
-          #  - name: Install pip
-          #    shell: "sudo python /tmp/get-pip.py"
-  
-  - block:        
-    - name: upgrade pip3
-      shell: sudo pip3 install --upgrade pip
-    - name: Install Python packages
-      pip:
-        name: "{{ item }}"
-      with_items:
-        - awscli
-        - netifaces
-        - netaddr
-        - mongoengine
-        - psutil
-        - python-dotenv
-        - dnspython
-        - requests
-    rescue:
-    - name: Install python packages
-      shell: "sudo pip3 install {{ item }}"
-      with_items:
-        - awscli
-        - netifaces
-        - netaddr
-        - mongoengine
-        - psutil
-        - python-dotenv
-        - dnspython
-        - requests
-
+  - name: Setup awscli
+    shell: |
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip -o awscliv2.zip
+      sudo ./aws/install --update
+    become_user: root
+    become: yes
   - name: Create .aws directory
     file:
       path: "~/.aws/"
@@ -89,13 +30,13 @@
 
   - name: <==Deploy payload==>
     copy:
-      src: "../payloads/footprint.py"
-      dest: "/tmp/footprint.py"
+      src: "../payloads/footprint/footprint"
+      dest: "/tmp/footprint"
+      mode: a+x
     tags:
       - deploy
-
   - name: <==Executing payload==>
-    shell: "python3 /tmp/footprint.py {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
     register: st
     become: True
     tags:

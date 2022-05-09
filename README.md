@@ -7,7 +7,7 @@ Migration can be done from DC to DC, DC to cloud, Cloud to DC, Cloud to Cloud.
 
 ## Current release
 
-We have shipped xmigrate with the below features in our latest beta [release](https://hub.docker.com/layers/xmigrate/xmigrate/beta_v0.3.0/images/sha256-93e8066e599e56dfe05145a9b63dab487383350812d1798c14b71506b6719858?context=explore) 
+We have shipped xmigrate with the below features in our latest beta [release](https://hub.docker.com/r/xmigrate/xmigrate) 
 
 - Environment discovery
 - Automatic network creation and server deployment
@@ -49,9 +49,9 @@ We currently support server's with below OS versions
 
 |           | Redhat 7 | Redhat 8 | CentOS 7 | Ubuntu 16.04 | Ubuntu 18.04 | Ubuntu 20.04 |
 |-----------|----------|----------|----------|--------------|--------------|--------------|
-| **AWS**   |  ✅      |   ✅    |   ✅    |              |     ✅      |              |
-| **Azure** |  ✅      |          |    ✅    |              |     ✅      |              |
-| **GCP**   |  ✅      |    ✅   |          |     ✅      |     ✅      |      ✅      |
+| **AWS**   |  ✅      |   ✅    |    ✅    |     ✅       |     ✅      |              |
+| **Azure** |  ✅      |          |   ✅    |     ✅       |     ✅      |      ✅      |
+| **GCP**   |  ✅      |    ✅   |          |     ✅       |     ✅      |      ✅      |
 
 > 💡 Make sure your `/etc/fstab` entries looks like this
 `UUID=d35fe619-1d06-4ace-9fe3-169baad3e421 /                       xfs     defaults,discard        1 1`
