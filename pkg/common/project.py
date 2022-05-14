@@ -1,6 +1,6 @@
 from utils.dbconn import *
 from model.project import *
-import os
+import os, json
 
 
 def get_project(name, user):
@@ -8,7 +8,7 @@ def get_project(name, user):
     print(name)
     if name == "all":
         print(user)
-        return Project.objects(users__contains=user).to_json()
+        return json.dumps(list(Project.objects.all().filter(users__contains=user).allow_filtering()))
     else:
         return Project.objects(name=name, users__contains=user).to_json()
 

@@ -12,12 +12,12 @@ def add_user(username, password):
         print(e)
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 def check_user(username, password):
     con = create_db_con()
     try:
-        if User.objects(username=username, password=password).count() == 1:
+        if User.objects(username=username, password=password).allow_filtering().count() == 1:
             return True
         else:
             return False
@@ -26,4 +26,4 @@ def check_user(username, password):
         print(e)
         return False
     finally:
-        con.close()
+        con.shutdown()
