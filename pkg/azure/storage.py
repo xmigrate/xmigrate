@@ -5,9 +5,9 @@ from utils.logger import *
 def get_storage(name):
     con = create_db_con()
     if name == "all":
-        return Storage.objects.to_json()
+        return [ dict(x) for x in Storage.objects.allow_filtering() ]
     else:
-        return Storage.objects(project=name).to_json()
+        return [ dict(x) for x in Storage.objects(project=name).allow_filtering() ]
 
 
 def create_storage(project, storage, container, access_key):
@@ -22,14 +22,14 @@ def create_storage(project, storage, container, access_key):
         logger(str(e),"warning")
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 
 def update_storage(project, storage, container, access_key):
     con = create_db_con()
     try:
-        Storage.objects(project=project).update(
-            storage=storage, container=container, access_key=access_key,upsert=True)
+        Storage.objects(project=project, storage=storage).update(
+            container=container, access_key=access_key,upsert=True)
         return True
     except Exception as e:
         print("Boss you have to see this!!")
@@ -37,4 +37,4 @@ def update_storage(project, storage, container, access_key):
         logger(str(e),"warning")
         return False
     finally:
-        con.close()
+        con.shutdown()
