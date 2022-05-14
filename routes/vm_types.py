@@ -16,7 +16,7 @@ async def vms_get():
         con = create_db_con()
         project = request.args.get('project')
         provider = Project.objects(name=project)[0]['provider']
-        con.close()
+        con.shutdown()
         if provider == 'azure':
             machine_types, flag = compute.get_vm_types(project)
         elif provider == 'aws':

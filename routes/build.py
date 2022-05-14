@@ -8,7 +8,7 @@ from quart_jwt_extended import jwt_required, get_jwt_identity
 @jwt_required
 def start_building():
     con = create_db_con()
-    machines = json.loads(BluePrint.objects.to_json())
+    machines = json.loads(BluePrint.objects.allow_filtering())
     vpcs = []
     subnets = []
     for machine in machines:
@@ -24,7 +24,7 @@ def start_building():
           BluePrint.objects(network=vpc).update(status='VPC created')
         except Exception as e:
           print("Something went wrong while creating vpc: "+str(e))
-    machines = json.loads(BluePrint.objects.to_json())
+    machines = json.loads(BluePrint.objects.allow_filtering())
     for machine in machines:
       subnet = machine['subnet']
       vpcid = machine['vpc_id']
@@ -36,7 +36,7 @@ def start_building():
           BluePrint.objects(subnet=subnet).update(status='Subnet created')
         except Exception as e:
           print("Something went wrong while creating subnet: "+str(e))
-    machines = json.loads(BluePrint.objects.to_json())
+    machines = json.loads(BluePrint.objects.allow_filtering())
     for machine in machines:
       subnet_id = machine['subnet_id']
       ami_id = machine['ami_id']
@@ -47,5 +47,5 @@ def start_building():
          BluePrint.objects(host=hostname).update(status='Completed build')
        except Exception as e:
          print("Something went wrong while building the machine "+hostname+' '+str(e))
-    con.close()
+    con.shutdown()
     return jsonify({'status': 'Success'})

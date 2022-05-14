@@ -13,7 +13,7 @@ def build_vpc(cidr,public_route, project):
     access_key = Project.objects(name=project)[0]['access_key']
     secret_key = Project.objects(name=project)[0]['secret_key']
     location = Project.objects(name=project)[0]['location']
-    con.close()
+    con.shutdown()
     session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
     ec2 = session.resource('ec2')
     vpc = ec2.create_vpc(CidrBlock=cidr)
@@ -31,12 +31,12 @@ def build_vpc(cidr,public_route, project):
         route = route_table.create_route(DestinationCidrBlock='0.0.0.0/0',GatewayId=ig.id)
         BluePrint.objects(network=cidr, project=project).update(route_table=route_table.id)
         Network.objects(cidr=cidr, project=project).update(created=True, upsert=True)
-      con.close()
+      con.shutdown()
     except Exception as e:
       print(repr(e))
       return False,0
     finally:
-      con.close()
+      con.shutdown()
     return True, vpc.id
   else:
     return True
@@ -49,7 +49,7 @@ def build_subnet(cidr,vpcid,route,project):
       access_key = Project.objects(name=project)[0]['access_key']
       secret_key = Project.objects(name=project)[0]['secret_key']
       location = Project.objects(name=project)[0]['location']
-      con.close()
+      con.shutdown()
       session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
       ec2 = session.resource('ec2')
       route_table = ec2.RouteTable(route)
@@ -60,12 +60,12 @@ def build_subnet(cidr,vpcid,route,project):
         BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='20')
         Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
         route_table.associate_with_subnet(SubnetId=subnet.id)
-        con.close()
+        con.shutdown()
       except Exception as e:
         print(repr(e))
         return False
       finally:
-        con.close()
+        con.shutdown()
       return True
     else:
       return True
@@ -100,5 +100,5 @@ async def create_nw(project):
     print(repr(e))
     return False
   finally:
-    con.close()
+    con.shutdown()
   return True

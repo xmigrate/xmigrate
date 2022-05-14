@@ -37,7 +37,7 @@ async def download_worker(osdisk_raw,project,host):
         BluePrint.objects(project=project,host=host).update(status='-30')
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 
 async def upload_worker(osdisk_raw,project,host):
@@ -69,7 +69,7 @@ async def upload_worker(osdisk_raw,project,host):
         BluePrint.objects(project=project,host=host).update(status='-36')
         os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
     finally:
-        con.close()
+        con.shutdown()
 
 
 async def conversion_worker(osdisk_raw,project,host):
@@ -101,7 +101,7 @@ async def conversion_worker(osdisk_raw,project,host):
             logger(str(e),"warning")
             file_size = '0'
         finally:
-            con.close() 
+            con.shutdown() 
     else:
         logger("Downloading image failed","warning")
 

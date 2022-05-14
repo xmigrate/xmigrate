@@ -13,7 +13,7 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
     secret_key = Project.objects(name=project)[0]['secret_key']
     location = Project.objects(name=project)[0]['location']
     public_route = True if BluePrint.objects(project=project, image_id=ami_id)[0]['public_route'] == "true" else False
-    con.close()
+    con.shutdown()
     session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
     ec2 = session.resource('ec2')
     client = boto3.client('ec2',aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
@@ -60,7 +60,7 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
         print(repr(e))
         BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='-100')
     finally:
-        con.close()
+        con.shutdown()
 
 
 async def build_ec2(project, hostname):
@@ -69,14 +69,14 @@ async def build_ec2(project, hostname):
         hosts = BluePrint.objects(project=project, host=hostname)
         for host in hosts:
             await create_machine(project,host['subnet_id'],host['image_id'],host['machine_type'], hostname)
-        con.close()
+        con.shutdown()
         return True
     except Exception as e:
         print(str(e))
         print(repr(e))
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 
 def ec2_instance_types(ec2,region_name):
@@ -111,5 +111,5 @@ def get_vm_types(project):
         print(repr(e))
         flag = False
     finally:
-        con.close()
+        con.shutdown()
     return machine_types, flag

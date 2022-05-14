@@ -19,7 +19,7 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
     subscription_id = Project.objects(name=project)[0]['subscription_id']
     creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
     compute_client = ComputeManagementClient(creds,subscription_id)
-    con.close()
+    con.shutdown()
     managed_disks = []
 
     lun=1
@@ -75,7 +75,7 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
         print("VM creation updation failed: "+repr(e))
         logger("VM creation updation failed: "+repr(e),"warning")
     finally:
-        con.close()
+        con.shutdown()
 
 
 async def create_vm(project, hostname):
@@ -100,7 +100,7 @@ async def create_vm(project, hostname):
         nic_id = machine['nic_id']
         
         create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks)
-    con.close()
+    con.shutdown()
 
 
 def list_available_vm_sizes(compute_client, region = 'EastUS2', minimum_cores = 1, minimum_memory_MB = 768):
@@ -131,7 +131,7 @@ def get_vm_types(project):
         print(repr(e))
         logger("Fetching vm details failed: "+repr(e),"warning")
         flag = False
-    con.close()
+    con.shutdown()
     return machine_types, flag
 
 

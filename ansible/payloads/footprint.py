@@ -193,7 +193,7 @@ def main():
         print("Boss you have to see this!!")
         print(e)
     # finally:
-        # con.close()
+        # con.shutdown()
 
 
 if __name__ == '__main__':

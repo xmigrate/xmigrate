@@ -131,7 +131,7 @@ async def create_nw(project):
                 BluePrint.objects(network=network_name, project=project).update(vpc_id=res, status='-10')
                 vpc_created.append(False)
             finally:
-                con.close()
+                con.shutdown()
             vpc_created.append(True)
         else:
             vpc_created.append(True)
@@ -157,11 +157,11 @@ async def create_nw(project):
                     logger("Subnet creation failed to save: "+repr(e), "warning")
                     subnet_created.append(False) 
                 finally:
-                    con.close()
+                    con.shutdown()
                 subnet_created.append(True) 
             else:
                 subnet_created.append(True) 
         if False in subnet_created:
             return False      
-    con.close()
+    con.shutdown()
     return True

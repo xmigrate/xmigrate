@@ -25,11 +25,11 @@ def fetch_hosts(project):
             if nw_name not in response.keys():
                 response[nw_name] = []
             response[nw_name].append(sub_hosts[subnet])
-            con.close()
+            con.shutdown()
         return response
     except Exception as e:
         print("Reading from db failed: "+repr(e))
-        con.close()
+        con.shutdown()
         return {"msg":"Failed fetching details"}
 
 
@@ -48,11 +48,11 @@ def update_hosts(project,machines):
                 BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['nw_name'])
             else:
                 BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['cidr'])
-        con.close()
+        con.shutdown()
         return True
     except Exception as e:
         print(repr(e))
-        con.close()
+        con.shutdown()
         return False
 
 

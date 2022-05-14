@@ -48,12 +48,12 @@ def create_db_con():
     auth_provider = PlainTextAuthProvider(username=cass_user, password=cass_password)
     cluster = Cluster([cass_db],auth_provider=auth_provider)
     session = cluster.connect()
-    session.row_factory = ordered_dict_factory
     session.execute("""
         CREATE KEYSPACE IF NOT EXISTS migration
         WITH replication = { 'class': 'SimpleStrategy', 'replication_factor': '2' }
         """)
     session.set_keyspace('migration')
+    session.row_factory = ordered_dict_factory
     connection.setup([cass_db], "migration",protocol_version=3,auth_provider=auth_provider)
     sync_table(BluePrint)
     sync_table(Discover)

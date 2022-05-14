@@ -36,7 +36,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
             BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='-5')
             return False
         finally:
-            con.close()
+            con.shutdown()
         return True
     else:
         return True
@@ -53,7 +53,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
         subscription_id = Project.objects(name=project)[0]['subscription_id']
         creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
         network_client = NetworkManagementClient(creds,subscription_id)
-        con.close()
+        con.shutdown()
         poller = network_client.subnets.create_or_update(
             rg_name, vnet_name, subnet_name, {"address_prefix": cidr})
         subnet_result = poller.result()
@@ -69,7 +69,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
             logger("Subnet creation failed to save: "+repr(e),"warning")
             return False
         finally:
-            con.close()
+            con.shutdown()
         return True
     else:
         return True
@@ -86,7 +86,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
         subscription_id = Project.objects(name=project)[0]['subscription_id']
         creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
         network_client = NetworkManagementClient(creds,subscription_id)
-        con.close()
+        con.shutdown()
         poller = network_client.public_ip_addresses.create_or_update(rg_name, ip_name,
                                                                     {
                                                                         "location": location,
@@ -106,7 +106,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
             print("Public IP creation failed: "+repr(e))
             logger("Public IP creation failed: "+repr(e),"warning")
         finally:
-            con.close()
+            con.shutdown()
         print("Provisioning a public NIC ...some operations might take a minute or two.")
         poller = network_client.network_interfaces.create_or_update(rg_name,
                                                                     host,
@@ -128,7 +128,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
         except Exception as e:
             print("Nework interface creation failed:"+repr(e))
         finally:
-            con.close()
+            con.shutdown()
     else:
         logger("Public IP was already created for this host: "+host,"info")
    
@@ -164,8 +164,8 @@ async def create_nw(project):
                 subnet_id = machine['subnet_id'] 
                 create_publicIP(project, rg_name, ip_name, location, subnet_id,machine['host'])
         else:
-            con.close()
+            con.shutdown()
             return False
-    con.close()
+    con.shutdown()
     return True
 

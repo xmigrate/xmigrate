@@ -1,6 +1,6 @@
 // export const APPURL = "http://3.108.5.78:8000"
-export const APPURL = "/api"
-// export const APPURL = "http://localhost:8000"
+// export const APPURL = "/api"
+export const APPURL = "http://localhost:8000"
 export const DISCOVERURL = APPURL+"/discover"
 export const STREAMURL = APPURL+"/stream"
 export const BLUEPRINT_URL = APPURL+"/blueprint"

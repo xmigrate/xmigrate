@@ -33,7 +33,7 @@ export default class Home extends Component {
         this.props.history.push("/project");
       } else {
         noProject = false;
-        ProjectDetails = JSON.parse(res.data);
+        ProjectDetails = res.data;
       }
 
     });
@@ -57,7 +57,7 @@ export default class Home extends Component {
       await GetServiceWithData(BLUEPRINT_URL, dataGet).then(
         (res) => {
           console.log(res.data);
-          if (JSON.parse(res.data).length === 0) {
+          if (res.data.length === 0) {
             BlueprintDisabled = true;
           }
           else {
@@ -89,7 +89,7 @@ export default class Home extends Component {
     });
     await GetServiceWithData(BLUEPRINT_URL, dataGet).then(
       (res) => {
-        if (JSON.parse(res.data).length === 0) {
+        if (res.data.length === 0) {
           BlueprintDisabled = true;
         }
         else {

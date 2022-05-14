@@ -131,7 +131,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
       logger("Error while creating AMI:"+str(e),"error")
       BluePrint.objects(host=hostname, project=project).update(status='-35')
    finally:
-      con.close()
+      con.shutdown()
 
 
 async def start_ami_creation(project, hostname):
@@ -149,7 +149,7 @@ async def start_ami_creation(project, hostname):
    except Exception as e:
       print(repr(e))
    finally:
-      con.close()
+      con.shutdown()
    for host in hosts:
       disks = Discover.objects(project=project,host=host['host'])[0]['disk_details']
       disk_containers = [] 

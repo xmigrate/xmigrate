@@ -113,7 +113,7 @@ async def start_image_creation(project, hostname):
    except Exception as e:
       print(repr(e))
    finally:
-      con.close()
+      con.shutdown()
    for host in hosts:
       disks = Discover.objects(project=project,host=host['host'])[0]['disk_details']
       disk_containers = [] 
@@ -163,7 +163,7 @@ async def start_cloning(project, hostname):
                     status_count = status_count + 1
             if status_count == machine_count:
                 flag = False
-    con.close()
+    con.shutdown()
     return not flag
 
 
@@ -202,7 +202,7 @@ async def download_worker(osdisk_raw,project,host):
         BluePrint.objects(project=project,host=host).update(status='-30')
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 
 async def upload_worker(osdisk_raw,project,host):
@@ -233,7 +233,7 @@ async def upload_worker(osdisk_raw,project,host):
         BluePrint.objects(project=project,host=host).update(status='-36')
         os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
     finally:
-        con.close()
+        con.shutdown()
 
 
 async def conversion_worker(osdisk_raw,project,host):
@@ -262,7 +262,7 @@ async def conversion_worker(osdisk_raw,project,host):
     else:
         BluePrint.objects(project=project,host=host).update(status='-32')
         logger("Downloading image failed","warning")
-    con.close()
+    con.shutdown()
 
 
 async def start_conversion(project,hostname):
@@ -285,7 +285,7 @@ async def start_conversion(project,hostname):
                     logger("Conversion failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True
 
 async def start_downloading(project,hostname):
@@ -305,5 +305,5 @@ async def start_downloading(project,hostname):
                     logger("Download failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True

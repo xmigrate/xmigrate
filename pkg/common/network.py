@@ -9,7 +9,7 @@ from collections import defaultdict
 import traceback
 
 def update_nw_cidr(p):
-    machines = json.loads(Discover.objects(project=p).to_json())
+    machines = json.loads(Discover.objects(project=p).allow_filtering())
     networks = []
     print("trying to update network")
     for machine in machines:
@@ -32,18 +32,18 @@ def update_nw_cidr(p):
                 try:
                     con = create_db_con()
                     Discover.objects(network=i,project=p).update(network=vp)
-                    print(Discover.objects.to_json())
+                    print(Discover.objects.allow_filtering())
                 except:
                     print("Failed upating network")
                 finally:
-                    con.close()
+                    con.shutdown()
     return True
 
 
 def update_subnet(cidr,p):
     con = create_db_con()
     print("trying t update subnet")
-    machines = json.loads(Discover.objects(project=p).to_json())
+    machines = json.loads(Discover.objects(project=p).allow_filtering())
     if cidr == '10.0.0.0':
         for machine in machines:
             if machine['network'].split('.')[0] == '10':
@@ -94,7 +94,7 @@ def update_subnet(cidr,p):
             # print machine
     else:
         return machines, False
-    con.close()
+    con.shutdown()
     return machines, True
 
 
@@ -112,7 +112,7 @@ def update_blueprint(machines,p):
             print(e)
             return False
         finally:
-            con.close()
+            con.shutdown()
     return True
 
 
@@ -149,40 +149,40 @@ def create_nw(project,name,cidr):
         print(str(e))
         return False
     finally:
-         con.close()
+         con.shutdown()
 
 def delete_nw(project,name):
     con = create_db_con()
     try:
         Network.objects(project=project,nw_name=name).delete()
         Subnet.objects(project=project,nw_name=name).delete()
-        con.close()
+        con.shutdown()
         return True
     except Exception as e:
         print(str(e))
-        con.close()
+        con.shutdown()
         return False
 
 def delete_subnet(project,name, nw_name):
     con = create_db_con()
     try:
         Subnet.objects(project=project,subnet_name=name, nw_name=nw_name).delete()
-        con.close()
+        con.shutdown()
         return True
     except Exception as e:
         print(str(e))
-        con.close()
+        con.shutdown()
         return False
 
 
 def fetch_nw(project):
     con = create_db_con()
     try:
-        result = Network.objects(project=project).to_json()
-        con.close()
+        result = Network.objects(project=project).allow_filtering()
+        con.shutdown()
         return result
     except Exception as e:
-        con.close()
+        con.shutdown()
         result = {"msg":"Failed to retrieve network details"}
         return result
 
@@ -191,13 +191,13 @@ def fetch_subnet(project,network):
     con = create_db_con()
     try:
         if network == 'all':
-            result = Subnet.objects(project=project).to_json()
+            result = Subnet.objects(project=project).allow_filtering()
         else:
-            result = Subnet.objects(project=project, nw_name=network).to_json()
-        con.close()
+            result = Subnet.objects(project=project, nw_name=network).allow_filtering()
+        con.shutdown()
         return result
     except Exception as e:
-        con.close()
+        con.shutdown()
         result = {"msg":"Failed to retrieve network details"}
         return result
 
@@ -218,15 +218,15 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
                     network_cidr= nw[0]['nw_name'] if nw[0]['cidr'] == None else nw[0]['cidr']               
                     BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=network_cidr,
                          ports=machine['ports'], cores=str(machine['cores']), public_route=subnet_type, cpu_model=machine['cpu_model'], ram=str(machine['ram']), machine_type='', status='0', upsert=True)
-                    con.close()
+                    con.shutdown()
                 except Exception as e:
                     # print(traceback.format_exc())
                     print("Error while updating BluePrint: "+repr(e))
-                    con.close()
+                    con.shutdown()
             return True       
         else:
             return True
     except Exception as e:
         print("Error while updating Subnet: "+str(e))
-        con.close()
+        con.shutdown()
         return False

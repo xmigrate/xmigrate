@@ -8,9 +8,10 @@ def get_project(name, user):
     print(name)
     if name == "all":
         print(user)
-        return json.dumps(list(Project.objects.all().filter(users__contains=user).allow_filtering()))
+        print([dict(x) for x in Project.objects.all().filter(users__contains=user).allow_filtering()])
+        return [dict(x) for x in Project.objects.all().filter(users__contains=user).allow_filtering()]
     else:
-        return Project.objects(name=name, users__contains=user).to_json()
+        return [ dict(x) for x in Project.objects(name=name, users__contains=user).allow_filtering() ]
 
 
 async def create_project(data, user):
@@ -60,7 +61,7 @@ async def create_project(data, user):
         print(e)
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 
 async def update_project(data, user):
@@ -98,4 +99,4 @@ async def update_project(data, user):
         print(repr(e))
         return False
     finally:
-        con.close()
+        con.shutdown()

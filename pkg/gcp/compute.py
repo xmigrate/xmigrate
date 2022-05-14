@@ -38,7 +38,7 @@ def get_vm_types(project):
         print(repr(e))
         flag = False
     finally:
-        con.close()
+        con.shutdown()
     return machine_types, flag
 
 
@@ -117,11 +117,11 @@ async def build_compute(project, hostname):
                 print(vm)
                 BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='100')
                 ## todo watch vm status 
-                con.close()
+                con.shutdown()
                 return True
             except Exception as e:
                 print(e)
-                con.close()
+                con.shutdown()
                 return False
         return True
     except Exception as e:
@@ -129,4 +129,4 @@ async def build_compute(project, hostname):
         print(repr(e))
         return False
     finally:
-        con.close()
+        con.shutdown()

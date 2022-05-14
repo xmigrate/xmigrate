@@ -36,7 +36,7 @@ async def start_downloading(project):
                     logger("Download failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True
     
 
@@ -60,7 +60,7 @@ async def start_conversion(project,hostname):
                     logger("Conversion failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True
 
 async def start_uploading(project):
@@ -80,7 +80,7 @@ async def start_uploading(project):
                     logger("Upload failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True
 
 
@@ -116,7 +116,7 @@ async def start_cloning(project, hostname):
                     status_count = status_count + 1
             if status_count == machine_count:
                 flag = False
-        con.close()
+        con.shutdown()
         return not flag
 
 
@@ -171,7 +171,7 @@ async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_
         logger("Disk creation failed: "+repr(e),"error")
         BluePrint.objects(project=project, host=disk_name).update(status='-40')
     finally:
-        con.close()
+        con.shutdown()
 
 async def create_disk(project, hostname):
     con = create_db_con()
@@ -199,4 +199,4 @@ async def adhoc_image_conversion(project):
             except Exception as e:
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))
-    con.close()
+    con.shutdown()

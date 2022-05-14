@@ -38,5 +38,5 @@ async def start_cloning(project, hostname):
                     status_count = status_count + 1
             if status_count == machine_count:
                 flag = False
-    con.close()
+    con.shutdown()
     return not flag
