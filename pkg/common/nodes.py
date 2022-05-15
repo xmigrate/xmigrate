@@ -11,7 +11,7 @@ def add_nodes(nodes,user,password,p, update_db=True):
     host_file = open(ansible_hosts,'w')
     if update_db:
       try:
-        Project.objects(name=p).update(public_ip=nodes, username=user, password=password, upsert=True)
+        Project.objects(name=p).update(public_ip=nodes, username=user, password=password)
       except Exception as e:
         print("Error while inserting to Project: "+str(e))
         logger("Error while inserting to Project: "+str(e),"error")

@@ -137,13 +137,13 @@ def create_nw_layout(cidr,p):
 
 def create_nw(project,name,cidr):
     con = create_db_con()
-    provider = Project.objects(name=project)[0]['provider']
+    provider = Project.objects(name=project).allow_filtering()[0]['provider']
     print(provider)
     try:
         if provider == 'gcp':
-            Network.objects(project=project,nw_name=name).update(nw_name=name,upsert=True)
+            Network(project=project,nw_name=name).save()
         else:
-            Network.objects(project=project,nw_name=name).update(cidr=cidr,nw_name=name,upsert=True)
+            Network(project=project,nw_name=name,cidr=cidr).save()
         return True
     except Exception as e:
         print(str(e))
@@ -166,7 +166,8 @@ def delete_nw(project,name):
 def delete_subnet(project,name, nw_name):
     con = create_db_con()
     try:
-        Subnet.objects(project=project,subnet_name=name, nw_name=nw_name).delete()
+        cidr = Subnet.objects(project=project,subnet_name=name).allow_filtering()[0]['cidr']
+        Subnet.objects(project=project,subnet_name=name,cidr=cidr).delete()
         con.shutdown()
         return True
     except Exception as e:
@@ -178,7 +179,7 @@ def delete_subnet(project,name, nw_name):
 def fetch_nw(project):
     con = create_db_con()
     try:
-        result = Network.objects(project=project).allow_filtering()
+        result = [dict(x) for x in Network.objects(project=project).allow_filtering()]
         con.shutdown()
         return result
     except Exception as e:
@@ -191,9 +192,9 @@ def fetch_subnet(project,network):
     con = create_db_con()
     try:
         if network == 'all':
-            result = Subnet.objects(project=project).allow_filtering()
+            result = [dict(x) for x in Subnet.objects(project=project).allow_filtering()]
         else:
-            result = Subnet.objects(project=project, nw_name=network).allow_filtering()
+            result = [dict(x) for x in Subnet.objects(project=project, nw_name=network).allow_filtering()]
         con.shutdown()
         return result
     except Exception as e:
@@ -209,15 +210,15 @@ def create_subnet(cidr,nw_name,project,subnet_type,name):
             subnet_type = True
         elif subnet_type == 'Private':
             subnet_type = False
-        Subnet.objects(project=project,subnet_name=name).update(cidr=cidr,nw_name=nw_name,subnet_name=name,subnet_type=subnet_type,upsert=True)
-        if len(Subnet.objects(project=project)) == 1:
-            nw = Network.objects(project=project, nw_name=nw_name)
-            machines = Discover.objects(project=project)
+        Subnet.objects(project=project,subnet_name=name,cidr=cidr).update(nw_name=nw_name,subnet_type=subnet_type)
+        if len(Subnet.objects(project=project).allow_filtering()) == 1:
+            nw = Network.objects(project=project, nw_name=nw_name).allow_filtering()
+            machines = Discover.objects(project=project).allow_filtering()
             for machine in machines:
                 try:
                     network_cidr= nw[0]['nw_name'] if nw[0]['cidr'] == None else nw[0]['cidr']               
                     BluePrint.objects(project=project, host=machine['host']).update(ip='Not created', subnet=cidr, network=network_cidr,
-                         ports=machine['ports'], cores=str(machine['cores']), public_route=subnet_type, cpu_model=machine['cpu_model'], ram=str(machine['ram']), machine_type='', status='0', upsert=True)
+                         ports=machine['ports'], cores=str(machine['cores']), public_route=subnet_type, cpu_model=machine['cpu_model'], ram=str(machine['ram']), machine_type='', status='0')
                     con.shutdown()
                 except Exception as e:
                     # print(traceback.format_exc())

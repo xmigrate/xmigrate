@@ -20,7 +20,7 @@ def update_bucket(project, bucket, secret_key, access_key):
     con = create_db_con()
     try:
         Bucket.objects(project=project,bucket=bucket).update(
-            secret_key=secret_key, access_key=access_key,upsert=True)
+            secret_key=secret_key, access_key=access_key)
         return True
     except Exception as e:
         print("Boss you have to see this!!")

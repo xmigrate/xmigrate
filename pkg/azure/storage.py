@@ -29,7 +29,7 @@ def update_storage(project, storage, container, access_key):
     con = create_db_con()
     try:
         Storage.objects(project=project, storage=storage).update(
-            container=container, access_key=access_key,upsert=True)
+            container=container, access_key=access_key)
         return True
     except Exception as e:
         print("Boss you have to see this!!")

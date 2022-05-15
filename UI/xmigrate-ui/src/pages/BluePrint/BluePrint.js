@@ -183,7 +183,7 @@ export default class BluePrint extends Component {
     };
     await GetServiceWithData(BLUEPRINT_URL, data).then((res) => {
       console.log("Logging Blueprint url details", res.data);
-      var dataBlurprint = JSON.parse(res.data);
+      var dataBlurprint = res.data;
       dataBlurprint.map((data, index) =>
         this.state.hosts.push({
           id: index,
@@ -221,7 +221,7 @@ export default class BluePrint extends Component {
     let NetworksData = this.state.Networks;
     await GetServiceWithData(BLUEPRINTNET_NETWORK_GET_URL, dataGet).then(
       (res) => {
-        var NetworksDataServer = JSON.parse(res.data);
+        var NetworksDataServer = res.data;
         NetworksDataServer.forEach((Network) => {
           if (this.state.input["NetworkName"] === Network.nw_name) {
             Network["subnets"] = [];

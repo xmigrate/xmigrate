@@ -4,11 +4,8 @@ import socket
 import psutil
 from dotenv import load_dotenv
 from os import getenv
-# from mongoengine import *
 import requests
 import json
-from mongoengine import StringField
-from mongoengine import ListField
 from collections import OrderedDict
 import sys
 import os
@@ -61,20 +58,20 @@ def disk_info():
                         disk_blkid = x.split("=")[1].replace('"','')
                 disk_size = psutil.disk_usage(i.mountpoint).total
                 if len(root_disk)<=0:
-                    root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                    root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":str(disk_size),"filesystem":i.fstype})
                     dev_names.append(i.device.rstrip('1234567890'))
                 elif i.device.rstrip('1234567890') not in dev_names:
-                    root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                    root_disk.append({"mnt_path":i.mountpoint,"dev":i.device.rstrip('1234567890'),"uuid":disk_blkid,"disk_size":str(disk_size),"filesystem":i.fstype})
                     dev_names.append(i.device.rstrip('1234567890'))
             else:
                 disk_size = psutil.disk_usage(i.mountpoint).total
                 disk_uuid = os.popen('sudo blkid '+ i.device[0:-2]).read()
                 if len(root_disk)<=0:
                     if len(i.device.split('/')[2]) > 6:
-                        root_disk.append({"mnt_path":i.mountpoint,"dev":i.device[0:-2],"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                        root_disk.append({"mnt_path":i.mountpoint,"dev":i.device[0:-2],"uuid":disk_blkid,"disk_size":str(disk_size),"filesystem":i.fstype})
                         dev_names.append(i.device[0:-2])
                     elif i.device[0:-2] not in dev_names:
-                        root_disk.append({"mnt_path":i.mountpoint,"dev":i.device[0:-2],"uuid":disk_blkid,"disk_size":disk_size,"filesystem":i.fstype})
+                        root_disk.append({"mnt_path":i.mountpoint,"dev":i.device[0:-2],"uuid":disk_blkid,"disk_size":str(disk_size),"filesystem":i.fstype})
                         dev_names.append(i.device[0:-2])
     return root_disk
 
@@ -97,7 +94,7 @@ def ports_info():
             pid_name = psutil.Process(pid).name()
             msg = 'PID {} is listening on port {}/{} for all IPs.'
             msg = msg.format(pid_name, port, proto_s)
-            resp.append({'name': pid_name, 'port': port, 'type': proto_s})
+            resp.append({'name': pid_name, 'port': str(port), 'type': proto_s})
     return resp
 
 
@@ -158,42 +155,36 @@ class Document():
         print(req.text)
         return self
 
+
 class Discover(Document):
-    host = StringField(required=True, max_length=200 )
-    ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=50)
-    network = StringField(required=True, max_length=50)
-    ports = ListField()
-    cores = StringField(max_length=2)
-    cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=50)
-    project = StringField(required=True, max_length=50)
-    public_ip = StringField(required=True, max_length=150)
-    disk_details = ListField()
-    meta = {
-        'indexes': [
-            {'fields': ('host', 'project'), 'unique': True}
-        ]
-    }
+    host = str()
+    ip = str()
+    subnet = str()
+    network = str()
+    ports = list()
+    cores = str()
+    cpu_model = str()
+    ram = str()
+    disk_details = list()
+    project = str()
+    public_ip = str()
 
 def main():
     db_con_string = sys.argv[2]
     project = sys.argv[1]
     public_ip = sys.argv[3]
-    # con = connect(host=db_con_string)
+    
     result = network_info()
     result['ports'] = ports_info()
     cores = str(len(cpuinfo().keys()))
     cpu_model = cpuinfo()['proc0']['model name']
     ram = meminfo()['MemTotal']
     try:
-        Discover.objects(project=project,host=socket.gethostname()).update(host=socket.gethostname(),public_ip=public_ip, ip=result['ip'], subnet=result['subnet'], network=result['network'],
-                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disk_info(), upsert=True)
+        Discover.objects(project=project,host=socket.gethostname()).update(public_ip=public_ip, ip=result['ip'], subnet=result['subnet'], network=result['network'],
+                 ports=result['ports'], cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disk_info())
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
-    # finally:
-        # con.shutdown()
 
 
 if __name__ == '__main__':

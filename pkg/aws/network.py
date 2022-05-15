@@ -30,7 +30,7 @@ def build_vpc(cidr,public_route, project):
         route_table = vpc.create_route_table()
         route = route_table.create_route(DestinationCidrBlock='0.0.0.0/0',GatewayId=ig.id)
         BluePrint.objects(network=cidr, project=project).update(route_table=route_table.id)
-        Network.objects(cidr=cidr, project=project).update(created=True, upsert=True)
+        Network.objects(cidr=cidr, project=project).update(created=True)
       con.shutdown()
     except Exception as e:
       print(repr(e))
@@ -58,7 +58,7 @@ def build_subnet(cidr,vpcid,route,project):
         print(subnet)
         con = create_db_con()
         BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).update(subnet_id=subnet.id, status='20')
-        Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
+        Subnet.objects(cidr=cidr, project=project).update(created=True)
         route_table.associate_with_subnet(SubnetId=subnet.id)
         con.shutdown()
       except Exception as e:

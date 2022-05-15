@@ -13,7 +13,7 @@ class BluePrint(Model):
     cores = columns.Text(max_length=2)
     cpu_model = columns.Text(required=True, max_length=150)
     ram = columns.Text(required=True, max_length=50)
-    machine_type = columns.Text(required=True, max_length=150)
+    machine_type = columns.Text(max_length=150)
     status = columns.Text(required=False, max_length=100)
     image_id = columns.Text(required=False, max_length=500)
     vpc_id = columns.Text(required=False, max_length=100)

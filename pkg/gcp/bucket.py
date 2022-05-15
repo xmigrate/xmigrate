@@ -23,7 +23,7 @@ def update_bucket(project, bucket,access_key,secret_key):
     project_id = Project.objects(name=project)[0]['gcp_project_id']
     try:
         GcpBucket.objects(project=project, bucket=bucket).update(
-            access_key=access_key,secret_key=secret_key,project_id=project_id,upsert=True)
+            access_key=access_key,secret_key=secret_key,project_id=project_id)
         return True
     except Exception as e:
         print("Boss you have to see this!!")

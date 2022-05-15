@@ -226,7 +226,7 @@ async def upload_worker(osdisk_raw,project,host):
         await process3.wait()
         os.popen('echo "tar uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
-        Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split('.raw')[0].split('-')[-1]).update_one(vhd=osdisk_tar, file_size=str(file_size), upsert=True)
+        Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split('.raw')[0].split('-')[-1]).update_one(vhd=osdisk_tar, file_size=str(file_size))
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")

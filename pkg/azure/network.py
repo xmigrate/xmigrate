@@ -29,7 +29,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
                 "Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
             
             BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='5')
-            Network.objects(cidr=cidr, project=project).update(created=True, upsert=True)
+            Network.objects(cidr=cidr, project=project).update(created=True)
         except Exception as e:
             print("Vnet creation failed to save: "+repr(e))
             logger("Vnet creation failed to save: "+repr(e),"warning")
@@ -63,7 +63,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
             con = create_db_con()
             print(subnet_result.id)
             BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='10')
-            Subnet.objects(cidr=cidr, project=project).update(created=True, upsert=True)
+            Subnet.objects(cidr=cidr, project=project).update(created=True)
         except Exception as e:
             print("Subnet creation failed to save: "+repr(e))
             logger("Subnet creation failed to save: "+repr(e),"warning")

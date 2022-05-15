@@ -134,7 +134,7 @@ async def create_blueprint():
         con = create_db_con()
         for machine in machines:
             print(machine)
-            BluePrint.objects(host=machine['hostname']).update(machine_type=machine['machine_type'],public_route=bool(machine['type']))
+            BluePrint.objects(project=project,host=machine['hostname']).update(machine_type=machine['machine_type'],public_route=bool(machine['type']))
         con.shutdown()
         return jsonify({"msg":"Succesfully updated","status":200})
     else:

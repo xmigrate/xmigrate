@@ -116,7 +116,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
                   for snapshot_detail in import_task['SnapshotDetails']:
                      Disk.objects(host=hostname, project=project, mnt_path=snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0]).update(
                         file_size=str(snapshot_detail['DiskImageSize']), disk_id=snapshot_detail['SnapshotId'], 
-                        vhd=snapshot_detail['UserBucket']['S3Key'], upsert=True)
+                        vhd=snapshot_detail['UserBucket']['S3Key'])
                break
             elif response['ImportImageTasks'][0]['Status'] == "deleted":
                BluePrint.objects(host=hostname, project=project).update(status='-35')
