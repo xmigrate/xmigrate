@@ -101,9 +101,9 @@ def create_subnet(project_id, service_account_json, network_name, region, name, 
 async def create_nw(project):
 
     con = create_db_con()
-    location = Project.objects(name=project)[0]['location']
-    project_id = Project.objects(name=project)[0]['gcp_project_id']
-    service_account_json = Project.objects(name=project)[0]['service_account']
+    location = Project.objects(name=project).allow_filtering()[0]['location']
+    project_id = Project.objects(name=project).allow_filtering()[0]['gcp_project_id']
+    service_account_json = Project.objects(name=project).allow_filtering()[0]['service_account']
 
     machines = BluePrint.objects(project=project)
 
@@ -119,7 +119,7 @@ async def create_nw(project):
     for network_name in vpc:
         print("Provisioning a vpc...some operations might take a minute or two.")
         con = create_db_con()
-        created = Network.objects(nw_name=network_name, project=project)[0]['created']
+        created = Network.objects(nw_name=network_name, project=project).allow_filtering()[0]['created']
         if not created:
             try:
                 res = await create_vpc(project_id, service_account_json, network_name, True)
@@ -144,7 +144,7 @@ async def create_nw(project):
         for i in subnet:
             print("Provisioning a subnet...some operations might take a minute or two.")
             con = create_db_con()
-            created = Subnet.objects(cidr=i, project=project)[0]['created']
+            created = Subnet.objects(cidr=i, project=project).allow_filtering()[0]['created']
             if not created:
                 try:
                     subnet_name = project+"subnet"+str(c)

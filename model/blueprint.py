@@ -28,7 +28,6 @@ class BluePrint(Model):
 
 
 
-
 class BluePrintMongo(Document):
     host = StringField(required=True, max_length=200)
     ip = StringField(required=True)

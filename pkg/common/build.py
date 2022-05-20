@@ -148,7 +148,7 @@ async def call_build_network(project):
 # why we are not return anything from here?
 async def start_network_build(project):
     con = create_db_con()
-    p = Project.objects(name=project)
+    p = Project.objects(name=project).allow_filtering()
     if len(p) > 0:
         if p[0]['provider'] == "azure":
             logger("Network build started","info")

@@ -13,13 +13,13 @@ from utils.logger import *
 def create_vnet(rg_name, vnet_name, cidr, location, project):
     print("Provisioning a vnet...some operations might take a minute or two.")
     con = create_db_con()
-    created = Network.objects(cidr=cidr, project=project)[0]['created']
+    created = Network.objects(cidr=cidr, project=project).allow_filtering()[0]['created']
     if not created:
         try:
-            client_id = Project.objects(name=project)[0]['client_id']
-            secret = Project.objects(name=project)[0]['secret']
-            tenant_id = Project.objects(name=project)[0]['tenant_id']
-            subscription_id = Project.objects(name=project)[0]['subscription_id']
+            client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
+            secret = Project.objects(name=project).allow_filtering()[0]['secret']
+            tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
+            subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
             creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
             network_client = NetworkManagementClient(creds,subscription_id)
             poller = network_client.virtual_networks.create_or_update(rg_name, vnet_name, {
@@ -45,12 +45,12 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
 def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
     print("Provisioning a subnet...some operations might take a minute or two.")
     con = create_db_con()
-    created = Subnet.objects(cidr=cidr, project=project)[0]['created']
+    created = Subnet.objects(cidr=cidr, project=project).allow_filtering()[0]['created']
     if not created:
-        client_id = Project.objects(name=project)[0]['client_id']
-        secret = Project.objects(name=project)[0]['secret']
-        tenant_id = Project.objects(name=project)[0]['tenant_id']
-        subscription_id = Project.objects(name=project)[0]['subscription_id']
+        client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
+        secret = Project.objects(name=project).allow_filtering()[0]['secret']
+        tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
+        subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
         creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
         network_client = NetworkManagementClient(creds,subscription_id)
         con.shutdown()
@@ -78,12 +78,12 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
 def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
     print("Provisioning a public IP...some operations might take a minute or two.")
     con = create_db_con()
-    ip_created = BluePrint.objects(project=project, host=host)[0]['ip_created']
+    ip_created = BluePrint.objects(project=project, host=host).allow_filtering()[0]['ip_created']
     if not ip_created:
-        client_id = Project.objects(name=project)[0]['client_id']
-        secret = Project.objects(name=project)[0]['secret']
-        tenant_id = Project.objects(name=project)[0]['tenant_id']
-        subscription_id = Project.objects(name=project)[0]['subscription_id']
+        client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
+        secret = Project.objects(name=project).allow_filtering()[0]['secret']
+        tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
+        subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
         creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
         network_client = NetworkManagementClient(creds,subscription_id)
         con.shutdown()
@@ -135,9 +135,9 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
 
 async def create_nw(project):
     con = create_db_con()
-    rg_name = Project.objects(name=project)[0]["resource_group"]
-    location = Project.objects(name=project)[0]["location"]
-    machines = BluePrint.objects(project=project)
+    rg_name = Project.objects(name=project).allow_filtering()[0]["resource_group"]
+    location = Project.objects(name=project).allow_filtering()[0]["location"]
+    machines = BluePrint.objects(project=project).allow_filtering()
     cidr = []
     subnet = []
     for machine in machines:
