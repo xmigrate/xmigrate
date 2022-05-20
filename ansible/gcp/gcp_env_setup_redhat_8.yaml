@@ -7,17 +7,30 @@
   force_handlers: True
   tasks:
   - block:
+    - name: Upgrade pip to the latest version
+      shell: sudo pip3 install --upgrade pip
+      become: yes
     - name: Install Python packages
       pip:
         name: "{{ item }}"
       with_items:
         - gsutil
-
+      become: yes
+      become_user: root
     rescue:
     - name: Install python packages
       shell: "sudo pip3 install {{ item }}"
       with_items:
         - gsutil
+      become: yes
+      become_user: root
+  
+  - name: Upgrade python packages
+    shell: "sudo pip3 install --upgrade {{ item }}"
+    with_items:
+      - requests
+      - urllib3
+    become: yes
 
   - name: Configure gsutil credentials
     template:

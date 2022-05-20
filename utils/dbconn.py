@@ -64,6 +64,7 @@ def create_db_con():
     sync_table(Bucket)
     sync_table(GcpBucket)
     sync_table(User)
+    sync_table(Disk)
     session.execute("CREATE INDEX IF NOT EXISTS ON blue_print (network);")
     session.execute("CREATE INDEX IF NOT EXISTS ON blue_print (subnet);")
     return session

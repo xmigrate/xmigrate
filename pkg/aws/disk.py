@@ -11,15 +11,11 @@ from model.project import *
 async def start_cloning(project, hostname):
     con = create_db_con()
     try:
-        print("bucket")
         bucket = Bucket.objects(project=project).allow_filtering()[0]['bucket']
         accesskey = Bucket.objects(project=project).allow_filtering()[0]['access_key']
         secret_key = Bucket.objects(project=project).allow_filtering()[0]['secret_key']
-        print("disc")
         public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
-        print("pro")
         user = Project.objects(name=project).allow_filtering()[0]['username']
-        print("compl")
     except Exception as e:
         print("Error occurred: "+str(e))
     load_dotenv()

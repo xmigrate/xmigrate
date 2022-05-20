@@ -9,10 +9,10 @@ from pkg.aws import creds
 
 async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
     con = create_db_con()
-    access_key = Project.objects(name=project)[0]['access_key']
-    secret_key = Project.objects(name=project)[0]['secret_key']
-    location = Project.objects(name=project)[0]['location']
-    public_route = True if BluePrint.objects(project=project, image_id=ami_id)[0]['public_route'] == "true" else False
+    access_key = Project.objects(name=project).allow_filtering()[0]['access_key']
+    secret_key = Project.objects(name=project).allow_filtering()[0]['secret_key']
+    location = Project.objects(name=project).allow_filtering()[0]['location']
+    public_route = True if BluePrint.objects(project=project, image_id=ami_id).allow_filtering()[0]['public_route'] == "true" else False
     con.shutdown()
     session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
     ec2 = session.resource('ec2')
@@ -21,7 +21,7 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
     filters = [{'Name':'name','Values':[ami_id]}]
     response = client.describe_images(Filters=filters)
     ami_id = response['Images'][0]['ImageId']
-    disks = Disk.objects(project=project,host=hostname)
+    disks = Disk.objects(project=project,host=hostname).allow_filtering()
     vol_ids = []
     for disk in disks:
         if disk['mnt_path'] not in ['slash', 'slashboot']:
@@ -38,7 +38,7 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
               },
             )
             dev_id = dev_id + 1
-    BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='95')
+    BluePrint.objects(project=project,host=hostname).update(status='95')
     instances = ec2.create_instances(
         BlockDeviceMappings=vol_ids,
         ImageId=ami_id, 
@@ -54,11 +54,11 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
     for instance in running_instances:
         ip = instance.public_ip_address
     try:
-        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(vm_id=str(instances[0].id), ip=str(ip))
-        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='100')
+        BluePrint.objects(project=project,host=hostname).update(vm_id=str(instances[0].id), ip=str(ip))
+        BluePrint.objects(project=project,host=hostname).update(status='100')
     except Exception as e:
         print(repr(e))
-        BluePrint.objects(project=project,host=hostname,image_id=amiid).update(status='-100')
+        BluePrint.objects(project=project,host=hostname).update(status='-100')
     finally:
         con.shutdown()
 
@@ -66,7 +66,7 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
 async def build_ec2(project, hostname):
     try:
         con = create_db_con()
-        hosts = BluePrint.objects(project=project, host=hostname)
+        hosts = BluePrint.objects(project=project, host=hostname).allow_filtering()
         for host in hosts:
             await create_machine(project,host['subnet_id'],host['image_id'],host['machine_type'], hostname)
         con.shutdown()
@@ -95,9 +95,9 @@ def get_vm_types(project):
     machine_types = []
     try:
         con = create_db_con()
-        access_key = Project.objects(name=project)[0]['access_key']
-        secret_key = Project.objects(name=project)[0]['secret_key']
-        location = Project.objects(name=project)[0]['location']
+        access_key = Project.objects(name=project).allow_filtering()[0]['access_key']
+        secret_key = Project.objects(name=project).allow_filtering()[0]['secret_key']
+        location = Project.objects(name=project).allow_filtering()[0]['location']
         client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=location)
         for ec2_type in ec2_instance_types(client,location):
             cores = ''

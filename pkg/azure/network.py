@@ -27,13 +27,19 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
             vnet_result = poller.result()
             print(
                 "Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
-            
-            BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='5')
-            Network.objects(cidr=cidr, project=project).update(created=True)
+            hosts = [x['host'] for x in BluePrint.objects(network=cidr).filter(project=project).allow_filtering()]
+            print(hosts)
+            for host in hosts:
+                try:
+                    BluePrint.objects(host=host, project=project).update(vpc_id=vnet_result.name,status='5')
+                    print(vnet_result.name)
+                except Exception as e:
+                    BluePrint.objects(host=host, project=project).update(vpc_id=vnet_result.name,status='-5')
+            nw_name = Network.objects(cidr=cidr, project=project).allow_filtering()[0]['nw_name']
+            Network.objects(cidr=cidr, project=project, nw_name=nw_name).update(created=True)
         except Exception as e:
             print("Vnet creation failed to save: "+repr(e))
             logger("Vnet creation failed to save: "+repr(e),"warning")
-            BluePrint.objects(network=cidr, project=project).update(vpc_id=vnet_result.name,status='-5')
             return False
         finally:
             con.shutdown()
@@ -62,8 +68,11 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
         try:
             con = create_db_con()
             print(subnet_result.id)
-            BluePrint.objects(subnet=cidr).update(subnet_id=str(subnet_result.id),status='10')
-            Subnet.objects(cidr=cidr, project=project).update(created=True)
+            hosts = [x['host'] for x in BluePrint.objects(subnet=cidr).filter(project=project).allow_filtering()]
+            for host in hosts:
+                BluePrint.objects(host=host, project=project).update(subnet_id=str(subnet_result.id),status='10')
+            subnet_name = Subnet.objects(cidr=cidr, project=project).allow_filtering()[0]['subnet_name']
+            Subnet.objects(cidr=cidr, project=project, subnet_name=subnet_name).update(created=True)
         except Exception as e:
             print("Subnet creation failed to save: "+repr(e))
             logger("Subnet creation failed to save: "+repr(e),"warning")
@@ -158,7 +167,7 @@ async def create_nw(project):
             subnet_name = project+"subnet"+str(c)
             subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i, project)
         if subnet_created:
-            machines = BluePrint.objects(project=project)
+            machines = BluePrint.objects(project=project).allow_filtering()
             for machine in machines:
                 ip_name = machine['host']
                 subnet_id = machine['subnet_id'] 

@@ -3,7 +3,7 @@ from cassandra.cqlengine.models import Model
 from cassandra.cqlengine import columns
 
 class Network(Model):
-    cidr = columns.Text(primary_key=True, max_length=50)
+    cidr = columns.Text(max_length=50)
     project = columns.Text(primary_key=True, max_length=50)
     nw_name = columns.Text(primary_key=True, max_length=50)
     created = columns.Boolean(required=True, default=False)

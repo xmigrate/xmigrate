@@ -13,10 +13,10 @@ from azure.mgmt.compute.models import DiskCreateOptionTypes
 
 def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks):
     con = create_db_con()
-    client_id = Project.objects(name=project)[0]['client_id']
-    secret = Project.objects(name=project)[0]['secret']
-    tenant_id = Project.objects(name=project)[0]['tenant_id']
-    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
+    secret = Project.objects(name=project).allow_filtering()[0]['secret']
+    tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
+    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
     creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
     compute_client = ComputeManagementClient(creds,subscription_id)
     con.shutdown()
@@ -80,14 +80,14 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
 
 async def create_vm(project, hostname):
     con = create_db_con()
-    rg_name = Project.objects(name=project)[0]['resource_group']
-    location = Project.objects(name=project)[0]['location']
-    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    rg_name = Project.objects(name=project).allow_filtering()[0]['resource_group']
+    location = Project.objects(name=project).allow_filtering()[0]['location']
+    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
     username = "xmigrate"
     password = "Xmigrate@321"
-    machines = BluePrint.objects(project=project, host=hostname)
+    machines = BluePrint.objects(project=project, host=hostname).allow_filtering()
     for machine in machines:
-        disks = Disk.objects(project=project, host=machine['host'])
+        disks = Disk.objects(project=project, host=machine['host']).allow_filtering()
         data_disks = []
         image_name = ''
         for disk in disks:
@@ -118,11 +118,11 @@ def get_vm_types(project):
     machine_types = []
     try:
         con = create_db_con()
-        subscription_id = Project.objects(name=project)[0]['subscription_id']
-        client_id = Project.objects(name=project)[0]['client_id']
-        tenant_id = Project.objects(name=project)[0]['tenant_id']
-        secret_id = Project.objects(name=project)[0]['secret']
-        location = Project.objects(name=project)[0]['location']
+        subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
+        client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
+        tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
+        secret_id = Project.objects(name=project).allow_filtering()[0]['secret']
+        location = Project.objects(name=project).allow_filtering()[0]['location']
         creds = ServicePrincipalCredentials(client_id=client_id, secret=secret_id, tenant=tenant_id)
         client = ComputeManagementClient(creds, subscription_id)
         machine_types = list_available_vm_sizes(client, region = location, minimum_cores = 1, minimum_memory_MB = 768)
