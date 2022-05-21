@@ -14,31 +14,7 @@ from model.project import *
 from model.network import *
 from model.user import *
 
-
-
 load_dotenv()
-
-db = getenv("MONGO_DB")
-couch_db = getenv("COUCH_DB")
-
-# def create_db_con():
-#     con = connect(host=db)
-#     return con
-
-#########CouchDB#############
-def create_couchdb_con():
-    con = couchdb.Server(couch_db)
-    return con
-
-def couchdb_con():
-    con = create_couchdb_con()
-    try:
-        db = con['migration']
-    except couchdb.http.ResourceNotFound:
-        db = con.create('migration')
-    return db
-
-##################################
 
 cass_db = getenv("CASS_DB")
 cass_password = getenv("CASS_PASSWORD")
@@ -68,17 +44,3 @@ def create_db_con():
     session.execute("CREATE INDEX IF NOT EXISTS ON blue_print (network);")
     session.execute("CREATE INDEX IF NOT EXISTS ON blue_print (subnet);")
     return session
-
-
-# from cassandra.cqlengine import columns
-# from cassandra.cqlengine import connection
-# from datetime import datetime
-# from cassandra.cqlengine.management import sync_table
-# from cassandra.cqlengine.models import Model
-
-# #first, define a model
-# class ExampleModel(Model):
-#     project      = columns.Text(primary_key=True)
-#     example_type    = columns.Integer(index=True)
-#     created_at      = columns.DateTime()
-#     hostname     = columns.Text(primary_key=True)
