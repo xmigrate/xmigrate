@@ -22,7 +22,7 @@ async def get_blueprint():
     if request.method == 'GET':
         project = request.args.get('project')
         con = create_db_con()
-        return jsonify(Discover.objects(project=project).to_json())
+        return jsonify([dict(x) for x in Discover.objects(project=project).allow_filtering()])
     else:
         return jsonify({"status":500, "msg": "method not supported"})
 
@@ -134,8 +134,8 @@ async def create_blueprint():
         con = create_db_con()
         for machine in machines:
             print(machine)
-            BluePrint.objects(host=machine['hostname']).update(machine_type=machine['machine_type'],public_route=bool(machine['type']))
-        con.close()
+            BluePrint.objects(project=project,host=machine['hostname']).update(machine_type=machine['machine_type'],public_route=bool(machine['type']))
+        con.shutdown()
         return jsonify({"msg":"Succesfully updated","status":200})
     else:
         return jsonify({"msg":"cannot read project name","status":500})

@@ -26,12 +26,12 @@ We have shipped xmigrate with the below features in our latest beta [release](ht
 xmigrate is build on below techstack
 - Quart python web framework
 - Ansible
-- Mongodb
+- Cassandra
 
 xmigrate is a web application which run as a container in your local machine. 
 
 All the web-services and payloads are written in python. 
-Ansible is used to prepare the servers ready for migration. MongoDB is used to store user, project, cloud environment and other metadata related to the VM which needs to be migrated.
+Ansible is used to prepare the servers ready for migration. Casandra DB is used to store user, project, cloud environment and other metadata related to the VM which needs to be migrated.
 
 ## Future Roadmap
 - Support for more OS versions

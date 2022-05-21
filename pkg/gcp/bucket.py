@@ -16,14 +16,14 @@ def create_bucket(project, bucket,access_key,secret_key):
         logger(str(e),"warning")
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 def update_bucket(project, bucket,access_key,secret_key):
     con = create_db_con()
     project_id = Project.objects(name=project)[0]['gcp_project_id']
     try:
-        GcpBucket.objects(project=project).update(
-            bucket=bucket,  access_key=access_key,secret_key=secret_key,project_id=project_id,upsert=True)
+        GcpBucket.objects(project=project, bucket=bucket).update(
+            access_key=access_key,secret_key=secret_key,project_id=project_id)
         return True
     except Exception as e:
         print("Boss you have to see this!!")
@@ -31,11 +31,11 @@ def update_bucket(project, bucket,access_key,secret_key):
         logger(str(e),"warning")
         return False
     finally:
-        con.close()
+        con.shutdown()
 
 def get_storage(name):
     con = create_db_con()
     if name == "all":
-        return Storage.objects.to_json()
+        return [dict(x) for x in Storage.objects.allow_filtering()]
     else:
-        return Storage.objects(project=name).to_json()
+        return [dict(x) for x in Storage.objects(project=name).allow_filtering()]

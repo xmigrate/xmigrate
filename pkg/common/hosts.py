@@ -8,28 +8,28 @@ def fetch_hosts(project):
         con = create_db_con()
         response = {}
         sub_hosts = {}
-        hosts = BluePrint.objects(project=project)
+        hosts = BluePrint.objects(project=project).allow_filtering()
         for host in hosts:
-            sub_name = Subnet.objects(project=project,cidr=host['subnet'])
+            sub_name = Subnet.objects(project=project,cidr=host['subnet']).allow_filtering()
             print(sub_name)
             subnet_name = sub_name[0]['subnet_name']
             if subnet_name not in sub_hosts.keys():
                 sub_hosts[subnet_name] = []
-            machine = host.to_mongo().to_dict()
+            machine = dict(host)
             del(machine['_id'])
             sub_hosts[subnet_name].append(machine)
         print(sub_hosts)
         for subnet in sub_hosts.keys():
-            nw_name = Subnet.objects(project=project,subnet_name=subnet)
+            nw_name = Subnet.objects(project=project,subnet_name=subnet).allow_filtering()
             nw_name = nw_name[0]['nw_name']
             if nw_name not in response.keys():
                 response[nw_name] = []
             response[nw_name].append(sub_hosts[subnet])
-            con.close()
+            con.shutdown()
         return response
     except Exception as e:
         print("Reading from db failed: "+repr(e))
-        con.close()
+        con.shutdown()
         return {"msg":"Failed fetching details"}
 
 
@@ -37,9 +37,9 @@ def update_hosts(project,machines):
     try:
         con = create_db_con()
         for machine in machines:
-            subnet = Subnet.objects(project=project, cidr = machine['subnet'])
-            network = Network.objects(project=project, nw_name = subnet[0]['nw_name'])
-            provider = Project.objects(name=project)[0]['provider']
+            subnet = Subnet.objects(project=project, cidr = machine['subnet']).allow_filtering()
+            network = Network.objects(project=project, nw_name = subnet[0]['nw_name']).allow_filtering()
+            provider = Project.objects(name=project).allow_filtering()[0]['provider']
             if machine['public_route'] == 'Public':
                 machine['public_route'] = True
             elif machine['public_route'] == 'Private':
@@ -48,27 +48,26 @@ def update_hosts(project,machines):
                 BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['nw_name'])
             else:
                 BluePrint.objects(host=machine['host'],project=project).update(machine_type=machine['machine_type'],public_route=machine['public_route'],subnet=machine['subnet'],network=network[0]['cidr'])
-        con.close()
+        con.shutdown()
         return True
     except Exception as e:
         print(repr(e))
-        con.close()
+        con.shutdown()
         return False
 
 
 def fetch_all_hosts(project):
     try:
         con = create_db_con()
-        subnets = Subnet.objects(project=project)
-        networks = Network.objects(project=project)
+        subnets = Subnet.objects(project=project).allow_filtering()
+        networks = Network.objects(project=project).allow_filtering()
         subnet_object = []
         network_objects = []
         for subnet in subnets:
             host_objects = [] 
-            hosts = BluePrint.objects(project=project,subnet=subnet['cidr'])
+            hosts = BluePrint.objects(project=project,subnet=subnet['cidr']).allow_filtering()
             for host in hosts:
-                machine = host.to_mongo().to_dict()
-                del(machine['_id'])
+                machine = dict(host)
                 host_objects.append(machine)
             subnet_object.append({"name":subnet['subnet_name'],"cidr":subnet['cidr'],"subnet_type":subnet['subnet_type'],"nw_name":subnet['nw_name'],"hosts":host_objects})
         for network in networks:

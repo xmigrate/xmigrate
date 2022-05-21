@@ -87,7 +87,7 @@ export default class SignIn extends Component {
           loader:false,
         });
         console.log("Summiting",);
-        if(JSON.parse(res.data).length === 0){
+        if(res.data.length === 0){
           Auth.login(() => {
             this.props.history.push("/project");
           })

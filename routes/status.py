@@ -11,8 +11,8 @@ async def migration_status():
     if request.method == 'GET':
         project = request.args.get('project')
         con = create_db_con()
-        machines = json.loads(BluePrint.objects(project=project).to_json())
-        con.close()
+        machines = [dict(x) for x in BluePrint.objects(project=project).allow_filtering()]
+        con.shutdown()
         return jsonify(machines)
     else:
         return jsonify({"status":500, "msg": "method not supported"})

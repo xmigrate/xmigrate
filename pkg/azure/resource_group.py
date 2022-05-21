@@ -34,7 +34,7 @@ async def create_rg(project):
             print(
                 "Provisioned resource group"+ rg_result.name+" in the "+rg_result.location+" region")
             Project.objects(name=project).update(resource_group=rg_result.name, resource_group_created=True)
-            con.close()
+            con.shutdown()
             return True
         except Exception as e:
             print("Resource group creation failed "+str(e))
