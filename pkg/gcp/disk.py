@@ -19,9 +19,9 @@ from pathlib import Path
 
 async def start_image_creation_worker(project, disk_containers, host):
     con = create_db_con()
-    location = Project.objects(name=project)[0]['location']
-    project_id = Project.objects(name=project)[0]['gcp_project_id']
-    service_account = Project.objects(name=project)[0]['service_account']
+    location = Project.objects(name=project).allow_filtering()[0]['location']
+    project_id = Project.objects(name=project).allow_filtering()[0]['gcp_project_id']
+    service_account = Project.objects(name=project).allow_filtering()[0]['service_account']
     service = get_service_compute_v1(service_account)
     for disk in disk_containers:
         if disk['os_disk']:
@@ -94,7 +94,7 @@ async def start_image_creation_worker(project, disk_containers, host):
                     print("done.")
                     if 'error' in result:
                         raise Exception(result['error'])
-                    Disk.objects(host=host, project=project, vhd=disk['image_path'].split('/')[-1]).update(disk_id=result['targetLink'])
+                    Disk.objects(host=host, project=project, mnt_path=disk["mnt_path"]).update(disk_id=result['targetLink'])
                     BluePrint.objects(host=host, project=project).update(status='42')
                     break
                 await asyncio.sleep(1)
@@ -104,18 +104,18 @@ async def start_image_creation(project, hostname):
    bucket_name = ''
    hosts = []
    try:
-      bucket = GcpBucket.objects(project=project)[0]
+      bucket = GcpBucket.objects(project=project).allow_filtering()[0]
       if hostname == "all":
-         hosts = BluePrint.objects(project=project)
+         hosts = BluePrint.objects(project=project).allow_filtering()
       else:
-         hosts = BluePrint.objects(project=project,host=hostname)
+         hosts = BluePrint.objects(project=project,host=hostname).allow_filtering()
       bucket_name = bucket['bucket']
    except Exception as e:
       print(repr(e))
    finally:
       con.shutdown()
    for host in hosts:
-      disks = Discover.objects(project=project,host=host['host'])[0]['disk_details']
+      disks = Discover.objects(project=project,host=host['host']).allow_filtering()[0]['disk_details']
       disk_containers = [] 
       for disk in disks:
          image_name = host['host']+disk['mnt_path'].replace("/","-slash")+'.tar.gz'
@@ -136,11 +136,11 @@ async def start_image_creation(project, hostname):
 async def start_cloning(project, hostname):
     con = create_db_con()
     try:
-        bucket = GcpBucket.objects(project=project)[0]['bucket']
-        accesskey = GcpBucket.objects(project=project)[0]['access_key']
-        secret_key = GcpBucket.objects(project=project)[0]['secret_key']
-        public_ip = Discover.objects(project=project,host=hostname)[0]['public_ip']
-        user = Project.objects(name=project)[0]['username']
+        bucket = GcpBucket.objects(project=project).allow_filtering()[0]['bucket']
+        accesskey = GcpBucket.objects(project=project).allow_filtering()[0]['access_key']
+        secret_key = GcpBucket.objects(project=project).allow_filtering()[0]['secret_key']
+        public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
+        user = Project.objects(name=project).allow_filtering()[0]['username']
     except Exception as e:
         print("Error occurred: "+str(e))
     load_dotenv()
@@ -153,7 +153,7 @@ async def start_cloning(project, hostname):
     print(command)
     process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
     await process.wait()
-    machines = BluePrint.objects(project=project)
+    machines = BluePrint.objects(project=project).allow_filtering()
     machine_count = len(machines)
     flag = True
     status_count = 0
@@ -169,15 +169,13 @@ async def start_cloning(project, hostname):
 
 async def download_worker(osdisk_raw,project,host):
     con = create_db_con()
-    bucket = GcpBucket.objects(project=project)[0]['bucket']
-    secret_key = GcpBucket.objects(project=project)[0]['secret_key']
-    access_key = GcpBucket.objects(project=project)[0]['access_key']
-    project_id = GcpBucket.objects(project=project)[0]['project_id']
-    
+    bucket = GcpBucket.objects(project=project).allow_filtering()[0]['bucket']
+    secret_key = GcpBucket.objects(project=project).allow_filtering()[0]['secret_key']
+    access_key = GcpBucket.objects(project=project).allow_filtering()[0]['access_key']
+    project_id = GcpBucket.objects(project=project).allow_filtering()[0]['project_id']
     try:
         cur_path = os.getcwd()
         path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')+"/disk.raw"
-
         boto_path = cur_path+"/ansible/"+project+"/.boto"
         if not os.path.exists(boto_path):
             with open(cur_path+"/ansible/"+"gcp/templates/.boto.j2") as file_:
@@ -207,10 +205,10 @@ async def download_worker(osdisk_raw,project,host):
 
 async def upload_worker(osdisk_raw,project,host):
     con = create_db_con()
-    bucket = GcpBucket.objects(project=project)[0]['bucket']
-    secret_key = GcpBucket.objects(project=project)[0]['secret_key']
-    access_key = GcpBucket.objects(project=project)[0]['access_key']
-    project_id = GcpBucket.objects(project=project)[0]['project_id']
+    bucket = GcpBucket.objects(project=project).allow_filtering()[0]['bucket']
+    secret_key = GcpBucket.objects(project=project).allow_filtering()[0]['secret_key']
+    access_key = GcpBucket.objects(project=project).allow_filtering()[0]['access_key']
+    project_id = GcpBucket.objects(project=project).allow_filtering()[0]['project_id']
     pipe_result = ''
     file_size = '0'
     cur_path = os.getcwd()
@@ -226,7 +224,7 @@ async def upload_worker(osdisk_raw,project,host):
         await process3.wait()
         os.popen('echo "tar uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
-        Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split('.raw')[0].split('-')[-1]).update_one(vhd=osdisk_tar, file_size=str(file_size))
+        Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split('.raw')[0].split('-')[-1]).update(vhd=osdisk_tar, file_size=str(file_size))
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")
@@ -267,13 +265,13 @@ async def conversion_worker(osdisk_raw,project,host):
 
 async def start_conversion(project,hostname):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "gcp":
+    if Project.objects(name=project).allow_filtering()[0]['provider'] == "gcp":
         if hostname == "all":
-            machines = BluePrint.objects(project=project)
+            machines = BluePrint.objects(project=project).allow_filtering()
         else:
-            machines = BluePrint.objects(project=project, host=hostname)
+            machines = BluePrint.objects(project=project, host=hostname).allow_filtering()
         for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
                 print(disk_raw)
@@ -290,10 +288,10 @@ async def start_conversion(project,hostname):
 
 async def start_downloading(project,hostname):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "gcp":
-        machines = BluePrint.objects(project=project)
+    if Project.objects(name=project).allow_filtering()[0]['provider'] == "gcp":
+        machines = BluePrint.objects(project=project).allow_filtering()
         for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
                 print(disk_raw)
