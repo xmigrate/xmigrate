@@ -1,38 +1,33 @@
 version: '3.1'
 
 services:
-  mongo:
-    image: bitnami/mongodb:4.2
-    restart: always
-    environment:
-      MONGODB_ROOT_USER: root
-      MONGODB_ROOT_PASSWORD: example
-      MONGODB_DATABASE: migration
+  cassandra:
+    image: docker.io/bitnami/cassandra:4.0
     volumes:
-      - mongo:/bitnami/mongodb
-
-  mongo-express:
-    image: mongo-express
-    restart: always
-    ports:
-      - 8081:8081
+      - cassandra_data:/bitnami
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
-    depends_on:
-     - mongo
-
+      - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_PASSWORD_SEEDER=yes
+      - CASSANDRA_PASSWORD=cassandra
+      # By default, Cassandra autodetects the available host memory and takes as much as it can.
+      # Therefore, memory options are mandatory if multiple Cassandras are launched in the same node.
+      - MAX_HEAP_SIZE=2G
+      - HEAP_NEWSIZE=200M
   app:
-    image: xmigrate/xmigrate:latest
+    build: .
     ports:
       - 8000:80
     environment:
-      MONGO_DB: mongodb://root:example@mongo:27017/migration?authSource=admin
-      BASE_URL: http://<you server ip>:8000/api
+      CASS_PASSWORD: "cassandra"
+      CASS_USER: "cassandra"
+      CASS_DB: "cassandra"
+      BASE_URL: http://<xmigrate_server_ip>:8000/api
     depends_on:
-     - mongo
+     - cassandra
 
 volumes:
-  mongo:
-    name: mongo
+  cassandra_data:
+    driver: local
+  cassandra2_data:
+    driver: local
