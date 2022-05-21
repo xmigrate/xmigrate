@@ -35,7 +35,7 @@ def build_vpc(cidr,public_route, project):
           route = route_table.create_route(DestinationCidrBlock='0.0.0.0/0',GatewayId=ig.id)
           BluePrint.objects(project=project, host=host).update(route_table=route_table.id)
           nw_name = Network.objects(cidr=cidr, project=project).allow_filtering()[0]['nw_name']
-          Network.objects(cidr=cidr, project=project, nw_name=nw_name).update(created=True)
+          Network.objects(project=project, nw_name=nw_name).update(created=True)
       con.shutdown()
     except Exception as e:
       print(repr(e))

@@ -36,7 +36,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
                 except Exception as e:
                     BluePrint.objects(host=host, project=project).update(vpc_id=vnet_result.name,status='-5')
             nw_name = Network.objects(cidr=cidr, project=project).allow_filtering()[0]['nw_name']
-            Network.objects(cidr=cidr, project=project, nw_name=nw_name).update(created=True)
+            Network.objects(project=project, nw_name=nw_name).update(created=True)
         except Exception as e:
             print("Vnet creation failed to save: "+repr(e))
             logger("Vnet creation failed to save: "+repr(e),"warning")
