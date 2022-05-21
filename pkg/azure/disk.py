@@ -21,10 +21,10 @@ from pkg.azure import sas
 
 async def start_downloading(project):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "azure":
-        machines = BluePrint.objects(project=project)
+    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
+        machines = BluePrint.objects(project=project).allow_filtering()
         for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
                 print(disk_raw)
@@ -36,19 +36,19 @@ async def start_downloading(project):
                     logger("Download failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True
     
 
 async def start_conversion(project,hostname):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "azure":
+    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
         if hostname == "all":
-            machines = BluePrint.objects(project=project)
+            machines = BluePrint.objects(project=project).allow_filtering()
         else:
-            machines = BluePrint.objects(project=project, host=hostname)
+            machines = BluePrint.objects(project=project, host=hostname).allow_filtering()
         for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
                 print(disk_raw)
@@ -60,15 +60,15 @@ async def start_conversion(project,hostname):
                     logger("Conversion failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True
 
 async def start_uploading(project):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "azure":
-        machines = BluePrint.objects(project=project)
+    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
+        machines = BluePrint.objects(project=project).allow_filtering()
         for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host'])[0]['disk_details']
+            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
                 print(disk_raw)
@@ -80,18 +80,18 @@ async def start_uploading(project):
                     logger("Upload failed for "+disk_raw,"warning")
                     logger("Here is the error: "+str(e),"warning")
                     return False
-        con.close()
+        con.shutdown()
         return True
 
 
 async def start_cloning(project, hostname):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "azure":
-        public_ip = Discover.objects(project=project,host=hostname)[0]['public_ip']
-        user = Project.objects(name=project)[0]['username']
-        storage = Storage.objects(project=project)[0]['storage']
-        accesskey = Storage.objects(project=project)[0]['access_key']
-        container = Storage.objects(project=project)[0]['container']
+    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
+        public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
+        user = Project.objects(name=project).allow_filtering()[0]['username']
+        storage = Storage.objects(project=project).allow_filtering()[0]['storage']
+        accesskey = Storage.objects(project=project).allow_filtering()[0]['access_key']
+        container = Storage.objects(project=project).allow_filtering()[0]['container']
         sas_token = sas.generate_sas_token(storage,accesskey)
         url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
         load_dotenv()
@@ -106,7 +106,7 @@ async def start_cloning(project, hostname):
             logger(command,"warning")
         process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process.wait()
-        machines = BluePrint.objects(project=project)
+        machines = BluePrint.objects(project=project).allow_filtering()
         machine_count = len(machines)
         flag = True
         status_count = 0
@@ -116,16 +116,16 @@ async def start_cloning(project, hostname):
                     status_count = status_count + 1
             if status_count == machine_count:
                 flag = False
-        con.close()
+        con.shutdown()
         return not flag
 
 
 async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_path, storage_account):
     con = create_db_con()
-    client_id = Project.objects(name=project)[0]['client_id']
-    secret = Project.objects(name=project)[0]['secret']
-    tenant_id = Project.objects(name=project)[0]['tenant_id']
-    subscription_id = Project.objects(name=project)[0]['subscription_id']
+    client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
+    secret = Project.objects(name=project).allow_filtering()[0]['secret']
+    tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
+    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
     creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
     compute_client = ComputeManagementClient(creds,subscription_id)
     async_creation = ''
@@ -171,15 +171,15 @@ async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_
         logger("Disk creation failed: "+repr(e),"error")
         BluePrint.objects(project=project, host=disk_name).update(status='-40')
     finally:
-        con.close()
+        con.shutdown()
 
 async def create_disk(project, hostname):
     con = create_db_con()
-    rg_name = Project.objects(name=project)[0]['resource_group']
-    location = Project.objects(name=project)[0]['location']
-    disks = Disk.objects(project=project,host=hostname)
-    storage_account = Storage.objects(project=project)[0]['storage']
-    container = Storage.objects(project=project)[0]['container']
+    rg_name = Project.objects(name=project).allow_filtering()[0]['resource_group']
+    location = Project.objects(name=project).allow_filtering()[0]['location']
+    disks = Disk.objects(project=project,host=hostname).allow_filtering()
+    storage_account = Storage.objects(project=project).allow_filtering()[0]['storage']
+    container = Storage.objects(project=project).allow_filtering()[0]['container']
     for disk in disks:
         vhd = disk['vhd']
         uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
@@ -190,8 +190,8 @@ async def create_disk(project, hostname):
 
 async def adhoc_image_conversion(project):
     con = create_db_con()
-    if Project.objects(name=project)[0]['provider'] == "azure":
-        machines = BluePrint.objects(project=project)
+    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
+        machines = BluePrint.objects(project=project).allow_filtering()
         for machine in machines:
             osdisk_raw = machine['host']+".raw"
             try:
@@ -199,4 +199,4 @@ async def adhoc_image_conversion(project):
             except Exception as e:
                 print("Conversion failed for "+osdisk_raw)
                 print(str(e))
-    con.close()
+    con.shutdown()

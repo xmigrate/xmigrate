@@ -13,9 +13,9 @@ from utils.logger import *
 
 async def start_ami_creation_worker(bucket_name, image_name, project, disk_containers, hostname):
    con = create_db_con()
-   access_key = Project.objects(name=project)[0]['access_key']
-   secret_key = Project.objects(name=project)[0]['secret_key']
-   region = Project.objects(name=project)[0]['location']
+   access_key = Project.objects(name=project).allow_filtering()[0]['access_key']
+   secret_key = Project.objects(name=project).allow_filtering()[0]['secret_key']
+   region = Project.objects(name=project).allow_filtering()[0]['location']
    import_task_id = ''
    try:
       client = boto3.client('iam', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
@@ -99,7 +99,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
       ]
       )
       import_task_id = response['ImportTaskId']
-      BluePrint.objects(host=hostname).update(status='30')
+      BluePrint.objects(host=hostname, project=project).update(status='30')
       logger("AMI creation started: "+import_task_id,"info")
       if len(import_task_id) > 0:
          while True:
@@ -110,13 +110,12 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
             )
             if response['ImportImageTasks'][0]['Status'] == "completed":
                ami_id = import_task_id
-               BluePrint.objects(host=hostname, project=project).update(image_id=ami_id)
-               BluePrint.objects(host=hostname, project=project).update(status='35')
+               BluePrint.objects(host=hostname, project=project).update(image_id=ami_id, status='35')
                for import_task in response['ImportImageTasks']:
                   for snapshot_detail in import_task['SnapshotDetails']:
                      Disk.objects(host=hostname, project=project, mnt_path=snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0]).update(
                         file_size=str(snapshot_detail['DiskImageSize']), disk_id=snapshot_detail['SnapshotId'], 
-                        vhd=snapshot_detail['UserBucket']['S3Key'], upsert=True)
+                        vhd=snapshot_detail['UserBucket']['S3Key'])
                break
             elif response['ImportImageTasks'][0]['Status'] == "deleted":
                BluePrint.objects(host=hostname, project=project).update(status='-35')
@@ -131,7 +130,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
       logger("Error while creating AMI:"+str(e),"error")
       BluePrint.objects(host=hostname, project=project).update(status='-35')
    finally:
-      con.close()
+      con.shutdown()
 
 
 async def start_ami_creation(project, hostname):
@@ -140,18 +139,18 @@ async def start_ami_creation(project, hostname):
    bucket_name = ''
    hosts = []
    try:
-      bucket = Bucket.objects(project=project)[0]
+      bucket = Bucket.objects(project=project).allow_filtering()[0]
       if hostname == "all":
-         hosts = BluePrint.objects(project=project)
+         hosts = BluePrint.objects(project=project).allow_filtering()
       else:
-         hosts = BluePrint.objects(project=project,host=hostname)
+         hosts = BluePrint.objects(project=project,host=hostname).allow_filtering()
       bucket_name = bucket['bucket']
    except Exception as e:
       print(repr(e))
    finally:
-      con.close()
+      con.shutdown()
    for host in hosts:
-      disks = Discover.objects(project=project,host=host['host'])[0]['disk_details']
+      disks = Discover.objects(project=project,host=host['host']).allow_filtering()[0]['disk_details']
       disk_containers = [] 
       for disk in disks:
          image_name = host['host']+disk['mnt_path'].replace("/","-slash")+'.img'

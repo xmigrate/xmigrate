@@ -43,7 +43,7 @@ export default class HeaderComponent extends Component {
                             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
 
                                  {this.state.Projects.map((pro)=>(
-                                     <div className="dropdown-item" key={pro._id.$oid} onClick={()=>this.props.onChangeProject(pro)}>{pro.name}</div>
+                                     <div className="dropdown-item" key={pro.name} onClick={()=>this.props.onChangeProject(pro)}>{pro.name}</div>
                                 ))} 
                              
                             </div>

@@ -31,10 +31,10 @@ async def master_status_update():
             Discover.objects(host=class_obj.get('host'), project=class_obj.get('project')).update(**update_data)
     except Exception as e:
         print(e)
-        con.close()
+        con.shutdown()
         return jsonify({'status': '500', 'message': str(e)}), 500
     finally:
-        con.close()
+        con.shutdown()
     return jsonify({'status': '200'}), 200
 
 @app.route("/master/disks/get/<project>/<hostname>", methods=['GET'])
@@ -45,8 +45,8 @@ async def get_disks(project, hostname):
         disks=  Discover.objects(host=hostname,project=project)[0]['disk_details']
     except Exception as e:
         print(e)
-        con.close()
+        con.shutdown()
         return jsonify({'status': '500', 'message': str(e)}), 500
-    con.close()
+    con.shutdown()
     return jsonify({'status': '200','data': disks}), 200
 

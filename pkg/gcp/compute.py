@@ -27,9 +27,9 @@ def get_vm_types(project):
     machine_types = []
     try:
         con = create_db_con()
-        service_account = Project.objects(name=project)[0]['service_account']
-        location = Project.objects(name=project)[0]['location']
-        project_id = Project.objects(name=project)[0]['gcp_project_id']
+        service_account = Project.objects(name=project).allow_filtering()[0]['service_account']
+        location = Project.objects(name=project).allow_filtering()[0]['location']
+        project_id = Project.objects(name=project).allow_filtering()[0]['gcp_project_id']
         machines = list_machine_type(project_id, service_account, location+'-a')
         for machine in machines:
             machine_types.append({'vm_name': machine})
@@ -38,7 +38,7 @@ def get_vm_types(project):
         print(repr(e))
         flag = False
     finally:
-        con.close()
+        con.shutdown()
     return machine_types, flag
 
 
@@ -84,11 +84,10 @@ def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_s
 async def build_compute(project, hostname):
     try:
         con = create_db_con()
-        hosts = BluePrint.objects(project=project, host=hostname)
-
-        location = Project.objects(name=project)[0]['location']
-        project_id = Project.objects(name=project)[0]['gcp_project_id']
-        service_account = Project.objects(name=project)[0]['service_account']
+        hosts = BluePrint.objects(project=project, host=hostname).allow_filtering()
+        location = Project.objects(name=project).allow_filtering()[0]['location']
+        project_id = Project.objects(name=project).allow_filtering()[0]['gcp_project_id']
+        service_account = Project.objects(name=project).allow_filtering()[0]['service_account']
 
         for host in hosts:
             machine_type = host['machine_type']
@@ -96,7 +95,7 @@ async def build_compute(project, hostname):
             image_id = host['image_id']
             subnet = host['subnet_id'].split('v1')[1].split('/')[-1]
             network = host['vpc_id'].split('v1')[1].split('/')[-1]
-            disks = Disk.objects(host=hostname, project=project)
+            disks = Disk.objects(host=hostname, project=project).allow_filtering()
             extra_disks = []
             for disk in disks:
                 if disk["mnt_path"] in ["slash", "slashboot"]:
@@ -112,16 +111,16 @@ async def build_compute(project, hostname):
             print("Extra disks!!")
             print(extra_disks)
             try:
-                BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='95')
+                BluePrint.objects(project=project, host=hostname).update(status='95')
                 vm = create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, extra_disks)
                 print(vm)
-                BluePrint.objects(project=project, host=hostname,image_id=image_id).update(status='100')
+                BluePrint.objects(project=project, host=hostname).update(status='100')
                 ## todo watch vm status 
-                con.close()
+                con.shutdown()
                 return True
             except Exception as e:
                 print(e)
-                con.close()
+                con.shutdown()
                 return False
         return True
     except Exception as e:
@@ -129,4 +128,4 @@ async def build_compute(project, hostname):
         print(repr(e))
         return False
     finally:
-        con.close()
+        con.shutdown()

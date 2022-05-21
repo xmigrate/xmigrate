@@ -101,11 +101,11 @@ def create_subnet(project_id, service_account_json, network_name, region, name, 
 async def create_nw(project):
 
     con = create_db_con()
-    location = Project.objects(name=project)[0]['location']
-    project_id = Project.objects(name=project)[0]['gcp_project_id']
-    service_account_json = Project.objects(name=project)[0]['service_account']
+    location = Project.objects(name=project).allow_filtering()[0]['location']
+    project_id = Project.objects(name=project).allow_filtering()[0]['gcp_project_id']
+    service_account_json = Project.objects(name=project).allow_filtering()[0]['service_account']
 
-    machines = BluePrint.objects(project=project)
+    machines = BluePrint.objects(project=project).allow_filtering()
 
     vpc = []
     subnet = []
@@ -119,19 +119,23 @@ async def create_nw(project):
     for network_name in vpc:
         print("Provisioning a vpc...some operations might take a minute or two.")
         con = create_db_con()
-        created = Network.objects(nw_name=network_name, project=project)[0]['created']
+        created = Network.objects(nw_name=network_name, project=project).allow_filtering()[0]['created']
         if not created:
             try:
                 res = await create_vpc(project_id, service_account_json, network_name, True)
-                BluePrint.objects(network=network_name, project=project).update(vpc_id=res['targetLink'], status='10')
-                Network.objects(nw_name=network_name, project=project).update(created=True, upsert=True)
+                hosts = [x['host'] for x in BluePrint.objects(network=network_name, project=project).allow_filtering()]
+                for host in hosts:
+                    try:
+                        BluePrint.objects(host=host, project=project).update(vpc_id=res['targetLink'], status='10')
+                    except Exception as e:
+                        BluePrint.objects(host=host, project=project).update(vpc_id=res, status='-10')
+                Network.objects(nw_name=network_name, project=project).update(created=True)
             except Exception as e:
                 print("Vnet creation failed to save: "+repr(e))
                 logger("Vnet creation failed to save: "+repr(e), "warning")
-                BluePrint.objects(network=network_name, project=project).update(vpc_id=res, status='-10')
                 vpc_created.append(False)
             finally:
-                con.close()
+                con.shutdown()
             vpc_created.append(True)
         else:
             vpc_created.append(True)
@@ -144,24 +148,29 @@ async def create_nw(project):
         for i in subnet:
             print("Provisioning a subnet...some operations might take a minute or two.")
             con = create_db_con()
-            created = Subnet.objects(cidr=i, project=project)[0]['created']
+            created = Subnet.objects(cidr=i, project=project).allow_filtering()[0]['created']
             if not created:
                 try:
                     subnet_name = project+"subnet"+str(c)
                     subnet_result = create_subnet(project_id, service_account_json,network_name, location, subnet_name, i)
-                    BluePrint.objects(subnet=i,project=project).update(subnet_id=str(subnet_result['targetLink']),status='20')
-                    Subnet.objects(cidr=i, project=project).update(created=True, upsert=True)
+                    hosts = [x['host'] for x in BluePrint.objects(subnet=i,project=project).allow_filtering()]
+                    for host in hosts:
+                        try:
+                            BluePrint.objects(host=host,project=project).update(subnet_id=str(subnet_result['targetLink']),status='20')
+                        except Exception as e:
+                            BluePrint.objects(host=host,project=project).update(subnet_id=str(subnet_result['targetLink']),status='-20')
+                    subnet_name = Subnet.objects(cidr=i, project=project).allow_filtering()[0]['subnet_name']
+                    Subnet.objects(cidr=i, project=project, subnet_name=subnet_name).update(created=True)
                 except Exception as e:
-                    BluePrint.objects(subnet=i,project=project).update(subnet_id=str(subnet_result['targetLink']),status='-20')
                     print("Subnet creation failed to save: "+repr(e))
                     logger("Subnet creation failed to save: "+repr(e), "warning")
                     subnet_created.append(False) 
                 finally:
-                    con.close()
+                    con.shutdown()
                 subnet_created.append(True) 
             else:
                 subnet_created.append(True) 
         if False in subnet_created:
             return False      
-    con.close()
+    con.shutdown()
     return True

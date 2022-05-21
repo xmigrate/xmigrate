@@ -11,6 +11,7 @@
       apt:
         pkg:
         - python3-dev
+        - python3-pip
         - python3-setuptools 
         - libffi-dev
         - gcc
@@ -33,7 +34,7 @@
         executable: /usr/local/bin/pip3
     rescue:
     - name: Install python packages
-      shell: "sudo /usr/local/bin/pip3 install {{ item }}"
+      shell: "sudo /usr/bin/pip3 install {{ item }}"
       with_items:
         - gsutil
       

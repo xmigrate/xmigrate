@@ -1,7 +1,27 @@
 from mongoengine import *
+from cassandra.cqlengine.models import Model
+from cassandra.cqlengine import columns
 
+class Project(Model):
+    provider = columns.Text(required=True, max_length=20)
+    location = columns.Text(required=True)
+    name = columns.Text(primary_key=True, max_length=50)
+    resource_group = columns.Text(max_length=100)
+    subscription_id = columns.Text(max_length=100)
+    client_id = columns.Text(max_length=150)
+    secret = columns.Text(max_length=150)
+    tenant_id = columns.Text(max_length=150)
+    users = columns.List(value_type=columns.Text(), required=True)
+    access_key = columns.Text(max_length=150)
+    secret_key = columns.Text(max_length=150)
+    resource_group_created = columns.Boolean(default=False)
+    username = columns.Text(max_length=150)
+    password = columns.Text(max_length=150)
+    public_ip = columns.List(value_type=columns.Text())
+    service_account = columns.Map(key_type=columns.Text(), value_type=columns.Text())
+    gcp_project_id = columns.Text(max_length=150)
 
-class Project(Document):
+class ProjectMongo(Document):
     provider = StringField(required=True, max_length=20)
     location = StringField(required=True)
     name = StringField(required=True, max_length=50, unique=True)
