@@ -1,30 +1,48 @@
-from __main__ import app
+from fastapi import Depends
+from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
+from app import app
 import os
 from quart import jsonify, request
 from pkg.common import project
 from quart_jwt_extended import jwt_required, get_jwt_identity
+from routes.auth import TokenData, get_current_user
+from typing import Union
 
-@app.route('/project/create', methods=['POST'])
-@jwt_required
-async def project_create():
-    if request.method == 'POST':
-        data = await request.get_json()
-        project_created = await project.create_project(data, get_jwt_identity())
-        if project_created:
-            return jsonify({'status': '200'})
-        else:
-            return jsonify({'status': '500'})
+class ProjectCreate(BaseModel):
+    provider: Union[str,None] = None
+    location: Union[str,None] = None
+    name: Union[str,None] = None
+    resource_group: Union[str,None] = None
+    subscription_id: Union[str,None] = None
+    client_id: Union[str,None] = None
+    secret: Union[str,None] = None
+    tenant_id: Union[str,None] = None
+    users: Union[list,None] = None
+    access_key: Union[str,None] = None
+    secret_key: Union[str,None] = None
+    resource_group_created: Union[bool,None] = None
+    username: Union[str,None] = None
+    password: Union[str,None] = None
+    public_ip: Union[list,None] = None
+    service_account: Union[dict,None] = None
+    gcp_project_id: Union[str,None] = None
 
 
-@app.route('/project/get', methods=['GET'])
-@jwt_required
-async def project_get():
-    if request.method == 'GET':
-        name = request.args.get('name')
-        current_user = get_jwt_identity()
-        return jsonify(project.get_project(name, current_user)), 200
+@app.post('/project')
+async def project_create(data: ProjectCreate, current_user: TokenData = Depends(get_current_user)):
+    current_user = current_user['username']
+    project_created = await project.create_project(data, current_user)
+    if project_created:
+        return jsonable_encoder({'status': '200'})
     else:
-        return jsonify(msg="method not supported"), 400
+        return jsonable_encoder({'status': '500'})
+
+
+@app.get('/project')
+async def project_get(name: str, current_user: TokenData = Depends(get_current_user)):
+    current_user = current_user['username']
+    return jsonable_encoder(project.get_project(name, current_user))
 
 @app.route('/project/update', methods=['POST'])
 @jwt_required

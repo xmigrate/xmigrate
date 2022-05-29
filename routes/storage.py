@@ -1,4 +1,4 @@
-from __main__ import app
+from app import app
 import os
 from quart import jsonify, request
 from pkg.azure import storage as st
