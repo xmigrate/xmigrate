@@ -7,12 +7,6 @@ from pydantic import BaseModel
 from typing import Union
 
 
-# from quart import jsonify, request
-# from quart_jwt_extended import (
-#     JWTManager, jwt_required, create_access_token,
-#     get_jwt_identity
-# )
-
 from pkg.common import user
 
 class UsernamePassword(BaseModel):
