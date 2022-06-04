@@ -1,4 +1,4 @@
-from __main__ import app
+from app import app
 from quart import jsonify
 from utils.logger import *
 

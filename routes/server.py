@@ -1,4 +1,4 @@
-from __main__ import app
+from app import app
 from pkg.common.nodes import *
 from quart import request,render_template
 from quart_jwt_extended import jwt_required, get_jwt_identity
