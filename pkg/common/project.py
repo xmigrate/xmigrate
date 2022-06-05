@@ -17,25 +17,25 @@ def get_project(name, user):
 async def create_project(data, user):
     con = create_db_con()
     users = [user]
-    provider = data['provider']
+    provider = data.provider
     if provider == 'azure':
-        location = data['location']
-        name = data['name']
-        resource_group = data['resource_group']
-        subscription_id = data['subscription_id']
-        client_id = data['client_id']
-        secret = data['secret_id']
-        tenant_id = data['tenant_id']
+        location = data.location
+        name = data.name
+        resource_group = data.resource_group
+        subscription_id = data.subscription_id
+        client_id = data.client_id
+        secret = data.secret_id
+        tenant_id = data.tenant_id
         post = Project(name=name, provider=provider, users=users, location=location, resource_group=resource_group,
                        subscription_id=subscription_id, client_id=client_id, secret=secret, tenant_id=tenant_id)
     elif provider == 'aws':
         aws_dir = os.path.expanduser('~/.aws')
         if not os.path.exists(aws_dir):
             os.mkdir(aws_dir)
-        name = data['name']
-        access_key = data['access_key']
-        secret_key = data['secret_key']
-        location = data['location']
+        name = data.name
+        access_key = data.access_key
+        secret_key = data.secret_key
+        location = data.location
         credentials_str = '['+name+']\naws_access_key_id = ' + \
             access_key+'\n' + 'aws_secret_access_key = '+secret_key
         with open(aws_dir+'/credentials', 'w+') as writer:
@@ -46,10 +46,10 @@ async def create_project(data, user):
         post = Project(name=name, provider=provider, users=users,
                        location=location, access_key=access_key, secret_key=secret_key)
     elif provider == 'gcp':
-        location = data['location']
-        name = data['name']
-        project_id = data['project_id']
-        service_account = data['service_account']
+        location = data.location
+        name = data.name
+        project_id = data.project_id
+        service_account = data.service_account
         post = Project(name=name, provider=provider, users=users, location=location,
                            service_account=service_account, gcp_project_id=project_id)
 

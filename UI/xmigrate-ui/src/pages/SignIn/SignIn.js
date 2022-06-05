@@ -65,7 +65,7 @@ export default class SignIn extends Component {
     this.setState({
       loader:true,
     });
-    await PostLoginService(LOGIN, formdata).then((res) => {
+    await PostLoginService(LOGIN, formData).then((res) => {
       let input = {};
       console.log(res);
       if(res===401){
@@ -169,7 +169,7 @@ export default class SignIn extends Component {
                         id="exampleInputEmail1"
                         aria-describedby="emailHelp"
                         placeholder="User Name"
-                        name="UserId"
+                        name="username"
                       />
                     </Form.Group>
                     <Form.Group className="passSpa">

@@ -155,7 +155,9 @@ def delete_nw(project,name):
     con = create_db_con()
     try:
         Network.objects(project=project,nw_name=name).delete()
-        Subnet.objects(project=project,nw_name=name).delete()
+        subnets = Subnet.objects(project=project,nw_name=name).allow_filtering()
+        for subnet in subnets:
+            Subnet.objects(project=project,subnet_name=subnet['subnet_name'], cidr=subnet['cidr']).delete()
         con.shutdown()
         return True
     except Exception as e:

@@ -11,6 +11,6 @@ from fastapi.encoders import jsonable_encoder
 @app.get('/migration/status')
 async def migration_status(project: str, current_user: TokenData = Depends(get_current_user)):
     con = create_db_con()
-    machines = json.loads(BluePrint.objects(project=project).to_json())
-    con.close()
+    machines = [dict(x) for x in BluePrint.objects(project=project).allow_filtering()]
+    con.shutdown()
     return jsonable_encoder(machines)

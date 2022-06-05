@@ -20,13 +20,14 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from fastapi import Depends
 from typing import Union
+from fastapi import Depends, HTTPException, status
 
 executor = ProcessPoolExecutor(max_workers=5)
 
 @app.get('/blueprint')
 async def get_blueprint(project: str, current_user: TokenData = Depends(get_current_user)):
     con = create_db_con()
-    return jsonable_encoder(Discover.objects(project=project).to_json())
+    return jsonable_encoder([dict(x) for x in Discover.objects(project=project).allow_filtering()])
 
 class NetworkCreate(BaseModel):
     project: Union[str,None] = None
@@ -59,6 +60,8 @@ class NetworkDelete(BaseModel):
 async def delete_network(req: NetworkDelete, current_user: TokenData = Depends(get_current_user)):
     project = req.project
     nw_name = req.nw_name
+    print(project)
+    print(nw_name)
     if netutils.delete_nw(project,nw_name):
         return jsonable_encoder({"msg":"success", "status":200})
     else:
@@ -136,8 +139,8 @@ async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depe
     con = create_db_con()
     for machine in machines:
         print(machine)
-        BluePrint.objects(host=machine['hostname']).update(machine_type=machine['machine_type'],public_route=bool(machine['type']),bandwidth=machine['bandwidth'])
-    con.close()
+        BluePrint.objects(host=machine['hostname'], project=project).update(machine_type=machine['machine_type'],public_route=bool(machine['type']))
+    con.shutdown()
     return jsonable_encoder({"msg":"Succesfully updated","status":200})
 
 class BlueprintHost(BaseModel):
@@ -148,22 +151,9 @@ class BlueprintHost(BaseModel):
 async def image_clone(data: BlueprintHost, current_user: TokenData = Depends(get_current_user)):
     project = data.project
     hostname = data.hostname
-    asyncio.create_task(build.call_start_clone(project, hostname, resume=False))
+    asyncio.create_task(build.call_start_clone(project, hostname))
     return jsonable_encoder({"msg":"Cloning started","status":200})
 
-@app.post('/blueprint/host/clone/resume')
-async def image_clone_resume(data: BlueprintHost, current_user: TokenData = Depends(get_current_user)):
-    project = data.project
-    hostname = data.hostname
-    asyncio.create_task(build.call_start_clone(project, hostname, resume=True))
-    return jsonable_encoder({"msg":"Cloning retrying","status":200})
-
-@app.post('/blueprint/host/clone/restart')
-async def image_clone_restart(data: BlueprintHost, current_user: TokenData = Depends(get_current_user)):
-    project = data.project
-    hostname = data.hostname
-    asyncio.create_task(build.call_start_clone(project, hostname, resume=False))
-    return jsonable_encoder({"msg":"Cloning restarted","status":200})
 
 @app.post('/blueprint/host/convert')
 async def image_convert(data: BlueprintHost, current_user: TokenData = Depends(get_current_user)):

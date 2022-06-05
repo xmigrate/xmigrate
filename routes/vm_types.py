@@ -16,7 +16,7 @@ from utils.dbconn import *
 async def vms_get(project: str, current_user: TokenData = Depends(get_current_user)):
     con = create_db_con()
     provider = Project.objects(name=project)[0]['provider']
-    con.close()
+    con.shutdown()
     if provider == 'azure':
         machine_types, flag = compute.get_vm_types(project)
     elif provider == 'aws':
