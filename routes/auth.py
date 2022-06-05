@@ -1,53 +1,81 @@
-from quart import jsonify, request
-from quart_jwt_extended import (
-    JWTManager, jwt_required, create_access_token,
-    get_jwt_identity
-)
-from __main__ import app
+import jwt
+from app import app, get_settings
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
+from typing import Union
+
+
 from pkg.common import user
 
-@app.route('/login', methods=['POST'])
-async def login():
-    if not request.is_json:
-        return jsonify({"msg": "Missing JSON in request"}), 400
+class UsernamePassword(BaseModel):
+    username: Union[str,None] = None
+    password: Union[str,None] = None
 
-    data = await request.get_json()
-    print(type(data))
-    username = data['username']
-    password = data['password']
+class TokenData(BaseModel):
+    username: str
+
+async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl='login'))):
+    try:
+        payload = jwt.decode(
+            token,
+            get_settings().JWT_SECRET_KEY, algorithms=[get_settings().ALGORITHM])
+        return payload
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='invalid username or password')
+
+
+
+@app.post('/login')
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    '''
+    Authentication endpoint
+    '''
+    username = form_data.username
+    password = form_data.password
+
     if not username:
-        return jsonify({"msg": "Missing username parameter"}), 400
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder(
+            {"msg": "Missing username parameter"}))
     if not password:
-        return jsonify({"msg": "Missing password parameter"}), 400
-    valid_user = user.check_user(username,password)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder(
+            {"msg": "Missing password parameter"}))
+
+    valid_user = user.check_user(username, password)
     if not valid_user:
-        return jsonify({"msg": "Bad username or password"}), 401
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder(
+            {"msg": "Bad username or password"}))
 
-    # Identity can be any data that is json serializable
-    access_token = create_access_token(identity=username)
-    return jsonify(access_token=access_token), 200
+    token_data = {
+        'username': username
+    }
+    access_token = jwt.encode(token_data, get_settings().JWT_SECRET_KEY)
+    response_object = {
+        'access_token': access_token
+    }
+    return jsonable_encoder(response_object)
 
-@app.route('/signup', methods=['POST'])
-async def signup():
-    if not request.is_json:
-        return jsonify({"msg": "Missing JSON in request"}), 400
 
-    data = await request.get_json()
-    username = data['username']
-    password = data['password']
+@app.post('/signup')
+async def signup(username_password: UsernamePassword):
+    username = username_password.username
+    password = username_password.password
     if not username:
-        return jsonify({"msg": "Missing username parameter"}), 400
+        raise HTTPException(status_code=400, detail=jsonable_encoder(
+            {"msg": "Missing username parameter"}))
     if not password:
-        return jsonify({"msg": "Missing password parameter"}), 400
-    user_added = user.add_user(username,password)
-    if user_added:
-        return jsonify({"msg":"User added successfully"}), 200
-    else:
-        return jsonify({"msg":"User addition failed"}), 400
+        raise HTTPException(status_code=400, detail=jsonable_encoder(
+            {"msg": "Missing password parameter"}))
 
+    user_added = user.add_user(username, password)
 
-@app.route('/user', methods=['GET'])
-@jwt_required
-async def username():
-    username = get_jwt_identity()
-    return jsonify(username=username), 200
+    if not user_added:
+        return HTTPException(status_code=400, detail=jsonable_encoder({"msg": "User addition failed"}))
+    return jsonable_encoder({"msg": "User added successfully"})
+
+@app.get('/user', response_model=TokenData)
+async def username(current_user: TokenData = Depends(get_current_user)):
+    return jsonable_encoder(current_user)

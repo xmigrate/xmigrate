@@ -1,4 +1,4 @@
-from __main__ import app
+from app import app
 from quart import render_template,jsonify, flash, request
 from quart_jwt_extended import jwt_required, get_jwt_identity
 

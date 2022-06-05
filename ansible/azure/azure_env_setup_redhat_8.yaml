@@ -11,52 +11,21 @@
         mode: 0777
       become_user: root
       become_method: sudo
-    - name: Copy content to file
-      copy: 
-        content:  | 
-            NETWORKING=yes
-            HOSTNAME=localhost.localdomain
-        dest: /etc/sysconfig/network
-        force: yes
-      become: yes
-      become_user: root
-
-    - name: Copy content to file
-      copy: 
-        content: |
-          DEVICE=eth0
-          ONBOOT=yes
-          BOOTPROTO=dhcp
-          TYPE=Ethernet
-          USERCTL=no
-          PEERDNS=yes
-          IPV6INIT=no
-          NM_CONTROLLED=no
-        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-        force: yes
-      become: yes
-      become_user: root
-
-    - name: Ensure that the network service will start at boot time
-      shell: "sudo systemctl enable network"
+    - name: Ensure that the network service will start at boot time dhcp is enabled
+      shell: | 
+        sudo systemctl enable NetworkManager.service
+        sudo nmcli con mod "System eth0" connection.autoconnect yes ipv4.method auto
       become: yes
       become_user: root  
     
-    - name: grub configure
-      shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,earlyprintk=ttyS0,net.ifnames=0\"
-      ' /etc/default/grub"
+    - name: Edit kernel parameters in grub
+      shell: |
+        sudo grub2-editenv - unset kernelopts
+        sudo sed -i '/GRUB_CMDLINE_LINUX/c\\GRUB_CMDLINE_LINUX=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 earlyprintk=ttyS0 net.ifnames=0\"' /etc/default/grub
+        sudo sed -i '/GRUB_TERMINAL_OUTPUT/c\\GRUB_TERMINAL_OUTPUT=\"serial console\" ' /etc/default/grub
+        sudo sed -i '/GRUB_SERIAL_COMMAND/c\\GRUB_SERIAL_COMMAND=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\" ' /etc/default/grub
       become: true
       become_user: root
-    - name: grub configure
-      shell: "sed -i '/GRUB_TERMINAL_OUTPUT_DEFAULT/c\\GRUB_TERMINAL_OUTPUT_DEFAULT=\"serial console\"
-      ' /etc/default/grub"
-      become: true
-      become_user: root  
-    - name: grub configure
-      shell: "sed -i '/GRUB_SERIAL_COMMAND_DEFAULT/c\\GRUB_SERIAL_COMMAND_DEFAULT=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\"
-      ' /etc/default/grub"
-      become: true
-      become_user: root  
     
     - name: rebuild the grub configuration
       shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
@@ -66,40 +35,33 @@
         path: /etc/ssh/sshd_config
         line: |
           ClientAliveInterval 180  
+        state: present
       become: yes
       become_user: root
-
-    - name: epel-release-latest-7
-      shell: sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
-      ignore_errors: True
       
     - name: Install azure linux agent other tools
       yum:
         name: 
-          - python-pyasn1
+          - WALinuxAgent 
           - cloud-init
           - cloud-utils-growpart
           - gdisk 
           - hyperv-daemons
-          - ntfs-3g
         state: latest
+        update_cache: yes
       become_method: sudo   
       become: yes
       become_user: root 
-
-    - name: Download file
-      shell: sudo yum install https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm -y
-      ignore_errors: yes
-
+   
     - name: Enable azure linux agent
       systemd: 
-        name: waagent
+        name: waagent.service
         enabled: yes
       become: yes
       become_user: root  
     - name: Enable cloud init
       systemd: 
-        name: cloud-init
+        name: cloud-init.service
         enabled: yes
       become: yes
       become_user: root      

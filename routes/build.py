@@ -1,4 +1,4 @@
-from __main__ import app
+from app import app
 from utils.dbconn import *
 from model.discover import *
 from quart import jsonify

@@ -14,6 +14,7 @@ import Loader from '../../components/Loader/Loader'
 import { FaAngleRight } from "react-icons/fa";
 import "./SignIn.scss";
 import PostService from '../../services/PostService';
+import PostLoginService from '../../services/PostLoginService'
 import { LOGIN,GETPROJECTS } from '../../services/Services';
 import Auth from '../../services/Auth';
 import GetService from '../../services/GetService';
@@ -22,7 +23,7 @@ export default class SignIn extends Component {
   constructor(props){
     super()
     let input = {};
-    input["UserId"] = "";
+    input["username"] = "";
     input["password"] = "";
     let  sh = false;  
     if(props.location.state !== undefined){
@@ -51,21 +52,25 @@ export default class SignIn extends Component {
     event.preventDefault();
     if(this.validate()){
         console.log(this.state);
-           var data={
-      "username":this.state.input["UserId"],
-      "password":this.state.input["password"]
-    }
-    console.log(data);
+        let formData = new FormData();    //formdata object
+
+        formData.append('username', this.state.input["username"]);   
+        formData.append('password', this.state.input["password"]);
+    //        var data={
+    //   "username":this.state.input["UserId"],
+    //   "password":this.state.input["password"]
+    // }
+    // console.log(data);
     //Posting to server
     this.setState({
       loader:true,
     });
-    await PostService(LOGIN, data).then((res) => {
+    await PostLoginService(LOGIN, formData).then((res) => {
       let input = {};
       console.log(res);
       if(res===401){
         errors["Authentication"] = "Invalid Authentication";
-        input["UserId"] = "";
+        input["username"] = "";
         input["password"] = "";
         this.setState({
           input:input,
@@ -108,9 +113,9 @@ export default class SignIn extends Component {
     let errors = {};
     let isValid = true;
 
-    if (!input["UserId"]) {
+    if (!input["username"]) {
       isValid = false;
-      errors["UserId"] = "Please enter your UserId.";
+      errors["username"] = "Please enter your UserId.";
     }
 
 
@@ -164,7 +169,7 @@ export default class SignIn extends Component {
                         id="exampleInputEmail1"
                         aria-describedby="emailHelp"
                         placeholder="User Name"
-                        name="UserId"
+                        name="username"
                       />
                     </Form.Group>
                     <Form.Group className="passSpa">
