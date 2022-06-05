@@ -14,6 +14,7 @@ import {
 } from "react-bootstrap";
 import * as icon from "react-icons/all";
 import { GetServiceWithData } from "../../services/GetService";
+import  DeleteService  from "../../services/DeleteService";
 import {
   BLUEPRINT_URL,
   BLUEPRINTNET_NETWORK_CREATE_URL,
@@ -264,7 +265,7 @@ export default class BluePrint extends Component {
       nw_name: NameNetwork,
     };
     //Delete Network Details------------
-    await GetServiceWithData(BLUEPRINTNET_DELETE_NETWORK, data).then((res) => {
+    await DeleteService(BLUEPRINTNET_DELETE_NETWORK, data).then((res) => {
       console.log("Delete Data From Host", res.data);
     });
     var NetworksData = this.state.Networks;
@@ -292,7 +293,7 @@ export default class BluePrint extends Component {
       subnet_name: subnetname,
       nw_name: nw_name,
     };
-    await GetServiceWithData(BLUEPRINTNET_DELETE_SUBNET, data).then((res) => {
+    await DeleteService(BLUEPRINTNET_DELETE_SUBNET, data).then((res) => {
       console.log("Delete Data From Host", res.data);
     });
     this.GettingData();
