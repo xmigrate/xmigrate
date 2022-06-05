@@ -108,6 +108,11 @@ export default class Project extends Component {
       if (this.state.status === "Verify") {
         await PostService(LOCATIONPOST, data).then((res) => {
           console.log(res.data);
+            //Setting the default location as value
+            let input = this.state.input;
+            if(data.location === undefined){
+              input["location"] = res.data.locations[0];
+            }
           this.setState({
             locations: res.data.locations,
             status: "Create Project",
