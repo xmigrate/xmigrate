@@ -14,6 +14,7 @@ from routes.auth import TokenData, get_current_user
 from typing import Union
 from dotenv import load_dotenv
 from os import getenv
+from utils.playbook import run_playbook
 
 class Discover(BaseModel):
     provider: Union[str,None] = None
@@ -51,7 +52,8 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open(aws_dir+'/config', 'w+') as writer:
             writer.write(config_str)
-        os.popen('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/aws/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
+        # os.popen('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/aws/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
+        run_playbook(username=username, mongodb_url=mongodb, project_name=project)
         return jsonable_encoder({'status': '200'})
     elif provider == "azure":
         os.popen('ansible-playbook -i '+current_dir+'/ansible/'+project+'/hosts ./ansible/azure/xmigrate.yaml -e "mongodb='+mongodb+' project='+project+'" --user '+username+' --become-user '+username+' --become-method sudo > ./logs/ansible/log.txt')
