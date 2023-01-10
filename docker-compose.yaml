@@ -22,7 +22,7 @@ services:
       CASS_PASSWORD: "cassandra"
       CASS_USER: "cassandra"
       CASS_DB: "cassandra"
-      BASE_URL: http://<xmigrate_server_ip>:8000/api
+      BASE_URL: http://15.207.235.96:8000/api
     depends_on:
      - cassandra
 
