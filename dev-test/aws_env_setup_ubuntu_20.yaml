@@ -1,0 +1,89 @@
+- name : Configure aws-cli and required packages and deploy and execute the payload
+  become: true
+  become_method: sudo
+  hosts: all
+  gather_facts: no
+  force_handlers: True
+  tasks:
+  - name: Ensure unzip is installed
+    apt:
+      name: unzip
+      state: latest 
+    become: yes
+    become_user: root
+  - name: Setup awscli
+    shell: |
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip -o awscliv2.zip
+      sudo ./aws/install --update
+    become_user: root
+    become: yes
+  - block: 
+    - name: Upgrade to AWS linux kernel
+      apt:
+        name: linux-image-generic-hwe-20.04
+        state: latest 
+    rescue:
+    - name: Upgrade to AWS linux kernel
+      shell: "sudo apt install linux-image-generic-hwe-20.04 -y"
+    tags:
+        - devel
+
+  - name: Remove EFI entries
+    shell: sudo mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
+    become_user: root
+    become: yes
+    ignore_errors: yes
+
+## Do below tasks manually if required
+  # - name: Remove azure cloud related kernel if found
+  #   shell: sudo apt remove linux-*-azure -y
+  #   become_user: root
+  #   become: yes
+
+  # - name: Remove gcp cloud related kernel if found
+  #   shell: sudo apt remove linux-*-gcp -y
+  #   become_user: root
+  #   become: yes
+    
+  - name: Update grub entries
+    shell: |
+      sudo update-grub
+    become_user: root
+    become: yes
+
+  - name: Create .aws directory
+    file:
+      path: "~/.aws/"
+      state: directory
+      mode: 0755
+
+  - name: Configure awscli credentials
+    copy:
+      src: "~/.aws/credentials"
+      dest: "~/.aws/credentials"
+
+  - name: Configure aws region
+    copy:
+      src: "~/.aws/config"
+      dest: "~/.aws/config"
+
+  - name: <==Deploy payload==>
+    copy:
+      src: "../payloads/footprint/footprint"
+      dest: "/tmp/footprint"
+      mode: a+x
+    tags:
+      - deploy
+  - name: <==Executing payload==>
+    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+    register: st
+    become: True
+    tags:
+      - exec
+
+  - name: Debug
+    debug:
+      var: st
+    tags:
+      - msg
