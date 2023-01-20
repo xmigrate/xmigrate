@@ -1,16 +1,15 @@
 import os
 from ansible_runner import run_async
+import asyncio
 
-def run_playbook(extra_vars: dict):
+async def run_playbook(extra_vars: dict):
+    playbook = os.getcwd()+'/xmigrate.yaml'
+    inventory = os.getcwd()+'/hosts'
+    log_path = os.getcwd()+'/log.txt'
+    cmdline_args = ['-l ' + log_path]
+    envvars = {
+        'ANSIBLE_LOG_PATH': os.getcwd()+'/log.txt'
+    }
+    _, r = run_async(playbook=playbook, inventory=inventory, extravars=extra_vars, envvars=envvars)
 
-    playbook = 'xmigrate.yaml'
-    inventory = 'hosts'
-
-    os.environ['ANSIBLE_LOG_PATH'] = 'log.txt'
-
-    try:
-        run_async(playbook=playbook, inventory=inventory, extravars=extra_vars)
-    except Exception as e:
-        print(str(e))
-
-run_playbook(extra_vars={'mongodb':'http://15.207.235.96:8000/api', 'project': 'xmtest'})
+asyncio.run(run_playbook(extra_vars={'mongodb':'http://15.207.235.96:8000/api', 'project': 'xmtest', "ANSIBLE_LOG_PATH": os.getcwd()+'/log.txt'}))
