@@ -6,7 +6,6 @@ async def run_playbook(extra_vars: dict):
     playbook = os.getcwd()+'/xmigrate.yaml'
     inventory = os.getcwd()+'/hosts'
     log_path = os.getcwd()+'/log.txt'
-    cmdline_args = ['-l ' + log_path]
     envvars = {
         'ANSIBLE_LOG_PATH': os.getcwd()+'/log.txt'
     }
