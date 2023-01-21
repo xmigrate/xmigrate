@@ -1,25 +1,22 @@
-from ansible import context
-from ansible.cli import CLI
-from ansible.module_utils.common.collections import ImmutableDict
-from ansible.executor.playbook_executor import PlaybookExecutor
-from ansible.parsing.dataloader import DataLoader
-from ansible.inventory.manager import InventoryManager
-from ansible.vars.manager import VariableManager
+import os
+from ansible_runner import run_async
 
-def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, extra_vars: set):
+def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, extra_vars: dict):
 
-    loader = DataLoader()
+    playbook = '{}/ansible/{}/xmigrate.yaml'.format(curr_working_dir, provider)
+    inventory = '{}/ansible/{}/hosts'.format(curr_working_dir, project_name)
+    log_folder = '{}/logs/ansible/{}'.format(curr_working_dir, project_name)
+    log_file = '{}/logs/ansible/{}/log.txt'.format(curr_working_dir, project_name)
+    env_vars = {
+            'ANSIBLE_SSH_ARGS': '-o User={}'.format(username),
+            'ANSIBLE_LOG_PATH': log_file
+        }
+        
+    if not os.path.exists(log_folder):
+        os.makedirs(log_folder)
 
-    context.CLIARGS = ImmutableDict(tags={}, listtags=False, listtasks=False, listhosts=False, syntax=False, connection='ssh',
-                        module_path=None, forks=100, remote_user=username, become=True,
-                        become_method='sudo', become_user=username, verbosity=True, check=False, start_at_task=None, extra_vars=extra_vars)
-    
-    sources = "{}/ansible/{}/hosts".format(curr_working_dir, project_name)
-
-    inventory = InventoryManager(loader=loader, sources=(sources))
-
-    variable_manager = VariableManager(loader=loader, inventory=inventory, version_info=CLI.version_info(gitinfo=False))
-
-    pbex = PlaybookExecutor(playbooks=['./ansible/{}/xmigrate.yaml'.format(provider)], inventory=inventory, variable_manager=variable_manager, loader=loader, passwords={})
-
-    return pbex.run()
+    with open(log_file, 'w'):
+        try:
+            run_async(playbook=playbook, inventory=inventory, extravars=extra_vars, envvars=env_vars)
+        except Exception as e:
+            print(str(e))
