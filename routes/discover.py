@@ -39,7 +39,7 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
             {"msg": "Request couldn't process"}))
 
-    extra_vars = {"mongodb={}".format(mongodb), "project={}".format(project)}
+    extra_vars = {'mongodb': mongodb, 'project': project}
         
     if provider == "aws":
         proj_details = Project.objects(name=project)[0]
@@ -65,7 +65,7 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         project_id = storage['project_id']
         gs_access_key_id = storage['access_key']
         gs_secret_access_key = storage['secret_key']
-        extra_vars = {"mongodb={}".format(mongodb), "project={}".format(project), "project_id={}".format(project_id), "gs_access_key_id={}".format(gs_access_key_id), "gs_secret_access_key={}".format(gs_secret_access_key)}
+        extra_vars = {'mongodb': mongodb, 'project': project, 'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key}
         run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
         return jsonable_encoder({'status': '200'})
     return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
