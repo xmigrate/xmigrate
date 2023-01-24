@@ -15,7 +15,7 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
     if not os.path.exists(log_folder):
         os.makedirs(log_folder)
 
-    with open(log_file, 'w'):
+    with open(log_file, 'a+'):
         try:
             run_async(playbook=playbook, inventory=inventory, extravars=extra_vars, envvars=env_vars)
         except Exception as e:
