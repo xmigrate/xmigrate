@@ -3,7 +3,7 @@ import { Container, Row, Col, Form, Button } from 'react-bootstrap'
 import Tags from "@yaireo/tagify/dist/react.tagify.js";
 import "./Discover.scss"
 import PostService from '../../services/PostService';
-import GetService from '../../services/GetService';
+import { GetServiceWithData } from '../../services/GetService';
 import { DISCOVERURL, STREAMURL } from '../../services/Services';
 import { Link } from 'react-router-dom';
 import "@yaireo/tagify/dist/tagify.css"
