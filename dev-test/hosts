@@ -1,4 +1,0 @@
-[nodes]
-ubuntu@13.233.19.86
-[all:vars]
-ansible_ssh_pass = 
