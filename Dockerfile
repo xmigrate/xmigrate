@@ -10,7 +10,8 @@ FROM ubuntu:18.04
 
 WORKDIR /app
 
-RUN apt update -y 
+RUN apt update -y
+RUN apt install sshpass -y 
 RUN apt install -y python3.7
 RUN apt install -y python3-pip qemu-utils
 RUN apt install -y wget nginx

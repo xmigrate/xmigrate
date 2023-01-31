@@ -43,10 +43,10 @@ async def master_status_update(data:MasterUpdate):
             Disk.objects(host=class_obj.get('host'),project=class_obj.get('project'),mnt_path=class_obj.get('mnt_path')).update(**update_data)
     except Exception as e:
         print(e)
-        con.close()
+        con.shutdown()
         return jsonable_encoder({'status': '500', 'message': str(e)})
     finally:
-        con.close()
+        con.shutdown()
     return jsonable_encoder({'status': '200'})
 
 
@@ -58,9 +58,9 @@ async def get_disks(project, hostname):
         disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
     except Exception as e:
         print(e)
-        con.close()
+        con.shutdown()
         return jsonable_encoder({'status': '500', 'message': str(e)})
-    con.close()
+    con.shutdown()
     return jsonable_encoder({'status': '200','data': disks})
 
 
@@ -72,7 +72,7 @@ async def get_blueprint_api(project, hostname):
         disks = BluePrint.objects(host=hostname,project=project)[0]['disk_clone']
     except Exception as e:
         print(e)
-        con.close()
+        con.shutdown()
         return jsonable_encoder({'status': '500', 'message': str(e)})
-    con.close()
+    con.shutdown()
     return jsonable_encoder({'status': '200','data': disks})

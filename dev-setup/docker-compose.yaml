@@ -14,17 +14,8 @@ services:
       # Therefore, memory options are mandatory if multiple Cassandras are launched in the same node.
       - MAX_HEAP_SIZE=2G
       - HEAP_NEWSIZE=200M
-  app:
-    build: .
     ports:
-      - 8000:80
-    environment:
-      CASS_PASSWORD: "cassandra"
-      CASS_USER: "cassandra"
-      CASS_DB: "cassandra"
-      BASE_URL: http://15.207.235.96:8000/api
-    depends_on:
-     - cassandra
+      - "9042:9042"
 
 volumes:
   cassandra_data:

@@ -3,17 +3,17 @@ import { Container, Row, Col, Form, Button } from 'react-bootstrap'
 import Tags from "@yaireo/tagify/dist/react.tagify.js";
 import "./Discover.scss"
 import PostService from '../../services/PostService';
-import GetService from '../../services/GetService';
+import { GetServiceWithData } from '../../services/GetService';
 import { DISCOVERURL, STREAMURL } from '../../services/Services';
 import { Link } from 'react-router-dom';
-import "@yaireo/tagify/dist/tagify.css" 
+import "@yaireo/tagify/dist/tagify.css"
 
 export default class Discover extends Component {
-    
+
 
     constructor(props) {
         super()
-        console.log("PROPs",props);
+        console.log("PROPs", props);
         this.state = {
             showDiscoverMenu: true,
             showDiscoverMenuEdit: false,
@@ -33,25 +33,25 @@ export default class Discover extends Component {
         this.editDiscover = this.editDiscover.bind(this)
         this.getStream = this.getStream.bind(this)
     }
-    
+
     onChange(e) {
         // e.persist()
-        console.log("detailtagify",e.detail.tagify.value);
+        console.log("detailtagify", e.detail.tagify.value);
         console.log("CHANGED:", e.detail.tagify.DOM.originalInput);
-        console.log("detailtagify",e.detail.tagify.value);
+        console.log("detailtagify", e.detail.tagify.value);
         console.log("detailvalue", e.detail.value)
-        try{
+        try {
             var parsed = JSON.parse(e.detail.value).map((data) => data.value)
             console.log(parsed);
             this.setState({ tags: e.detail.value, parsedTags: parsed })
         }
-        catch(e){
+        catch (e) {
             console.log("Here");
         }
     }
 
-   
-      
+
+
     setUsername(e) {
         this.setState({ username: e.target.value })
     }
@@ -89,9 +89,12 @@ export default class Discover extends Component {
     }
     scrollToBottom = () => {
         this.messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
-      }
+    }
     getStream() {
-        GetService(STREAMURL).then((data) => {
+        var data = {
+            "project": this.state.project
+        }
+        GetServiceWithData(STREAMURL, data).then((data) => {
             this.scrollToBottom();
             console.log(data);
             if (data.data.offset === "EOF") {
@@ -130,10 +133,10 @@ export default class Discover extends Component {
                                     <h5 >
                                         Server IP's
                                     </h5>
-    
+
                                     {/* <input type="textarea" name="" id="" /> */}
                                     {/* <Tags mode='textarea' settings={this.settings}  onChange={this.onChange}  />/ */}
-                                    <Tags className="mb-3" mode='textarea' onChange={this.onChange} /> 
+                                    <Tags className="mb-3" mode='textarea' onChange={this.onChange} />
                                     <Form className="mb-3">
                                         <Form.Group className="mb-3" controlId="formBasicEmail" onChange={this.setUsername.bind(this)}>
                                             <Form.Label>Username</Form.Label>
@@ -171,35 +174,35 @@ export default class Discover extends Component {
                         </Col>
                         <Col md={{ span: 8 }} className="p-0 clrg">
                             <div className="shadow-sm   ml-5 rounded bg-white d-flex flex-column clrg ">
-                            <div className="p-3 d-flex justify-content-between">
-                                <span>
-                                    {this.state.disableGoToBlueprint ?
-                                        this.state.streamming ? "Gathering Informations" : "Discover"
-                                        : "Done"
-                                    }
+                                <div className="p-3 d-flex justify-content-between">
+                                    <span>
+                                        {this.state.disableGoToBlueprint ?
+                                            this.state.streamming ? "Gathering Informations" : "Discover"
+                                            : "Done"
+                                        }
 
-                                </span>
-                                {this.state.disableGoToBlueprint ?
-                                    this.state.streamming ?
-                                        <Button variant="secondary" disabled>
-                                            Go to Blueprint
-                                        </Button>
+                                    </span>
+                                    {this.state.disableGoToBlueprint ?
+                                        this.state.streamming ?
+                                            <Button variant="secondary" disabled>
+                                                Go to Blueprint
+                                            </Button>
+                                            :
+                                            <Button variant="secondary" disabled>
+                                                Discover
+                                            </Button>
                                         :
-                                        <Button variant="secondary" disabled>
-                                            Discover
-                                    </Button>
-                                    :
-                                    <Link to="/home/blue-print">
-                                        <Button variant="success" >
-                                            Go to Blueprint
-                                        </Button>
-                                    </Link>
-                                }
-                            </div>
-                            <div className="background-primary media-body p-3 discover-logs" >
-                                {this.state.message}
-                                <div ref={this.messagesEndRef}></div>
-                            </div>
+                                        <Link to="/home/blue-print">
+                                            <Button variant="success" >
+                                                Go to Blueprint
+                                            </Button>
+                                        </Link>
+                                    }
+                                </div>
+                                <div className="background-primary media-body p-3 discover-logs" >
+                                    {this.state.message}
+                                    <div ref={this.messagesEndRef}></div>
+                                </div>
                             </div>
                         </Col>
                     </Row>
