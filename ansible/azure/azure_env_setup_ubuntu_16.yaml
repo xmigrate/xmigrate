@@ -6,14 +6,14 @@
   tasks:
     - name: Backup sources list
       shell: "cp /etc/apt/sources.list /etc/apt/sources.list.bak"
-      become_user: root
+      
     - name: Install azcopy
       shell: |
         wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
         tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
         mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin && \
-        sudo chmod 777 /usr/bin/azcopy
-      become_user: root
+        chmod 777 /usr/bin/azcopy
+      
     - block:
       - name: Installing azure tools and python
         apt:
@@ -28,50 +28,37 @@
           - linux-tools-azure
           - linux-cloud-tools-azure
           - npm
-          update_cache: yes
-        become: true
-        become_user: root
-        
+          update_cache: yes        
       rescue:
       - name: Update Accepted
-        shell: "apt update -y"
-        become: true
+        shell: "apt update -y"       
       - name: Failback installation "Installing azure tools and python"
         shell: "apt install python python-pip linux-azure linux-image-azure linux-headers-azure linux-tools-common linux-cloud-tools-common linux-tools-azure linux-cloud-tools-azure unzip -y"
-        become: true
-
+        
     - name: Update grub entry
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"
-      ' /etc/default/grub"
-      become: true
-      become_user: root
+      ' /etc/default/grub" 
       ignore_errors: True
     
     - name: Update apt.. older way
       shell: "apt update"
-      become: true
-      become_method: sudo
-      become_user: root
+        
     - name: Install cloud init older way
-      shell: "sudo apt install cloud-init -y"
-      become: true
-      become_user: root
+      shell: "apt install cloud-init -y"
+      
     - name: Install netplan.io  older way
-      shell: "sudo apt-get install netplan -y"
-      become: true
-      become_user: root
+      shell: "apt-get install netplan -y"
+      
     - name: Install walinuxagent.. older way
-      shell: "sudo apt install walinuxagent -y"
-      become: true
-      become_user: root 
+      shell: "apt install walinuxagent -y" 
       ignore_errors: True
+
     - name: Stopping walinuxagent .. older way
       shell: "systemctl stop walinuxagent"
-      become: true
-      become_user: root
       tags:
         - devel
       ignore_errors: True
+
     - name: Remove cloud configuration files
       file:
         path: "{{ item }}"
@@ -81,18 +68,16 @@
         - /etc/cloud/cloud.cfg.d/curtin-preserve-sources.cfg
         - /etc/cloud/ds-identify.cfg
         - /etc/netplan/*.yaml
-      become: true
-      become_user: root
       ignore_errors: True
    
     - name: Update walinuxagent config
       shell: |
-        sudo sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf;
-        sudo sed -i 's/Provisioning.UseCloudInit=n/Provisioning.UseCloudInit=y/g' /etc/waagent.conf;
-        sudo sed -i 's/Provisioning.RegenerateSshHostKeyPair=y/Provisioning.RegenerateSshHostKeyPair=n/g' /etc/waagent.conf
-        sudo sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf;
-        sudo sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf;
-        sudo cat >> /etc/waagent.conf << EOF
+        sed -i 's/Provisioning.Enabled=y/Provisioning.Enabled=n/g' /etc/waagent.conf;
+        sed -i 's/Provisioning.UseCloudInit=n/Provisioning.UseCloudInit=y/g' /etc/waagent.conf;
+        sed -i 's/Provisioning.RegenerateSshHostKeyPair=y/Provisioning.RegenerateSshHostKeyPair=n/g' /etc/waagent.conf
+        sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf;
+        sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf;
+        cat >> /etc/waagent.conf << EOF
         # For Azure Linux agent version >= 2.2.45, this is the option to configure,
         # enable, or disable the provisioning behavior of the Linux agent.
         # Accepted values are auto (default), waagent, cloud-init, or disabled.
@@ -100,29 +85,24 @@
         # provisioning if it is installed and enabled, which in this case it will.
         Provisioning.Agent=auto
         EOF
-      become: true
-      become_user: root
       ignore_errors: True
 
     - name: Cloud init clean
       shell: "cloud-init clean --logs --seed"
-      become: true
-      become_user: root
       ignore_errors: True
+
     - name: Remove stale files
       file:
         path: /var/lib/cloud/
         state: absent
-      become: true
-      become_user: root
       ignore_errors: True
+
     - name: stop walinuxagent
       systemd:
         name: walinuxagent
         state: stopped
-      become: true
-      become_user: root
       ignore_errors: True
+
     - name: Removing wagent logs and files
       file:
         path: "{{ item }}"
@@ -130,34 +110,11 @@
       with_items:
         - /var/lib/waagent/
         - /var/log/waagent.log
-      become: true
-      become_user: root
       ignore_errors: True
+
     - name: Deprovision waagent
       shell: |
-        sudo waagent -force -deprovision
+        waagent -force -deprovision
         rm -f ~/.bash_history
         export HISTSIZE=0
-      become: true
-      become_user: root
       ignore_errors: True
-
-    - name: <==Deploy payload==>
-      copy:
-        src: "../payloads/footprint/footprint"
-        dest: "/tmp/footprint"
-        mode: a+x
-      tags:
-        - deploy
-    - name: <==Executing payload==>
-      shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-      register: st
-      become: True
-      tags:
-        - exec
-
-    - name: Debug
-      debug:
-        var: st
-      tags:
-        - msg

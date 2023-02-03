@@ -1,6 +1,6 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
-  become_method: sudo
+  become_user: sudo
   hosts: all
   force_handlers: True
   tasks:
@@ -9,26 +9,22 @@
         src: /usr/bin/azcopy
         dest: /usr/bin/azcopy
         mode: 0777
-      become_user: root
-      become_method: sudo
+
     - name: Ensure that the network service will start at boot time dhcp is enabled
       shell: | 
-        sudo systemctl enable NetworkManager.service
-        sudo nmcli con mod "System eth0" connection.autoconnect yes ipv4.method auto
-      become: yes
-      become_user: root  
-    
+        systemctl enable NetworkManager.service
+        nmcli con mod "System eth0" connection.autoconnect yes ipv4.method auto
+  
     - name: Edit kernel parameters in grub
       shell: |
-        sudo grub2-editenv - unset kernelopts
-        sudo sed -i '/GRUB_CMDLINE_LINUX/c\\GRUB_CMDLINE_LINUX=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 earlyprintk=ttyS0 net.ifnames=0\"' /etc/default/grub
-        sudo sed -i '/GRUB_TERMINAL_OUTPUT/c\\GRUB_TERMINAL_OUTPUT=\"serial console\" ' /etc/default/grub
-        sudo sed -i '/GRUB_SERIAL_COMMAND/c\\GRUB_SERIAL_COMMAND=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\" ' /etc/default/grub
-      become: true
-      become_user: root
-    
+        grub2-editenv - unset kernelopts
+        sed -i '/GRUB_CMDLINE_LINUX/c\\GRUB_CMDLINE_LINUX=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 earlyprintk=ttyS0 net.ifnames=0\"' /etc/default/grub
+        sed -i '/GRUB_TERMINAL_OUTPUT/c\\GRUB_TERMINAL_OUTPUT=\"serial console\" ' /etc/default/grub
+        sed -i '/GRUB_SERIAL_COMMAND/c\\GRUB_SERIAL_COMMAND=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\" ' /etc/default/grub
+ 
     - name: rebuild the grub configuration
-      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      shell: "grub2-mkconfig -o /boot/grub2/grub.cfg"
+      become_user: root
 
     - name: configure-secure-shell
       lineinfile:
@@ -36,9 +32,7 @@
         line: |
           ClientAliveInterval 180  
         state: present
-      become: yes
-      become_user: root
-      
+   
     - name: Install azure linux agent other tools
       yum:
         name: 
@@ -49,22 +43,17 @@
           - hyperv-daemons
         state: latest
         update_cache: yes
-      become_method: sudo   
-      become: yes
-      become_user: root 
-   
+ 
     - name: Enable azure linux agent
       systemd: 
         name: waagent.service
         enabled: yes
-      become: yes
-      become_user: root  
+      
     - name: Enable cloud init
       systemd: 
         name: cloud-init.service
         enabled: yes
-      become: yes
-      become_user: root      
+             
     - name: Configure waagent for cloud-init
       shell: |
         sed -i 's/Provisioning.Agent=auto/Provisioning.Agent=cloud-init/g' /etc/waagent.conf
@@ -98,34 +87,10 @@
         EOF
         # ResourceDisk.Format=n
         # ResourceDisk.EnableSwap=n
-      become: yes
-      become_user: root
-  
+ 
     - name: Deprovision waagent
       shell: |
         cloud-init clean --logs --seed
         waagent -force -deprovision
         rm -f ~/.bash_history
         export HISTSIZE=0
-      become: yes
-      become_user: root
-
-    - name: <==Deploy payload==>
-      copy:
-        src: "../payloads/footprint/footprint"
-        dest: "/tmp/footprint"
-        mode: a+x
-      tags:
-        - deploy
-    - name: <==Executing payload==>
-      shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-      register: st
-      become: True
-      tags:
-        - exec
-
-    - name: Debug
-      debug:
-        var: st
-      tags:
-        - msg
