@@ -8,34 +8,31 @@
   - name: Ensure unzip is installed
     apt:
       name: unzip
-      state: latest 
-    become: yes
-    become_user: root
+      state: latest
+
   - name: Setup awscli
     shell: |
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       unzip -o awscliv2.zip
-      sudo ./aws/install --update
-    become_user: root
-    become: yes
+      ./aws/install --update
+    args:
+      warn: false
+
   - block: 
     - name: Upgrade to AWS linux kernel
       apt:
         name: linux-aws-lts-18.04
         state: latest 
-      become_user: root
-      become: yes
     rescue:
     - name: Upgrade to AWS linux kernel
-      shell: "sudo apt install linux-aws-lts-18.04 -y"
+      shell: "apt install linux-aws-lts-18.04 -y"
     tags:
         - devel
     
   - name: Update grub entries
     shell: |
-      sudo update-grub
+      update-grub
     become_user: root
-    become: yes
 
   - name: Create .aws directory
     file:
@@ -52,23 +49,3 @@
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
-
-  - name: <==Deploy payload==>
-    copy:
-      src: "../payloads/footprint/footprint"
-      dest: "/tmp/footprint"
-      mode: a+x
-    tags:
-      - deploy
-  - name: <==Executing payload==>
-    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-    register: st
-    become: True
-    tags:
-      - exec
-
-  - name: Debug
-    debug:
-      var: st
-    tags:
-      - msg
