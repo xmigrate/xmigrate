@@ -14,7 +14,7 @@ from routes.auth import TokenData, get_current_user
 from typing import Union
 from dotenv import load_dotenv
 from os import getenv
-from utils.playbook import run_playbook
+from utils.playbook import execute_payload
 
 class Discover(BaseModel):
     provider: Union[str,None] = None
@@ -55,10 +55,10 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open(aws_dir+'/config', 'w+') as writer:
             writer.write(config_str)
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
+        execute_payload(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
         return jsonable_encoder({'status': '200'})
     elif provider == "azure":
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
+        execute_payload(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
         return jsonable_encoder({'status': '200'})
     elif provider == "gcp":
         storage = GcpBucket.objects(project=project)[0]
@@ -66,7 +66,7 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         gs_access_key_id = storage['access_key']
         gs_secret_access_key = storage['secret_key']
         extra_vars = {'mongodb': mongodb, 'project': project, 'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key}
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
+        execute_payload(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
         return jsonable_encoder({'status': '200'})
     return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
         {"msg": "Request couldn't process"}))
