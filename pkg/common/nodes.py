@@ -5,9 +5,9 @@ import os
 
 
 def add_nodes(nodes,user,password,p, update_db=True):
-    ansible_hosts = "./ansible/"+p+"/hosts"
-    if not os.path.exists("./ansible/"+p):
-      os.makedirs("./ansible/"+p)
+    ansible_hosts = "./ansible/projects/"+p+"/hosts"
+    if not os.path.exists("./ansible/projects/"+p):
+      os.makedirs("./ansible/projects/"+p)
     host_file = open(ansible_hosts,'w')
     if update_db:
       try:

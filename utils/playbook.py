@@ -5,7 +5,7 @@ from utils.logger import logger
 def execute_payload(provider: str, username: str, project_name: str, curr_working_dir: str, extra_vars: dict):
 
     playbook = '{}/ansible/{}/payload_execution.yaml'.format(curr_working_dir, provider)
-    inventory = '{}/ansible/{}/hosts'.format(curr_working_dir, project_name)
+    inventory = '{}/ansible/projects/{}/hosts'.format(curr_working_dir, project_name)
     log_folder = '{}/logs/ansible/{}'.format(curr_working_dir, project_name)
     log_file = '{}/logs/ansible/{}/payload_log.txt'.format(curr_working_dir, project_name)
     env_vars = {
@@ -28,7 +28,7 @@ def execute_payload(provider: str, username: str, project_name: str, curr_workin
 def prepare_vm(provider: str, username: str, project_name: str, curr_working_dir: str):
 
     playbook = '{}/ansible/{}/xmigrate.yaml'.format(curr_working_dir, provider)
-    inventory = '{}/ansible/{}/hosts'.format(curr_working_dir, project_name)
+    inventory = '{}/ansible/projects/{}/hosts'.format(curr_working_dir, project_name)
     log_file = '{}/logs/ansible/{}/prep_log.txt'.format(curr_working_dir, project_name)
     env_vars = {
             'ANSIBLE_REMOTE_USER': username,
