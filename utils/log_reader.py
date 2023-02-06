@@ -1,6 +1,6 @@
 async def read_logs(curr_working_dir, project_name):
     l = ''
-    f = open('{}/logs/ansible/{}/log.txt'.format(curr_working_dir ,project_name),'r')
+    f = open('{}/logs/ansible/{}/payload_log.txt'.format(curr_working_dir ,project_name),'r')
     l = f.read()
     return l
 
