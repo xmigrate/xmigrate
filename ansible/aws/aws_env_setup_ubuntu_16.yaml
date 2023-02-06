@@ -1,6 +1,7 @@
-- name : Configure aws-cli and required packages and deploy and execute the payload
+- name : Configure aws-cli and required packages
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
   gather_facts: no
   force_handlers: True
@@ -9,7 +10,6 @@
     apt:
       name: unzip
       state: latest
-
   - name: Setup awscli
     shell: |
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -33,35 +33,34 @@
         - devel
 
   - name: Remove EFI entries
-    shell: sudo mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
-    become_user: root
+    shell: mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
     ignore_errors: yes
 
   - name: Remove azure cloud related kernel if found
     shell: apt remove linux-*-azure -y
-    become: yes
 
   - name: Remove gcp cloud related kernel if found
     shell: apt remove linux-*-gcp -y
-    become: yes
     
   - name: Update grub entries
     shell: |
       update-grub
-    become_user: root
   
   - name: Create .aws directory
     file:
       path: "~/.aws/"
       state: directory
       mode: 0755
+    become: false
 
   - name: Configure awscli credentials
     copy:
       src: "~/.aws/credentials"
       dest: "~/.aws/credentials"
+    become: false
 
   - name: Configure aws region
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
+    become: false

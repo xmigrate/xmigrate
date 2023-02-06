@@ -1,6 +1,7 @@
-- name : Configure aws-cli and required packages and deploy and execute the payload
+- name : Configure aws-cli and required packages
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
   gather_facts: no
   force_handlers: True
@@ -21,7 +22,7 @@
   - block: 
     - name: Upgrade to AWS linux kernel
       apt:
-        name: linux-aws-lts-18.04
+        name: linux-image-generic-hwe-18.04
         state: latest 
     rescue:
     - name: Upgrade to AWS linux kernel
@@ -32,20 +33,22 @@
   - name: Update grub entries
     shell: |
       update-grub
-    become_user: root
 
   - name: Create .aws directory
     file:
       path: "~/.aws/"
       state: directory
       mode: 0755
+    become: false
 
   - name: Configure awscli credentials
     copy:
       src: "~/.aws/credentials"
       dest: "~/.aws/credentials"
+    become: false
 
   - name: Configure aws region
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
+    become: false
