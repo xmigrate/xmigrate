@@ -1,7 +1,9 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
+  gather_facts: no
   force_handlers: True
   tasks:
     - name: Copy content to file
@@ -81,14 +83,17 @@
     - name: Update grub entry
       shell: "sed -i '/GRUB_CMDLINE_LINUX/c\\GRUB_CMDLINE_LINUX=\"rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0\"
       ' /etc/default/grub"
+      args:
+        warn: false
    
     - name:  grub rebuild
       shell: "grub2-mkconfig -o /boot/grub2/grub.cfg"
-      become_user: root
    
     - name: Ensure the Hyper-V drivers are included in the initramfs
       shell: "sed -i '/add_drivers+=/c\\add_drivers+=\" hv_vmbus hv_netvsc hv_storvsc \"
       ' /etc/dracut.conf"
+      args:
+        warn: false
    
     - name: rebuild dracut
       shell: "dracut -f -v"
@@ -140,6 +145,8 @@
         EOF
         sed -i 's/ResourceDisk.Format=y/ResourceDisk.Format=n/g' /etc/waagent.conf
         sed -i 's/ResourceDisk.EnableSwap=y/ResourceDisk.EnableSwap=n/g' /etc/waagent.conf
+      args:
+        warn: false
   
     # - name: Removing wagent logs and files
     #   file:

@@ -1,7 +1,9 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
+  gather_facts: no
   force_handlers: True
   tasks:
     - name: Backup sources list
@@ -45,6 +47,8 @@
     - name: Update grub entry
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"
       ' /etc/default/grub"
+      args:
+        warn: false
   
     - block:
       - name: Install cloud init, netplan and walinuxagent
@@ -108,6 +112,8 @@
         # provisioning if it is installed and enabled, which in this case it will.
         Provisioning.Agent=auto
         EOF
+      args:
+        warn: false
   
     - name: Cloud init clean
       shell: "cloud-init clean --logs --seed"
@@ -141,6 +147,7 @@
     #   - name: Install Python packages
     #     pip:
     #       name: ['awscli', 'netifaces', 'netaddr', 'mongoengine', 'psutil', 'pyasn1','python-dotenv','dnspython', 'requests']
+    #     become: false
     #   rescue:
     #   - name: Install python packages
     #     shell: "pip install {{ item }}"
@@ -154,3 +161,4 @@
     #       - python-dotenv
     #       - dnspython
     #       - requests
+    #     become: false

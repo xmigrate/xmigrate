@@ -1,7 +1,9 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
+  gather_facts: no
   force_handlers: True
   tasks:
     - name: Install azcopy
@@ -36,31 +38,26 @@
       shell: "systemctl enable network"
    
     - name: grub configure
-      shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,earlyprintk=ttyS0,net.ifnames=0\"
-      ' /etc/default/grub"
-      
-    - name: grub configure
-      shell: "sed -i '/GRUB_TERMINAL_OUTPUT_DEFAULT/c\\GRUB_TERMINAL_OUTPUT_DEFAULT=\"serial console\"
-      ' /etc/default/grub"
-   
-    - name: grub configure
-      shell: "sed -i '/GRUB_SERIAL_COMMAND_DEFAULT/c\\GRUB_SERIAL_COMMAND_DEFAULT=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\"
-      ' /etc/default/grub"
+      shell: |
+        sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,earlyprintk=ttyS0,net.ifnames=0\"' /etc/default/grub
+        sed -i '/GRUB_TERMINAL_OUTPUT_DEFAULT/c\\GRUB_TERMINAL_OUTPUT_DEFAULT=\"serial console\"' /etc/default/grub
+        sed -i '/GRUB_SERIAL_COMMAND_DEFAULT/c\\GRUB_SERIAL_COMMAND_DEFAULT=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\"' /etc/default/grub
+      args:
+        warn: false
       
     - name: rebuild the grub configuration
       shell: "grub2-mkconfig -o /boot/grub2/grub.cfg"
-      become_user: root
 
     - name: configure-secure-shell
       lineinfile:
         path: /etc/ssh/sshd_config
         line: |
           ClientAliveInterval 180  
-
+  
     - name: epel-release-latest-7
       shell: yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
       ignore_errors: True
-      
+    
     - name: Install azure linux agent other tools
       yum:
         name: 
@@ -69,8 +66,12 @@
           - cloud-utils-growpart
           - gdisk 
           - hyperv-daemons
-          - ntfs-3g
-        state: latest  
+        state: latest
+
+    # - name: test
+    #   yum:
+    #     name: ntfs-3g
+    #     state: present
  
     - name: Download file
       shell: yum install https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm -y
@@ -119,6 +120,8 @@
         EOF
         # ResourceDisk.Format=n
         # ResourceDisk.EnableSwap=n
+      args:
+        warn: false
     
     - name: Deprovision waagent
       shell: |

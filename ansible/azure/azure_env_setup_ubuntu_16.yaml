@@ -1,7 +1,9 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
+  gather_facts: no
   force_handlers: True
   tasks:
     - name: Backup sources list
@@ -39,6 +41,8 @@
       shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 quiet splash\"
       ' /etc/default/grub" 
       ignore_errors: True
+      args:
+        warn: false
     
     - name: Update apt.. older way
       shell: "apt update"
@@ -86,6 +90,8 @@
         Provisioning.Agent=auto
         EOF
       ignore_errors: True
+      args:
+        warn: false
 
     - name: Cloud init clean
       shell: "cloud-init clean --logs --seed"
