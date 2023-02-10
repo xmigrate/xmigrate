@@ -1,6 +1,7 @@
-- name : Configure gsutil and required packages and deploy and execute the payload
+- name : Configure gsutil and required packages
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
   gather_facts: no
   force_handlers: True
@@ -81,7 +82,6 @@
   - block:
     - name: <==Update grub config==>
       shell: "update-grub"
-      become_user: root
       tags:
         - grubupdate
     rescue:

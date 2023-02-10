@@ -1,4 +1,7 @@
 - name : Deploy and execute the payload
+  become: true
+  become_method: sudo
+  become_user: root
   hosts: all
   gather_facts: no
   tasks:

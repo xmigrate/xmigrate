@@ -1,6 +1,7 @@
-- name : Configure gsutil and required packages and deploy and execute the payload
+- name : Configure gsutil and required packages
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
   gather_facts: no
   force_handlers: True
@@ -8,12 +9,14 @@
   - block:
     - name: Epel Release
       shell: "yum install epel-release -y"
+      args:
+        warn: false
     - name: Install Python packages
       shell : "yum install gcc openssl-devel python-devel python-setuptools libffi-devel -y"
     - name: Install Pip
-      shell : "yum install python-pip -y"
+      shell : "yum install python3-pip -y"
     - name: pip3
-      shell: "pip3.6 install --upgrade pip"
+      shell: "pip3 install --upgrade pip"
     - name: Install gsutil
       shell: "pip3 install gsutil"     
     rescue:
@@ -74,13 +77,11 @@
   - block:
     - name: <==Update grub config==>
       shell: "grub2-mkconfig -o /boot/grub/grub.cfg"
-      become_user: root
       ignore_errors: yes  
     rescue:
     - name: <==Trying Update grub2 config==>
       shell: "grub2-mkconfig -o /boot/grub2/grub.cfg"
       register: grubout
-      become_user: root
       tags:
         - grubupdate
       ignore_errors: yes

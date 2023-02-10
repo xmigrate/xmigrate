@@ -1,6 +1,7 @@
-- name : Configure gsutil and required packages and deploy and execute the payload
+- name : Configure gsutil and required packages
   become: true
-  become_method: sudo  
+  become_method: sudo
+  become_user: root  
   hosts: all
   gather_facts: no
   force_handlers: True
@@ -21,7 +22,7 @@
     - name: Install Python packages
       pip:
         name: ['gsutil']
-        executable: /usr/bin/pip3  
+        executable: /usr/bin/pip3       
     rescue:
     - name: Install python packages
       shell: "/usr/bin/pip3 install {{ item }}"
