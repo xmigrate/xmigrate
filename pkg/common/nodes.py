@@ -17,7 +17,7 @@ def add_nodes(nodes,user,password,p, update_db=True):
         logger("Error while inserting to Project: "+str(e),"error")
     nodes = '\n'.join(nodes)
     try:
-      s='[nodes]'+'\n'+nodes+'\n'+'[all:vars]'+'\n'+'ansible_ssh_pass = '+password
+      s='[nodes]'+'\n'+nodes+'\n'+'[all:vars]'+'\n'+'ansible_ssh_pass = '+password+'\n'+'ansible_sudo_pass = '+password
       host_file.write(s)
       host_file.close()
       cfg_file = open('./ansible.cfg','w')
