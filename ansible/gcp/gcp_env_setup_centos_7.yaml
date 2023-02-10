@@ -13,8 +13,12 @@
         warn: false
     - name: Install Python packages
       shell : "yum install gcc openssl-devel python-devel python-setuptools libffi-devel -y"
+      args:
+        warn: false
     - name: Install Pip
       shell : "yum install python3-pip -y"
+      args:
+        warn: false
     - name: pip3
       shell: "pip3 install --upgrade pip"
     - name: Install gsutil
@@ -25,6 +29,8 @@
       with_items:
         - gsutil
       ignore_errors: yes
+      args:
+        warn: false
 
   - name: Configure gsutil credentials
     template:

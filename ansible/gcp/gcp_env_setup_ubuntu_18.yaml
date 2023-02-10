@@ -15,8 +15,12 @@
     rescue:
     - name: Update apt.. older way
       shell: "apt update -y"
+      args:
+        warn: false
     - name: Install Python-devel.. older way
       shell: "apt install python3-pip -y"
+      args:
+        warn: false
     tags:
         - devel
 
