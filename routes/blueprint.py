@@ -1,6 +1,8 @@
+import os
 from app import app
 from utils.dbconn import *
 from utils.converter import *
+from utils.playbook import run_playbook
 from model.discover import *
 from model.blueprint import *
 from pkg.azure import *
@@ -142,6 +144,34 @@ async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depe
         BluePrint.objects(host=machine['hostname'], project=project).update(machine_type=machine['machine_type'],public_route=bool(machine['type']))
     con.shutdown()
     return jsonable_encoder({"msg":"Succesfully updated","status":200})
+
+
+class PrepareVM(BaseModel):
+    provider: Union[str,None] = None
+    username: Union[str,None] = None
+    project: Union[str,None] = None
+
+@app.post('/blueprint/host/prepare')
+async def vm_prepare(data: PrepareVM, current_user: TokenData = Depends(get_current_user)):
+    
+    provider = data.provider
+    username = data.username
+    project = data.project
+    curr_dir = os.getcwd()
+    
+    con = create_db_con()
+    storage = GcpBucket.objects(project=project)[0]
+    project_id = storage['project_id']
+    gs_access_key_id = storage['access_key']
+    gs_secret_access_key = storage['secret_key']
+
+    playbook = "xmigrate.yaml"
+    stage = "vm_preparation"
+    extra_vars = {'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key} if provider == 'gcp' else None
+
+    run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+    return jsonable_encoder({"msg": "VM preparation started", "status":200})
+
 
 class BlueprintHost(BaseModel):
     project: Union[str,None] = None
