@@ -1,6 +1,5 @@
 import os
 from ansible_runner import run_async
-from utils.logger import logger
 
 def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None):
 
@@ -19,10 +18,7 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
 
     with open(log_file, 'a+'):
         try:
-            if stage == "payload_execution":
-                run_async(playbook=playbook_path, inventory=inventory, extravars=extra_vars, envvars=env_vars)
-            elif stage == "vm_preparation":
-                run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars)
+            run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars)
         except Exception as e:
             print(str(e))
     
