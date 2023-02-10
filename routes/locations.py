@@ -21,7 +21,7 @@ class Location(BaseModel):
     tenant_id: Union[str,None] = None
     secret_key: Union[str,None] = None
     access_key: Union[str,None] = None
-    service_account: Union[str,None] = None
+    service_account: Union[dict,None] = None
 
 
 @app.post('/locations')
