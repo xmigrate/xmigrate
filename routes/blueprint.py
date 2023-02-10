@@ -159,11 +159,12 @@ async def vm_prepare(data: PrepareVM, current_user: TokenData = Depends(get_curr
     project = data.project
     curr_dir = os.getcwd()
     
-    con = create_db_con()
-    storage = GcpBucket.objects(project=project)[0]
-    project_id = storage['project_id']
-    gs_access_key_id = storage['access_key']
-    gs_secret_access_key = storage['secret_key']
+    if provider == "gcp":
+        con = create_db_con()
+        storage = GcpBucket.objects(project=project)[0]
+        project_id = storage['project_id']
+        gs_access_key_id = storage['access_key']
+        gs_secret_access_key = storage['secret_key']
 
     playbook = "xmigrate.yaml"
     stage = "vm_preparation"

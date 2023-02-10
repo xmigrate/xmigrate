@@ -57,10 +57,10 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open(aws_dir+'/config', 'w+') as writer:
             writer.write(config_str)
+    try:
         run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
         return jsonable_encoder({'status': '200'})
-    elif provider in ["azure", "gcp"]:
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
-        return jsonable_encoder({'status': '200'})
-    return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
-        {"msg": "Request couldn't process"}))
+    except Exception as e:
+        print(str(e))
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
+            {"msg": "Request couldn't process"}))
