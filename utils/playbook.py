@@ -18,7 +18,9 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
 
     with open(log_file, 'a+'):
         try:
-            run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars)
+            runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, quiet=True)
+            if stage != "payload_execution":
+                return not bool(runner[1].stats['failures'])
         except Exception as e:
             print(str(e))
     

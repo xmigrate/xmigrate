@@ -146,31 +146,12 @@ async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depe
     return jsonable_encoder({"msg":"Succesfully updated","status":200})
 
 
-class PrepareVM(BaseModel):
-    provider: Union[str,None] = None
-    username: Union[str,None] = None
-    project: Union[str,None] = None
-
 @app.post('/blueprint/host/prepare')
-async def vm_prepare(data: PrepareVM, current_user: TokenData = Depends(get_current_user)):
-    
-    provider = data.provider
-    username = data.username
-    project = data.project
-    curr_dir = os.getcwd()
-    
-    if provider == "gcp":
-        con = create_db_con()
-        storage = GcpBucket.objects(project=project)[0]
-        project_id = storage['project_id']
-        gs_access_key_id = storage['access_key']
-        gs_secret_access_key = storage['secret_key']
+async def vm_prepare(project, current_user: TokenData = Depends(get_current_user)):
 
-    playbook = "xmigrate.yaml"
-    stage = "vm_preparation"
-    extra_vars = {'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key} if provider == 'gcp' else None
-
-    run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+    con = create_db_con()
+    asyncio.create_task(build.call_start_vm_preparation(project=project))
+ 
     return jsonable_encoder({"msg": "VM preparation started", "status":200})
 
 
