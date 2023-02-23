@@ -606,7 +606,7 @@ export default class BluePrint extends Component {
                 host["status"] = hostRes.status;
                 // host["BtStatus"] = hostRes.status;
                 console.log("Status of Button", host["BtStatus"]);
-                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") ||  parseInt(hostRes.status) < 21 && host["BtStatus"] === "perpare" || (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "build")) {
+                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") || ( parseInt(hostRes.status) < 20 && host["BtStatus"] === "prepare" )|| (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "build")) {
                   flag = false;
                 }
                 else {
