@@ -127,6 +127,9 @@ export default class BluePrint extends Component {
             if ((status > -25 && status <= -20) || status === 20) {
               host["BtStatus"] = "clone";
               host["BtProgress"] = "cloneCompleted";
+            } else if (status == 21) {
+              host["BtStatus"] = "clone";
+              host["BtProgress"] = "prepareCompleted";
             } else if ((status <= -25 && status > -35) || status === 25) {
               host["BtStatus"] = "convert";
               host["BtProgress"] = "convertCompleted";
@@ -138,7 +141,7 @@ export default class BluePrint extends Component {
               host["BtStatus"] = "BuildNetwork";
             }
 
-            if(status >20 && status <25 ){
+            if(status >21 && status <25 ){
               host["BtProgress"] = "cloneStarted";
             }
             else if(status >25 && status <35){
@@ -146,6 +149,10 @@ export default class BluePrint extends Component {
             }else if(status >25 && status >100 ){
               host["BtProgress"] = "buildStarted";
             }
+
+            console.log("status", host["BtStatus"]);
+            console.log("buttonProgress", host["BtProgress"]);
+
             let hostCurrent = {};
             hostCurrent["hostname"] = host.host;
             hostCurrent["type"] = subnet.subnet_type;
@@ -602,7 +609,8 @@ export default class BluePrint extends Component {
               if (host.host === hostRes.host) {
                 
               
-                console.log(hostRes.status);
+                console.log("status", hostRes.status);
+                console.log("buttonProgress", hostRes.BtProgress);
                 host["status"] = hostRes.status;
                 // host["BtStatus"] = hostRes.status;
                 console.log("Status of Button", host["BtStatus"]);
