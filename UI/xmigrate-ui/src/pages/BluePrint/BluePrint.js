@@ -31,7 +31,8 @@ import {
   BLUEPRINT_NETWORK_BUILD,
   BLUEPRINT_HOST_BUILD,
   BLUEPRINT_HOST_CONVERT,
-  BLUEPRINT_HOST_CLONE
+  BLUEPRINT_HOST_CLONE,
+  BLUEPRINT_HOST_PREPARE
 } from "../../services/Services";
 import PostService from "../../services/PostService";
 import Loader from "../../components/Loader/Loader";
@@ -74,6 +75,7 @@ export default class BluePrint extends Component {
     this.allowDrop = this.allowDrop.bind(this);
     this.drop = this.drop.bind(this);
     this.getStatus = this.getStatus.bind(this);
+    this._BlueprintHostPrepare = this._BlueprintHostPrepare.bind(this);
     this._BlueprintHostClone = this._BlueprintHostClone.bind(this);
     this._BlueprintHostConvert = this._BlueprintHostConvert.bind(this);
     this._BlueprintHostBuild = this._BlueprintHostBuild.bind(this);
@@ -501,6 +503,31 @@ export default class BluePrint extends Component {
     });
   }
 
+   //BlueprintHostPrepare-------------------------------------------------------------------------
+   async _BlueprintHostPrepare(hostName) {
+    console.log("Network Prepare", hostName);
+    var data = {
+      project: this.state.project
+    };
+    console.log(data);
+    //Updating progress to load spinner
+    let NetworksData = this.state.Networks;
+    NetworksData.forEach((Network, index) => {
+      Network.subnets.forEach((subnet, index) => {
+        subnet.hosts.forEach((host, index) => {
+          if(host.host === hostName){
+            host["BtProgress"] = "prepareStarted";
+          }
+        })
+      })
+      })
+    await PostService(BLUEPRINT_HOST_PREPARE, data).then((res) => {
+      console.log("data from response of  prepare post", res.data);
+      var interval = setInterval(this.getStatus, 60000);
+      this.setState({ intervalId: interval ,Networks:NetworksData});
+    });
+  }
+
 
 
   //BlueprintHostConvert-------------------------------------------------------------------------
@@ -579,32 +606,37 @@ export default class BluePrint extends Component {
                 host["status"] = hostRes.status;
                 // host["BtStatus"] = hostRes.status;
                 console.log("Status of Button", host["BtStatus"]);
-                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") || (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "build")) {
+                if ((parseInt(hostRes.status) < 20 && host["BtStatus"] === "BuildNetwork") ||  parseInt(hostRes.status) < 21 && host["BtStatus"] === "perpare" || (parseInt(hostRes.status) < 25 && host["BtStatus"] === "clone") || (parseInt(hostRes.status) < 35 && host["BtStatus"] === "convert") || (parseInt(hostRes.status) < 100 && host["BtStatus"] === "build")) {
                   flag = false;
                 }
                 else {
                   flag = true;
                   if (host["BtStatus"] === "BuildNetwork") {
                     hostAlert = host.host;
-                    UpdateMessage = "Build Network Successfull!!";
-                    host["BtStatus"] = "clone"
+                    UpdateMessage = "Build Network Successfully!!";
+                    host["BtStatus"] = "prepare"
                     console.log(host["BtStatus"]);
+                  }      else if (host["BtStatus"] === "prepareStarted") {
+                    hostAlert = host.host;
+                    UpdateMessage = "Perpare Completed Successfully!!";
+                    host["BtProgress"] = "PrepareCompleted";
+                    host["BtStatus"] = "clone";
                   }
                   else if (host["BtStatus"] === "clone") {
                     hostAlert = host.host;
-                    UpdateMessage = "Clone Completed Successfull!!";
+                    UpdateMessage = "Clone Completed Successfully!!";
                     host["BtProgress"] = "cloneCompleted";
                     host["BtStatus"] = "convert";
                   }
                   else if (host["BtStatus"] === "convert") {
                     hostAlert = host.host;
-                    UpdateMessage = "Convert Completed Successfull!!";
+                    UpdateMessage = "Convert Completed Successfully!!";
                     host["BtProgress"] = "convertCompleted";
                     host["BtStatus"] = "build";
                   }
                   else if (host["BtStatus"] === "build") {
                     hostAlert = host.host;
-                    UpdateMessage = "Build Completed Successfull!!";
+                    UpdateMessage = "Build Completed Successfully!!";
                     host["BtProgress"] = "buildCompleted";
                     host["BtStatus"] = "BuildNetwork";
                   }
@@ -767,6 +799,7 @@ export default class BluePrint extends Component {
                           dragStart={this.state.dragStart}
                           allowDrop={this.allowDrop}
                           drop={this.drop}
+                          BlueprintHostPrepare = {this._BlueprintHostPrepare}
                           BlueprintHostClone={this._BlueprintHostClone}
                           BlueprintHostConvert={this._BlueprintHostConvert}
                           BlueprintHostBuild={this._BlueprintHostBuild}

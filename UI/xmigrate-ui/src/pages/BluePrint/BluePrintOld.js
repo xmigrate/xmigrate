@@ -310,6 +310,14 @@ export default class BluePrint extends Component {
               size="lg"
               active
             >
+              Prepare
+            </Button>
+            <Button
+              className="media-body py-3 mr-40px text-secondary bg-white"
+              variant="light"
+              size="lg"
+              active
+            >
               Cloning <icon.FiCopy />
             </Button>
             <Button

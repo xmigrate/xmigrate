@@ -105,7 +105,19 @@ render(){
                         </Form> 
                       </Col>
                       <Col className="rdColCenter" xs={{ span: 3 }}>   
-                
+                      <Button
+                      className=" media-body"
+                      variant="info"
+                      size="sm"
+                      disabled={host["BtStatus"] !=="prepare" || host["BtProgress"] === "prepareStarted"}
+                      onClick={()=>this.props.BlueprintHostPrepare(host.host)}
+                    >
+                      {
+                         host["BtProgress"] === "prepareStarted" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <> Prepare</>
+                      }
+                      
+                    </Button>
+                 ----
                        <Button
                       className=" media-body"
                       variant="success"
