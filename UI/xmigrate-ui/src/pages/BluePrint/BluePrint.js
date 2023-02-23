@@ -127,7 +127,7 @@ export default class BluePrint extends Component {
             if ((status > -25 && status <= -20) || status === 20) {
               host["BtStatus"] = "clone";
               host["BtProgress"] = "cloneCompleted";
-            } else if (status == 21) {
+            } else if (status === 21) {
               host["BtStatus"] = "clone";
               host["BtProgress"] = "prepareCompleted";
             } else if ((status <= -25 && status > -35) || status === 25) {
@@ -584,7 +584,6 @@ export default class BluePrint extends Component {
         })
     console.log(data);
     await PostService(BLUEPRINT_HOST_BUILD, data).then((res) => {
-      console.log("data from response of  Build post", res.data);
       var interval = setInterval(this.getStatus, 60000);
       this.setState({ intervalId: interval ,Networks:NetworksData});
     });
@@ -598,7 +597,6 @@ export default class BluePrint extends Component {
       project: this.state.project,
     };
     GetServiceWithData(BLUEPRINT_STATUS, data1).then((res) => {
-      console.log("Response For Status", res);
       let flag = false;
       let NetworksData = this.state.Networks;
       //Setting the host status
@@ -621,10 +619,10 @@ export default class BluePrint extends Component {
                   flag = true;
                   if (host["BtStatus"] === "BuildNetwork") {
                     hostAlert = host.host;
-                    UpdateMessage = "Build Network Successfully!!";
+                    UpdateMessage = "Built Network Successfully!!";
                     host["BtStatus"] = "prepare"
                     console.log(host["BtStatus"]);
-                  }      else if (host["BtStatus"] === "prepareStarted") {
+                  }      else if (host["BtStatus"] === "prepare") {
                     hostAlert = host.host;
                     UpdateMessage = "Perpare Completed Successfully!!";
                     host["BtProgress"] = "PrepareCompleted";
