@@ -1,7 +1,7 @@
 ---
 - name : Deploy and execute the payload
   become: true
-  hosts: localhost
+  hosts: all
   gather_facts: yes
   tasks:
     - name: Run the script
