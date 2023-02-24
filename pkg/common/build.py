@@ -87,18 +87,21 @@ async def start_vm_preparation(project):
             
             preparation_completed = run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
             
-            if preparation_completed:
-                print("****************VM preparation completed*****************")
-                logger("VM preparation completed", "info")
-                
-                hosts = BluePrint.objects(project=project)
-                for host in hosts:
-                    BluePrint.objects(host=host.host, project=project).update(status="21")
-            else:
-                print("VM preparation failed")
-                logger("VM preparation failed", "error")
-            
-    con.close()
+            try:
+                if preparation_completed:
+                    print("****************VM preparation completed*****************")
+                    logger("VM preparation completed", "info")
+                                        
+                    hosts = BluePrint.objects(project=project).allow_filtering()
+                    for host in hosts:
+                        BluePrint.objects(host=host.host, project=project).update(status="21")
+                else:
+                    print("VM preparation failed")
+                    logger("VM preparation failed", "error")
+            except Exception as e:
+                print(str(e))
+            finally:
+                con.shutdown()
 
 async def call_start_clone(project,hostname):
     await asyncio.create_task(start_cloning(project,hostname))
