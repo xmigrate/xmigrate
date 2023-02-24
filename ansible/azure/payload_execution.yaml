@@ -1,21 +1,115 @@
+---
 - name : Deploy and execute the payload
-  hosts: all
-  gather_facts: no
+  become: true
+  hosts: localhost
+  gather_facts: yes
   tasks:
+    - name: Run the script
+      shell: |
+        vm_os=$(uname -s)
+        # Check if the OS is compatible with Azure
+        if [[ "$vm_os" == "Linux" || "$vm_os" == "Darwin" ]]; then
+            echo "The VM operating system is compatible with Azure."
+        else
+            echo "The VM operating system is not compatible with Azure."
+        fi
+        # Get the VM size from the hardware profile of the VM
+
+        vm_size=$(curl -s -H Metadata:true "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-02-01&format=text")
+
+        # Check if the VM virtualization platform is compatible with Azure
+
+        if [[ "$vm_size" == *"Standard_A"* || "$vm_size" == *"Standard_D"* ]]; then
+            echo "The virtualization platform of the VM is compatible with Azure."
+        else
+            echo "The virtualization platform of the VM is not compatible with Azure."
+            
+        fi
+        # Check if the VM's configuration is compatible with Azure
+
+        if [ -e "/etc/os-release" ]; then
+            source "/etc/os-release"
+            if [[ "$ID" == "ubuntu" || "$ID" == "debian" || "$ID" == "rhel" || "$ID" == "centos" ]]; then
+                echo "The VM's configuration is compatible with Azure."
+            else
+                echo "The VM's configuration is not compatible with Azure."
+                
+            fi
+        else
+            echo "The VM's configuration is not compatible with Azure."
+            
+        fi
+        # Check if the VM has a NIC attached
+
+        if [[ $(ip link show | grep -c eth0) -eq 0 ]]; then
+            echo "The VM does not have a NIC attached."
+            
+        else
+            echo "The VM has a NIC attached."
+        fi
+        # Check if the NIC has an IP address assigned
+
+        if [[ $(ip address show dev eth0 | grep -c "inet ") -eq 0 ]]; then
+            echo "The NIC does not have an IP address assigned."
+            
+        else
+            echo "The NIC has an IP address assigned."
+        fi
+        # Check if the VM can access the Azure portal
+
+        if nc -zv portal.azure.com 443 > /dev/null 2>&1; then
+            echo "The VM can access the Azure portal."
+        else
+            echo "The VM cannot access the Azure portal."
+            
+        fi
+        # Check if the VM has a disk attached
+
+        if [[ $(lsblk | grep -c "disk") -eq 0 ]]; then
+            echo "The VM does not have a disk attached."
+            
+        else
+            echo "The VM has a disk attached."
+        fi
+        # Check if the disk is formatted with a compatible file system
+        fs_type=$(lsblk -o NAME,FSTYPE | grep -m 1 "disk" | awk '{print $2}')
+
+        if [[ "$fs_type" != "ext3" && "$fs_type" != "ext4" && "$fs_type" != "xfs" ]]; then
+            echo "The disk is formatted with an incompatible file system."
+            
+        else
+            echo "The disk is formatted with a compatible file system."
+        fi
+
+
+        # Check if the disk has enough free space
+
+        free_space=$(df -h / | awk '{print $4}' | tail -n 1)
+
+        if [[ $(echo "$free_space < 5" | bc -l) -eq 1 ]]; then
+            echo "The disk does not have enough free space."
+            
+        else
+            echo "The disk has enough free space."
+        fi"
+      register: compatibility_check
+      ignore_errors: yes
+
+    - name: Display compatibility check results
+      debug:
+        var: compatibility_check.stdout_lines
     - name: <==Deploy payload==>
       copy:
-        src: "../payloads/footprint/footprint"
-        dest: "/tmp/footprint"
+        src: ../payloads/footprint/footprint
+        dest: /tmp/footprint
         mode: a+x
       tags:
         - deploy
-        
     - name: <==Executing payload==>
-      shell: "/tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
+      shell: /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}
       register: st
       tags:
         - exec
-
     - name: Debug
       debug:
         var: st

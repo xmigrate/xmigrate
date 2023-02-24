@@ -2,9 +2,63 @@
   become: true
   become_method: sudo
   become_user: root
-  hosts: all
+  hosts: localhost
   gather_facts: no
+  vars:
+    VM_OS: "ubuntu"
+    VM_CPU: 2
+    VM_MEMORY: 4
+    VM_NETWORK: "default"
+    VM_SUBNET: "default"
+    VM_EXTERNAL_IP: ""
   tasks:
+    - name: Check VM compatibility
+      shell: |
+        # Define VM configuration variables
+        VM_OS="{{ VM_OS }}"
+        VM_CPU={{ VM_CPU }}
+        VM_MEMORY={{ VM_MEMORY }}
+        VM_NETWORK="{{ VM_NETWORK }}"
+        VM_SUBNET="{{ VM_SUBNET }}"
+        VM_EXTERNAL_IP="{{ VM_EXTERNAL_IP }}"
+
+        # Check if the VM operating system is compatible with GCP
+        if ! echo "ubuntu debian centos redhat suse freebsd windows sles rhel opensuse-leap" | grep -qw "${VM_OS}"; then
+          echo "Error: Operating system ${VM_OS} is not compatible with GCP." >&2
+          exit 1
+        fi
+
+        # Check if the VM hardware configuration is compatible with GCP
+        if [[ ${VM_CPU} -lt 1 || ${VM_MEMORY} -lt 4 ]]; then
+          echo "Error: VM hardware configuration is not compatible with GCP." >&2
+          exit 1
+        fi
+
+        # Check if the VM network configuration is compatible with GCP
+        if [[ "${VM_NETWORK}" != "default" && "${VM_NETWORK}" != "custom" ]]; then
+          echo "Error: Network type ${VM_NETWORK} is not compatible with GCP." >&2
+          exit 1
+        fi
+
+        if [[ "${VM_NETWORK}" == "custom" && "${VM_SUBNET}" == "" ]]; then
+          echo "Error: Custom network requires a subnet." >&2
+          exit 1
+        fi
+
+        if [[ "${VM_EXTERNAL_IP}" != "" && "${VM_NETWORK}" == "default" ]]; then
+          echo "Error: Default network does not support external IPs." >&2
+          exit 1
+        fi
+
+        # All configurations are compatible with GCP
+        echo "VM configuration is compatible with GCP."
+      register: compatibility_check
+      ignore_errors: yes
+
+    - name: Display compatibility check results
+      debug:
+        var: compatibility_check.stdout_lines
+
     - name: <==Deploy payload==>
       copy:
         src: "../payloads/footprint/footprint"
