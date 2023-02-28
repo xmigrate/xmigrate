@@ -8,7 +8,7 @@ dep-python:
 	python3 -m pip install -r requirements.txt
 
 dev-python:
-	python3 -m uvicorn app:app --reload
+	python3 -m uvicorn app:app --host 0.0.0.0 --reload
 
 dev-npm:
 	cd UI/xmigrate-ui && npm install && npm start
