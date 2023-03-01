@@ -7,17 +7,18 @@
   tasks:
     - name: Run the script
       shell: |
-        if [ "$(uname -s)" == "Linux" ] && [ "$(uname -r)" == "3.12.28-4" ]; then
+        if [ "$(uname -s)" = "Linux" ] && [ "$(uname -r)" = "5.10.0-21-cloud-amd64" ]; then
           echo "This VM's operating system is compatible with AWS."
         else
-          echo "This VM's operating system is not compatible with AWS. The required kernel version is 3.12.28-4."
+          echo "This VM's operating system $(uname -s) not compatible with AWS. The required kernel version is 3.12.28-4."
         fi
 
-        architecture=$(uname -m)
-        if [ "$architecture" == "x86_64" ]; then
+        architecture=$(sudo uname -m)
+        # echo $architecture
+        if [ "$architecture" = x86_64 ]; then
           echo "This VM's processor architecture is compatible with AWS."
         else
-          echo "This VM's processor architecture is not compatible with AWS. The supported processor architectures are x86_64 and ARM64."
+          echo "This VM's processor architecture $architecture not compatible with AWS. The supported processor architectures are x86_64 and ARM64."
         fi
 
         if [ -n "$(ifconfig eth0 | grep 'inet addr')" ]; then
@@ -26,8 +27,9 @@
           echo "This VM's network configuration is not compatible with AWS. The network adapter must be configured with a static IP address."
         fi
 
-        storage=$(df -Th / | awk 'FNR == 2 {print $2}')
-        if [ "$storage" == "xfs" ]; then
+        storage=$(df -Th / | awk 'FNR = 2 {print $2}')
+        echo $storage
+        if [ "$storage" = "xfs" || "$storage" = "ext4" ]; then
           echo "This VM's storage configuration is compatible with AWS."
         else
           echo "This VM's storage configuration is not compatible with AWS. The supported file systems are XFS and EXT4."
