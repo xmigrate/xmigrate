@@ -20,7 +20,7 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
         try:
             runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, quiet=True)
             if stage != "payload_execution":
-                return not bool(runner[1].stats['failures'])
+                return(not (bool(runner[1].stats['failures']) or bool(runner[1].stats['dark'])))
         except Exception as e:
             print(str(e))
     
