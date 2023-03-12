@@ -147,13 +147,15 @@ async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depe
 
 class Prepare(BaseModel):
     project: Union[str,None] = None
+    hostname: Union[list,None] = None
 
 @app.post('/blueprint/host/prepare')
 async def vm_prepare(data: Prepare, current_user: TokenData = Depends(get_current_user)):
 
     project = data.project
+    hostname = data.hostname
     con = create_db_con()
-    asyncio.create_task(build.call_start_vm_preparation(project=project))
+    asyncio.create_task(build.call_start_vm_preparation(project=project, hostname=hostname))
  
     return jsonable_encoder({"msg": "VM preparation started", "status":200})
 

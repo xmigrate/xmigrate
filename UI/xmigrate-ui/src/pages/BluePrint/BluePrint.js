@@ -514,7 +514,8 @@ export default class BluePrint extends Component {
    async _BlueprintHostPrepare(hostName) {
     console.log("Network Prepare", hostName);
     var data = {
-      project: this.state.project
+      project: this.state.project,
+      hostname: [hostName]
     };
     console.log(data);
     //Updating progress to load spinner

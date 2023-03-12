@@ -49,10 +49,10 @@ async def start_infra_build(project):
     else:
         print("Resource group creation failed")
 
-async def call_start_vm_preparation(project):
-    await asyncio.create_task(start_vm_preparation(project))
+async def call_start_vm_preparation(project, hostname):
+    await asyncio.create_task(start_vm_preparation(project, hostname))
 
-async def start_vm_preparation(project):
+async def start_vm_preparation(project, hostname):
 
     con = create_db_con
     p = Project.objects(name=project)
