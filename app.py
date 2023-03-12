@@ -17,7 +17,7 @@ import sys
 #from quart_jwt_extended import JWTManager
 
 class Settings(BaseSettings):
-    MONGO_DB: str = "mongodb://root:example@localhost:27017/"
+    MONGO_DB: str = "mongodb://root:example@mongo:27017/"
     JWT_SECRET_KEY: str = "try2h@ckT415"
     JWT_ACCESS_TOKEN_EXPIRES: int = 3600
     ALGORITHM: str = "HS256"
