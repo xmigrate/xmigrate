@@ -1,6 +1,8 @@
+import os
 from app import app
 from utils.dbconn import *
 from utils.converter import *
+from utils.playbook import run_playbook
 from model.discover import *
 from model.blueprint import *
 from pkg.azure import *
@@ -143,9 +145,38 @@ async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depe
     con.shutdown()
     return jsonable_encoder({"msg":"Succesfully updated","status":200})
 
+class Prepare(BaseModel):
+    project: Union[str,None] = None
+    hostname: Union[list,None] = None
+
+@app.post('/blueprint/host/prepare')
+async def vm_prepare(data: Prepare, current_user: TokenData = Depends(get_current_user)):
+
+    project = data.project
+    hostname = data.hostname
+    con = create_db_con()
+    asyncio.create_task(build.call_start_vm_preparation(project=project, hostname=hostname))
+ 
+    return jsonable_encoder({"msg": "VM preparation started", "status":200})
+
+
 class BlueprintHost(BaseModel):
     project: Union[str,None] = None
     hostname: Union[str,None] = None
+
+class check(BaseModel):
+    project: Union[str,None] = None
+    hostname: Union[str,None] = None
+
+@app.post('/blueprint/host/check')
+async def vm_check(data: check, current_user: TokenData = Depends(get_current_user)):
+    print(data)
+    project = data.project
+    con = create_db_con()
+    # run_playbook(provider="aws",project=project,username="ubuntu",curr_working_dir=os.getcwd(),extra_vars=extra_vars)
+    asyncio.create_task(build.call_start_check(project))
+    return jsonable_encoder({"msg":"Checking started","status":200})
+
 
 @app.post('/blueprint/host/clone')
 async def image_clone(data: BlueprintHost, current_user: TokenData = Depends(get_current_user)):

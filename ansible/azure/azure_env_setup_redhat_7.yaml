@@ -1,7 +1,9 @@
 - name : Preparing the VM to be migrated to Azure
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
+  gather_facts: no
   force_handlers: True
   tasks:
     - name: Install azcopy
@@ -9,8 +11,7 @@
         src: /usr/bin/azcopy
         dest: /usr/bin/azcopy
         mode: 0777
-      become_user: root
-      become_method: sudo
+      
     - name: Copy content to file
       copy: 
         content:  | 
@@ -18,8 +19,6 @@
             HOSTNAME=localhost.localdomain
         dest: /etc/sysconfig/network
         force: yes
-      become: yes
-      become_user: root
 
     - name: Copy content to file
       copy: 
@@ -34,45 +33,31 @@
           NM_CONTROLLED=no
         dest: /etc/sysconfig/network-scripts/ifcfg-eth0
         force: yes
-      become: yes
-      become_user: root
-
+      
     - name: Ensure that the network service will start at boot time
-      shell: "sudo systemctl enable network"
-      become: yes
-      become_user: root  
-    
+      shell: "systemctl enable network"
+   
     - name: grub configure
-      shell: "sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,earlyprintk=ttyS0,net.ifnames=0\"
-      ' /etc/default/grub"
-      become: true
-      become_user: root
-    - name: grub configure
-      shell: "sed -i '/GRUB_TERMINAL_OUTPUT_DEFAULT/c\\GRUB_TERMINAL_OUTPUT_DEFAULT=\"serial console\"
-      ' /etc/default/grub"
-      become: true
-      become_user: root  
-    - name: grub configure
-      shell: "sed -i '/GRUB_SERIAL_COMMAND_DEFAULT/c\\GRUB_SERIAL_COMMAND_DEFAULT=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\"
-      ' /etc/default/grub"
-      become: true
-      become_user: root  
-    
+      shell: |
+        sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0, earlyprintk=ttyS0,earlyprintk=ttyS0,net.ifnames=0\"' /etc/default/grub
+        sed -i '/GRUB_TERMINAL_OUTPUT_DEFAULT/c\\GRUB_TERMINAL_OUTPUT_DEFAULT=\"serial console\"' /etc/default/grub
+        sed -i '/GRUB_SERIAL_COMMAND_DEFAULT/c\\GRUB_SERIAL_COMMAND_DEFAULT=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\"' /etc/default/grub
+      args:
+        warn: false
+      
     - name: rebuild the grub configuration
-      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      shell: "grub2-mkconfig -o /boot/grub2/grub.cfg"
 
     - name: configure-secure-shell
       lineinfile:
         path: /etc/ssh/sshd_config
         line: |
           ClientAliveInterval 180  
-      become: yes
-      become_user: root
-
+  
     - name: epel-release-latest-7
-      shell: sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
+      shell: yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
       ignore_errors: True
-      
+    
     - name: Install azure linux agent other tools
       yum:
         name: 
@@ -81,28 +66,27 @@
           - cloud-utils-growpart
           - gdisk 
           - hyperv-daemons
-          - ntfs-3g
         state: latest
-      become_method: sudo   
-      become: yes
-      become_user: root 
 
+    # - name: test
+    #   yum:
+    #     name: ntfs-3g
+    #     state: present
+ 
     - name: Download file
-      shell: sudo yum install https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm -y
+      shell: yum install https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm -y
       ignore_errors: yes
 
     - name: Enable azure linux agent
       systemd: 
         name: waagent
         enabled: yes
-      become: yes
-      become_user: root  
+
     - name: Enable cloud init
       systemd: 
         name: cloud-init
         enabled: yes
-      become: yes
-      become_user: root      
+         
     - name: Configure waagent for cloud-init
       shell: |
         sed -i 's/Provisioning.Agent=auto/Provisioning.Agent=cloud-init/g' /etc/waagent.conf
@@ -136,34 +120,12 @@
         EOF
         # ResourceDisk.Format=n
         # ResourceDisk.EnableSwap=n
-      become: yes
-      become_user: root
-  
+      args:
+        warn: false
+    
     - name: Deprovision waagent
       shell: |
         cloud-init clean --logs --seed
         waagent -force -deprovision
         rm -f ~/.bash_history
         export HISTSIZE=0
-      become: yes
-      become_user: root
-
-    - name: <==Deploy payload==>
-      copy:
-        src: "../payloads/footprint/footprint"
-        dest: "/tmp/footprint"
-        mode: a+x
-      tags:
-        - deploy
-    - name: <==Executing payload==>
-      shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-      register: st
-      become: True
-      tags:
-        - exec
-
-    - name: Debug
-      debug:
-        var: st
-      tags:
-        - msg

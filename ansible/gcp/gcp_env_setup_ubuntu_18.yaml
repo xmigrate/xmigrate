@@ -1,5 +1,5 @@
-- name : Configure gsutil and required packages and deploy and execute the payload
-  become: yes
+- name : Configure gsutil and required packages
+  become: true
   become_method: sudo
   become_user: root
   hosts: all
@@ -14,28 +14,34 @@
         update_cache: yes
     rescue:
     - name: Update apt.. older way
-      shell: "sudo apt update -y"
+      shell: "apt update -y"
+      args:
+        warn: false
     - name: Install Python-devel.. older way
-      shell: "sudo apt install python3-pip -y"
+      shell: "apt install python3-pip -y"
+      args:
+        warn: false
     tags:
-        - devel  
+        - devel
+
   - block:
     - name: Upgrade pip3
-      shell: "sudo python3 -m pip install --upgrade pip"
+      shell: "python3 -m pip install --upgrade pip"
     - name: Install Python packages
       pip:
         name: ['gsutil']
         executable: /usr/bin/pip3
-     
     rescue:
     - name: Install python packages
-      shell: "sudo /usr/bin/pip3 install {{ item }} --ignore-installed httplib2"
+      shell: "/usr/bin/pip3 install {{ item }} --ignore-installed httplib2"
       with_items:
         - gsutil
+
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"
       dest: "~/.boto"
+
   - name: check if splash is configured in the boot command
     lineinfile:
       backup: true
@@ -72,37 +78,16 @@
       path: /etc/default/grub
       state: absent
       regexp: 'splashimage'
+
   - block:
     - name: <==Update grub config==>
-      shell: "sudo update-grub"
+      shell: "update-grub"
       register: grubout
-      become: True
       tags:
         - grubupdate
     rescue:
     - name: <==Trying Update grub2 config==>
-      shell: "sudo update-grub2"
+      shell: "update-grub2"
       register: grubout
-      become: True
       tags:
         - grubupdate
-
-  - name: <==Deploy payload==>
-    copy:
-      src: "../payloads/footprint/footprint"
-      dest: "/tmp/footprint"
-      mode: a+x
-    tags:
-      - deploy
-  - name: <==Executing payload==>
-    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-    register: st
-    become: True
-    tags:
-      - exec
-
-  - name: Debug
-    debug:
-      var: st
-    tags:
-      - msg

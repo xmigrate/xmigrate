@@ -16,7 +16,7 @@ class ProjectCreate(BaseModel):
     resource_group: Union[str,None] = None
     subscription_id: Union[str,None] = None
     client_id: Union[str,None] = None
-    secret: Union[str,None] = None
+    secret_id: Union[str,None] = None
     tenant_id: Union[str,None] = None
     users: Union[list,None] = None
     access_key: Union[str,None] = None
