@@ -5,7 +5,6 @@ from model.disk import *
 from model.discover import *
 from model.storage import GcpBucket
 from utils.log_reader import *
-from utils.playbook import run_playbook
 from utils.dbconn import *
 from utils.logger import *
 from utils.playbook import run_playbook
@@ -353,7 +352,6 @@ async def start_build(project):
     else:
         print("No such project")
 
-
 async def call_start_check(project):
     await asyncio.create_task(start_check(project))
 
@@ -383,7 +381,7 @@ async def start_check(project):
             logger("VM Check started","info")
             print("****************VM Check awaiting*****************")
             
-            run_playbook(provider=provider, username=username, project_name=project,playbook=playbook, curr_working_dir=curr_dir, extra_vars=None)
+            run_playbook(provider=provider, username=username, project_name=project,playbook=playbook, curr_working_dir=curr_dir, extra_vars=None, stage=stage)
             # print(provider,username,project_name,curr_working_dir,playbook,stage)
             try:
                 if run_playbook:

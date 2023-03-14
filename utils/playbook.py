@@ -1,10 +1,10 @@
 import os
 from ansible_runner import run_async
 
-def run_playbook(provider: str, username: str, project_name: str, playbook:str, curr_working_dir: str, extra_vars: dict):
+def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None):
 
-    playbook_path = '{}/ansible/{}/{}'.format(curr_working_dir, provider ,playbook)
-    inventory = '{}/ansible/{}/hosts'.format(curr_working_dir, project_name)
+    playbook_path = '{}/ansible/{}/{}'.format(curr_working_dir, provider, playbook)
+    inventory = '{}/ansible/projects/{}/hosts'.format(curr_working_dir, project_name)
     log_folder = '{}/logs/ansible/{}'.format(curr_working_dir, project_name)
     log_file = '{}/{}_log.txt'.format(log_folder, stage)
     env_vars = {
@@ -18,7 +18,9 @@ def run_playbook(provider: str, username: str, project_name: str, playbook:str, 
 
     with open(log_file, 'a+'):
         try:
-            run_async(playbook=playbook_path, inventory=inventory, extravars=extra_vars, envvars=env_vars)
+            runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, quiet=True)
+            if stage != "payload_execution":
+                return(not (bool(runner[1].stats['failures']) or bool(runner[1].stats['dark'])))
         except Exception as e:
             print(str(e))
     

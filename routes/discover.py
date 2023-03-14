@@ -33,7 +33,6 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
     username = data.username
     password = data.password
     project = data.project
-    playbook= "xmigrate.yaml"
     load_dotenv()
     mongodb = os.getenv('BASE_URL')
     if n.add_nodes(nodes,username,password, project) == False:
@@ -58,7 +57,8 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open(aws_dir+'/config', 'w+') as writer:
             writer.write(config_str)
-        run_playbook(provider=provider, username=username, project_name=project,playbook=playbook, curr_working_dir=current_dir, extra_vars=extra_vars)
+    try:
+        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
         return jsonable_encoder({'status': '200'})
     except Exception as e:
         print(str(e))
