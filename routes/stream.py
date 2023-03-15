@@ -1,4 +1,3 @@
-import os
 from app import app
 from quart import jsonify
 from utils.log_reader import *
@@ -9,9 +8,8 @@ from fastapi.encoders import jsonable_encoder
 
 @app.get('/stream')
 async def stream(project, current_user: TokenData = Depends(get_current_user)):
-    curr_dir = os.getcwd()
     line = ''
-    line = await read_logs(curr_dir, project)
+    line = await read_logs(project)
     offset= ''
     blueprint_status = ''
     if "PLAY RECAP" in line:

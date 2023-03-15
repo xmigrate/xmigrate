@@ -3,9 +3,11 @@ from model.blueprint import *
 from model.project import *
 from model.disk import *
 from model.discover import *
+from model.storage import GcpBucket
 from utils.log_reader import *
 from utils.dbconn import *
 from utils.logger import *
+from utils.playbook import run_playbook
 from pkg.common import nodes as n
 import time
 
@@ -47,6 +49,60 @@ async def start_infra_build(project):
     else:
         print("Resource group creation failed")
 
+async def call_start_vm_preparation(project, hostname):
+    await asyncio.create_task(start_vm_preparation(project, hostname))
+
+async def start_vm_preparation(project, hostname):
+
+    con = create_db_con
+    p = Project.objects(name=project)
+    
+    if len(p) > 0:
+        nodes = []
+        
+        for host in Project.objects(name=project)[0]['public_ip']:
+            nodes.append(host)
+
+        username = Project.objects(name=project)[0]['username']
+        password = Project.objects(name=project)[0]['password']
+
+        if n.add_nodes(nodes, username, password, project, False) == False:
+            logger("VM preparation couldn't start because inventory was not created","error")
+        else:
+            provider = p[0]['provider']
+            playbook = "xmigrate.yaml"
+            stage = "vm_preparation"
+            curr_dir = os.getcwd()
+
+            if provider == "gcp":
+                storage = GcpBucket.objects(project=project)[0]
+                project_id = storage['project_id']
+                gs_access_key_id = storage['access_key']
+                gs_secret_access_key = storage['secret_key']
+
+            extra_vars = {'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key} if provider == 'gcp' else None
+
+            logger("VM preparation started","info")
+            print("****************VM preparation awaiting*****************")
+            
+            preparation_completed = run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+            
+            try:
+                if preparation_completed:
+                    print("****************VM preparation completed*****************")
+                    logger("VM preparation completed", "info")
+                                        
+                    hosts = BluePrint.objects(project=project).allow_filtering()
+                    for host in hosts:
+                        BluePrint.objects(host=host.host, project=project).update(status="21")
+                else:
+                    print("VM preparation failed")
+                    logger("VM preparation failed", "error")
+            except Exception as e:
+                print(str(e))
+            finally:
+                con.shutdown()
+
 async def call_start_clone(project,hostname):
     await asyncio.create_task(start_cloning(project,hostname))
 
@@ -54,44 +110,36 @@ async def start_cloning(project,hostname):
     con = create_db_con()
     p = Project.objects(name=project)
     if len(p) > 0:
-        nodes = []
-        for host in Project.objects(name=project)[0]['public_ip']:
-            nodes.append(host)
-        username = Project.objects(name=project)[0]['username']
-        password = Project.objects(name=project)[0]['password']
-        if n.add_nodes(nodes,username,password, project, False) == False:
-            logger("Cloning couldn't start because inventory not created","error")
-        else:
-            if p[0]['provider'] == "azure":
-                logger("Cloning started","info")
-                print("****************Cloning awaiting*****************")
-                cloning_completed = await disk.start_cloning(project,hostname)
-                if cloning_completed:
-                    print("****************Cloning completed*****************")
-                    logger("Disk cloning completed","info")
-                else:
-                    print("Disk cloning failed")
-                    logger("Disk cloning failed","error")
-            elif p[0]['provider'] == "aws":
-                logger("Cloning started","info")
-                print("****************Cloning awaiting*****************")
-                cloning_completed = await awsdisk.start_cloning(project,hostname)
-                if cloning_completed:
-                    print("****************Cloning completed*****************")
-                    logger("Cloning completed","info")
-                else:
-                    print("Disk cloning failed")
-                    logger("Disk cloning failed","error")
-            elif p[0]['provider'] == "gcp":
-                logger("Cloning started","info")
-                print("****************Cloning awaiting*****************")
-                cloning_completed = await gcpdisk.start_cloning(project,hostname)
-                if cloning_completed:
-                    print("****************Cloning completed*****************")
-                    logger("Cloning completed","info")
-                else:
-                    print("Disk cloning failed")
-                    logger("Disk cloning failed","error")
+        if p[0]['provider'] == "azure":
+            logger("Cloning started","info")
+            print("****************Cloning awaiting*****************")
+            cloning_completed = await disk.start_cloning(project,hostname)
+            if cloning_completed:
+                print("****************Cloning completed*****************")
+                logger("Disk cloning completed","info")
+            else:
+                print("Disk cloning failed")
+                logger("Disk cloning failed","error")
+        elif p[0]['provider'] == "aws":
+            logger("Cloning started","info")
+            print("****************Cloning awaiting*****************")
+            cloning_completed = await awsdisk.start_cloning(project,hostname)
+            if cloning_completed:
+                print("****************Cloning completed*****************")
+                logger("Cloning completed","info")
+            else:
+                print("Disk cloning failed")
+                logger("Disk cloning failed","error")
+        elif p[0]['provider'] == "gcp":
+            logger("Cloning started","info")
+            print("****************Cloning awaiting*****************")
+            cloning_completed = await gcpdisk.start_cloning(project,hostname)
+            if cloning_completed:
+                print("****************Cloning completed*****************")
+                logger("Cloning completed","info")
+            else:
+                print("Disk cloning failed")
+                logger("Disk cloning failed","error")
 
 async def call_start_convert(project,hostname):
     await asyncio.create_task(start_convert(project,hostname))

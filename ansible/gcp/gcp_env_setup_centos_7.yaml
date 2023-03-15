@@ -1,5 +1,5 @@
-- name : Configure gsutil and required packages and deploy and execute the payload
-  become: yes
+- name : Configure gsutil and required packages
+  become: true
   become_method: sudo
   become_user: root
   hosts: all
@@ -8,34 +8,36 @@
   tasks:
   - block:
     - name: Epel Release
-      shell: "sudo yum install epel-release -y"
-      become: yes
-      become_user: root
+      shell: "yum install epel-release -y"
+      args:
+        warn: false
     - name: Install Python packages
-      shell : "sudo yum install gcc openssl-devel python-devel python-setuptools libffi-devel -y"
-      become: yes
-      become_user: root
+      shell : "yum install gcc openssl-devel python-devel python-setuptools libffi-devel -y"
+      args:
+        warn: false
     - name: Install Pip
-      shell : "sudo yum install python-pip -y" 
-      become: yes
-      become_user: root
+      shell : "yum install python3-pip -y"
+      args:
+        warn: false
     - name: pip3
-      shell: "sudo pip3.6 install --upgrade pip"  
+      shell: "pip3 install --upgrade pip"
     - name: Install gsutil
-      shell: "sudo pip3 install gsutil" 
-      become: yes
-      become_user: root  
+      shell: "pip3 install gsutil"     
     rescue:
     - name: Install python packages
-      shell: "sudo yum install {{ item }}"
+      shell: "yum install {{ item }}"
       with_items:
         - gsutil
       ignore_errors: yes
+      args:
+        warn: false
+
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"
       dest: "~/.boto"
     ignore_errors: yes
+    
   - name: check if splash is configured in the boot command
     lineinfile:
       backup: true
@@ -63,6 +65,7 @@
       line: 'GRUB_CMDLINE_LINUX="console=ttyS0,38400n8d console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"'
     when: grub_cmdline_check.found == 0
     ignore_errors: yes
+
   - name: remove-kernel param
     replace:
       path: "/etc/default/grub" 
@@ -76,38 +79,15 @@
       state: absent
       regexp: 'splashimage'
     ignore_errors: yes
+
   - block:
     - name: <==Update grub config==>
-      shell: "sudo grub2-mkconfig -o /boot/grub/grub.cfg"
-      become: true
-      become_user: root 
+      shell: "grub2-mkconfig -o /boot/grub/grub.cfg"
       ignore_errors: yes  
     rescue:
     - name: <==Trying Update grub2 config==>
-      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      shell: "grub2-mkconfig -o /boot/grub2/grub.cfg"
       register: grubout
-      become: True
       tags:
         - grubupdate
-      ignore_errors: yes  
-
-  - name: <==Deploy payload==>
-    copy:
-      src: "../payloads/footprint/footprint"
-      dest: "/tmp/footprint"
-      mode: a+x
-    tags:
-      - deploy
-
-  - name: <==Executing payload==>
-    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-    register: st
-    become: True
-    tags:
-      - exec
-
-  - name: Debug
-    debug:
-      var: st
-    tags:
-      - msg
+      ignore_errors: yes

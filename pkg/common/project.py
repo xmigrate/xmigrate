@@ -48,7 +48,7 @@ async def create_project(data, user):
     elif provider == 'gcp':
         location = data.location
         name = data.name
-        project_id = data.project_id
+        project_id = data.service_account['project_id']
         service_account = data.service_account
         post = Project(name=name, provider=provider, users=users, location=location,
                            service_account=service_account, gcp_project_id=project_id)
