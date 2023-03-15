@@ -41,8 +41,8 @@ async def start_cloning(project, hostname):
         #     command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/aws/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\""
         # else:
         #     command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/aws/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\" --limit "+public_ip+" --user "+user+" --become-user "+user+" --become-method sudo"
-        process = await asyncio.create_subprocess_shell(run_playbook, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-        await process.wait()
+        # process = await asyncio.create_subprocess_shell(run_playbook, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+        await run_playbook.wait()
         machines = BluePrint.objects(project=project).allow_filtering()
         machine_count = len(machines)
         flag = True
