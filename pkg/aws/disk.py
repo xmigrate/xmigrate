@@ -22,7 +22,7 @@ async def start_cloning(project, hostname):
     load_dotenv()
     username = Project.objects(name=project)[0]['username']
     mongodb = os.getenv('BASE_URL')
-    current_dir = os.getcwd()
+    current_dir = os.getcwd() 
     playbook = "start_migration.yaml"
     stage = "start clone"
     extra_vars = {'bucket': bucket, 'accesskey': accesskey, 'secret_key': secret_key,'public_ip':public_ip, 'user':user} 
