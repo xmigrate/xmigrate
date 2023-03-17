@@ -152,21 +152,20 @@ async def start_cloning(project, hostname):
     stage = "start clone"
     provider= 'gcp'
     extra_vars = {'bucket': bucket, 'access_key': access_key, 'secret_key': secret_key, 'public_ip':public_ip, 'user':user, 'mongodb':mongodb, 'project':project, } 
-    run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
-    process = await asyncio.create_subprocess_shell(run_playbook, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-    await process.wait()
-    machines = BluePrint.objects(project=project).allow_filtering()
-    machine_count = len(machines)
-    flag = True
-    status_count = 0
-    while flag:
-            for machine in machines:
-                if int(machine['status'])>=25:
-                    status_count = status_count + 1
-            if status_count == machine_count:
-                flag = False
-    con.shutdown()
-    return not flag
+    cloning_completed =run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+    if cloning_completed:
+        machines = BluePrint.objects(project=project).allow_filtering()
+        machine_count = len(machines)
+        flag = True
+        status_count = 0
+        while flag:
+                for machine in machines:
+                    if int(machine['status'])>=25:
+                        status_count = status_count + 1
+                if status_count == machine_count:
+                    flag = False
+        con.shutdown()
+        return not flag
 
 
 async def download_worker(osdisk_raw,project,host):

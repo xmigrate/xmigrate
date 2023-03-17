@@ -104,25 +104,20 @@ async def start_cloning(project, hostname):
         provider= 'azure'
         os.popen('echo null > ./logs/ansible/migration_log.txt')
         extra_vars = {'storage': storage, 'access_key': access_key, 'sas_token': sas_token, 'public_ip':public_ip, 'user':user, 'mongodb':mongodb, 'project':project, 'url':url} 
-
-        if hostname == "all":
-            run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)        
-        else:
-            logger(run_playbook,"warning")
-        process = await asyncio.create_subprocess_shell(run_playbook, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-        await process.wait()
-        machines = BluePrint.objects(project=project).allow_filtering()
-        machine_count = len(machines)
-        flag = True
-        status_count = 0
-        while flag:
-            for machine in machines:
-                if int(machine['status'])>=25:
-                    status_count = status_count + 1
-            if status_count == machine_count:
-                flag = False
-        con.shutdown()
-        return not flag
+        cloning_compleated=run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+        if cloning_compleated:
+            machines = BluePrint.objects(project=project).allow_filtering()
+            machine_count = len(machines)
+            flag = True
+            status_count = 0
+            while flag:
+                for machine in machines:
+                    if int(machine['status'])>=25:
+                        status_count = status_count + 1
+                if status_count == machine_count:
+                    flag = False
+            con.shutdown()
+            return not flag
 
 
 async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_path, storage_account):
