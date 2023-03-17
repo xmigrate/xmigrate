@@ -3,6 +3,7 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.common.client_factory import get_client_from_cli_profile
 from utils.dbconn import *
 from utils.log_reader import *
+from utils.playbook import run_playbook
 from utils.logger import *
 from model.project import *
 from model.disk import *
@@ -90,21 +91,25 @@ async def start_cloning(project, hostname):
         public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
         user = Project.objects(name=project).allow_filtering()[0]['username']
         storage = Storage.objects(project=project).allow_filtering()[0]['storage']
-        accesskey = Storage.objects(project=project).allow_filtering()[0]['access_key']
+        access_key = Storage.objects(project=project).allow_filtering()[0]['access_key']
         container = Storage.objects(project=project).allow_filtering()[0]['container']
-        sas_token = sas.generate_sas_token(storage,accesskey)
+        sas_token = sas.generate_sas_token(storage,access_key)
         url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
         load_dotenv()
+        username = Project.objects(name=project)[0]['username']
         mongodb = os.getenv('BASE_URL')
         current_dir = os.getcwd()
+        playbook = "start_migration.yaml"
+        stage = "start clone"
+        provider= 'azure'
         os.popen('echo null > ./logs/ansible/migration_log.txt')
+        extra_vars = {'storage': storage, 'access_key': access_key, 'sas_token': sas_token, 'public_ip':public_ip, 'user':user, 'mongodb':mongodb, 'project':project, 'url':url} 
+
         if hostname == "all":
-            command = "ANSIBLE_HOST_KEY_CHECKING=False /usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas='"+sas_token+"' mongodb="+mongodb+ " project="+project+" hostname="+hostname+"\""
+            run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)        
         else:
-            command = "ANSIBLE_HOST_KEY_CHECKING=False /usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas='"+sas_token+"' mongodb="+mongodb+ " project="+project+" hostname="+hostname+"\" --limit "+public_ip+" --user "+user+" --become-user "+user+" --become-method sudo"
-            print(command)
-            logger(command,"warning")
-        process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+            logger(run_playbook,"warning")
+        process = await asyncio.create_subprocess_shell(run_playbook, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process.wait()
         machines = BluePrint.objects(project=project).allow_filtering()
         machine_count = len(machines)
