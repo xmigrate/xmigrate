@@ -26,7 +26,7 @@ async def start_cloning(project, hostname):
     playbook = "start_migration.yaml"
     stage = "start clone"
     provider = Project.objects(name=project)[0]['provider']
-    
+    # print(provider)
     # print(project)
     extra_vars = {'bucket': bucket, 'access_key': access_key, 'secret_key': secret_key, 'mongodb': mongodb, 'project': project, 'public_ip': public_ip, 'user': user} 
     # cloning_complets = 
