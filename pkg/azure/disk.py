@@ -100,12 +100,11 @@ async def start_cloning(project, hostname):
         mongodb = os.getenv('BASE_URL')
         current_dir = os.getcwd()
         playbook = "start_migration.yaml"
-        stage = "start clone"
+        stage = "cloning"
         provider= 'azure'
-        # os.popen('echo null > ./logs/ansible/migration_log.txt')
-        extra_vars = {'url':url,'sas': sas_token,'mongodb':mongodb, 'project':project, 'storage': storage, 'hostname':hostname, 'access_key': access_key,  'public_ip':public_ip, 'user':user,} 
-        cloning_compleated=run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
-        if cloning_compleated:
+        extra_vars = {'url':url,'sas': sas_token,'mongodb':mongodb, 'project':project, 'storage': storage, 'hostname':hostname, 'access_key': access_key,  'public_ip':public_ip, 'user':user} 
+        cloning_completed=run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+        if cloning_completed:
             machines = BluePrint.objects(project=project).allow_filtering()
             machine_count = len(machines)
             flag = True

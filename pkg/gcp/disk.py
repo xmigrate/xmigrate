@@ -149,7 +149,7 @@ async def start_cloning(project, hostname):
     mongodb = os.getenv('BASE_URL')
     current_dir = os.getcwd()
     playbook = "start_migration.yaml"
-    stage = "start clone"
+    stage = "cloning"
     provider= 'gcp'
     extra_vars = {'bucket': bucket, 'access_key': access_key, 'secret_key': secret_key, 'public_ip':public_ip, 'user':user, 'mongodb':mongodb, 'project':project, } 
     cloning_completed =run_playbook(username=username,provider=provider,project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
