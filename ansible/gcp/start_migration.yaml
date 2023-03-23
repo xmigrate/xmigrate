@@ -1,7 +1,8 @@
 - name : Starting migration
   become: true
+  become_user: root
   become_method: sudo
-  hosts: nodes
+  hosts: all
   gather_facts: no
   force_handlers: True
   tasks:
@@ -13,9 +14,7 @@
   - name: <== Executing payload ==>
     shell: "python3 /tmp/start.py {{ bucket }} {{ access_key }} {{ secret_key }} '{{ mongodb }}' {{ project }}"
     register: st
-    become_user: root
-    become: true
-    
+
   - name: Message
     debug:
       var: st
