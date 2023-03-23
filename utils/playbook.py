@@ -1,7 +1,7 @@
 import os
 from ansible_runner import run_async
 
-def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None):
+def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None ):
 
     playbook_path = '{}/ansible/{}/{}'.format(curr_working_dir, provider, playbook)
     inventory = '{}/ansible/projects/{}/hosts'.format(curr_working_dir, project_name)
