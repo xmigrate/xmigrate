@@ -24,14 +24,17 @@
   #       - requests
   #     become: true
   #     become_user: root
+
   - name: <== Deploy payload ==>
     copy:
       src: "../payloads/start_dd_azure.py"
       dest: "/tmp/start.py"
+
   - name: <== Executing payload ==>
     shell: "python3 /tmp/start.py {{ url }} '{{ sas }}' {{ mongodb }} {{ project }} {{ hostname }}"
     register: st
     become: True
+    
   - name: Message
     debug:
       var: st

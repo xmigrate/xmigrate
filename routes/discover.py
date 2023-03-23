@@ -40,6 +40,8 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
             {"msg": "Request couldn't process"}))
 
     extra_vars = {'mongodb': mongodb, 'project': project}
+    playbook = "payload_execution.yaml"
+    stage = "payload_execution"
         
     if provider == "aws":
         proj_details = Project.objects(name=project)[0]
@@ -55,18 +57,10 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open(aws_dir+'/config', 'w+') as writer:
             writer.write(config_str)
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
+    try:
+        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
         return jsonable_encoder({'status': '200'})
-    elif provider == "azure":
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
-        return jsonable_encoder({'status': '200'})
-    elif provider == "gcp":
-        storage = GcpBucket.objects(project=project)[0]
-        project_id = storage['project_id']
-        gs_access_key_id = storage['access_key']
-        gs_secret_access_key = storage['secret_key']
-        extra_vars = {'mongodb': mongodb, 'project': project, 'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key}
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
-        return jsonable_encoder({'status': '200'})
-    return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
-        {"msg": "Request couldn't process"}))
+    except Exception as e:
+        print(str(e))
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
+            {"msg": "Request couldn't process"}))

@@ -1,0 +1,94 @@
+---
+- name : compatibility check azure
+  become: true
+  become_method: sudo
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Run the script
+      shell: |
+        vm_os=$(uname -s)
+        echo $vm_os
+        # Check if the OS is compatible with Azure
+        if [ "$(uname -s)" = "Linux" -o "$(uname -s)" = "Darwin" ]; then
+          echo "The VM operating system is compatible with Azure."
+        else
+          echo "The VM operating system is not compatible with Azure."
+        fi
+        # Check virtualization platform
+        virt_platform=$(sudo virt-what)
+
+        # Check virtualization compatibility
+        compatible="true"
+        case "$virt_platform" in
+          kvm|xen|hyperv)
+            compatible="false"
+            ;;
+        esac
+
+        # Display compatibility check result
+        if [ "$compatible" = "true" ]; then
+          echo "The VM's virtualization platform is compatible with Azure."
+        else
+          echo "Error: The VM's virtualization platform '$virt_platform' is not compatible with Azure."
+          echo "Supported virtualization platforms are: kvm, xen, and hyperv."
+        fi
+
+       
+        # Check if the VM is configured to use a supported virtual hardware version
+        
+        # Check if the VM has a NIC attached
+         
+        if [ $(ip link show | grep -c eth0) -eq 0 ]; then
+          echo "The VM does not have a NIC attached."
+            
+        else
+          echo "The VM has a NIC attached."
+        fi
+        # Check if the NIC has an IP address assigned
+
+        if [ $(ip address show dev eth0 | grep -c "inet ") -eq 0 ]; then
+          echo "The NIC does not have an IP address assigned."
+            
+        else
+          echo "The NIC has an IP address assigned."
+        fi
+
+          # Check if the VM can access the Azure portal
+        if nc -zv portal.azure.com 443 > /dev/null 2>&1; then
+            echo "The VM can access the Azure portal."
+        else
+            echo "The VM cannot access the Azure portal."
+        fi
+
+        # Check if the VM has a disk attached
+        if [[ $(lsblk | grep -c "disk") -eq 0 ]]; then
+          echo "The VM does not have a disk attached."
+          exit 1
+        else
+          echo "The VM has a disk attached."
+        fi
+
+        # Check if the disk is formatted with a compatible file system
+        fs_type=$(lsblk -o NAME,FSTYPE | grep -m 1 "disk" | awk '{print $2}')
+        if [[ "$fs_type" != "ext3" && "$fs_type" != "ext4" && "$fs_type" != "xfs" ]]; then
+            echo "The disk is formatted with an incompatible file system."
+            exit 1
+        else
+            echo "The disk is formatted with a compatible file system."
+        fi
+        # Check if the disk has enough free space
+        free_space=$(df -h / | awk '{print $4}' | tail -n 1)
+        if [[ $(echo "$free_space < 5" | bc -l) -eq 1 ]]; then
+            echo "The disk does not have enough free space."
+            exit 1
+        else
+            echo "The disk has enough free space."
+        fi
+      register: compatibility_check
+      ignore_errors: yes
+
+    - name: Display compatibility check results
+      debug:
+        var: compatibility_check.stdout_lines
+    

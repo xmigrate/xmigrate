@@ -1,6 +1,7 @@
-- name : Configure aws-cli and required packages and deploy and execute the payload
+- name : Configure aws-cli and required packages
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
   gather_facts: no
   force_handlers: True
@@ -8,16 +9,15 @@
   - name: Ensure unzip is installed
     apt:
       name: unzip
-      state: latest 
-    become: yes
-    become_user: root
+      state: latest
   - name: Setup awscli
     shell: |
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       unzip -o awscliv2.zip
-      sudo ./aws/install --update
-    become_user: root
-    become: yes
+      ./aws/install --update
+    args:
+      warn: false
+
   - block: 
     - name: Upgrade to AWS linux kernel
       apt:
@@ -26,66 +26,41 @@
         update_cache: yes
     rescue:
     - name: Update apt.. older way
-      shell: "sudo apt update -y"
+      shell: "apt update -y"
     - name: Upgrade to AWS linux kernel
-      shell: "sudo apt install linux-image-generic-hwe-16.04 -y"
+      shell: "apt install linux-image-generic-hwe-16.04 -y"
     tags:
         - devel
 
   - name: Remove EFI entries
-    shell: sudo mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
-    become_user: root
-    become: yes
+    shell: mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
     ignore_errors: yes
 
   - name: Remove azure cloud related kernel if found
-    shell: sudo apt remove linux-*-azure -y
-    become_user: root
-    become: yes
+    shell: apt remove linux-*-azure -y
 
   - name: Remove gcp cloud related kernel if found
-    shell: sudo apt remove linux-*-gcp -y
-    become_user: root
-    become: yes
+    shell: apt remove linux-*-gcp -y
     
   - name: Update grub entries
     shell: |
-      sudo update-grub
-    become_user: root
-    become: yes
+      update-grub
   
   - name: Create .aws directory
     file:
       path: "~/.aws/"
       state: directory
       mode: 0755
+    become: false
 
   - name: Configure awscli credentials
     copy:
       src: "~/.aws/credentials"
       dest: "~/.aws/credentials"
+    become: false
 
   - name: Configure aws region
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
-
-  - name: <==Deploy payload==>
-    copy:
-      src: "../payloads/footprint/footprint"
-      dest: "/tmp/footprint"
-      mode: a+x
-    tags:
-      - deploy
-  - name: <==Executing payload==>
-    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-    register: st
-    become: True
-    tags:
-      - exec
-
-  - name: Debug
-    debug:
-      var: st
-    tags:
-      - msg
+    become: false

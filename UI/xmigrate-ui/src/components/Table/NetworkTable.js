@@ -152,6 +152,7 @@ export default class NetworkTableRow extends Component {
                         dragStart={this.props.dragStart}
                         allowDrop = {this.props.allowDrop}
                         drop = {this.props.drop}
+                        BlueprintHostPrepare={this.props.BlueprintHostPrepare}
                         BlueprintHostClone={this.props.BlueprintHostClone}
                         BlueprintHostConvert={this.props.BlueprintHostConvert}
                         BlueprintHostBuild={this.props.BlueprintHostBuild}
