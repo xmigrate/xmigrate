@@ -1,0 +1,11 @@
+- name: Gather system facts
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Get disk details
+      shell: lsblk -o FSTYPE,SIZE,UUID,PATH,MOUNTPOINT -r | grep 'ext4\|xfs'
+      register: disk_info
+
+    - name: Disk details
+      debug:
+        var: disk_info.stdout_lines

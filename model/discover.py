@@ -14,6 +14,7 @@ class Discover(Model):
     disk_details = columns.List(value_type=columns.Map(key_type=columns.Text(),value_type=columns.Text()))
     project = columns.Text(primary_key=True, max_length=150)
     public_ip = columns.Text(required=True, max_length=150)
+    meta = {'allow_inheritance': True}
 
 
 class DiscoverMongo(Document):
