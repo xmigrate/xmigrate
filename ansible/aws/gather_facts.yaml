@@ -3,7 +3,7 @@
   gather_facts: yes
   tasks:
     - name: Get disk details
-      shell: lsblk -o FSTYPE,SIZE,UUID,PATH,MOUNTPOINT -r | grep 'ext4\|xfs'
+      shell: lsblk -o FSTYPE,SIZE,UUID,PATH,MOUNTPOINT -r | grep 'ext\|xfs'
       register: disk_info
 
     - name: Disk details
