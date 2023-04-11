@@ -9,7 +9,7 @@ from model.discover import *
 from model.project import *
 from ansible_runner import run_async
 
-async def start_cloning(project, hostname):
+async def start_cloning(project):
     con = create_db_con()
     try:
         bucket = Bucket.objects(project=project).allow_filtering()[0]['bucket']

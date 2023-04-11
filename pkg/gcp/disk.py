@@ -133,7 +133,7 @@ async def start_image_creation(project, hostname):
    return True
 
 
-async def start_cloning(project, hostname):
+async def start_cloning(project):
     con = create_db_con()
     try:
         bucket = GcpBucket.objects(project=project).allow_filtering()[0]['bucket']
