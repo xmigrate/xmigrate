@@ -162,7 +162,7 @@ async def start_cloning(project):
         'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
     }
 
-    await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, quiet=False)
+    await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, quiet=True)
 
     machines = BluePrint.objects(project=project).allow_filtering()
     machine_count = len(machines)
