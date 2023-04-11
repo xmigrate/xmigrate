@@ -147,7 +147,7 @@ async def start_cloning(project):
     mongodb = os.getenv('BASE_URL')
     current_dir = os.getcwd()
 
-    playbook = "{}/ansible//{}/start_migration.yaml".format(current_dir, provider)
+    playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, provider)
     inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project)
     extravars = {
         'bucket': bucket,
