@@ -27,7 +27,6 @@ async def start_downloading(project):
             disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                print(disk_raw)
                 try:
                     await cw.download_worker(disk_raw,project,machine['host'])  
                 except Exception as e:
@@ -51,7 +50,6 @@ async def start_conversion(project,hostname):
             disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                print(disk_raw)
                 try:
                     await cw.conversion_worker(disk_raw,project,machine['host'])  
                 except Exception as e:

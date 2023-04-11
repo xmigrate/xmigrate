@@ -29,9 +29,9 @@ async def master_status_update(data:MasterUpdate):
     update_data = data.data
     class_type = data.classType
     class_obj = data.classObj
-    print(class_obj)
-    print(class_obj.get('host'))
-    print(class_obj.get('project'))
+    # print(class_obj)
+    # print(class_obj.get('host'))
+    # print(class_obj.get('project'))
 
     con = create_db_con()
     try:

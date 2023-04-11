@@ -42,8 +42,6 @@ async def project_create(data: ProjectCreate, current_user: TokenData = Depends(
 @app.get('/project')
 async def project_get(name: str, current_user: TokenData = Depends(get_current_user)):
     current_user = current_user['username']
-    print(current_user)
-    print(name)
     return jsonable_encoder(project.get_project(name, current_user))
 
 @app.route('/project/update', methods=['POST'])

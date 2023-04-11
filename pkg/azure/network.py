@@ -28,7 +28,6 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
             print(
                 f"Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
             hosts = [x['host'] for x in BluePrint.objects(network=cidr).filter(project=project).allow_filtering()]
-            print(hosts)
             for host in hosts:
                 try:
                     BluePrint.objects(host=host, project=project).update(vpc_id=vnet_result.name,status='5')
@@ -67,7 +66,6 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
             f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
         try:
             con = create_db_con()
-            print(subnet_result.id)
             hosts = [x['host'] for x in BluePrint.objects(subnet=cidr).filter(project=project).allow_filtering()]
             for host in hosts:
                 BluePrint.objects(host=host, project=project).update(subnet_id=str(subnet_result.id),status='10')
