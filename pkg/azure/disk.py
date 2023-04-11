@@ -100,7 +100,7 @@ async def start_cloning(project, hostname):
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
 
-        playbook = "{}/ansible/projects/{}/start_migration.yaml".format(current_dir, provider)
+        playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, provider)
         inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project)
         extravars = {
             'url': url,
