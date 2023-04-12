@@ -133,12 +133,13 @@ async def start_image_creation(project, hostname):
    return True
 
 
-async def start_cloning(project):
+async def start_cloning(project, hostname):
     con = create_db_con()
     try:
         bucket = GcpBucket.objects(project=project).allow_filtering()[0]['bucket']
         accesskey = GcpBucket.objects(project=project).allow_filtering()[0]['access_key']
         secret_key = GcpBucket.objects(project=project).allow_filtering()[0]['secret_key']
+        public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
         provider = Project.objects(name=project).allow_filtering()[0]['provider']
         user = Project.objects(name=project).allow_filtering()[0]['username']
     except Exception as e:
@@ -161,8 +162,8 @@ async def start_cloning(project):
         'ANSIBLE_BECOME_USER': user,
         'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
     }
-
-    await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, quiet=True)
+    
+    await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
 
     machines = BluePrint.objects(project=project).allow_filtering()
     machine_count = len(machines)
