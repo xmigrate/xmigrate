@@ -14,7 +14,7 @@ from .gcp import get_service_compute_v1
 from utils.logger import *
 from jinja2 import Template
 from pathlib import Path
-
+from ansible_runner import run_async
 
 
 async def start_image_creation_worker(project, disk_containers, host):
@@ -140,19 +140,31 @@ async def start_cloning(project, hostname):
         accesskey = GcpBucket.objects(project=project).allow_filtering()[0]['access_key']
         secret_key = GcpBucket.objects(project=project).allow_filtering()[0]['secret_key']
         public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
+        provider = Project.objects(name=project).allow_filtering()[0]['provider']
         user = Project.objects(name=project).allow_filtering()[0]['username']
     except Exception as e:
         print("Error occurred: "+str(e))
     load_dotenv()
     mongodb = os.getenv('BASE_URL')
     current_dir = os.getcwd()
-    if hostname == "all":
-        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/gcp/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\""
-    else:
-        command = "/usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/gcp/start_migration.yaml -e \"bucket="+bucket+" access_key="+accesskey+" secret_key="+secret_key+" mongodb="+mongodb+ " project="+project+"\" --limit "+public_ip+" --user "+user+" --become-user "+user+" --become-method sudo"
-    print(command)
-    process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-    await process.wait()
+
+    playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, provider)
+    inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project)
+    extravars = {
+        'bucket': bucket,
+        'access_key': accesskey,
+        'secret_key': secret_key,
+        'mongodb': mongodb,
+        'project': project
+    }
+    envvars = {
+        'ANSIBLE_USER': user,
+        'ANSIBLE_BECOME_USER': user,
+        'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
+    }
+    
+    await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
+
     machines = BluePrint.objects(project=project).allow_filtering()
     machine_count = len(machines)
     flag = True

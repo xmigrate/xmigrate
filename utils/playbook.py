@@ -1,7 +1,7 @@
 import os
 from ansible_runner import run_async
 
-def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None):
+def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None, limit: str = None):
 
     playbook_path = '{}/ansible/{}/{}'.format(curr_working_dir, provider, playbook)
     inventory = '{}/ansible/projects/{}/hosts'.format(curr_working_dir, project_name)
@@ -18,7 +18,7 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
 
     with open(log_file, 'w+'):
         try:
-            runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, quiet=True)
+            runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, limit=limit, quiet=True)
             if stage == "gather_facts":
                 return runner[1]
             else:

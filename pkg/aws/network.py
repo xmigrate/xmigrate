@@ -22,7 +22,6 @@ def build_vpc(cidr,public_route, project):
     #vpc.create_tags(Tags=[{"Key": "Name", "Value": "default_vpc"}])
     vpc.wait_until_available()
     try:
-      print(vpc)
       con = create_db_con()
       hosts = [x['host'] for x in BluePrint.objects(network=cidr).filter(project=project).allow_filtering()]
       for host in hosts:
@@ -60,10 +59,8 @@ def build_subnet(cidr,vpcid,route,project):
       route_table = ec2.RouteTable(route)
       subnet = ec2.create_subnet(CidrBlock=cidr, VpcId=vpcid)
       try:
-        print(subnet)
         con = create_db_con()
         hosts = [x['host'] for x in BluePrint.objects(subnet=cidr, vpc_id=vpcid, project=project).allow_filtering()]
-        print(hosts)
         for host in hosts:
           BluePrint.objects(project=project, host=host).update(subnet_id=subnet.id, status='20')
           subnet_name = Subnet.objects(cidr=cidr, project=project).allow_filtering()[0]['subnet_name']
@@ -87,7 +84,6 @@ async def create_nw(project):
     for host in hosts:
       vpc_id = ''
       if not host['vpc_id']:
-        print("hi")
         all_networks = [dict(x) for x in BluePrint.objects(project=project, network = host['network']).allow_filtering()]
         network = []
         for i in all_networks:
