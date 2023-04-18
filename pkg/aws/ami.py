@@ -141,6 +141,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
       print(str(e))
       logger("Error while creating AMI:"+str(e),"error")
       BluePrint.objects(host=hostname, project=project).update(status='-35')
+      return False
    finally:
       con.shutdown()
 
@@ -176,5 +177,7 @@ async def start_ami_creation(project, hostname):
                }
             }
          )
-      await start_ami_creation_worker(bucket_name, image_name, project, disk_containers, hostname)
+      worker_done = await start_ami_creation_worker(bucket_name, image_name, project, disk_containers, hostname)
+      if worker_done == False:
+         return False
    return True
