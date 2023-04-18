@@ -85,9 +85,9 @@ async def start_vm_preparation(project, hostname):
             logger("VM preparation started","info")
             print("****************VM preparation awaiting*****************")
             
-            preparation_completed = run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
-            
             try:
+                preparation_completed = run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+            
                 if preparation_completed:
                     print("****************VM preparation completed*****************")
                     logger("VM preparation completed", "info")
