@@ -19,7 +19,10 @@ async def download_worker(osdisk_raw,project,host):
     file_size = '0'
     try:
         cur_path = os.getcwd()
-        path = cur_path+"/osdisks/"+osdisk_raw
+        parent = "{}/projects/{}/{}/osdisks/".format(cur_path, project, host)
+        if not os.path.exists(parent):
+            os.makedirs(parent)
+        path = parent+osdisk_raw
         if not os.path.exists(path):
             os.popen('echo "download started"> ./logs/ansible/migration_log.txt')
             url = "https://" + account_name + ".blob.core.windows.net/" + container_name + "/" + osdisk_raw + "?" + sas_token
@@ -51,8 +54,7 @@ async def upload_worker(osdisk_raw,project,host):
     try:
         osdisk_vhd = osdisk_raw.replace(".raw",".vhd")
         cur_path = os.getcwd()
-        path = cur_path+"/osdisks/"+osdisk_raw
-        vhd_path = cur_path+"/osdisks/"+osdisk_vhd
+        vhd_path = "{}/projects/{}/{}/osdisks/{}".format(cur_path, project, host, osdisk_vhd)
         file_size = Path(vhd_path).stat().st_size 
         os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
         os.popen('echo "VHD uploading" >> ./logs/ansible/migration_log.txt')
@@ -84,10 +86,9 @@ async def conversion_worker(osdisk_raw,project,host):
         try:
             osdisk_vhd = osdisk_raw.replace(".raw",".vhd")
             cur_path = os.getcwd()
-            path = cur_path+"/osdisks/"+osdisk_raw
-            vhd_path = cur_path+"/osdisks/"+osdisk_vhd
+            path = "{}/projects/{}/{}/osdisks/{}".format(cur_path, project, host, osdisk_raw)
+            vhd_path = "{}/projects/{}/{}/osdisks/{}".format(cur_path, project, host, osdisk_vhd)
             print("Start converting")
-            print(path)
             os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
             command2 = "qemu-img convert -f raw -o subformat=fixed,force_size -O vpc "+path+" "+vhd_path
             process2 = await asyncio.create_subprocess_shell(command2, stdin = PIPE, stdout = PIPE, stderr = STDOUT)

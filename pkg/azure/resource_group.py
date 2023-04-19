@@ -32,7 +32,7 @@ async def create_rg(project):
             rg_result = resource_client.resource_groups.create_or_update(
                 rg_name, {"location": rg_location})
             print(
-                "Provisioned resource group"+ rg_result.name+" in the "+rg_result.location+" region")
+                "Provisioned resource group "+ rg_result.name+" in the "+rg_result.location+" region")
             Project.objects(name=project).update(resource_group=rg_result.name, resource_group_created=True)
             con.shutdown()
             return True

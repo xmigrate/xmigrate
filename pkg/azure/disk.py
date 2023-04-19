@@ -16,8 +16,8 @@ from asyncio.subprocess import PIPE, STDOUT
 from azure.common.credentials import ServicePrincipalCredentials
 from dotenv import load_dotenv
 from os import getenv
-import shlex, subprocess
 from pkg.azure import sas
+from ansible_runner import run_async
 
 async def start_downloading(project):
     con = create_db_con()
@@ -27,7 +27,6 @@ async def start_downloading(project):
             disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                print(disk_raw)
                 try:
                     await cw.download_worker(disk_raw,project,machine['host'])  
                 except Exception as e:
@@ -51,7 +50,6 @@ async def start_conversion(project,hostname):
             disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                print(disk_raw)
                 try:
                     await cw.conversion_worker(disk_raw,project,machine['host'])  
                 except Exception as e:
@@ -89,23 +87,34 @@ async def start_cloning(project, hostname):
     if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
         public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
         user = Project.objects(name=project).allow_filtering()[0]['username']
+        provider = Project.objects(name=project).allow_filtering()[0]['provider']
         storage = Storage.objects(project=project).allow_filtering()[0]['storage']
         accesskey = Storage.objects(project=project).allow_filtering()[0]['access_key']
         container = Storage.objects(project=project).allow_filtering()[0]['container']
-        sas_token = sas.generate_sas_token(storage,accesskey)
+        sas_token = sas.generate_sas_token(storage, accesskey)
         url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
         load_dotenv()
         mongodb = os.getenv('BASE_URL')
         current_dir = os.getcwd()
         os.popen('echo null > ./logs/ansible/migration_log.txt')
-        if hostname == "all":
-            command = "ANSIBLE_HOST_KEY_CHECKING=False /usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas='"+sas_token+"' mongodb="+mongodb+ " project="+project+" hostname="+hostname+"\""
-        else:
-            command = "ANSIBLE_HOST_KEY_CHECKING=False /usr/local/bin/ansible-playbook -i "+current_dir+"/ansible/"+project+"/hosts "+current_dir+"/ansible/azure/start_migration.yaml -e \"url="+url+" sas='"+sas_token+"' mongodb="+mongodb+ " project="+project+" hostname="+hostname+"\" --limit "+public_ip+" --user "+user+" --become-user "+user+" --become-method sudo"
-            print(command)
-            logger(command,"warning")
-        process = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-        await process.wait()
+
+        playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, provider)
+        inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project)
+        extravars = {
+            'url': url,
+            'sas': sas_token,
+            'mongodb': mongodb,
+            'project': project,
+            'hostname': hostname
+        }
+        envvars = {
+            'ANSIBLE_USER': user,
+            'ANSIBLE_BECOME_USER': user,
+            'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
+        }
+
+        await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, quiet=True)
+        
         machines = BluePrint.objects(project=project).allow_filtering()
         machine_count = len(machines)
         flag = True

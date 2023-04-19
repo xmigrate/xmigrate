@@ -177,7 +177,7 @@ async def image_convert(data: BlueprintHost, current_user: TokenData = Depends(g
     project = data.project
     hostname = data.hostname
     asyncio.create_task(build.call_start_convert(project,hostname))
-    return jsonable_encoder({"msg":"Build started","status":200})
+    return jsonable_encoder({"msg":"Conversion started","status":200})
 
 class NetworkBuild(BaseModel):
     project: Union[str,None] = None

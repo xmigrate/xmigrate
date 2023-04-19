@@ -26,9 +26,8 @@ def create_vnet(rg_name, vnet_name, cidr, location, project):
                                                                     "location": location, "address_space": {"address_prefixes": [cidr]}})
             vnet_result = poller.result()
             print(
-                "Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
+                f"Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
             hosts = [x['host'] for x in BluePrint.objects(network=cidr).filter(project=project).allow_filtering()]
-            print(hosts)
             for host in hosts:
                 try:
                     BluePrint.objects(host=host, project=project).update(vpc_id=vnet_result.name,status='5')
@@ -64,10 +63,9 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
             rg_name, vnet_name, subnet_name, {"address_prefix": cidr})
         subnet_result = poller.result()
         print(
-            "Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
+            f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
         try:
             con = create_db_con()
-            print(subnet_result.id)
             hosts = [x['host'] for x in BluePrint.objects(subnet=cidr).filter(project=project).allow_filtering()]
             for host in hosts:
                 BluePrint.objects(host=host, project=project).update(subnet_id=str(subnet_result.id),status='10')
@@ -107,7 +105,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
 
         ip_address_result = poller.result()
         print(
-            "Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
+            f"Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
         try:
             con = create_db_con()
             BluePrint.objects(project=project, host=host).update(status='15', ip_created=True)
@@ -130,7 +128,7 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
                                                                     )
 
         nic_result = poller.result()
-        print("Provisioned network interface client {nic_result.name}")
+        print(f"Provisioned network interface client {nic_result.name}")
         try:
             con = create_db_con()
             BluePrint.objects(project=project,host=host).update(status='20', nic_id=nic_result.id,ip=ip_address_result.ip_address)
