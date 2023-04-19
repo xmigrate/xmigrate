@@ -4,7 +4,7 @@ from model.discover import Discover as DiscoverM
 from model.project import *
 from model.storage import *
 from pkg.common import nodes as n
-import os
+import os, netaddr
 from quart import jsonify, request
 from quart_jwt_extended import jwt_required, get_jwt_identity
 from fastapi.encoders import jsonable_encoder
@@ -69,8 +69,9 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
                             disk_details = e['event_data']['res']['disk_info.stdout_lines']
             hostname = facts['ansible_hostname']
             ip_address = facts['ansible_all_ipv4_addresses'][0]
-            subnet = ' '
-            network = ' '
+            nwinfo = netaddr.IPNetwork(f'{facts["ansible_default_ipv4"]["address"]}/{facts["ansible_default_ipv4"]["netmask"]}')
+            subnet = str(nwinfo)
+            network = str(nwinfo.network)
             ports = []
             cores = str(facts['ansible_processor_cores'])
             cpu_model = facts['ansible_processor'][2]
