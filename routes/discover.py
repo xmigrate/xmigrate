@@ -82,6 +82,7 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
                 hashmap = {}
                 diskinfo = disk.strip().split()
                 _ = list(map(lambda k, v: hashmap.update({k:v}), keys, diskinfo))
+                hashmap['dev'] = f'/dev/{hashmap["dev"]}'
                 disks.append(hashmap)
             try:
                 DiscoverM.objects(project=project,host=hostname).update(ip=ip_address, subnet=subnet, network=network,
