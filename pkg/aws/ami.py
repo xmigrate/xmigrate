@@ -133,7 +133,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
                BluePrint.objects(host=hostname, project=project).update(status='-35')
                logger(response['ImportImageTasks'][0]['StatusMessage'],'error')
                print(response['ImportImageTasks'][0]['StatusMessage'])
-               break
+               return False
             else:
                print(response)
                await asyncio.sleep(60)
