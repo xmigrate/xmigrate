@@ -1,4 +1,0 @@
-[nodes]
-3.250.225.75
-[all:vars]
-ansible_ssh_pass = Xmigrate@1234
