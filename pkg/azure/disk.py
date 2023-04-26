@@ -105,10 +105,10 @@ async def start_cloning(project, hostname):
             'sas': sas_token,
             'mongodb': mongodb,
             'project': project,
-            'hostname': hostname
+            'hostname': hostname,
+            'ansible_user': user
         }
         envvars = {
-            'ANSIBLE_USER': user,
             'ANSIBLE_BECOME_USER': user,
             'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
         }

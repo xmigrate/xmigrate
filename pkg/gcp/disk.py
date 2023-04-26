@@ -155,10 +155,10 @@ async def start_cloning(project, hostname):
         'access_key': accesskey,
         'secret_key': secret_key,
         'mongodb': mongodb,
-        'project': project
+        'project': project,
+        'ansible_user': user
     }
     envvars = {
-        'ANSIBLE_USER': user,
         'ANSIBLE_BECOME_USER': user,
         'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
     }
@@ -187,10 +187,16 @@ async def download_worker(osdisk_raw,project,host):
     project_id = GcpBucket.objects(project=project).allow_filtering()[0]['project_id']
     try:
         cur_path = os.getcwd()
-        path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')+"/disk.raw"
-        boto_path = cur_path+"/ansible/"+project+"/.boto"
+        path = f'{cur_path}/projects/{project}/{host}/osdisks/'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        path += osdisk_raw
+        boto_path = cur_path+"/ansible/projects/"+project
         if not os.path.exists(boto_path):
-            with open(cur_path+"/ansible/"+"gcp/templates/.boto.j2") as file_:
+            os.makedirs(boto_path)
+        boto_path += "/.boto"
+        if not os.path.exists(boto_path):  
+            with open(cur_path+"/ansible/gcp/templates/.boto.j2") as file_:
                 template = Template(file_.read())
             rendered_boto = template.render(project_id=project_id, gs_access_key_id=access_key, gs_secret_access_key=secret_key)
             with open(boto_path, "w") as fh:
@@ -198,7 +204,6 @@ async def download_worker(osdisk_raw,project,host):
         if not os.path.exists(path):
             os.popen('echo "download started"> ./logs/ansible/migration_log.txt')
             command = 'BOTO_CONFIG='+boto_path +' gsutil cp gs://'+bucket+'/'+osdisk_raw + ' ' +path
-            print(command)
             os.popen('echo '+command+'>> ./logs/ansible/migration_log.txt')
             process1 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
@@ -224,10 +229,10 @@ async def upload_worker(osdisk_raw,project,host):
     pipe_result = ''
     file_size = '0'
     cur_path = os.getcwd()
-    boto_path = cur_path+"/ansible/"+project+"/.boto"
+    boto_path = cur_path+"/ansible/projects/"+project+"/.boto"
     try:
         osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
-        tar_path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')+"/"+osdisk_tar
+        tar_path = f'{cur_path}/projects/{project}/{host}/osdisks/{osdisk_tar}'
         file_size = Path(tar_path).stat().st_size 
         os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
         os.popen('echo "tar uploading" >> ./logs/ansible/migration_log.txt')
@@ -242,6 +247,7 @@ async def upload_worker(osdisk_raw,project,host):
         logger(str(e),"warning")
         BluePrint.objects(project=project,host=host).update(status='-36')
         os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
+        return False
     finally:
         con.shutdown()
 
@@ -254,24 +260,27 @@ async def conversion_worker(osdisk_raw,project,host):
         try:
             osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
             cur_path = os.getcwd()
-            path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')
-            tar_path = cur_path+"/osdisks/"+osdisk_raw.replace('.raw','')+"/"+osdisk_tar
+            path = f'{cur_path}/projects/{project}/{host}/osdisks/'
+            tar_path = path + osdisk_tar
             print("Start compressing")
-            print(path)
             os.popen('echo "start compressing">> ./logs/ansible/migration_log.txt')
-            command = "tar --format=oldgnu -Sczf "+ tar_path+" -C "+path+" disk.raw"
+            command = "tar --format=oldgnu -Sczf "+ tar_path+" "+ path + osdisk_raw
             process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process2.wait()
-            await upload_worker(osdisk_raw,project,host)
+            uploaded = await upload_worker(osdisk_raw,project,host)
+            if not uploaded:
+                return False
             BluePrint.objects(project=project,host=host).update(status='35')
             logger("Conversion completed "+osdisk_raw,"warning")
         except Exception as e:
             print(str(e))
             BluePrint.objects(project=project,host=host).update(status='-35')
             logger(str(e),"warning")
+            return False
     else:
         BluePrint.objects(project=project,host=host).update(status='-32')
         logger("Downloading image failed","warning")
+        return False
     con.shutdown()
 
 
@@ -286,9 +295,10 @@ async def start_conversion(project,hostname):
             disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                print(disk_raw)
                 try:
-                    await conversion_worker(disk_raw,project,machine['host'])  
+                    conversion_done = await conversion_worker(disk_raw,project,machine['host'])
+                    if not conversion_done:
+                        return False
                 except Exception as e:
                     print("Conversion failed for "+disk_raw)
                     print(str(e))
@@ -306,7 +316,6 @@ async def start_downloading(project,hostname):
             disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
             for disk in disks:
                 disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                print(disk_raw)
                 try:
                     await download_worker(disk_raw,project,machine['host'])  
                 except Exception as e:
