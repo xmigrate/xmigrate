@@ -242,6 +242,7 @@ async def upload_worker(osdisk_raw,project,host):
         os.popen('echo "tar uploaded" >> ./logs/ansible/migration_log.txt')
         BluePrint.objects(project=project,host=host).update(status='36')
         Disk.objects(host=host,project=project,mnt_path=osdisk_raw.split('.raw')[0].split('-')[-1]).update(vhd=osdisk_tar, file_size=str(file_size))
+        return True
     except Exception as e:
         print(repr(e))
         logger(str(e),"warning")
@@ -253,35 +254,38 @@ async def upload_worker(osdisk_raw,project,host):
 
 
 async def conversion_worker(osdisk_raw,project,host):
-    downloaded = await download_worker(osdisk_raw,project,host)
-    if downloaded:
+    try:
         con = create_db_con()
-        BluePrint.objects(project=project,host=host).update(status='32')        
-        try:
-            osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
-            cur_path = os.getcwd()
-            path = f'{cur_path}/projects/{project}/{host}/osdisks/'
-            tar_path = path + osdisk_tar
-            print("Start compressing")
-            os.popen('echo "start compressing">> ./logs/ansible/migration_log.txt')
-            command = "tar --format=oldgnu -Sczf "+ tar_path+" "+ path + osdisk_raw
-            process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-            await process2.wait()
-            uploaded = await upload_worker(osdisk_raw,project,host)
-            if not uploaded:
+        downloaded = await download_worker(osdisk_raw,project,host)
+        if downloaded:
+            BluePrint.objects(project=project,host=host).update(status='32')
+            try:
+                osdisk_tar = osdisk_raw.replace(".raw",".tar.gz")
+                cur_path = os.getcwd()
+                path = f'{cur_path}/projects/{project}/{host}/osdisks/'
+                tar_path = path + osdisk_tar
+                print("Start compressing")
+                os.popen('echo "start compressing">> ./logs/ansible/migration_log.txt')
+                command = "tar --format=oldgnu -Sczf "+ tar_path+" "+ path + osdisk_raw
+                process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+                await process2.wait()
+                uploaded = await upload_worker(osdisk_raw,project,host)
+                if not uploaded:
+                    return False
+                BluePrint.objects(project=project,host=host).update(status='35')
+                logger("Conversion completed "+osdisk_raw,"warning")
+                return True
+            except Exception as e:
+                print(str(e))
+                BluePrint.objects(project=project,host=host).update(status='-35')
+                logger(str(e),"warning")
                 return False
-            BluePrint.objects(project=project,host=host).update(status='35')
-            logger("Conversion completed "+osdisk_raw,"warning")
-        except Exception as e:
-            print(str(e))
-            BluePrint.objects(project=project,host=host).update(status='-35')
-            logger(str(e),"warning")
+        else:
+            BluePrint.objects(project=project,host=host).update(status='-32')
+            logger("Downloading image failed","warning")
             return False
-    else:
-        BluePrint.objects(project=project,host=host).update(status='-32')
-        logger("Downloading image failed","warning")
-        return False
-    con.shutdown()
+    finally:
+        con.shutdown()
 
 
 async def start_conversion(project,hostname):
