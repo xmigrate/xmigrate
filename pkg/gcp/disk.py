@@ -155,10 +155,10 @@ async def start_cloning(project, hostname):
         'access_key': accesskey,
         'secret_key': secret_key,
         'mongodb': mongodb,
-        'project': project
+        'project': project,
+        'ansible_user': user
     }
     envvars = {
-        'ANSIBLE_USER': user,
         'ANSIBLE_BECOME_USER': user,
         'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
     }
