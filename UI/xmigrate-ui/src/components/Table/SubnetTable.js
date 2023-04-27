@@ -109,7 +109,7 @@ render(){
                       className=" media-body"
                       variant="info"
                       size="sm"
-                      disabled={host["BtStatus"] !=="prepare" || host["BtProgress"] === "prepareStarted"}
+                      disabled={host["BtStatus"] !=="prepare" || host["BtProgress"] === "prepareStarted" || host["BtProgress"] === "cloneStarted"}
                       onClick={()=>this.props.BlueprintHostPrepare(host.host)}
                     >
                       {
@@ -122,7 +122,7 @@ render(){
                       className=" media-body"
                       variant="success"
                       size="sm"
-                      disabled={host["BtStatus"] !=="clone" || host["BtProgress"] === "cloneStarted"}
+                      disabled={(host["BtStatus"] !=="clone" && host["BtStatus"] !=="prepare" )|| host["BtProgress"] === "cloneStarted"}
                       onClick={()=>this.props.BlueprintHostClone(host.host)}
                     >
                       {
