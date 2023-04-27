@@ -9,7 +9,7 @@ from quart import jsonify, request
 from quart_jwt_extended import jwt_required, get_jwt_identity
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from routes.auth import TokenData, get_current_user
 from typing import Union
 from dotenv import load_dotenv
@@ -27,7 +27,6 @@ class Discover(BaseModel):
 async def discover(data: Discover, current_user: TokenData = Depends(get_current_user)):
     con = create_db_con()
     current_dir = os.getcwd()
-    print(data)
     provider = data.provider
     nodes = data.hosts
     username = data.username
