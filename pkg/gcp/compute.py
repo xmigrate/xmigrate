@@ -1,3 +1,5 @@
+import asyncio
+import time
 from mongoengine import *
 from model.blueprint import *
 from model.disk import *
@@ -42,7 +44,7 @@ def get_vm_types(project):
     return machine_types, flag
 
 
-def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_source, machine_type, network, subnet, additional_disk=[]):
+async def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_source, machine_type, network, subnet, additional_disk=[]):
     service = get_service_compute_v1(service_account_json)
     vm_type = "zones/"+zone_name+"/machineTypes/"+machine_type
     network = get_vpc(project_id, service_account_json, network)['selfLink']
@@ -63,7 +65,6 @@ def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_s
     disks.extend(additional_disk)
     instance_body = {
         "name": vm_name.replace('.','-'),
-        "networkInterfaces": [],
         "machineType": vm_type,
         "disks": disks,
         'networkInterfaces': [{
@@ -78,7 +79,12 @@ def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_s
     request = service.instances().insert(
         project=project_id, zone=zone_name, body=instance_body)
     response = request.execute()
-    return response
+    while True:
+        result = service.zoneOperations().get(project=project_id, zone=zone_name, operation=response['name']).execute()
+        print(result)
+        if result['status'] == 'DONE':
+            return result
+        time.sleep(10)
 
 
 async def build_compute(project, hostname):
@@ -112,9 +118,13 @@ async def build_compute(project, hostname):
             print(extra_disks)
             try:
                 BluePrint.objects(project=project, host=hostname).update(status='95')
-                vm = create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, extra_disks)
-                print(vm)
-                BluePrint.objects(project=project, host=hostname).update(status='100')
+                vm = await create_vm(project_id, service_account, hostname, location, location+"-a", image_id, machine_type, network, subnet, extra_disks)
+                if 'error' not in vm.keys():
+                    print(f"vm {hostname.replace('.','-')} created.")
+                    BluePrint.objects(project=project, host=hostname).update(status='100')
+                else:
+                    print(f"vm {hostname.replace('.','-')} creation failed.")
+                    BluePrint.objects(project=project, host=hostname).update(status='-100')
                 ## todo watch vm status 
                 con.shutdown()
                 return True

@@ -110,18 +110,14 @@ async def start_image_creation(project, hostname):
                 hosts = BluePrint.objects(project=project).allow_filtering()
             else:
                 hosts = BluePrint.objects(project=project,host=hostname).allow_filtering()
-            print(hosts)
             bucket_name = bucket['bucket']
-            print(bucket_name)
         except Exception as e:
             print(repr(e))
         for host in hosts:
             disks = Discover.objects(project=project,host=host['host']).allow_filtering()[0]['disk_details']
-            print(disks)
             disk_containers = [] 
             for disk in disks:
                 image_name = host['host']+disk['mnt_path'].replace("/","-slash")+'.tar.gz'
-                print(image_name)
                 os_disk = True if disk['mnt_path'] in ['/', '/boot'] else False
                 disk_containers.append(
                     {
