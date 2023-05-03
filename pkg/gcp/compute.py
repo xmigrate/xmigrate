@@ -1,4 +1,4 @@
-import time
+import asyncio
 from mongoengine import *
 from model.blueprint import *
 from model.disk import *
@@ -83,7 +83,7 @@ async def create_vm(project_id, service_account_json, vm_name, region, zone_name
         print(result)
         if result['status'] == 'DONE':
             return result
-        time.sleep(10)
+        asyncio.sleep(10)
 
 
 async def build_compute(project, hostname):
