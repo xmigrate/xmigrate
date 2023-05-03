@@ -138,7 +138,6 @@ def create_nw_layout(cidr,p):
 def create_nw(project,name,cidr):
     con = create_db_con()
     provider = Project.objects(name=project).allow_filtering()[0]['provider']
-    print(provider)
     try:
         if provider == 'gcp':
             Network(project=project,nw_name=name).save()
