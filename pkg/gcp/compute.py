@@ -1,4 +1,3 @@
-import asyncio
 import time
 from mongoengine import *
 from model.blueprint import *
