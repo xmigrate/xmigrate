@@ -37,8 +37,7 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
         
     
     print(
-        "Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
-    print(nic_id)
+        f"Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
 
     poller = compute_client.virtual_machines.create_or_update(rg_name, vm_name,
                                                               {

@@ -10,56 +10,52 @@ from model.storage import *
 from model.blueprint import *
 from model.discover import *
 from pkg.azure import conversion_worker as cw
-import os
-import asyncio, json
-from asyncio.subprocess import PIPE, STDOUT 
+import os, asyncio
 from azure.common.credentials import ServicePrincipalCredentials
 from dotenv import load_dotenv
-from os import getenv
 from pkg.azure import sas
 from ansible_runner import run_async
 
-async def start_downloading(project):
+async def start_downloading(project, hostname):
     con = create_db_con()
-    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
-        machines = BluePrint.objects(project=project).allow_filtering()
-        for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
-            for disk in disks:
-                disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                try:
-                    await cw.download_worker(disk_raw,project,machine['host'])  
-                except Exception as e:
-                    print("Download failed for "+disk_raw)
-                    print(str(e))
-                    logger("Download failed for "+disk_raw,"warning")
-                    logger("Here is the error: "+str(e),"warning")
-                    return False
-        con.shutdown()
-        return True
+    if isinstance(hostname, str):
+        hostname = [hostname]
+    for host in hostname:
+        disks = Discover.objects(project=project, host=host).allow_filtering()[0]['disk_details']
+        for disk in disks:
+            disk_raw = host+disk['mnt_path'].replace('/','-slash')+".raw"
+            try:
+                downloaded = await cw.download_worker(disk_raw,project,host)
+                if not downloaded: return False
+            except Exception as e:
+                print("Download failed for "+disk_raw)
+                print(str(e))
+                logger("Download failed for "+disk_raw,"warning")
+                logger("Here is the error: "+str(e),"warning")
+                return False
+    con.shutdown()
+    return True
     
 
 async def start_conversion(project,hostname):
     con = create_db_con()
-    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
-        if hostname == "all":
-            machines = BluePrint.objects(project=project).allow_filtering()
-        else:
-            machines = BluePrint.objects(project=project, host=hostname).allow_filtering()
-        for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
-            for disk in disks:
-                disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                try:
-                    await cw.conversion_worker(disk_raw,project,machine['host'])  
-                except Exception as e:
-                    print("Conversion failed for "+disk_raw)
-                    print(str(e))
-                    logger("Conversion failed for "+disk_raw,"warning")
-                    logger("Here is the error: "+str(e),"warning")
-                    return False
-        con.shutdown()
-        return True
+    if isinstance(hostname, str):
+        hostname = [hostname]
+    for host in hostname:
+        disks = Discover.objects(project=project, host=host).allow_filtering()[0]['disk_details']
+        for disk in disks:
+            disk_raw = host+disk['mnt_path'].replace('/','-slash')+".raw"
+            try:
+                converted = await cw.conversion_worker(disk_raw,project,host)
+                if not converted: return False
+            except Exception as e:
+                print("Conversion failed for "+disk_raw)
+                print(str(e))
+                logger("Conversion failed for "+disk_raw,"warning")
+                logger("Here is the error: "+str(e),"warning")
+                return False
+    con.shutdown()
+    return True
 
 async def start_uploading(project):
     con = create_db_con()

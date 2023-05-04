@@ -150,10 +150,12 @@ async def start_convert(project,hostname):
         if p[0]['provider'] == "azure":
             logger("Download started","info")
             print("****************Download started*****************")
-            image_downloaded = await disk.start_downloading(project)
-            print("****************Conversion awaiting*****************")
-            logger("Conversion started","info")
+            image_downloaded = await disk.start_downloading(project, hostname)
             if image_downloaded:
+                print("****************Download completed*****************")
+                logger("Image Download completed","info")
+                print("****************Conversion awaiting*****************")
+                logger("Conversion started","info")
                 converted =  await disk.start_conversion(project,hostname)
                 if converted:
                     print("****************Conversion completed*****************")
@@ -161,6 +163,10 @@ async def start_convert(project,hostname):
                 else:
                     print("Disk Conversion failed")
                     logger("Disk Conversion failed","error")
+            else:
+                print("Image Download failed\nDisk Conversion failed")
+                logger("Image Download faied", "error")
+                logger("Disk Conversion failed", "error")
         elif p[0]['provider'] == "aws":
             logger("Conversion started","info")
             print("****************Conversion awaiting*****************")
