@@ -6,6 +6,9 @@
   gather_facts: no
   force_handlers: True
   tasks:
+  - name: update packages
+    shell: apt update
+    
   - name: Ensure unzip is installed
     apt:
       name: unzip
@@ -18,29 +21,35 @@
     args:
       warn: false
 
-  - block: 
-    - name: Upgrade to AWS linux kernel
+  - name: Remove all kernels other than the active kernel # This might install unsigned versions of some kernels
+    shell: |
+      kernel=$(uname -r)
+      dpkg -l | grep -i 'linux-image\|linux-headers' | grep -v $kernel | awk '{print $2}' | xargs apt purge --auto-remove -y
+    ignore_errors: yes
+
+  - block:
+    - name: Install aws supported generic linux kernel # AWS image build is not stable on non-generic kernals.
       apt:
-        name: linux-image-generic-hwe-16.04
+        name: linux-generic
         state: latest
-        update_cache: yes
     rescue:
-    - name: Update apt.. older way
-      shell: "apt update -y"
-    - name: Upgrade to AWS linux kernel
-      shell: "apt install linux-image-generic-hwe-16.04 -y"
+    - name: Install the kernel via shell
+      shell: "apt install linux-generic -y"
     tags:
         - devel
+    
+  - name: Configure new kernel boot files
+    shell: |
+      kernel=$(dpkg -l | grep -E linux-image-5.4.*-generic | awk '{print $2}' | sed 's/linux-image-//')
+      update-initramfs -u -k $kernel
+
+  - name: Remove AWS kernel boot files
+    shell: cd /boot && rm -f *aws
+   
 
   - name: Remove EFI entries
     shell: mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
     ignore_errors: yes
-
-  - name: Remove azure cloud related kernel if found
-    shell: apt remove linux-*-azure -y
-
-  - name: Remove gcp cloud related kernel if found
-    shell: apt remove linux-*-gcp -y
     
   - name: Update grub entries
     shell: |
