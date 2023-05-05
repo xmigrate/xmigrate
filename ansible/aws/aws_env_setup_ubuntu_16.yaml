@@ -40,7 +40,7 @@
     
   - name: Configure new kernel boot files
     shell: |
-      kernel=$(dpkg -l | grep -E linux-image-5.4.*-generic | awk '{print $2}' | sed 's/linux-image-//')
+      kernel=$(dpkg -l | grep -E linux-image-4.*-generic | awk '{print $2}' | sed 's/linux-image-//')
       update-initramfs -u -k $kernel
 
   - name: Remove AWS kernel boot files
