@@ -5,6 +5,9 @@
   gather_facts: no
   force_handlers: True
   tasks:
+  - name: update packages
+    shell: yum update
+
   - name: Ensure unzip is installed
     yum:
       name: unzip
