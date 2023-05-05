@@ -16,7 +16,7 @@ class ProjectCreate(BaseModel):
     resource_group: Union[str,None] = None
     subscription_id: Union[str,None] = None
     client_id: Union[str,None] = None
-    secret: Union[str,None] = None
+    secret_id: Union[str,None] = None
     tenant_id: Union[str,None] = None
     users: Union[list,None] = None
     access_key: Union[str,None] = None
@@ -42,8 +42,6 @@ async def project_create(data: ProjectCreate, current_user: TokenData = Depends(
 @app.get('/project')
 async def project_get(name: str, current_user: TokenData = Depends(get_current_user)):
     current_user = current_user['username']
-    print(current_user)
-    print(name)
     return jsonable_encoder(project.get_project(name, current_user))
 
 @app.route('/project/update', methods=['POST'])

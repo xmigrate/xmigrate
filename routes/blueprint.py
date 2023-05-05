@@ -1,6 +1,8 @@
+import os
 from app import app
 from utils.dbconn import *
 from utils.converter import *
+from utils.playbook import run_playbook
 from model.discover import *
 from model.blueprint import *
 from pkg.azure import *
@@ -143,6 +145,21 @@ async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depe
     con.shutdown()
     return jsonable_encoder({"msg":"Succesfully updated","status":200})
 
+class Prepare(BaseModel):
+    project: Union[str,None] = None
+    hostname: Union[list,None] = None
+
+@app.post('/blueprint/host/prepare')
+async def vm_prepare(data: Prepare, current_user: TokenData = Depends(get_current_user)):
+
+    project = data.project
+    hostname = data.hostname
+    con = create_db_con()
+    asyncio.create_task(build.call_start_vm_preparation(project=project, hostname=hostname))
+ 
+    return jsonable_encoder({"msg": "VM preparation started", "status":200})
+
+
 class BlueprintHost(BaseModel):
     project: Union[str,None] = None
     hostname: Union[str,None] = None
@@ -160,7 +177,7 @@ async def image_convert(data: BlueprintHost, current_user: TokenData = Depends(g
     project = data.project
     hostname = data.hostname
     asyncio.create_task(build.call_start_convert(project,hostname))
-    return jsonable_encoder({"msg":"Build started","status":200})
+    return jsonable_encoder({"msg":"Conversion started","status":200})
 
 class NetworkBuild(BaseModel):
     project: Union[str,None] = None

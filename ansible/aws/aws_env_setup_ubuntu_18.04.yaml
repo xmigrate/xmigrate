@@ -1,74 +1,71 @@
-- name : Configure aws-cli and required packages and deploy and execute the payload
+- name : Configure aws-cli and required packages
   become: true
   become_method: sudo
+  become_user: root
   hosts: all
   gather_facts: no
   force_handlers: True
   tasks:
+  - name: update packages
+    shell: apt update
+    
   - name: Ensure unzip is installed
     apt:
       name: unzip
-      state: latest 
-    become: yes
-    become_user: root
+      state: latest
+
   - name: Setup awscli
     shell: |
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       unzip -o awscliv2.zip
-      sudo ./aws/install --update
-    become_user: root
-    become: yes
-  - block: 
-    - name: Upgrade to AWS linux kernel
+      ./aws/install --update
+    args:
+      warn: false
+
+  - name: Remove all kernels other than the active kernel # This might install unsigned versions of some kernels
+    shell: |
+      kernel=$(uname -r)
+      dpkg -l | grep -i 'linux-image\|linux-headers' | grep -v $kernel | awk '{print $2}' | xargs apt purge --auto-remove -y
+    ignore_errors: yes
+
+  - block:
+    - name: Install aws supported generic linux kernel # AWS image build is not stable on non-generic kernals.
       apt:
-        name: linux-aws-lts-18.04
-        state: latest 
-      become_user: root
-      become: yes
+        name: linux-generic
+        state: latest
     rescue:
-    - name: Upgrade to AWS linux kernel
-      shell: "sudo apt install linux-aws-lts-18.04 -y"
+    - name: Install the kernel via shell
+      shell: "apt install linux-generic -y"
     tags:
         - devel
     
+  - name: Configure new kernel boot files
+    shell: |
+      kernel=$(dpkg -l | grep -E linux-image-5.4.*-generic | awk '{print $2}' | sed 's/linux-image-//')
+      update-initramfs -u -k $kernel
+
+  - name: Remove AWS kernel boot files
+    shell: cd /boot && rm -f *aws
+   
   - name: Update grub entries
     shell: |
-      sudo update-grub
-    become_user: root
-    become: yes
+      update-grub
 
   - name: Create .aws directory
     file:
       path: "~/.aws/"
       state: directory
       mode: 0755
+    become: false
 
   - name: Configure awscli credentials
     copy:
       src: "~/.aws/credentials"
       dest: "~/.aws/credentials"
+    become: false
 
   - name: Configure aws region
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
-
-  - name: <==Deploy payload==>
-    copy:
-      src: "../payloads/footprint/footprint"
-      dest: "/tmp/footprint"
-      mode: a+x
-    tags:
-      - deploy
-  - name: <==Executing payload==>
-    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-    register: st
-    become: True
-    tags:
-      - exec
-
-  - name: Debug
-    debug:
-      var: st
-    tags:
-      - msg
+    become: false

@@ -1,17 +1,28 @@
-- name : Configure aws-cli and required packages and deploy and execute the payload
-  become: true
+- name : Configure aws-cli and required packages
   become_method: sudo
-  hosts: nodes
+  become_user: root
+  hosts: all
   gather_facts: no
   force_handlers: True
   tasks:
+  - name: update packages
+    shell: yum update
+
+  - name: Ensure unzip is installed
+    yum:
+      name: unzip
+      state: latest
+    become: true
+    
   - name: Setup awscli
     shell: |
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       unzip -o awscliv2.zip
-      sudo ./aws/install --update
-    become_user: root
-    become: yes
+      ./aws/install --update
+    become: true
+    args:
+      warn: false
+
   - name: Create .aws directory
     file:
       path: "~/.aws/"
@@ -27,23 +38,3 @@
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
-
-  - name: <==Deploy payload==>
-    copy:
-      src: "../payloads/footprint/footprint"
-      dest: "/tmp/footprint"
-      mode: a+x
-    tags:
-      - deploy
-  - name: <==Executing payload==>
-    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-    register: st
-    become: True
-    tags:
-      - exec
-
-  - name: Debug
-    debug:
-      var: st
-    tags:
-      - msg

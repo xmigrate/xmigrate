@@ -16,7 +16,7 @@ from model.user import *
 
 load_dotenv()
 
-cass_db = getenv("CASS_DB")
+cass_db = getenv("CASS_DB") # use value "localhost" for dev with official cassandra image
 cass_password = getenv("CASS_PASSWORD")
 cass_user = getenv("CASS_USER")
 

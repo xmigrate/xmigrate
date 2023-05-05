@@ -1,15 +1,15 @@
 from app import app
 from utils.dbconn import *
-from model.discover import *
+from model.discover import Discover as DiscoverM
 from model.project import *
 from model.storage import *
 from pkg.common import nodes as n
-import os
+import os, netaddr
 from quart import jsonify, request
 from quart_jwt_extended import jwt_required, get_jwt_identity
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from routes.auth import TokenData, get_current_user
 from typing import Union
 from dotenv import load_dotenv
@@ -27,7 +27,6 @@ class Discover(BaseModel):
 async def discover(data: Discover, current_user: TokenData = Depends(get_current_user)):
     con = create_db_con()
     current_dir = os.getcwd()
-    print(data)
     provider = data.provider
     nodes = data.hosts
     username = data.username
@@ -39,7 +38,8 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
             {"msg": "Request couldn't process"}))
 
-    extra_vars = {'mongodb': mongodb, 'project': project}
+    playbook = "gather_facts.yaml"
+    stage = "gather_facts"
         
     if provider == "aws":
         proj_details = Project.objects(name=project)[0]
@@ -55,18 +55,43 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
         config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
         with open(aws_dir+'/config', 'w+') as writer:
             writer.write(config_str)
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
+    try:
+        output = run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage)
+        if 'ok' in output.stats.keys():
+            linux_host = list(output.stats['ok'].keys())[0]
+            facts = output.get_fact_cache(host=linux_host)
+            disk_details = []
+            for e in output.events:
+                if "event_data" in e.keys():
+                    if "res" in e['event_data'].keys():
+                        if "disk_info.stdout_lines" in e['event_data']['res'].keys():
+                            disk_details = e['event_data']['res']['disk_info.stdout_lines']
+            hostname = facts['ansible_hostname']
+            ip_address = facts['ansible_all_ipv4_addresses'][0]
+            nwinfo = netaddr.IPNetwork(f'{facts["ansible_default_ipv4"]["address"]}/{facts["ansible_default_ipv4"]["netmask"]}')
+            subnet = str(nwinfo)
+            network = str(nwinfo.network)
+            ports = []
+            cores = str(facts['ansible_processor_cores'])
+            cpu_model = facts['ansible_processor'][2] if len(facts['ansible_processor']) > 2 and len(facts['ansible_processor'][2]) > 1 else ' '
+            ram = str(facts['ansible_memtotal_mb'])
+            disks = []
+            keys = ['filesystem', 'disk_size', 'uuid', 'dev', 'mnt_path']
+            for disk in disk_details:
+                hashmap = {}
+                diskinfo = disk.strip().split()
+                _ = list(map(lambda k, v: hashmap.update({k:v}), keys, diskinfo))
+                hashmap['dev'] = f'/dev/{hashmap["dev"]}'
+                disks.append(hashmap)
+            try:
+                DiscoverM.objects(project=project,host=hostname).update(ip=ip_address, subnet=subnet, network=network,
+                        ports=ports, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks)
+            except Exception as e:
+                print("Error: "+str(e))
+            finally:
+                con.shutdown()
         return jsonable_encoder({'status': '200'})
-    elif provider == "azure":
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
-        return jsonable_encoder({'status': '200'})
-    elif provider == "gcp":
-        storage = GcpBucket.objects(project=project)[0]
-        project_id = storage['project_id']
-        gs_access_key_id = storage['access_key']
-        gs_secret_access_key = storage['secret_key']
-        extra_vars = {'mongodb': mongodb, 'project': project, 'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key}
-        run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, extra_vars=extra_vars)
-        return jsonable_encoder({'status': '200'})
-    return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
-        {"msg": "Request couldn't process"}))
+    except Exception as e:
+        print(str(e))
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
+            {"msg": "Request couldn't process"}))

@@ -69,10 +69,10 @@ render(){
                     <td className="uk-background-muted" colSpan={6}>
                     <Row className="font-weight-bold py-3 ml-1  ">
                               
-                              <Col className="rdColCenter" xs={{ span: 3 }}>HOSTNAME</Col>
+                              <Col className="rdColCenter" xs={{ span: 2 }}>HOST NAME</Col>
                               <Col  className="rdColCenter" xs={{ span: 2 }}>IP</Col>
                               <Col className="rdColCenter" xs={{ span: 2 }}>MACHINE TYPE</Col>
-                              <Col className="rdColCenter" xs={{ span: 3 }}>ACTION</Col>
+                              <Col className="rdColCenter" xs={{ span: 4 }}>ACTION</Col>
                                <Col className="rdColCenter" xs={{ span: 1 }}>STATUS</Col> 
                             </Row>
                             {this.props.Subnet.hosts === undefined || this.props.Subnet.hosts.length === 0  ? (
@@ -83,8 +83,8 @@ render(){
                     this.props.Subnet.hosts.map((host, index) => (
                       <Row className=" py-3 HostRow" key={index} id={host.host} draggable={true} onDragStart={(e)=>this.props.drag(e,host,index,this.state.Subnet,this.state.nw_name)}>
                     
-                       <Col className="rdColCenter" xs={{ span: 3 }}>{host.host}</Col>
-                      <Col className="rdColCenter" xs={{ span: 2 }}>{host.ip}</Col> 
+                       <Col className="rdColCenter txts" xs={{ span: 2 }}>{host.host}</Col>
+                      <Col className="rdColCenter txts" xs={{ span: 2 }}>{host.ip}</Col> 
                       <Col className="rdColCenter"  xs={{ span: 2 }}>
                         <Form>
                           <Form.Group controlId="select-machine-type">
@@ -104,13 +104,25 @@ render(){
                           </Form.Group>
                         </Form> 
                       </Col>
-                      <Col className="rdColCenter" xs={{ span: 3 }}>   
-                
+                      <Col className="rdColCenter" xs={{ span: 4 }}>   
+                      <Button
+                      className=" media-body"
+                      variant="info"
+                      size="sm"
+                      disabled={host["BtStatus"] !=="prepare" || host["BtProgress"] === "prepareStarted" || host["BtProgress"] === "cloneStarted"}
+                      onClick={()=>this.props.BlueprintHostPrepare(host.host)}
+                    >
+                      {
+                         host["BtProgress"] === "prepareStarted" ? <><Spinner as="span" animation="grow" size="sm" role="status"  aria-hidden="true"/> In Progess...</> : <> Prepare</>
+                      }
+                      
+                    </Button>
+                 ----
                        <Button
                       className=" media-body"
                       variant="success"
                       size="sm"
-                      disabled={host["BtStatus"] !=="clone" || host["BtProgress"] === "cloneStarted"}
+                      disabled={(host["BtStatus"] !=="clone" && host["BtStatus"] !=="prepare" )|| host["BtProgress"] === "cloneStarted"}
                       onClick={()=>this.props.BlueprintHostClone(host.host)}
                     >
                       {
@@ -144,6 +156,7 @@ render(){
                     </Button></Col>
                      <Col className="rdColCenter" xs={{ span: 1 }}>{host.status}</Col> 
                     </Row>
+               
                     ))
                   )}
                             

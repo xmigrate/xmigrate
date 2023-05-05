@@ -1,4 +1,4 @@
-import os, sys, time
+import time, json
 from mongoengine import *
 from model.discover import *
 from model.blueprint import *
@@ -17,77 +17,89 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
    secret_key = Project.objects(name=project).allow_filtering()[0]['secret_key']
    region = Project.objects(name=project).allow_filtering()[0]['location']
    import_task_id = ''
+   role_id = "vmimport"
    try:
       client = boto3.client('iam', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
-      file_trust_policy='''{
-         "Version":"2012-10-17",
-         "Statement":[
-            {
-               "Sid":"",
-               "Effect":"Allow",
-               "Principal":{
-                  "Service":"vmie.amazonaws.com"
-               },
-               "Action":"sts:AssumeRole",
-               "Condition":{
-                  "StringEquals":{
-                     "sts:ExternalId":"vmimport"
+
+      role_list = [role['RoleName'] for role in client.list_roles()['Roles']]
+      if role_id not in role_list:
+         file_trust_policy={
+            "Version": "2012-10-17",
+            "Statement": [
+               {
+                  "Effect": "Allow",
+                  "Principal": { "Service": "vmie.amazonaws.com" },
+                  "Action": "sts:AssumeRole",
+                  "Condition": {
+                     "StringEquals":{
+                        "sts:Externalid": 'vmimport'
+                     }
                   }
                }
-            }
-         ]
-      }'''
-   
-      response = client.create_role(RoleName='vmimport',AssumeRolePolicyDocument=file_trust_policy,Description='For vm migration',MaxSessionDuration=7200,Tags=[{'Key': 'app','Value': 'xmigrate'},])
-      file_role_policy = '''{
-         "Version":"2012-10-17",
-         "Statement":[
-            {
-               "Effect":"Allow",
-               "Action":[
-                  "s3:ListBucket",
-                  "s3:GetBucketLocation"
-               ],
-               "Resource":[
-                  "arn:aws:s3:::'''+bucket_name+'''"
+            ]
+         }
+         
+         response = client.create_role(RoleName=role_id, AssumeRolePolicyDocument=json.dumps(file_trust_policy), Description='For vm migration', MaxSessionDuration=7200, Tags=[{'Key': 'app','Value': 'xmigrate'}])
+         print(f'Created role {role_id}')
+
+         file_role_policy = {
+               "Version":"2012-10-17",
+               "Statement":[
+                  {
+                     "Effect": "Allow",
+                     "Action": [
+                        "kms:CreateGrant",
+                        "kms:Decrypt",
+                        "kms:DescribeKey",
+                        "kms:Encrypt",
+                        "kms:GenerateDataKey*",
+                        "kms:ReEncrypt*"
+                     ],
+                     "Resource": "*"
+                  },
+                  {
+                     "Effect": "Allow",
+                     "Action": [
+                        "license-manager:GetLicenseConfiguration",
+                        "license-manager:UpdateLicenseSpecificationsForResource",
+                        "license-manager:ListLicenseSpecificationsForResource"
+                     ],
+                     "Resource": "*"
+                  }
                ]
-            },
-            {
-               "Effect":"Allow",
-               "Action":[
-                  "s3:GetObject"
-               ],
-               "Resource":[
-                  "arn:aws:s3:::'''+bucket_name+'''/*"
-               ]
-            },
-            {
-               "Effect":"Allow",
-               "Action":[
-                  "ec2:ModifySnapshotAttribute",
-                  "ec2:CopySnapshot",
-                  "ec2:RegisterImage",
-                  "ec2:Describe*"
-               ],
-               "Resource":"*"
             }
-         ]
-      }'''
-      response = client.put_role_policy(
-         RoleName='vmimport',
-         PolicyName='vmimport',
-         PolicyDocument=file_role_policy
-      )
+         response = client.put_role_policy(
+            RoleName= role_id,
+            PolicyName= 'vmimport',
+            PolicyDocument= json.dumps(file_role_policy)
+         )
+         print(f'Attached inline policy vmimport to role {role_id}')
+         
+         policy_names = ['AmazonEC2FullAccess', 'AmazonS3FullAccess']
+
+         for policy_name in policy_names:
+            policy_arn = f'arn:aws:iam::aws:policy/{policy_name}'
+            response = client.attach_role_policy(
+               RoleName=role_id,
+               PolicyArn=policy_arn
+            )
+            print(f'Attached managed policy {policy_name} to role {role_id}')
+
+         print("Waiting for the role to become available...")
+         time.sleep(15)
+      else:
+         print(f'Role {role_id} already exists, skipping role creation')
    except Exception as e:
       print(str(e))
       BluePrint.objects(project=project, host=hostname).update(status='-1')
    try:
       print("Importing image")
-      client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=region)
+      client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
       response = client.import_image(
          DiskContainers=disk_containers,
+         RoleName=role_id,
          TagSpecifications=[
-         {
+            {
                'ResourceType': 'import-image-task',
                'Tags': [
                   {
@@ -95,8 +107,8 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
                      'Value': hostname
                   },
                ]
-         },
-      ]
+            },
+         ]
       )
       import_task_id = response['ImportTaskId']
       BluePrint.objects(host=hostname, project=project).update(status='30')
@@ -121,7 +133,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
                BluePrint.objects(host=hostname, project=project).update(status='-35')
                logger(response['ImportImageTasks'][0]['StatusMessage'],'error')
                print(response['ImportImageTasks'][0]['StatusMessage'])
-               break
+               return False
             else:
                print(response)
                await asyncio.sleep(60)
@@ -129,6 +141,7 @@ async def start_ami_creation_worker(bucket_name, image_name, project, disk_conta
       print(str(e))
       logger("Error while creating AMI:"+str(e),"error")
       BluePrint.objects(host=hostname, project=project).update(status='-35')
+      return False
    finally:
       con.shutdown()
 
@@ -154,7 +167,6 @@ async def start_ami_creation(project, hostname):
       disk_containers = [] 
       for disk in disks:
          image_name = host['host']+disk['mnt_path'].replace("/","-slash")+'.img'
-         print(image_name)
          disk_containers.append(
             {
                'Description': 'Xmigrate',
@@ -165,5 +177,7 @@ async def start_ami_creation(project, hostname):
                }
             }
          )
-      await start_ami_creation_worker(bucket_name, image_name, project, disk_containers, hostname)
+      worker_done = await start_ami_creation_worker(bucket_name, image_name, project, disk_containers, hostname)
+      if worker_done == False:
+         return False
    return True

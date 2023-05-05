@@ -5,10 +5,7 @@ import os, json
 
 def get_project(name, user):
     con = create_db_con()
-    print(name)
     if name == "all":
-        print(user)
-        print([dict(x) for x in Project.objects.all().filter(users__contains=user).allow_filtering()])
         return [dict(x) for x in Project.objects.all().filter(users__contains=user).allow_filtering()]
     else:
         return [ dict(x) for x in Project.objects(name=name, users__contains=user).allow_filtering() ]
@@ -48,7 +45,7 @@ async def create_project(data, user):
     elif provider == 'gcp':
         location = data.location
         name = data.name
-        project_id = data.project_id
+        project_id = data.service_account['project_id']
         service_account = data.service_account
         post = Project(name=name, provider=provider, users=users, location=location,
                            service_account=service_account, gcp_project_id=project_id)
@@ -69,7 +66,6 @@ async def update_project(data, user):
     provider = data['provider']
     try:
         if provider == 'azure':
-            print(user)
             name = data['name']
             location = data['location']
             resource_group = data['resource_group']

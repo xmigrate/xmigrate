@@ -1,4 +1,4 @@
 - name: Installing kernel modules without Hyper-V
-  command: sudo mkinitrd --preload=hv_storvsc hyperv_fb --preload=hv_vmbus -v -f initrd-`uname -r`.img `uname -r`
+  command: mkinitrd --preload=hv_storvsc hyperv_fb --preload=hv_vmbus -v -f initrd-`uname -r`.img `uname -r`
   become: yes
   become_user: root

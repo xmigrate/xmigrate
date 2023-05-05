@@ -1,5 +1,5 @@
-- name : Configure gsutil and required packages and deploy and execute the payload
-  become: yes
+- name : Configure gsutil and required packages
+  become: true
   become_method: sudo
   become_user: root
   hosts: all
@@ -7,22 +7,20 @@
   force_handlers: True
   tasks:
   - block:
+    - name: Upgrade pip to the latest version
+      shell: pip3 install --upgrade pip
     - name: Install Python packages
       pip:
-        name: "{{ item }}"
-      with_items:
-        - gsutil
-
+        name: ['gsutil']
     rescue:
     - name: Install python packages
-      shell: "sudo pip3 install {{ item }}"
-      with_items:
-        - gsutil
+      shell: "pip3 install gsutil"
 
   - name: Configure gsutil credentials
     template:
       src: "./templates/.boto.j2"
       dest: "~/.boto"
+
   - name: check if splash is configured in the boot command
     lineinfile:
       backup: true
@@ -59,38 +57,16 @@
       path: /etc/default/grub
       state: absent
       regexp: 'splashimage'
+
   - block:
     - name: <==Update grub config==>
-      shell: "sudo grub-mkconfig -o /boot/grub/grub.cfg"
+      shell: "grub-mkconfig -o /boot/grub/grub.cfg"
       register: grubout
-      become: True
       tags:
         - grubupdate
     rescue:
     - name: <==Trying Update grub2 config==>
-      shell: "sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+      shell: "grub2-mkconfig -o /boot/grub2/grub.cfg"
       register: grubout
-      become: True
       tags:
         - grubupdate
-
-  - name: <==Deploy payload==>
-    copy:
-      src: "../payloads/footprint/footprint"
-      dest: "/tmp/footprint"
-      mode: a+x
-    tags:
-      - deploy
-
-  - name: <==Executing payload==>
-    shell: "sudo /tmp/footprint {{ project }} '{{ mongodb }}' {{ inventory_hostname }}"
-    register: st
-    become: True
-    tags:
-      - exec
-
-  - name: Debug
-    debug:
-      var: st
-    tags:
-      - msg
