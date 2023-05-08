@@ -37,16 +37,16 @@
       shell: "apt install linux-generic -y"
     tags:
         - devel
+
+  - name: Remove active kernel boot files
+    shell: rm -f /boot/*
+    ignore_errors: yes
     
   - name: Configure new kernel boot files
     shell: |
       kernel=$(dpkg -l | grep -E linux-image-4.*-generic | awk '{print $2}' | sed 's/linux-image-//')
       update-initramfs -u -k $kernel
-
-  - name: Remove AWS kernel boot files
-    shell: cd /boot && rm -f *aws
    
-
   - name: Remove EFI entries
     shell: mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
     ignore_errors: yes
