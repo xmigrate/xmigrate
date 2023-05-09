@@ -9,7 +9,7 @@ services:
       - "9042:9042"
       - "9160:9160"
     volumes:
-      - cassandra:/cassandra
+      - cassandra:/var/lib/cassandra
     environment:
       - "CASSANDRA_CLUSTER_NAME=cassandra-cluster"
       - "CASSANDRA_DC=DC1"
