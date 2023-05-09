@@ -2,32 +2,37 @@ version: '3.1'
 
 services:
   cassandra:
-    image: docker.io/bitnami/cassandra:4.0
-    volumes:
-      - cassandra_data:/bitnami
-    environment:
-      - CASSANDRA_SEEDS=cassandra
-      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
-      - CASSANDRA_PASSWORD_SEEDER=yes
-      - CASSANDRA_PASSWORD=cassandra
-      # By default, Cassandra autodetects the available host memory and takes as much as it can.
-      # Therefore, memory options are mandatory if multiple Cassandras are launched in the same node.
-      - MAX_HEAP_SIZE=2G
-      - HEAP_NEWSIZE=200M
-  app:
-    build: .
+    image: cassandra:4.0
+    container_name: cassandra
+    restart: unless-stopped
     ports:
-      - 8000:80
+      - "9042:9042"
+      - "9160:9160"
+    volumes:
+      - cassandra:/var/lib/cassandra
+    environment:
+      - "CASSANDRA_CLUSTER_NAME=cassandra-cluster"
+      - "CASSANDRA_DC=DC1"
+      - "CASSANDRA_RACK=Rack1"
+      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
+      # By default, Cassandra autodetects the available host memory and takes as much as it can.
+      # Configure the limits according to the needs and memory availability.
+      - "MAX_HEAP_SIZE=512M"
+      - "HEAP_NEWSIZE=50M"
+  app:
+    image: xmigrate/xmigrate:latest
+    container_name: app
+    ports:
+      - 80:80
+      - 8000:8000
     environment:
       CASS_PASSWORD: "cassandra"
       CASS_USER: "cassandra"
       CASS_DB: "cassandra"
-      BASE_URL: http://15.207.235.96:8000/api
+      BASE_URL: http://<server-ip>:8000/api
     depends_on:
      - cassandra
 
 volumes:
-  cassandra_data:
-    driver: local
-  cassandra2_data:
+  cassandra:
     driver: local
