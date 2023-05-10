@@ -5,7 +5,7 @@
   gather_facts: no
   force_handlers: True
   tasks:
-  - name: update packages
+  - name: Update packages
     shell: yum update
 
   - name: Ensure unzip is installed
@@ -37,4 +37,25 @@
   - name: Configure aws region
     copy:
       src: "~/.aws/config"
-      dest: "~/.aws/config"
+      dest: "~/.aws/config"   
+  
+  - name: Remove current kernel boot files
+    shell: rm -f /boot/*
+    ignore_errors: yes
+
+  - block:
+    - name: Install AWS supported linux kernel # AWS image build is not stable on non-generic kernals.
+      apt:
+        name: kernel-4.18.0-147.8.1*
+        state: present
+    rescue:
+    - name: Install the kernel via shell
+      shell: "yum install kernel-4.18.0-147.8.1* -y"
+    tags:
+        - devel
+
+  - name: Configure new kernel boot files
+    shell: |
+      kernel=$(rpm -q kernel | grep 4.18.0-147.8.1 | sed 's/kernel/\/boot\/vmlinuz/')
+      grubby --set-default $kernel
+      grub2-mkconfig -o /boot/grub2/grub.cfg
