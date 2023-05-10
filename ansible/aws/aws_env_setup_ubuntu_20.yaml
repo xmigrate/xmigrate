@@ -6,7 +6,7 @@
   gather_facts: no
   force_handlers: True
   tasks:
-  - name: update packages
+  - name: Update packages
     shell: apt update
 
   - name: Ensure unzip is installed
@@ -25,7 +25,11 @@
   - name: Remove all kernels other than the active kernel # This might install unsigned versions of some kernels
     shell: |
       kernel=$(uname -r)
-      dpkg -l | grep -i 'linux-image\|linux-headers' | grep -v $kernel | awk '{print $2}' | xargs apt purge --auto-remove -y
+      dpkg -l | grep 'linux-image\|linux-headers' | grep -v $kernel | awk '{print $2}' | xargs apt purge --auto-remove -y
+    ignore_errors: yes
+
+  - name: Remove active kernel boot files
+    shell: rm -f /boot/*
     ignore_errors: yes
 
   - block:
@@ -41,11 +45,8 @@
     
   - name: Configure new kernel boot files
     shell: |
-      kernel=$(dpkg -l | grep -E linux-image-5.4.*-generic | awk '{print $2}' | sed 's/linux-image-//')
+      kernel=$(dpkg -l | grep -E 'linux\-image\-5\.4.*\-generic' | awk '{print $2}' | sed 's/linux-image-//')
       update-initramfs -u -k $kernel
-
-  - name: Remove AWS kernel boot files
-    shell: cd /boot && rm -f *aws
 
   - name: Remove EFI entries
     shell: mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
