@@ -5,7 +5,12 @@
   gather_facts: no
   force_handlers: True
   tasks:
-  - name: update packages
+  # - name: Add mirrors # Don't run normally but run manually if there is a mirror issue
+  #   shell: |
+  #     sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+  #     sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+
+  - name: Update packages
     shell: yum update
 
   - name: Ensure unzip is installed
@@ -38,3 +43,24 @@
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
+      
+  - name: Remove current kernel boot files
+    shell: rm -f /boot/*
+    ignore_errors: yes
+
+  - block:
+    - name: Install AWS supported linux kernel # AWS image build is not stable on non-generic kernals.
+      apt:
+        name: kernel-3.10.0-1160.90.1*
+        state: present
+    rescue:
+    - name: Install the kernel via shell
+      shell: "yum install kernel-3.10.0-1160.90.1* -y"
+    tags:
+        - devel
+
+  - name: Configure new kernel boot files
+    shell: |
+      kernel=$(rpm -q kernel | grep 3.10.0-1160.90.1 | sed 's/kernel/\/boot\/vmlinuz/')
+      grubby --set-default $kernel
+      grub2-mkconfig -o /boot/grub2/grub.cfg
