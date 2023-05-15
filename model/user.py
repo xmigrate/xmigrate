@@ -1,13 +1,11 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
+from utils.dbconn import Base
+from sqlalchemy import Column, String, Boolean
 
-class User(Model):
-    username = columns.Text(primary_key=True, max_length=20)
-    password = columns.Text(required=True)
-    active = columns.Boolean(default=True)
 
-class UserMongo(Document):
-    username = StringField(required=True, max_length=20,unique=True)
-    password = StringField(required=True)
-    active = BooleanField(default=True)
+class User(Base):
+    
+    __tablename__ = 'user'
+
+    username = Column(String, primary_key=True)
+    password = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)

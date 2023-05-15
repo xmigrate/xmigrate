@@ -1,25 +1,14 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Disk(Model):
-    host = columns.Text(primary_key=True, max_length=150)
-    vhd = columns.Text(required=True)
-    file_size = columns.Text(required=True)
-    project = columns.Text(primary_key=True, max_length=150)
-    mnt_path = columns.Text(primary_key=True, max_length=150)
-    disk_id = columns.Text(required=True, max_length=550)
+from utils.dbconn import Base
+from sqlalchemy import Column, String
 
 
-class DiskMongo(Document):
-    host = StringField(required=True, max_length=150)
-    vhd = StringField(required=True)
-    file_size = StringField(required=True)
-    project = StringField(required=True, max_length=150)
-    mnt_path = StringField(required=True, max_length=150)
-    disk_id = StringField(required=True, max_length=550)
-    meta = {
-        'indexes': [
-            {'fields': ('host', 'project', 'mnt_path'), 'unique': True}
-        ]
-    }
+class Disk(Base):
+    
+    __tablename__ = 'disk'
+    
+    project = Column(String, primary_key=True, unique=True)
+    host = Column(String, primary_key=True)
+    vhd = Column(String, nullable=False)
+    file_size = Column(String, nullable=False)
+    mnt_path = Column(String, nullable=False)
+    disk_id = Column(String, nullable=False)

@@ -1,59 +1,33 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Storage(Model):
-    project = columns.Text(primary_key=True, max_length=20)
-    storage = columns.Text(primary_key=True)
-    container = columns.Text(required=True)
-    access_key = columns.Text(required=True, max_length=150)
-
-class StorageMongo(Document):
-    project = StringField(required=True, max_length=20)
-    storage = StringField(required=True)
-    container = StringField(required=True)
-    access_key = StringField(required=True, max_length=150)
-    meta = {
-        'indexes': [
-            {'fields': ('storage', 'project'), 'unique': True}
-        ]
-    }
-
-class Bucket(Model):
-    project = columns.Text(primary_key=True, max_length=20)
-    bucket = columns.Text(primary_key=True)
-    secret_key = columns.Text(required=True, max_length=150)
-    access_key = columns.Text(required=True, max_length=150)
+from utils.dbconn import Base
+from sqlalchemy import Column, String
 
 
-class BucketMongo(Document):
-    project = StringField(required=True, max_length=20)
-    bucket = StringField(required=True)
-    secret_key = StringField(required=True, max_length=150)
-    access_key = StringField(required=True, max_length=150)
-    meta = {
-        'indexes': [
-            {'fields': ('bucket', 'project'), 'unique': True}
-        ]
-    }
+class Storage(Base):
+    
+    __tablename__ = 'storage'
+
+    project = Column(String, primary_key=True)
+    storage = Column(String, unique=True, nullable=False)
+    container = Column(String, nullable=False)
+    access_key = Column(String, nullable=False)
+   
+
+class Bucket(Base):
+
+    __tablename__ = 'bucket'
+
+    project = Column(String, primary_key=True)
+    bucket = Column(String, unique=True, nullable=False)
+    secret_key = Column(String, nullable=False)
+    access_key = Column(String, nullable=False)
 
 
-class GcpBucket(Model):
-    project = columns.Text(primary_key=True, max_length=20)
-    project_id= columns.Text(required=True, max_length=150)
-    secret_key = columns.Text(required=True, max_length=150)
-    access_key = columns.Text(required=True, max_length=150)
-    bucket = columns.Text(primary_key=True)
+class GcpBucket(Base):
+    
+    __tablename__ = 'gcp_bucket'
 
-
-class GcpBucketMongo(Document):
-    project = StringField(required=True, max_length=20)
-    project_id= StringField(required=True, max_length=150)
-    secret_key = StringField(required=True, max_length=150)
-    access_key = StringField(required=True, max_length=150)
-    bucket = StringField(required=True)
-    meta = {
-        'indexes': [
-            {'fields': ('bucket', 'project'), 'unique': True}
-        ]
-    }
+    project = Column(String, primary_key=True)
+    project_id= Column(String, nullable=False)
+    bucket = Column(String, unique=True, nullable=False)
+    secret_key = Column(String, nullable=False)
+    access_key = Column(String, nullable=False)

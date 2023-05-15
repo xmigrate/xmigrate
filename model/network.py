@@ -1,44 +1,24 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Network(Model):
-    cidr = columns.Text(max_length=50)
-    project = columns.Text(primary_key=True, max_length=50)
-    nw_name = columns.Text(primary_key=True, max_length=50)
-    created = columns.Boolean(required=True, default=False)
+from utils.dbconn import Base
+from sqlalchemy import Column, String
 
 
-class NetworkMongo(Document):
-    cidr = StringField(required=True, max_length=50)
-    project = StringField(required=True, max_length=50)
-    nw_name = StringField(required=True, max_length=50)
-    created = BooleanField(required=True, default=False)
-    meta = {
-        'indexes': [
-            {'fields': ('cidr', 'project','nw_name'), 'unique': True}
-        ]
-    }
+class Network(Base):
+    
+    __tablename__ = 'network'
+    
+    project = Column(String, primary_key=True, unique=True)
+    nw_name = Column(String, primary_key=True)
+    cidr = Column(String, primary_key=True)
+    created = Column(String, nullable=False, default=False)
 
 
-class Subnet(Model):
-    cidr = columns.Text(primary_key=True, max_length=50)
-    nw_name = columns.Text(required=False, max_length=100)
-    project = columns.Text(primary_key=True, max_length=50)
-    subnet_name = columns.Text(primary_key=True, max_length=150)
-    subnet_type = columns.Boolean(required=True)
-    created = columns.Boolean(required=True, default=False)
-
-
-class SubnetMongo(Document):
-    cidr = StringField(required=True, max_length=50)
-    nw_name = StringField(required=False, max_length=100)
-    project = StringField(required=True, max_length=50)
-    subnet_name = StringField(required=True, max_length=150)
-    subnet_type = BooleanField(required=True)
-    created = BooleanField(required=True, default=False)
-    meta = {
-        'indexes': [
-            {'fields': ('cidr', 'project','subnet_name'), 'unique': True}
-        ]
-    }
+class Subnet(Base):
+    
+    __tablename__ = 'subnet'
+    
+    project = Column(String, primary_key=True, unique=True)
+    nw_name = Column(String, primary_key=True)
+    subnet_name = Column(String, primary_key=True)
+    subnet_type = Column(String, nullable=False)
+    cidr = Column(String, primary_key=True)
+    created = Column(String, nullable=False, default=False)

@@ -1,37 +1,19 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Discover(Model):
-    host = columns.Text(primary_key=True, max_length=200 )
-    ip = columns.Text(required=True)
-    subnet = columns.Text(required=True, max_length=150)
-    network = columns.Text(required=True, max_length=150)
-    ports = columns.List(value_type=columns.Map(key_type=columns.Text(),value_type=columns.Text()))
-    cores = columns.Text(max_length=2)
-    cpu_model = columns.Text(required=True, max_length=150)
-    ram = columns.Text(required=True, max_length=150)
-    disk_details = columns.List(value_type=columns.Map(key_type=columns.Text(),value_type=columns.Text()))
-    project = columns.Text(primary_key=True, max_length=150)
-    public_ip = columns.Text(required=True, max_length=150)
-    meta = {'allow_inheritance': True}
+from utils.dbconn import Base
+from sqlalchemy import Column, String, ARRAY, JSON
 
 
-class DiscoverMongo(Document):
-    host = StringField(required=True, max_length=200 )
-    ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=150)
-    network = StringField(required=True, max_length=150)
-    ports = ListField()
-    cores = StringField(max_length=2)
-    cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=150)
-    disk_details = ListField()
-    project = StringField(required=True, max_length=150)
-    public_ip = StringField(required=True, max_length=150)
-    meta = {
-        'indexes': [
-            {'fields': ('host', 'project'), 'unique': True}
-        ]
-    }
-
+class Discover(Base):
+    
+    __tablename__ = 'discover'
+    
+    project = Column(String, primary_key=True, unique=True)
+    host = Column(String, primary_key=True)
+    ip = Column(String, nullable=False)
+    subnet = Column(String, nullable=False)
+    network = Column(String, nullable=False)
+    ports = Column(ARRAY(String))
+    cores = Column(String)
+    cpu_model = Column(String, nullable=False)
+    ram = Column(String, nullable=False)
+    disk_details = Column(ARRAY(JSON(String)))
+    public_ip = Column(String, nullable=False)
