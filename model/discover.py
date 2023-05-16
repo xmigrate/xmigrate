@@ -1,5 +1,6 @@
 from utils.dbconn import Base
-from sqlalchemy import Column, String, ARRAY, JSON
+from sqlalchemy import Column, String
+from sqlalchemy.dialects.postgresql import ARRAY, JSON
 
 
 class Discover(Base):

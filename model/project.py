@@ -1,5 +1,6 @@
 from utils.dbconn import Base
-from sqlalchemy import Column, String, Boolean, ARRAY, JSON
+from sqlalchemy import Column, String, Boolean
+from sqlalchemy.dialects.postgresql import ARRAY, JSON
 
 
 class Project(Base):
