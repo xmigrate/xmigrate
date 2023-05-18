@@ -4,7 +4,7 @@ from model.discover import Discover as DiscoverM
 from model.project import *
 from model.storage import *
 from pkg.common import nodes as n
-import os, netaddr
+import os, netaddr, re
 from quart import jsonify, request
 from quart_jwt_extended import jwt_required, get_jwt_identity
 from fastapi.encoders import jsonable_encoder
@@ -61,11 +61,14 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
             linux_host = list(output.stats['ok'].keys())[0]
             facts = output.get_fact_cache(host=linux_host)
             disk_details = []
+            blkid = []
             for e in output.events:
                 if "event_data" in e.keys():
                     if "res" in e['event_data'].keys():
                         if "disk_info.stdout_lines" in e['event_data']['res'].keys():
                             disk_details = e['event_data']['res']['disk_info.stdout_lines']
+                        if "blkid.stdout_lines" in e['event_data']['res'].keys():
+                            blkid = e['event_data']['res']['blkid.stdout_lines']
             hostname = facts['ansible_hostname']
             ip_address = facts['ansible_all_ipv4_addresses'][0]
             nwinfo = netaddr.IPNetwork(f'{facts["ansible_default_ipv4"]["address"]}/{facts["ansible_default_ipv4"]["netmask"]}')
@@ -76,13 +79,25 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
             cpu_model = facts['ansible_processor'][2] if len(facts['ansible_processor']) > 2 and len(facts['ansible_processor'][2]) > 1 else ' '
             ram = str(facts['ansible_memtotal_mb'])
             disks = []
+            dev_list=  []
             keys = ['filesystem', 'disk_size', 'uuid', 'dev', 'mnt_path']
             for disk in disk_details:
                 hashmap = {}
                 diskinfo = disk.strip().split()
                 _ = list(map(lambda k, v: hashmap.update({k:v}), keys, diskinfo))
-                hashmap['dev'] = f'/dev/{hashmap["dev"]}'
-                disks.append(hashmap)
+                hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
+                if hashmap['dev'] not in dev_list:
+                    for blk in blkid:
+                        if hashmap['dev'] in blk and 'uuid' in blk.lower():
+                            matches = re.findall(r'(?i)(\w+UUID)="([^"]+)"', blk)
+                            for match in matches:
+                                _, hashmap['uuid'] = match
+                            break
+                    else:
+                        hashmap['uuid'] = ' '
+                    dev_list.append(hashmap['dev'])
+                    hashmap['dev'] = f'/dev/{hashmap["dev"]}'
+                    disks.append(hashmap)
             try:
                 DiscoverM.objects(project=project,host=hostname).update(ip=ip_address, subnet=subnet, network=network,
                         ports=ports, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks)

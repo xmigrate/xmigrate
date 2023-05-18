@@ -1,11 +1,26 @@
 - name: Gather system facts
   hosts: all
+  become: true
+  become_method: sudo
+  become_user: root
   gather_facts: yes
   tasks:
     - name: Get disk details
-      shell: lsblk -o FSTYPE,SIZE,UUID,NAME,MOUNTPOINT -r | grep 'ext\|xfs'
+      shell: lsblk -o FSTYPE,SIZE,UUID,NAME,MOUNTPOINT -r | grep -iv lv | grep 'ext\|xfs'
       register: disk_info
+
+    - name: Get block ids
+      shell: |
+        #!/bin/bash
+        lsblk -o NAME,TYPE -r | grep -i disk | awk '{print $1}' | while IFS= read -r line; do
+          blkid "/dev/$line"
+        done
+      register: blkid
 
     - name: Disk details
       debug:
         var: disk_info.stdout_lines
+    
+    - name: Disk details
+      debug:
+        var: blkid.stdout_lines
