@@ -21,6 +21,6 @@
       debug:
         var: disk_info.stdout_lines
     
-    - name: Disk details
+    - name: Block ids
       debug:
         var: blkid.stdout_lines
