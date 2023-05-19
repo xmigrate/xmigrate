@@ -25,12 +25,15 @@
   - name: Remove all kernels other than the active kernel # This might install unsigned versions of some kernels
     shell: |
       kernel=$(uname -r)
-      dpkg -l | grep 'linux-image\|linux-headers' | grep -v $kernel | awk '{print $2}' | xargs apt purge --auto-remove -y
+      dpkg -l | grep 'linux-image\|linux-headers' | grep -v $kernel | awk '{print $2}' | xargs apt purge -y
+      apt autoremove -y
     ignore_errors: yes
 
   - name: Remove active kernel boot files
     shell: rm -f /boot/*
     ignore_errors: yes
+    args:
+      warn: false
 
   - block:
     - name: Install aws supported generic linux kernel # AWS image build is not stable on non-generic kernals.
@@ -47,7 +50,7 @@
     shell: |
       kernel=$(dpkg -l | grep -E 'linux\-image\-(5\.4|4\.15).*\-generic' | awk '{print $2}' | sed 's/linux-image-//')
       update-initramfs -u -k $kernel
-   
+      
   - name: Update grub entries
     shell: |
       update-grub
