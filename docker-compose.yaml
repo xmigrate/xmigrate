@@ -24,12 +24,11 @@ services:
     container_name: app
     ports:
       - 80:80
-      - 8000:8000
     environment:
       CASS_PASSWORD: "cassandra"
       CASS_USER: "cassandra"
       CASS_DB: "cassandra"
-      BASE_URL: http://<server-ip>:8000/api
+      BASE_URL: http://<server-ip>/api
     depends_on:
      - cassandra
 
