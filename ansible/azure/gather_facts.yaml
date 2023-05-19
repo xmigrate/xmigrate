@@ -6,7 +6,7 @@
   gather_facts: yes
   tasks:
     - name: Get disk details
-      shell: lsblk -o FSTYPE,SIZE,UUID,NAME,MOUNTPOINT -r | grep -iv lv | grep 'ext\|xfs'
+      shell: lsblk -o FSTYPE,SIZE,UUID,NAME,MOUNTPOINT,TYPE -r | grep -iv lv | grep 'ext\|xfs'
       register: disk_info
 
     - name: Get block ids

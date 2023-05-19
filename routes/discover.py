@@ -84,6 +84,7 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
             for disk in disk_details:
                 hashmap = {}
                 diskinfo = disk.strip().split()
+                diskinfo.pop(-1)
                 _ = list(map(lambda k, v: hashmap.update({k:v}), keys, diskinfo))
                 hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
                 if hashmap['dev'] not in dev_list:
