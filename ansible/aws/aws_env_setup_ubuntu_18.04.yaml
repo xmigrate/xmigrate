@@ -49,6 +49,7 @@
   - name: Configure new kernel boot files
     shell: |
       kernel=$(dpkg -l | grep -E 'linux\-image\-(5\.4|4\.15).*\-generic' | awk '{print $2}' | sed 's/linux-image-//')
+      update-initramfs -u -k $kernel
       
   - name: Update grub entries
     shell: |
