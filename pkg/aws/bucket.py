@@ -1,38 +1,37 @@
-from utils.dbconn import *
-from model.storage import *
+from model.storage import Bucket
 from utils.logger import *
+from sqlalchemy import update
 
-def create_bucket(project, bucket, secret_key, access_key):
-    con = create_db_con()
-    post = Bucket(project=project, bucket=bucket, secret_key=secret_key, access_key=access_key)
+def create_bucket(project, bucket, secret_key, access_key, db):
     try:
-        post.save()
+        strg = Bucket(project=project, bucket=bucket, secret_key=secret_key, access_key=access_key)
+        db.add(strg)
+        db.commit()
+        db.refresh(strg)
         return True
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
         logger(str(e),"warning")
         return False
-    finally:
-        con.shutdown()
 
-def update_bucket(project, bucket, secret_key, access_key):
-    con = create_db_con()
+def update_bucket(project, bucket, secret_key, access_key, db):
     try:
-        Bucket.objects(project=project,bucket=bucket).update(
-            secret_key=secret_key, access_key=access_key)
+        db.execute(update(Bucket).where(
+            Bucket.project==project and Bucket.bucket==bucket
+            ).values(
+            secret_key=secret_key, access_key=access_key
+            ).execution_options(synchronize_session="fetch"))
+        db.commit()
         return True
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
         logger(str(e),"warning")
         return False
-    finally:
-        con.shutdown()
 
-def get_storage(name):
-    con = create_db_con()
+def get_storage(name, db):
     if name == "all":
-        return [dict(x) for x in Bucket.objects.allow_filtering()]
+        return db.query(Bucket).all()
     else:
-        return [dict(x) for x in Bucket.objects(project=name).allow_filtering()]
+        return db.query(Bucket).filter(Bucket.project==name).all()

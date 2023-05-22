@@ -1,36 +1,22 @@
-from functools import lru_cache
 import uvicorn
 from fastapi import FastAPI
-from pydantic import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
+from utils.database import Base, engine
+from model import blueprint, discover, disk, network, project, storage, user # This is for Base to get table context, do not cleanup!!!
+from routes import (
+    auth,
+    blueprint as blueprint_r,
+    discover as discover_r,
+    locations,
+    master,
+    project as project_r,
+    status,
+    storage as storage_r,
+    stream,
+    vm_types
+    ) # import with alias to avoid overrides
 
-from ansible.playbook import Playbook
-# import ast
-# import json
-# import os
-from pygtail import Pygtail
-from collections import defaultdict
-# import boto3
-import sys
-#from quart import Quart, g, request
-#from quart_cors import cors
-#from quart_jwt_extended import JWTManager
-
-class Settings(BaseSettings):
-    MONGO_DB: str = "mongodb://root:example@mongo:27017/"
-    JWT_SECRET_KEY: str = "try2h@ckT415"
-    JWT_ACCESS_TOKEN_EXPIRES: int = 3600
-    ALGORITHM: str = "HS256"
-    class Config:
-        env_file = ".env"
-
-@lru_cache()
-def get_settings():
-    return Settings()
-
-sys.path.append('./')
-
-#app = Quart(__name__)
+Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 origins = [
@@ -45,31 +31,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# app = cors(app, allow_origin="*")
-
-# app.config['JWT_SECRET_KEY'] = 'try2h@ckT415'  # Change this!
-# app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 3600
-# jwt = JWTManager(app)
-
-
-#app.secret_key = getenv("SECRET")
-
-
-from routes.stream import *
-from routes.status import *
-from routes.server import *
-from routes.index import *
-from routes.discover import *
-from routes.build import *
-from routes.blueprint import *
-from routes.project import *
-from routes.storage import *
-from routes.auth import *
-from routes.locations import *
-from routes.vm_types import *
-from routes.master import *
-
+app.include_router(auth.router)
+app.include_router(blueprint_r.router)
+app.include_router(discover_r.router)
+app.include_router(locations.router)
+app.include_router(master.router)
+app.include_router(project_r.router)
+app.include_router(status.router)
+app.include_router(storage_r.router)
+app.include_router(stream.router)
+app.include_router(vm_types.router)
 
 #Exception
 from exception import handler

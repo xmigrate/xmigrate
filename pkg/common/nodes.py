@@ -1,30 +1,32 @@
 from model.project import *
-from utils.dbconn import *
+from utils.database import *
 from utils.logger import *
 import os
+from sqlalchemy import update
 
-
-def add_nodes(nodes,user,password,p, update_db=True):
+def add_nodes(nodes, user, password, p, db, update_db=True):
     ansible_hosts = "./ansible/projects/"+p+"/hosts"
     if not os.path.exists("./ansible/projects/"+p):
-      os.makedirs("./ansible/projects/"+p)
-    host_file = open(ansible_hosts,'w')
+       os.makedirs("./ansible/projects/"+p)
+    
     if update_db:
-      try:
-        Project.objects(name=p).update(public_ip=nodes, username=user, password=password)
-      except Exception as e:
-        print("Error while inserting to Project: "+str(e))
-        logger("Error while inserting to Project: "+str(e),"error")
+        try:
+            db.execute(update(Project).where(
+            Project.name==p
+            ).values(
+            public_ip=nodes, username=user, password=password
+            ).execution_options(synchronize_session="fetch"))
+            db.commit()
+        except Exception as e:
+            print("Error while inserting to Project: "+str(e))
+            logger("Error while inserting to Project: "+str(e),"error")
+
     nodes = '\n'.join(nodes)
     try:
-      s='[nodes]'+'\n'+nodes+'\n'+'[all:vars]'+'\n'+'ansible_ssh_pass = '+password+'\n'+'ansible_sudo_pass = '+password
-      host_file.write(s)
-      host_file.close()
-      cfg_file = open('./ansible.cfg','w')
-      s='[defaults]\nremote_user ='+user+'\n'+'inventory      = '+ansible_hosts+'\n'+'sudo_user      = '+user+'\n'+'host_key_checking = false\n\n'+'[privilege_escalation]\nbecome=True\nbecome_method=sudo\nbecome_user='+user
-      cfg_file.write(s)
-      cfg_file.close()
-      return True
+        with open(ansible_hosts, 'w') as hosts, open('./ansible.cfg','w') as config:
+            hosts.write(f"[nodes]\n{nodes}\n[all:vars]\nansible_ssh_pass = {password}\nansible_sudo_pass = {password}")
+            config.write(f"[defaults]\nremote_user = {user}\ninventory = {ansible_hosts}\nsudo_user = {user}\nhost_key_checking = false\n\n[privilege_escalation]\nbecome=True\nbecome_method=sudo\nbecome_user={user}")
+        return True
     except Exception as e:
-      logger("Error while creating ansible cfg: "+str(e),"error")
-      return False
+        logger("Error while creating ansible cfg: "+str(e),"error")
+        return False

@@ -18,9 +18,9 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
 
     with open(log_file, 'a+'):
         try:
-            runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, limit=limit, quiet=True)
+            runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, limit=limit, quiet=False)
             if stage == "gather_facts":
-                return runner[1]
+                return(not (bool(runner[1].stats['failures']) or bool(runner[1].stats['dark'])), runner[1])
             else:
                 return(not (bool(runner[1].stats['failures']) or bool(runner[1].stats['dark'])))
         except Exception as e:

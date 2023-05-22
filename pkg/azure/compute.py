@@ -1,25 +1,25 @@
 # Import the needed management objects from the libraries. The azure.common library
 # is installed automatically with the other libraries.
-from azure.common.client_factory import get_client_from_cli_profile
-from azure.mgmt.compute import ComputeManagementClient
-from model.project import *
-from model.blueprint import *
-from model.disk import *
-from utils.dbconn import *
-from azure.common.credentials import ServicePrincipalCredentials
+from model.blueprint import Blueprint
+from model.disk import Disk
+from model.project import Project
+from utils.database import dbconn
 from utils.logger import *
+from azure.common.credentials import ServicePrincipalCredentials
+from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOptionTypes
+from sqlalchemy import update
 
 
-def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks):
-    con = create_db_con()
-    client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-    secret = Project.objects(name=project).allow_filtering()[0]['secret']
-    tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
+def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks, db):
+    prjct = db.query(Project).filter(Project.name==project).first()
+    client_id = prjct.client_id
+    secret = prjct.secret
+    tenant_id = prjct.tenant_id
+    subscription_id = prjct.subscription_id
+
     creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
     compute_client = ComputeManagementClient(creds,subscription_id)
-    con.shutdown()
     managed_disks = []
 
     lun=1
@@ -36,8 +36,7 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
         lun = lun + 1
         
     
-    print(
-        f"Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
+    print(f"Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
 
     poller = compute_client.virtual_machines.create_or_update(rg_name, vm_name,
                                                               {
@@ -67,39 +66,45 @@ def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, ni
     vm_result = poller.result()
     print("Provisioned virtual machine")
     try:
-        con = create_db_con()
-        BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status='100')
+        db.execute(update(Blueprint).where(
+            Blueprint.project==project and Blueprint.host==vm_name
+            ).values(
+            vm_id=vm_result.name, status='100'
+            ).execution_options(synchronize_session="fetch"))
+        db.commit()
     except Exception as e:
-        BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status='-100')
+        db.execute(update(Blueprint).where(
+            Blueprint.project==project and Blueprint.host==vm_name
+            ).values(
+            vm_id=vm_result.name, status='-100'
+            ).execution_options(synchronize_session="fetch"))
+        db.commit()
         print("VM creation updation failed: "+repr(e))
         logger("VM creation updation failed: "+repr(e),"warning")
-    finally:
-        con.shutdown()
 
 
-async def create_vm(project, hostname):
-    con = create_db_con()
-    rg_name = Project.objects(name=project).allow_filtering()[0]['resource_group']
-    location = Project.objects(name=project).allow_filtering()[0]['location']
-    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
+async def create_vm(project, hostname, db):
+    prjct = db.query(Project).filter(Project.name==project).first()
+    rg_name = prjct.resource_group
+    location = prjct.location
+    subscription_id = prjct.subscription_id
     username = "xmigrate"
     password = "Xmigrate@321"
-    machines = BluePrint.objects(project=project, host=hostname).allow_filtering()
+    machines = db.query(Blueprint).filter(Blueprint.name==project, Blueprint.host==hostname).all()
     for machine in machines:
-        disks = Disk.objects(project=project, host=machine['host']).allow_filtering()
+        disks =  db.query(Disk).filter(Disk.project==project, Disk.host==machine.host).all()
         data_disks = []
         image_name = ''
         for disk in disks:
-            if disk['mnt_path'] == 'slash':
-                image_name = disk['disk_id']
+            if disk.mnt_path == 'slash':
+                image_name = disk.disk_id
             else:
-                data_disks.append(disk['disk_id'])
-        vm_name = machine['host']
-        vm_type = machine['machine_type']
-        nic_id = machine['nic_id']
+                data_disks.append(disk.disk_id)
+        vm_name = machine.host
+        vm_type = machine.machine_type
+        nic_id = machine.nic_id
         
         create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks)
-    con.shutdown()
 
 
 def list_available_vm_sizes(compute_client, region = 'EastUS2', minimum_cores = 1, minimum_memory_MB = 768):
@@ -111,26 +116,27 @@ def list_available_vm_sizes(compute_client, region = 'EastUS2', minimum_cores = 
     return machine_types
 
 
-def get_vm_types(project):
+def get_vm_types(project, db):
     client = ''
     location = ''
     machine_types = []
     try:
-        con = create_db_con()
-        subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
-        client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-        tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-        secret_id = Project.objects(name=project).allow_filtering()[0]['secret']
-        location = Project.objects(name=project).allow_filtering()[0]['location']
+        prjct = db.query(Project).filter(Project.name==project).first()
+        subscription_id = prjct.subscription_id
+        client_id = prjct.client_id
+        tenant_id = prjct.tenant_id
+        secret_id = prjct.secret
+        location = prjct.location
+
         creds = ServicePrincipalCredentials(client_id=client_id, secret=secret_id, tenant=tenant_id)
         client = ComputeManagementClient(creds, subscription_id)
+
         machine_types = list_available_vm_sizes(client, region = location, minimum_cores = 1, minimum_memory_MB = 768)
         flag = True
     except Exception as e:
         print(repr(e))
         logger("Fetching vm details failed: "+repr(e),"warning")
         flag = False
-    con.shutdown()
     return machine_types, flag
 
 

@@ -1,41 +1,40 @@
 from model.project import Project
-from utils.dbconn import *
-from model.storage import *
+from model.storage import GcpBucket
 from utils.logger import *
+from sqlalchemy import update
 
-def create_bucket(project, bucket,access_key,secret_key):
-    con = create_db_con()
-    project_id = Project.objects(name=project)[0]['gcp_project_id']
-    post = GcpBucket(project=project,bucket=bucket, access_key=access_key,secret_key=secret_key,project_id=project_id)
+def create_bucket(project, bucket, access_key, secret_key, db):
+    project_id = (db.query(Project).filter(Project.name==project).first()).gcp_project_id
     try:
-        post.save()
+        strg = GcpBucket(project=project,bucket=bucket, access_key=access_key,secret_key=secret_key,project_id=project_id)
+        db.add(strg)
+        db.commit()
+        db.refresh(strg)
         return True
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
         logger(str(e),"warning")
         return False
-    finally:
-        con.shutdown()
 
-def update_bucket(project, bucket,access_key,secret_key):
-    con = create_db_con()
-    project_id = Project.objects(name=project)[0]['gcp_project_id']
+def update_bucket(project, bucket,access_key,secret_key, db):
+    project_id = (db.query(Project).filter(Project.name==project).first()).gcp_project_id
     try:
-        GcpBucket.objects(project=project, bucket=bucket).update(
-            access_key=access_key,secret_key=secret_key,project_id=project_id)
+        db.execute(update(GcpBucket).where(
+            GcpBucket.project==project and GcpBucket.bucket==bucket
+            ).values(
+            access_key=access_key, secret_key=secret_key, project_id=project_id
+            ).execution_options(synchronize_session="fetch"))
+        db.commit()
         return True
     except Exception as e:
         print("Boss you have to see this!!")
         print(e)
         logger(str(e),"warning")
         return False
-    finally:
-        con.shutdown()
 
-def get_storage(name):
-    con = create_db_con()
+def get_storage(name, db):
     if name == "all":
-        return [dict(x) for x in Storage.objects.allow_filtering()]
+        return db.query(GcpBucket).all()
     else:
-        return [dict(x) for x in Storage.objects(project=name).allow_filtering()]
+        return db.query(GcpBucket).filter(GcpBucket.project==name).all()

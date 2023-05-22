@@ -1,15 +1,13 @@
-from typing import List
-from mongoengine import *
-from model.blueprint import *
-from model.project import *
-from model.network import *
-from utils.dbconn import *
-from utils.logger import *
-import asyncio
-from exception.exception import GcpRegionNotFound
-
 from .gcp import get_service_compute_v1
 from .gcp import REGIONS
+from exception.exception import GcpRegionNotFound
+from model.blueprint import Blueprint
+from model.project import Project
+from model.network import Subnet
+from utils.logger import *
+import asyncio
+from sqlalchemy import update
+from typing import List
 
 
 def list_vpc(project_id, service_account_json) -> List[str]:
@@ -98,44 +96,51 @@ def create_subnet(project_id, service_account_json, network_name, region, name, 
     return response
 
 
-async def create_nw(project):
-
-    con = create_db_con()
-    location = Project.objects(name=project).allow_filtering()[0]['location']
-    project_id = Project.objects(name=project).allow_filtering()[0]['gcp_project_id']
-    service_account_json = Project.objects(name=project).allow_filtering()[0]['service_account']
-
-    machines = BluePrint.objects(project=project).allow_filtering()
+async def create_nw(project, db):
+    prjct = db.query(Project).filter(Project.name==project).first()
+    machines = db.query(Blueprint).filter(Blueprint.project==project).all()
 
     vpc = []
     subnet = []
     for machine in machines:
-        vpc.append(machine['network'])
-        subnet.append(machine['subnet'])
+        vpc.append(machine.network)
+        subnet.append(machine.subnet)
 
     vpc = list(set(vpc))
     vpc_created = []
     
     for network_name in vpc:
         print("Provisioning a vpc...some operations might take a minute or two.")
-        con = create_db_con()
-        created = Network.objects(nw_name=network_name, project=project).allow_filtering()[0]['created']
+        created = (db.query(Subnet).filter(Subnet.project==project, Subnet.nw_name==network_name).first()).created
         if not created:
             try:
-                res = await create_vpc(project_id, service_account_json, network_name, True)
-                hosts = [x['host'] for x in BluePrint.objects(network=network_name, project=project).allow_filtering()]
+                res = await create_vpc(prjct.gcp_project_id, prjct.service_account, network_name, True)
+                hosts = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.network==network_name).all()
                 for host in hosts:
                     try:
-                        BluePrint.objects(host=host, project=project).update(vpc_id=res['targetLink'], status='10')
+                        db.execute(update(Blueprint).where(
+                            Blueprint.project==project and Blueprint.host==host.host
+                            ).values(
+                            vpc_id=res['targetLink'], status='10'
+                            ).execution_options(synchronize_session="fetch"))
+                        db.commit()
                     except Exception as e:
-                        BluePrint.objects(host=host, project=project).update(vpc_id=res, status='-10')
-                Network.objects(nw_name=network_name, project=project).update(created=True)
+                        db.execute(update(Blueprint).where(
+                            Blueprint.project==project and Blueprint.host==host.host
+                            ).values(
+                            vpc_id=res, status='-10'
+                            ).execution_options(synchronize_session="fetch"))
+                        db.commit()
+                db.execute(update(Subnet).where(
+                    Subnet.project==project and Subnet.nw_name==network_name
+                    ).values(
+                    created=True
+                    ).execution_options(synchronize_session="fetch"))
+                db.commit()
             except Exception as e:
                 print("Vnet creation failed to save: "+repr(e))
                 logger("Vnet creation failed to save: "+repr(e), "warning")
                 vpc_created.append(False)
-            finally:
-                con.shutdown()
             vpc_created.append(True)
         else:
             vpc_created.append(True)
@@ -147,30 +152,41 @@ async def create_nw(project):
         subnet_created = []
         for i in subnet:
             print("Provisioning a subnet...some operations might take a minute or two.")
-            con = create_db_con()
-            created = Subnet.objects(cidr=i, project=project).allow_filtering()[0]['created']
-            if not created:
+            sbnt = db.query(Subnet).filter(Subnet.project==project, Subnet.cidr==i).first()
+            if not sbnt.created:
                 try:
                     subnet_name = project+"subnet"+str(c)
-                    subnet_result = create_subnet(project_id, service_account_json,network_name, location, subnet_name, i)
-                    hosts = [x['host'] for x in BluePrint.objects(subnet=i,project=project).allow_filtering()]
+                    subnet_result = create_subnet(prjct.gcp_project_id, prjct.service_account ,network_name, prjct.location, subnet_name, i)
+                    hosts = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.subnet==i).all()
                     for host in hosts:
                         try:
-                            BluePrint.objects(host=host,project=project).update(subnet_id=str(subnet_result['targetLink']),status='20')
+                            db.execute(update(Blueprint).where(
+                                Blueprint.project==project and Blueprint.host==host.host
+                                ).values(
+                                subnet_id=str(subnet_result['targetLink']), status='20'
+                                ).execution_options(synchronize_session="fetch"))
+                            db.commit()
                         except Exception as e:
-                            BluePrint.objects(host=host,project=project).update(subnet_id=str(subnet_result['targetLink']),status='-20')
-                    subnet_name = Subnet.objects(cidr=i, project=project).allow_filtering()[0]['subnet_name']
-                    Subnet.objects(cidr=i, project=project, subnet_name=subnet_name).update(created=True)
+                            db.execute(update(Blueprint).where(
+                                Blueprint.project==project and Blueprint.host==host.host
+                                ).values(
+                                subnet_id=str(subnet_result['targetLink']), status='-20'
+                                ).execution_options(synchronize_session="fetch"))
+                            db.commit()        
+                    subnet_name = sbnt.subnet_name
+                    db.execute(update(Subnet).where(
+                        Subnet.project==project and Subnet.cidr==i and Subnet.subnet_name==subnet_name
+                        ).values(
+                        created=True
+                        ).execution_options(synchronize_session="fetch"))
+                    db.commit()
                 except Exception as e:
                     print("Subnet creation failed to save: "+repr(e))
                     logger("Subnet creation failed to save: "+repr(e), "warning")
                     subnet_created.append(False) 
-                finally:
-                    con.shutdown()
                 subnet_created.append(True) 
             else:
                 subnet_created.append(True) 
         if False in subnet_created:
-            return False      
-    con.shutdown()
+            return False
     return True

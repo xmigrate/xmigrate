@@ -1,40 +1,31 @@
 # Import the needed management objects from the libraries. The azure.common library
 # is installed automatically with the other libraries.
-from azure.common.client_factory import get_client_from_cli_profile
-from azure.mgmt.resource import ResourceManagementClient
-from utils.dbconn import *
-from utils.logger import *
 from model.project import Project
-import string, random
+from utils.database import *
+from utils.logger import *
 from azure.common.credentials import ServicePrincipalCredentials
+from azure.mgmt.resource import ResourceManagementClient
 
 # Provision the resource group.
-async def create_rg(project):
-    con = create_db_con()
+async def create_rg(project, db):
     try:
-        if Project.objects(name=project)[0]['resource_group']:
-            if Project.objects(name=project)[0]['resource_group_created']:
+        if (db.query(Project).filter(Project.name==project).first()).resource_group:
+            if (db.query(Project).filter(Project.name==project).first()).resource_group_created:
                 return True
     except Exception as e:
         print("Reaching Project document failed: "+repr(e))
         logger("Reaching Project document failed: "+repr(e),"warning")
     else:
-        rg_location = Project.objects(name=project)[0]['location']
-        rg_name = Project.objects(name=project)[0]['resource_group']
+        prjct = db.query(Project).filter(Project.name==project).first()
         try:
-            client_id = Project.objects(name=project)[0]['client_id']
-            secret = Project.objects(name=project)[0]['secret']
-            tenant_id = Project.objects(name=project)[0]['tenant_id']
-            subscription_id = Project.objects(name=project)[0]['subscription_id']
-            creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
-            resource_client = ResourceManagementClient(creds,subscription_id)
+            creds = ServicePrincipalCredentials(client_id=prjct.client_id, secret=prjct.secret, tenant=prjct.tenant_id)
+            resource_client = ResourceManagementClient(creds, prjct.subscription_id)
             print("Provisioning a resource group...some operations might take a minute or two.")
             rg_result = resource_client.resource_groups.create_or_update(
-                rg_name, {"location": rg_location})
+                prjct.resource_group, {"location": prjct.location})
             print(
                 "Provisioned resource group "+ rg_result.name+" in the "+rg_result.location+" region")
             Project.objects(name=project).update(resource_group=rg_result.name, resource_group_created=True)
-            con.shutdown()
             return True
         except Exception as e:
             print("Resource group creation failed "+str(e))
