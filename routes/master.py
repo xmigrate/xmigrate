@@ -1,22 +1,19 @@
-from app import app
-
-from quart import jsonify, request
-from mongoengine import *
-
-from model.blueprint import *
-from model.discover import *
-from model.disk import *
-from utils.dbconn import create_db_con
-
+from model.blueprint import Blueprint
+from model.discover import Discover
+from model.disk import Disk
+from utils.database import dbconn
+from fastapi import Depends, APIRouter
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from sqlalchemy import update
+from sqlalchemy.orm import Session
 from typing import Union
 
+router = APIRouter()
 
-
-@app.get("/master/status")
+@router.get("/master/status")
 async def get_master_status():
-    return jsonable_encoder({'status': '200'}), 200
+    return jsonable_encoder({'status': '200'})
 
 class MasterUpdate(BaseModel):
     data: Union[dict,None] = None
@@ -24,55 +21,57 @@ class MasterUpdate(BaseModel):
     classObj: Union[dict,None] = None
 
 
-@app.post("/master/status/update")
-async def master_status_update(data:MasterUpdate):
+@router.post("/master/status/update")
+async def master_status_update(data: MasterUpdate, db: Session = Depends(dbconn)):
     update_data = data.data
     class_type = data.classType
     class_obj = data.classObj
-    # print(class_obj)
-    # print(class_obj.get('host'))
-    # print(class_obj.get('project'))
 
-    con = create_db_con()
     try:
-        if class_type == 'BluePrint':
-            BluePrint.objects(host=class_obj.get('host'), project=class_obj.get('project')).update(**update_data)
+        if class_type == 'Blueprint':
+            db.execute(update(Blueprint).where(
+                Blueprint.host==class_obj.get('host') and Blueprint.project==class_obj.get('project')
+                ).values(
+                **update_data
+                ).execution_options(synchronize_session="fetch"))
+            db.commit()
         elif class_type == 'Discover':
-            Discover.objects(host=class_obj.get('host'), project=class_obj.get('project')).update(**update_data)
+            db.execute(update(Discover).where(
+                Discover.host==class_obj.get('host') and Discover.project==class_obj.get('project')
+                ).values(
+                **update_data
+                ).execution_options(synchronize_session="fetch"))
+            db.commit()
         elif class_type == 'Disk':
-            Disk.objects(host=class_obj.get('host'),project=class_obj.get('project'),mnt_path=class_obj.get('mnt_path')).update(**update_data)
+            db.execute(update(Disk).where(
+                Disk.host==class_obj.get('host') and Disk.project==class_obj.get('project') and Disk.mnt_path==class_obj.get('mnt_path')
+                ).values(
+                **update_data
+                ).execution_options(synchronize_session="fetch"))
+            db.commit()
     except Exception as e:
         print(e)
-        con.shutdown()
         return jsonable_encoder({'status': '500', 'message': str(e)})
-    finally:
-        con.shutdown()
     return jsonable_encoder({'status': '200'})
 
 
-@app.get("/master/disks/get/{project}/{hostname}")
-async def get_disks(project, hostname):
-    con = create_db_con()
+@router.get("/master/disks/get/{project}/{hostname}")
+async def get_disks(project, hostname, db: Session = Depends(dbconn)):
     disks = []
     try:
-        disks = Discover.objects(host=hostname,project=project)[0]['disk_details']
+        disks = (db.query(Discover).filter(Discover.host==hostname, Discover.project==project).first()).disk_details
     except Exception as e:
         print(e)
-        con.shutdown()
         return jsonable_encoder({'status': '500', 'message': str(e)})
-    con.shutdown()
-    return jsonable_encoder({'status': '200','data': disks})
+    return jsonable_encoder({'status': '200', 'data': disks})
 
 
-@app.get("/master/blueprint/get/{project}/{hostname}")
-async def get_blueprint_api(project, hostname):
-    con = create_db_con()
+@router.get("/master/blueprint/get/{project}/{hostname}")
+async def get_blueprint_api(project, hostname, db: Session = Depends(dbconn)):
     disks = []
     try:
-        disks = BluePrint.objects(host=hostname,project=project)[0]['disk_clone']
+        disks = (db.query(Blueprint).filter(Blueprint.host==hostname, Blueprint.project==project).first()).disk_clone
     except Exception as e:
         print(e)
-        con.shutdown()
         return jsonable_encoder({'status': '500', 'message': str(e)})
-    con.shutdown()
-    return jsonable_encoder({'status': '200','data': disks})
+    return jsonable_encoder({'status': '200', 'data': disks})

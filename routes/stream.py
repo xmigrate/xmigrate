@@ -1,13 +1,11 @@
-from app import app
-from quart import jsonify
-from utils.log_reader import *
-from quart_jwt_extended import jwt_required, get_jwt_identity
-from fastapi import Depends
-from routes.auth import TokenData, get_current_user
+from utils.log_reader import read_logs
+from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
 
-@app.get('/stream')
-async def stream(project, current_user: TokenData = Depends(get_current_user)):
+router = APIRouter()
+
+@router.get('/stream')
+async def stream(project):
     line = ''
     line = await read_logs(project)
     offset= ''

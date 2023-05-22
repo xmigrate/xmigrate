@@ -1,20 +1,18 @@
-from app import app
-from utils.dbconn import *
+from model.blueprint import Blueprint
 from model.discover import Discover as DiscoverM
-from model.project import *
-from model.storage import *
+from model.project import Project as ProjectM
+from utils.database import dbconn
+from utils.playbook import run_playbook
 from pkg.common import nodes as n
 import os, netaddr
-from quart import jsonify, request
-from quart_jwt_extended import jwt_required, get_jwt_identity
+from typing import Union
+from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from fastapi import Depends, HTTPException, status
-from routes.auth import TokenData, get_current_user
-from typing import Union
-from dotenv import load_dotenv
-from os import getenv
-from utils.playbook import run_playbook
+from sqlalchemy import update
+from sqlalchemy.orm import Session
+
+router = APIRouter()
 
 class Discover(BaseModel):
     provider: Union[str,None] = None
@@ -23,38 +21,33 @@ class Discover(BaseModel):
     password: Union[str,None] = None
     project: Union[str,None] = None
 
-@app.post('/discover')
-async def discover(data: Discover, current_user: TokenData = Depends(get_current_user)):
-    con = create_db_con()
+@router.post('/discover')
+async def discover(data: Discover, db: Session = Depends(dbconn)):
     current_dir = os.getcwd()
+
     provider = data.provider
     nodes = data.hosts
     username = data.username
     password = data.password
     project = data.project
-    load_dotenv()
-    mongodb = os.getenv('BASE_URL')
-    if n.add_nodes(nodes,username,password, project) == False:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder(
-            {"msg": "Request couldn't process"}))
+
+    if n.add_nodes(nodes, username, password, project, db) == False:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=jsonable_encoder({"msg": "Request couldn't process"}))
 
     playbook = "gather_facts.yaml"
     stage = "gather_facts"
         
     if provider == "aws":
-        proj_details = Project.objects(name=project)[0]
-        access_key = proj_details['access_key']
-        secret_key = proj_details['secret_key']
-        location = proj_details['location']
-        credentials_str = '['+project+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
+        proj_details = db.query(ProjectM).filter(ProjectM.name==project).first()
+    
         aws_dir = os.path.expanduser('~/.aws')
         if not os.path.exists(aws_dir):
             os.mkdir(aws_dir)
-        with open(aws_dir+'/credentials', 'w+') as writer:
-            writer.write(credentials_str)
-        config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
-        with open(aws_dir+'/config', 'w+') as writer:
-            writer.write(config_str)
+
+        with open(f'{aws_dir}/credentials', 'w+') as cred, open(f'{aws_dir}/config', 'w+') as config:
+            cred.write(f'[{project}]\naws_access_key_id = {proj_details.access_key}\naws_secret_access_key = {proj_details.secret_key}')
+            config.write(f'[profile {project}]\nregion = {proj_details.location}\noutput = json')
     try:
         output = run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage)
         if 'ok' in output.stats.keys():
@@ -84,12 +77,27 @@ async def discover(data: Discover, current_user: TokenData = Depends(get_current
                 hashmap['dev'] = f'/dev/{hashmap["dev"]}'
                 disks.append(hashmap)
             try:
-                DiscoverM.objects(project=project,host=hostname).update(ip=ip_address, subnet=subnet, network=network,
-                        ports=ports, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks)
+                if db.query(DiscoverM).filter(DiscoverM.project==project,DiscoverM.host==hostname).count() == 0:
+                    dscvr = DiscoverM(project=project, host=hostname, ip=ip_address, subnet=subnet, network=network, ports=ports, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, public_ip=','.join(nodes))
+                    db.add(dscvr)
+                    db.commit()
+                    db.refresh(dscvr)
+                else:
+                    db.execute(update(DiscoverM).where(
+                        DiscoverM.project==project and DiscoverM.host==hostname
+                        ).values(
+                        ip=ip_address, subnet=subnet, network=network, ports=ports, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks
+                        ).execution_options(synchronize_session="fetch"))
+                    db.commit()
+
+                if db.query(Blueprint).filter(Blueprint.project==project,Blueprint.host==hostname).count() == 0:
+                    blrpnt = Blueprint(project=project, host=hostname, ip=ip_address, subnet=subnet, network=network, cpu_model=cpu_model, ram=ram, machine_type=' ')
+                    db.add(blrpnt)
+                    db.commit()
+                    db.refresh(blrpnt)
+
             except Exception as e:
                 print("Error: "+str(e))
-            finally:
-                con.shutdown()
         return jsonable_encoder({'status': '200'})
     except Exception as e:
         print(str(e))

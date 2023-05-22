@@ -1,19 +1,12 @@
-from app import app
-import os
-from pkg.azure import storage as st
 from pkg.aws import bucket as bk
-from pkg.gcp import bucket as gbk
-from app import app
-import os
 from pkg.azure import storage as st
-from pkg.aws import bucket as bk
 from pkg.gcp import bucket as gbk
-
-from routes.auth import TokenData, get_current_user
-from typing import Union
-from fastapi import Depends
+from utils.database import dbconn
+from fastapi import Depends, APIRouter
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from typing import Union
 
 
 class Storage(BaseModel):
@@ -26,65 +19,42 @@ class Storage(BaseModel):
     secret_key: Union[str,None] = None
     bucket: Union[str,None] = None
 
-@app.post('/storage')
-async def storage_create(data: Storage, current_user: TokenData = Depends(get_current_user)):
-    provider = data.provider
-    project = data.project
-    if provider == 'azure':
-        storage = data.storage
-        container = data.container
-        access_key = data.access_key
-        storage_created = st.create_storage(
-            project, storage, container, access_key)
-    elif provider == 'aws':
-        bucket = data.bucket
-        secret_key = data.secret_key
-        access_key = data.access_key
-        storage_created = bk.create_bucket(
-            project, bucket, secret_key, access_key)
-    elif provider == 'gcp':
-        bucket = data.bucket
-        secret_key = data.secret_key
-        access_key = data.access_key
-        storage_created = gbk.create_bucket(project, bucket, access_key,secret_key)
+router = APIRouter()
+
+@router.post('/storage')
+async def storage_create(data: Storage, db: Session = Depends(dbconn)):
+    if data.provider == 'azure':
+        storage_created = st.create_storage(data.project, data.storage, data.container, data.access_key, db)
+    elif data.provider == 'aws':
+        storage_created = bk.create_bucket(data.project, data.bucket, data.secret_key, data.access_key, db)
+    elif data.provider == 'gcp':
+        storage_created = gbk.create_bucket(data.project, data.bucket, data.access_key, data.secret_key, db)
+
     if storage_created:
         return jsonable_encoder({'status': '200'})
     else:
         return jsonable_encoder({'status': '500'})
 
 
-@app.get('/storage')
-async def storage_get(project: str, provider:str, current_user: TokenData = Depends(get_current_user)):
+@router.get('/storage')
+async def storage_get(project: str, provider: str, db: Session = Depends(dbconn)):
     if provider == "azure":
-        return jsonable_encoder(st.get_storage(project))
+        return jsonable_encoder(st.get_storage(project, db))
     elif provider == "aws":
-        return jsonable_encoder(bk.get_storage(project))
+        return jsonable_encoder(bk.get_storage(project, db))
     elif provider == "gcp":
-        return jsonable_encoder(gbk.get_storage(project))
+        return jsonable_encoder(gbk.get_storage(project, db))
 
 
-@app.post('/storage/update')
-async def storage_update(data: Storage, current_user: TokenData = Depends(get_current_user)):
-    project = data.project
-    provider = data.provider
-    if provider == 'azure':
-        storage = data.storage
-        container = data.container
-        access_key = data.access_key
-        storage_updated = st.update_storage(
-            project, storage, container, access_key)
-    elif provider == "aws":
-        bucket = data.bucket
-        secret_key = data.secret_key
-        access_key = data.access_key
-        storage_updated = bk.update_bucket(
-            project, bucket, secret_key, access_key)
-    elif provider == 'gcp':
-        bucket = data.bucket
-        secret_key = data.secret_key
-        access_key = data.access_key
-        storage_updated = gbk.update_bucket(
-            project, bucket, access_key,secret_key)
+@router.post('/storage/update')
+async def storage_update(data: Storage, db: Session = Depends(dbconn)):
+    if data.provider == 'azure':
+        storage_updated = st.update_storage(data.project, data.storage, data.container, data.access_key, db)
+    elif data.provider == "aws":
+        storage_updated = bk.update_bucket(data.project, data.bucket, data.secret_key, data.access_key, db)
+    elif data.provider == 'gcp':
+        storage_updated = gbk.update_bucket(data.project, data.bucket, data.access_key, data.secret_key, db)
+
     if storage_updated:
         return jsonable_encoder({'status': '200'})
     else:
