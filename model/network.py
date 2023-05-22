@@ -1,4 +1,4 @@
-from utils.dbconn import Base
+from utils.database import Base
 from sqlalchemy import Column, String
 
 
