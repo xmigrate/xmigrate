@@ -5,11 +5,10 @@ from model.disk import *
 from model.discover import *
 from model.storage import GcpBucket
 from utils.log_reader import *
-from utils.dbconn import *
+from utils.database import *
 from utils.logger import *
 from utils.playbook import run_playbook
 from pkg.common import nodes as n
-import time
 
 from pkg.azure import network
 from pkg.aws import disk as awsdisk
@@ -24,122 +23,96 @@ from pkg.aws import network as awsnw
 from pkg.aws import ec2
 
 from pkg.gcp import network as gcpnw
+from sqlalchemy import update
 
 import asyncio
 
-async def call_start_build(project):
-    await asyncio.create_task(start_build(project))
+async def call_start_vm_preparation(project, hostname, db):
+    await asyncio.create_task(start_vm_preparation(project, hostname, db))
 
-async def start_infra_build(project):
-    rg_created = resource_group.create_rg(project)
-    if rg_created:
-        disk_created = await disk.create_disk(project)
-        if disk_created:
-            network_created = network.create_nw(project)
-            if network_created:
-                vm_created = compute.create_vm(project)
-                if vm_created:
-                    print("VM created")     
-                else:
-                    print("VM creation failed")
-            else:
-                print("Network creation failed")
-        else:
-            print("Disk creation failed")
-    else:
-        print("Resource group creation failed")
-
-async def call_start_vm_preparation(project, hostname):
-    await asyncio.create_task(start_vm_preparation(project, hostname))
-
-async def start_vm_preparation(project, hostname):
-
-    con = create_db_con
-    p = Project.objects(name=project)
+async def start_vm_preparation(project, hostname, db):
+    p = db.query(Project).filter(Project.name==project).first()
     
-    if len(p) > 0:
+    if p is not None:
         nodes = []
         
-        for host in Project.objects(name=project)[0]['public_ip']:
-            nodes.append(host)
-
-        username = Project.objects(name=project)[0]['username']
-        password = Project.objects(name=project)[0]['password']
-
-        if n.add_nodes(nodes, username, password, project, False) == False:
+        for ip in p.public_ip:
+            nodes.append(ip)
+            
+        if n.add_nodes(nodes, p.username, p.password, project, db, False) == False:
             logger("VM preparation couldn't start because inventory was not created","error")
         else:
-            provider = p[0]['provider']
             playbook = "xmigrate.yaml"
             stage = "vm_preparation"
             curr_dir = os.getcwd()
 
-            if provider == "gcp":
-                storage = GcpBucket.objects(project=project)[0]
-                project_id = storage['project_id']
-                gs_access_key_id = storage['access_key']
-                gs_secret_access_key = storage['secret_key']
+            if p.provider == "gcp":
+                storage = db.query(GcpBucket).filter(GcpBucket.project==project).first()
 
-            extra_vars = {'project_id': project_id, 'gs_access_key_id': gs_access_key_id, 'gs_secret_access_key': gs_secret_access_key} if provider == 'gcp' else None
+            extra_vars = {
+                'project_id': storage.project_id,
+                'gs_access_key_id': storage.access_key,
+                'gs_secret_access_key': storage.secret_key
+            } if p.provider == "gcp" else None
 
-            logger("VM preparation started","info")
+            logger("VM preparation started", "info")
             print("****************VM preparation awaiting*****************")
             
             try:
-                preparation_completed = run_playbook(provider=provider, username=username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
+                preparation_completed = run_playbook(provider=p.provider, username=p.username, project_name=project, curr_working_dir=curr_dir, playbook=playbook, stage=stage, extra_vars=extra_vars)
             
-                if preparation_completed:
+                if preparation_completed:                     
+                    db.execute(update(Blueprint).where(
+                        Blueprint.project==project and Blueprint.host==hostname[0]
+                        ).values(
+                        status="21"
+                        ).execution_options(synchronize_session="fetch"))
+                    db.commit()
+
                     print("****************VM preparation completed*****************")
                     logger("VM preparation completed", "info")
-                                        
-                    hosts = BluePrint.objects(project=project).allow_filtering()
-                    for host in hosts:
-                        BluePrint.objects(host=host.host, project=project).update(status="21")
                 else:
                     print("VM preparation failed")
                     logger("VM preparation failed", "error")
             except Exception as e:
                 print(str(e))
-            finally:
-                con.shutdown()
 
-async def call_start_clone(project,hostname):
-    await asyncio.create_task(start_cloning(project,hostname))
+async def call_start_clone(project, hostname, db):
+    await asyncio.create_task(start_cloning(project,hostname, db))
 
-async def start_cloning(project,hostname):
-    con = create_db_con()
-    p = Project.objects(name=project)
-    if len(p) > 0:
-        if p[0]['provider'] == "azure":
-            logger("Cloning started","info")
-            print("****************Cloning awaiting*****************")
-            cloning_completed = await disk.start_cloning(project,hostname)
-            if cloning_completed:
-                print("****************Cloning completed*****************")
-                logger("Disk cloning completed","info")
-            else:
-                print("Disk cloning failed")
-                logger("Disk cloning failed","error")
-        elif p[0]['provider'] == "aws":
-            logger("Cloning started","info")
-            print("****************Cloning awaiting*****************")
-            cloning_completed = await awsdisk.start_cloning(project,hostname)
-            if cloning_completed:
-                print("****************Cloning completed*****************")
-                logger("Cloning completed","info")
-            else:
-                print("Disk cloning failed")
-                logger("Disk cloning failed","error")
-        elif p[0]['provider'] == "gcp":
-            logger("Cloning started","info")
-            print("****************Cloning awaiting*****************")
-            cloning_completed = await gcpdisk.start_cloning(project,hostname)
-            if cloning_completed:
-                print("****************Cloning completed*****************")
-                logger("Cloning completed","info")
-            else:
-                print("Disk cloning failed")
-                logger("Disk cloning failed","error")
+async def start_cloning(project, hostname, db):
+    provider = (db.query(Project).filter(Project.name==project).first()).provider
+
+    if provider == "azure":
+        logger("Cloning started","info")
+        print("****************Cloning awaiting*****************")
+        cloning_completed = await disk.start_cloning(project, hostname, db)
+        if cloning_completed:
+            print("****************Cloning completed*****************")
+            logger("Disk cloning completed","info")
+        else:
+            print("Disk cloning failed")
+            logger("Disk cloning failed","error")
+    elif provider == "aws":
+        logger("Cloning started","info")
+        print("****************Cloning awaiting*****************")
+        cloning_completed = await awsdisk.start_cloning(project, hostname, db)
+        if cloning_completed:
+            print("****************Cloning completed*****************")
+            logger("Cloning completed","info")
+        else:
+            print("Disk cloning failed")
+            logger("Disk cloning failed","error")
+    elif provider == "gcp":
+        logger("Cloning started","info")
+        print("****************Cloning awaiting*****************")
+        cloning_completed = await gcpdisk.start_cloning(project, hostname, db)
+        if cloning_completed:
+            print("****************Cloning completed*****************")
+            logger("Cloning completed","info")
+        else:
+            print("Disk cloning failed")
+            logger("Disk cloning failed","error")
 
 async def call_start_convert(project,hostname):
     await asyncio.create_task(start_convert(project,hostname))
@@ -195,45 +168,44 @@ async def start_convert(project,hostname):
                     logger("Disk Conversion failed","error")
 
 
-async def call_build_network(project):
-    await asyncio.create_task(start_network_build(project))
+async def call_build_network(project, db):
+    await asyncio.create_task(start_network_build(project, db))
 
 
 # why we are not return anything from here?
-async def start_network_build(project):
-    con = create_db_con()
-    p = Project.objects(name=project).allow_filtering()
-    if len(p) > 0:
-        if p[0]['provider'] == "azure":
-            logger("Network build started","info")
-            print("****************Network build awaiting*****************")
-            rg_created = await resource_group.create_rg(project)
-            if rg_created:
-                logger("Resource group created","info")
-                network_created = await network.create_nw(project)
-                if network_created:
-                    logger("Network created","info")
-                else:
-                    logger("Network creation failed","error")
-            else:
-                print("Resource group creation failed")
-                logger("Resource group creation failed","error")
-        elif p[0]['provider'] == "aws":
-            logger("Network creation started","info")
-            network_created = await awsnw.create_nw(project)
+async def start_network_build(project, db):
+    provider = (db.query(Project).filter(Project.name==project).first()).provider
+
+    if provider == "azure":
+        logger("Network build started","info")
+        print("****************Network build awaiting*****************")
+        rg_created = await resource_group.create_rg(project, db)
+        if rg_created:
+            logger("Resource group created","info")
+            network_created = await network.create_nw(project, db)
             if network_created:
-                logger("Network creation completed","info")
+                logger("Network created","info")
             else:
-                print("Network creation failed")
                 logger("Network creation failed","error")
-        elif p[0]['provider'] == "gcp":
-            logger("Network creation started","info")
-            network_created = await gcpnw.create_nw(project)
-            if network_created:
-                logger("Network creation completed","info")
-            else:
-                print("Network creation failed")
-                logger("Network creation failed","error")
+        else:
+            print("Resource group creation failed")
+            logger("Resource group creation failed","error")
+    elif provider == "aws":
+        logger("Network creation started","info")
+        network_created = await awsnw.create_nw(project, db)
+        if network_created:
+            logger("Network creation completed","info")
+        else:
+            print("Network creation failed")
+            logger("Network creation failed","error")
+    elif provider == "gcp":
+        logger("Network creation started","info")
+        network_created = await gcpnw.create_nw(project, db)
+        if network_created:
+            logger("Network creation completed","info")
+        else:
+            print("Network creation failed")
+            logger("Network creation failed","error")
 
 async def call_build_host(project,hostname):
     await asyncio.create_task(start_host_build(project,hostname))
@@ -272,88 +244,3 @@ async def start_host_build(project,hostname):
             else:
                 print("gcp disk creation failed")
                 logger("gcp disk creation failed","error")
-
-
-async def start_build(project):
-    con = create_db_con()
-    p = Project.objects(name=project)
-    if len(p) > 0:
-        if p[0]['provider'] == "azure":
-            logger("Cloning started","info")
-            print("****************Cloning awaiting*****************")
-            cloning_completed = await disk.start_cloning(project)
-            print("****************Cloning completed*****************")
-            logger("Cloning completed","info")
-            if cloning_completed:
-                image_downloaded = await disk.start_downloading(project)
-                if image_downloaded:
-                    converted =  await disk.start_conversion(project)
-                    if converted:
-                        image_uploaded = await disk.start_uploading(project)
-                        if image_uploaded:
-                            rg_created = await resource_group.create_rg(project)
-                            if rg_created:
-                                disk_created = await disk.create_disk(project)
-                                if disk_created:
-                                    network_created = await network.create_nw(project)
-                                    if network_created:
-                                        vm_created = await compute.create_vm(project)
-                                        if vm_created:
-                                            print("VM created")
-                                            logger("VM created","info")     
-                                        else:
-                                            print("VM creation failed")
-                                            logger("VM creation failed","info")
-                                    else:
-                                        print("Network creation failed")
-                                        logger("Network creation failed","info")
-                                else:
-                                    print("Disk creation failed")
-                                    logger("Disk creation failed","info")
-                            else:
-                                print("Resource group creation failed")
-                                logger("Resource group creation failed","info")
-                        else:
-                            print("Image uploading failed")
-                            logger("Image uploading failed","info")
-                    else:
-                        print("Disk conversion failed")
-                        logger("Disk conversion failed","info")
-                else:
-                    print("Image downloading failed")
-                    logger("Image downloading failed","info")
-            else:
-                print("Disk cloning failed")
-                logger("Disk cloning failed","info")
-        elif p[0]['provider'] == "aws":
-            logger("Cloning started","info")
-            print("****************Cloning awaiting*****************")
-            cloning_completed = await awsdisk.start_cloning(project)
-            print("****************Cloning completed*****************")
-            logger("Cloning completed","info")
-            if cloning_completed:
-                logger("AMI creation started","info")
-                ami_created = await ami.start_ami_creation(project)
-                logger("AMI creation completed:"+str(ami_created),"info")
-                if ami_created:
-                    logger("Network creation started","info")
-                    network_created = await awsnw.create_nw(project)
-                    logger("Network creation completed","info")
-                    if network_created:
-                        logger("EC2 creation started","info")
-                        ec2_created = await ec2.build_ec2(project)
-                        logger("EC2 creation completed","info")
-                        if ec2_created:
-                            print("ec2 creation successfull")
-                        else:
-                            print("ec2 creation failed")
-                    else:
-                        print("Network creation failed")
-                else:
-                    print("ami creation failed")
-            else:
-                print("Cloning failed")
-        else:
-            print("No such provider")
-    else:
-        print("No such project")

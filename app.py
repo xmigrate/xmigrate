@@ -1,7 +1,3 @@
-import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from utils.database import Base, engine
 from model import blueprint, discover, disk, network, project, storage, user # This is for Base to get table context, do not cleanup!!!
 from routes import (
     auth,
@@ -15,6 +11,10 @@ from routes import (
     stream,
     vm_types
     ) # import with alias to avoid overrides
+from utils.database import Base, engine
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()

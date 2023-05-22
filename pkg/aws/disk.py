@@ -1,55 +1,42 @@
-from utils.dbconn import *
+from model.blueprint import Blueprint
+from model.storage import Bucket
+from model.discover import Discover
+from model.project import Project
 import os
-from model.blueprint import *
-from model.storage import *
-from model.discover import *
-import asyncio
-from asyncio.subprocess import PIPE, STDOUT 
-from model.discover import *
-from model.project import *
 from ansible_runner import run_async
 
-async def start_cloning(project, hostname):
-    con = create_db_con()
-    try:
-        bucket = Bucket.objects(project=project).allow_filtering()[0]['bucket']
-        accesskey = Bucket.objects(project=project).allow_filtering()[0]['access_key']
-        secret_key = Bucket.objects(project=project).allow_filtering()[0]['secret_key']
-        public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
-        provider = Project.objects(name=project).allow_filtering()[0]['provider']
-        user = Project.objects(name=project).allow_filtering()[0]['username']
-    except Exception as e:
-        print("Error occurred: "+str(e))
-    load_dotenv()
+async def start_cloning(project, hostname, db):
+    bkt = db.query(Bucket).filter(Bucket.project==project).first()
+    prjct = db.query(Project).filter(Project.name==project).first()
+    public_ip = (db.query(Discover).filter(Discover.project==project, Discover.host==hostname).first()).public_ip
     mongodb = os.getenv('BASE_URL')
     current_dir = os.getcwd()
 
-    playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, provider)
+    playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, prjct.provider)
     inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project)
     extravars = {
-        'bucket': bucket,
-        'access_key': accesskey,
-        'secret_key': secret_key,
+        'bucket': bkt.bucket,
+        'access_key': bkt.access_key,
+        'secret_key': bkt.secret_key,
         'mongodb': mongodb,
         'project': project,
-        'ansible_user': user
+        'ansible_user': prjct.username
     }
     envvars = {
-        'ANSIBLE_BECOME_USER': user,
+        'ANSIBLE_BECOME_USER': prjct.username,
         'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
     }
 
     await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
     
-    machines = BluePrint.objects(project=project).allow_filtering()
-    machine_count = len(machines)
+    machines = db.query(Blueprint).filter(Blueprint.project==project).all()
+    machine_count = db.query(Blueprint).filter(Blueprint.project==project).count()
     flag = True
     status_count = 0
     while flag:
-            for machine in machines:
-                if int(machine['status'])>=25:
-                    status_count = status_count + 1
-            if status_count == machine_count:
-                flag = False
-    con.shutdown()
+        for machine in machines:
+            if int(machine.status)>=25:
+                status_count = status_count + 1
+        if status_count == machine_count:
+            flag = False
     return not flag
