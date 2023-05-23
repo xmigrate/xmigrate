@@ -1,4 +1,5 @@
 - name : Configure aws-cli and required packages
+  become: true
   become_method: sudo
   become_user: root
   hosts: all
@@ -17,14 +18,12 @@
     yum:
       name: unzip
       state: latest
-    become: true
 
   - name: Setup awscli
     shell: |
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       unzip -o awscliv2.zip
       ./aws/install --update
-    become: true
     args:
       warn: false
 
@@ -33,20 +32,25 @@
       path: "~/.aws/"
       state: directory
       mode: 0755
+    become: false
 
   - name: Configure awscli credentials
     copy:
       src: "~/.aws/credentials"
       dest: "~/.aws/credentials"
+    become: false
 
   - name: Configure aws region
     copy:
       src: "~/.aws/config"
       dest: "~/.aws/config"
+    become: false
       
   - name: Remove current kernel boot files
     shell: rm -f /boot/*
     ignore_errors: yes
+    args:
+      warn: false
 
   - block:
     - name: Install AWS supported linux kernel # AWS image build is not stable on non-generic kernals.
