@@ -1,4 +1,5 @@
 from model.blueprint import Blueprint
+from model.disk import Disk
 from model.discover import Discover as DiscoverM
 from model.project import Project as ProjectM
 from utils.database import dbconn
@@ -96,6 +97,13 @@ async def discover(data: Discover, db: Session = Depends(dbconn)):
                         db.add(blrpnt)
                         db.commit()
                         db.refresh(blrpnt)
+
+                    if db.query(Disk).filter(Disk.project==project, Disk.host==hostname).count() == 0:
+                        for disk in disks:
+                            dsk = Disk(project=project, host=hostname, mnt_path=disk['mnt_path'].replace('/', 'slash'), vhd=' ', file_size='0', disk_id=' ')
+                            db.add(dsk)
+                            db.commit()
+                            db.refresh(dsk)
                 except Exception as e:
                     print("Error: "+str(e))
             return jsonable_encoder({'status': '200'})

@@ -17,7 +17,6 @@ def build_vpc(cidr, public_route, project, db):
         vpc.wait_until_available()
         try:
             hosts = [blprnt.host for blprnt in db.query(Blueprint).filter(Blueprint.project==project, Blueprint.network==cidr).all()]
-            print(hosts)
             for host in hosts:
                 db.execute(update(Blueprint).where(
                         Blueprint.project==project and Blueprint.host==host

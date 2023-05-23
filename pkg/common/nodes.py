@@ -25,7 +25,7 @@ def add_nodes(nodes, user, password, p, db, update_db=True):
     try:
         with open(ansible_hosts, 'w') as hosts, open('./ansible.cfg','w') as config:
             hosts.write(f"[nodes]\n{nodes}\n[all:vars]\nansible_ssh_pass = {password}\nansible_sudo_pass = {password}")
-            config.write(f"[defaults]\nremote_user = {user}\ninventory = {ansible_hosts}\nsudo_user = {user}\nhost_key_checking = false\n\n[privilege_escalation]\nbecome=True\nbecome_method=sudo\nbecome_user={user}")
+            config.write(f"[defaults]\nremote_user = {user}\ninventory = {ansible_hosts}\nsudo_user = {user}\nhost_key_checking = false\ncommand_warnings=False\n\n[privilege_escalation]\nbecome=True\nbecome_method=sudo\nbecome_user={user}")
         return True
     except Exception as e:
         logger("Error while creating ansible cfg: "+str(e),"error")
