@@ -169,17 +169,17 @@ async def image_clone(data: BlueprintHost, db: Session = Depends(dbconn)):
 
     asyncio.create_task(build.call_start_clone(project, hostname, db))
 
-    return jsonable_encoder({"msg":"Cloning started","status":200})
+    return jsonable_encoder({"msg": "Cloning started", "status":200})
 
 
 @router.post('/blueprint/host/convert')
-async def image_convert(data: BlueprintHost):
+async def image_convert(data: BlueprintHost, db: Session = Depends(dbconn)):
     project = data.project
     hostname = data.hostname
 
-    asyncio.create_task(build.call_start_convert(project,hostname))
+    asyncio.create_task(build.call_start_convert(project, hostname, db))
 
-    return jsonable_encoder({"msg":"Conversion started","status":200})
+    return jsonable_encoder({"msg": "Conversion started", "status":200})
 
 class NetworkBuild(BaseModel):
     project: Union[str,None] = None
@@ -189,7 +189,7 @@ async def network_build(req: NetworkBuild, db: Session = Depends(dbconn)):
     project = req.project
     asyncio.create_task(build.call_build_network(project, db))
 
-    return jsonable_encoder({"msg":"Build started","status":200})
+    return jsonable_encoder({"msg": "Build started", "status":200})
 
 @router.post('/blueprint/host/build')
 async def host_build(data: BlueprintHost):
@@ -198,4 +198,4 @@ async def host_build(data: BlueprintHost):
 
     asyncio.create_task(build.call_build_host(project,hostname))
 
-    return jsonable_encoder({"msg":"Build started","status":200})
+    return jsonable_encoder({"msg": "Build started", "status":200})

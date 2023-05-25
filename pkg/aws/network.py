@@ -7,7 +7,7 @@ from sqlalchemy import update
 
 def build_vpc(cidr, public_route, project, db):
     created = (db.query(Network).filter(Network.cidr==cidr, Network.project==project).first()).created
-    if created == 'false':
+    if not created:
         prjct = db.query(Project).filter(Project.name==project).first()
         session = boto3.Session(aws_access_key_id=prjct.access_key, aws_secret_access_key=prjct.secret_key, region_name=prjct.location)
         ec2 = session.resource('ec2')
@@ -65,7 +65,7 @@ def build_vpc(cidr, public_route, project, db):
 
 def build_subnet(cidr, vpcid, route, project, db):
     created = (db.query(Subnet).filter(Subnet.project==project, Subnet.cidr==cidr).first()).created
-    if created == 'false':
+    if not created:
         prjct = db.query(Project).filter(Project.name==project).first()
         session = boto3.Session(aws_access_key_id=prjct.access_key, aws_secret_access_key=prjct.secret_key, region_name=prjct.location)
         ec2 = session.resource('ec2')
@@ -112,7 +112,7 @@ async def create_nw(project, db):
                 network = []
 
                 for i in all_networks:
-                    if i.vpc_id != None:
+                    if i.vpc_id is not None:
                         network.append(i)
 
                 if len(network) > 0:
@@ -127,7 +127,7 @@ async def create_nw(project, db):
                     subnet = []
 
                     for i in all_subnet:
-                        if subnet.subnet_id != None:
+                        if subnet.subnet_id is not None:
                             subnet.append(i)
 
                     if len(subnet) > 0:

@@ -79,7 +79,7 @@ async def discover(data: Discover, db: Session = Depends(dbconn)):
                 for disk in disk_details:
                     hashmap = {}
                     diskinfo = disk.strip().split()
-                    diskinfo.pop(-1)
+                    diskinfo.pop(-1) # the final element in the list is only needed during filtering in ansible
                     _ = list(map(lambda k, v: hashmap.update({k:v}), keys, diskinfo))
                     hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
                     if hashmap['dev'] not in dev_list:

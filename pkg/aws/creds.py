@@ -1,22 +1,17 @@
-from model.project import *
-from utils.dbconn import *
+from model.project import Project
 import os
 
-def set_aws_creds(project):
+def set_aws_creds(project, db):
     try:
-        con = create_db_con()
-        access_key = Project.objects(name=project)[0]['access_key']
-        secret_key = Project.objects(name=project)[0]['secret_key']
-        location = Project.objects(name=project)[0]['location']
-        aws_dir = os.path.expanduser("~/.aws/")
-        credentials_str = '['+project+']\naws_access_key_id = '+ access_key+'\n'+ 'aws_secret_access_key = '+secret_key
+        prjct = db.query(Project).filter(Project.name==project).first()
+        aws_dir = os.path.expanduser("~/.aws")
+
         if not os.path.exists(aws_dir):
             os.mkdir(aws_dir)
-        with open(aws_dir+'/credentials', 'w+') as writer:
-            writer.write(credentials_str)
-        config_str = '[profile '+project+']\nregion = '+location+'\noutput = json'
-        with open(aws_dir+'/config', 'w+') as writer:
-            writer.write(config_str)
+            
+        with open(f'{aws_dir}/credentials', 'w+') as cred, open(f'{aws_dir}/config', 'w+') as config:
+            cred.write(f'[{project}]\naws_access_key_id = {prjct.access_key}\naws_secret_access_key = {prjct.secret_key}')
+            config.write(f'[profile {project}]\nregion = {prjct.location}\noutput = json')
         return True
     except Exception as e:
         print(repr(e))

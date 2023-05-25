@@ -5,6 +5,7 @@ from utils.database import *
 from utils.logger import *
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.resource import ResourceManagementClient
+from sqlalchemy import update
 
 # Provision the resource group.
 async def create_rg(project, db):
@@ -21,11 +22,16 @@ async def create_rg(project, db):
             creds = ServicePrincipalCredentials(client_id=prjct.client_id, secret=prjct.secret, tenant=prjct.tenant_id)
             resource_client = ResourceManagementClient(creds, prjct.subscription_id)
             print("Provisioning a resource group...some operations might take a minute or two.")
-            rg_result = resource_client.resource_groups.create_or_update(
-                prjct.resource_group, {"location": prjct.location})
-            print(
-                "Provisioned resource group "+ rg_result.name+" in the "+rg_result.location+" region")
-            Project.objects(name=project).update(resource_group=rg_result.name, resource_group_created=True)
+            rg_result = resource_client.resource_groups.create_or_update(prjct.resource_group, {"location": prjct.location})
+            print(f"Provisioned resource group {rg_result.name} in the {rg_result.location} region")
+
+            db.execute(update(Project).where(
+                Project.name==project
+                ).values(
+                resource_group=rg_result.name, resource_group_created=True
+                ).execution_options(synchronize_session="fetch"))
+            db.commit()
+
             return True
         except Exception as e:
             print("Resource group creation failed "+str(e))

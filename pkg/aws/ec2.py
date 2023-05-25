@@ -1,13 +1,8 @@
-from mongoengine import *
-from model.blueprint import *
-from model.disk import *
+from model.blueprint import Blueprint
+from model.project import Project
 import boto3
-from utils.dbconn import *
-import asyncio
-from model.project import *
-from pkg.aws import creds
 
-async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
+async def create_machine(project, subnet_id,ami_id, machine_type, hostname, db):
     con = create_db_con()
     access_key = Project.objects(name=project).allow_filtering()[0]['access_key']
     secret_key = Project.objects(name=project).allow_filtering()[0]['secret_key']
@@ -79,7 +74,7 @@ async def build_ec2(project, hostname):
         con.shutdown()
 
 
-def ec2_instance_types(ec2,region_name):
+def ec2_instance_types(ec2, region_name):
     describe_args = {}
     while True:
         describe_result = ec2.describe_instance_types(**describe_args)
@@ -90,26 +85,22 @@ def ec2_instance_types(ec2,region_name):
 
 
 
-def get_vm_types(project):
+def get_vm_types(project, db):
     location = ''
     machine_types = []
     try:
-        con = create_db_con()
-        access_key = Project.objects(name=project).allow_filtering()[0]['access_key']
-        secret_key = Project.objects(name=project).allow_filtering()[0]['secret_key']
-        location = Project.objects(name=project).allow_filtering()[0]['location']
-        client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name=location)
-        for ec2_type in ec2_instance_types(client,location):
+        prjct = db.query(Project).filter(Project.name==project).first()
+        location = prjct.location
+        client = boto3.client('ec2', aws_access_key_id=prjct.access_key, aws_secret_access_key=prjct.secret_key, region_name=location)
+        for ec2_type in ec2_instance_types(client, location):
             cores = ''
             if 'DefaultCores' in ec2_type['VCpuInfo'].keys():
                 cores = ec2_type['VCpuInfo']['DefaultCores']
             else:
                 cores = str(ec2_type['VCpuInfo']['DefaultVCpus'])+'_vcpus'
-            machine_types.append({"vm_name":ec2_type['InstanceType'],"cores":cores,"memory":ec2_type['MemoryInfo']['SizeInMiB']})
+            machine_types.append({"vm_name": ec2_type['InstanceType'], "cores": cores, "memory": ec2_type['MemoryInfo']['SizeInMiB']})
         flag = True
     except Exception as e:
         print(repr(e))
         flag = False
-    finally:
-        con.shutdown()
     return machine_types, flag

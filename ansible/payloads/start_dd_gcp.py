@@ -23,9 +23,9 @@ headers = {
         "Accept": "application/json"
     }
 
-url = server_con_string + "/master/status/update"
+server_url = server_con_string + "/master/status/update"
 
-def update(status=None, disk_clone=None, host=hostname, project=project, url=url, headers=headers):
+def update(status=None, disk_clone=None, host=hostname, project=project, url=server_url, headers=headers):
 
     payload = {
         "table": "Blueprint",

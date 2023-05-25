@@ -4,49 +4,46 @@ from azure.common.client_factory import get_client_from_cli_profile
 from utils.database import *
 from utils.log_reader import *
 from utils.logger import *
-from model.project import *
-from model.disk import *
-from model.storage import *
-from model.blueprint import *
-from model.discover import *
+from model.project import Project
+from model.disk import Disk
+from model.storage import Storage
+from model.blueprint import Blueprint
+from model.discover import Discover
 from pkg.azure import conversion_worker as cw
 import os, asyncio
 from azure.common.credentials import ServicePrincipalCredentials
-from dotenv import load_dotenv
 from pkg.azure import sas
 from ansible_runner import run_async
 
-async def start_downloading(project, hostname):
-    con = create_db_con()
+async def start_downloading(project, hostname, db):
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
-        disks = Discover.objects(project=project, host=host).allow_filtering()[0]['disk_details']
+        disks = (db.query(Discover).filter(Discover.project==project, Discover.host==host).first()).disk_details
+        
         for disk in disks:
-            disk_raw = host+disk['mnt_path'].replace('/','-slash')+".raw"
+            disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                downloaded = await cw.download_worker(disk_raw,project,host)
+                downloaded = await cw.download_worker(disk_raw, project, host, db)
                 if not downloaded: return False
             except Exception as e:
                 print("Download failed for "+disk_raw)
                 print(str(e))
-                logger("Download failed for "+disk_raw,"warning")
+                logger("Download failed for "+disk_raw, "warning")
                 logger("Here is the error: "+str(e),"warning")
                 return False
-    con.shutdown()
     return True
     
 
-async def start_conversion(project,hostname):
-    con = create_db_con()
+async def start_conversion(project, hostname, db):
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
-        disks = Discover.objects(project=project, host=host).allow_filtering()[0]['disk_details']
+        disks = (db.query(Discover).filter(Discover.project==project, Discover.host==host).first()).disk_details
         for disk in disks:
-            disk_raw = host+disk['mnt_path'].replace('/','-slash')+".raw"
+            disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                converted = await cw.conversion_worker(disk_raw,project,host)
+                converted = await cw.conversion_worker(disk_raw, project, host, db)
                 if not converted: return False
             except Exception as e:
                 print("Conversion failed for "+disk_raw)
@@ -54,7 +51,6 @@ async def start_conversion(project,hostname):
                 logger("Conversion failed for "+disk_raw,"warning")
                 logger("Here is the error: "+str(e),"warning")
                 return False
-    con.shutdown()
     return True
 
 async def start_uploading(project):
@@ -83,7 +79,7 @@ async def start_cloning(project, hostname, db):
     prjct = db.query(Project).filter(Project.name==project).first()
     public_ip = (db.query(Discover).filter(Discover.project==project, Discover.host==hostname).first()).public_ip
     sas_token = sas.generate_sas_token(strg.storage, strg.access_key)
-    url = f'https://{strg.storage}.blob.core.windows.net/{prjct.container}/'
+    url = f'https://{strg.storage}.blob.core.windows.net/{strg.container}/'
     mongodb = os.getenv('BASE_URL')
     current_dir = os.getcwd()
     os.popen('echo null > ./logs/ansible/migration_log.txt')
@@ -103,19 +99,22 @@ async def start_cloning(project, hostname, db):
         'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
     }
 
-    await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
+    cloned = await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
     
-    machines = db.query(Blueprint).filter(Blueprint.project==project).all()
-    machine_count = db.query(Blueprint).filter(Blueprint.project==project).count()
-    flag = True
-    status_count = 0
-    while flag:
-        for machine in machines:
-            if int(machine.status)>=25:
-                status_count = status_count + 1
-        if status_count == machine_count:
-            flag = False
-    return not flag
+    if (not (bool(cloned[1].stats['failures']) or bool(cloned[1].stats['dark']))):
+        machines = db.query(Blueprint).filter(Blueprint.project==project).all()
+        machine_count = db.query(Blueprint).filter(Blueprint.project==project).count()
+        flag = True
+        status_count = 0
+        while flag:
+            for machine in machines:
+                if int(machine.status)>=25:
+                    status_count = status_count + 1
+            if status_count == machine_count:
+                flag = False
+        return not flag
+    else:
+        return False
 
 
 async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_path, storage_account):

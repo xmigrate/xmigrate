@@ -27,16 +27,19 @@ async def start_cloning(project, hostname, db):
         'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
     }
 
-    await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
-    
-    machines = db.query(Blueprint).filter(Blueprint.project==project).all()
-    machine_count = db.query(Blueprint).filter(Blueprint.project==project).count()
-    flag = True
-    status_count = 0
-    while flag:
-        for machine in machines:
-            if int(machine.status)>=25:
-                status_count = status_count + 1
-        if status_count == machine_count:
-            flag = False
-    return not flag
+    cloned = await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
+
+    if (not (bool(cloned[1].stats['failures']) or bool(cloned[1].stats['dark']))):
+        machines = db.query(Blueprint).filter(Blueprint.project==project).all()
+        machine_count = db.query(Blueprint).filter(Blueprint.project==project).count()
+        flag = True
+        status_count = 0
+        while flag:
+            for machine in machines:
+                if int(machine.status)>=25:
+                    status_count = status_count + 1
+            if status_count == machine_count:
+                flag = False
+        return not flag
+    else:
+        return False

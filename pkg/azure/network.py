@@ -10,7 +10,6 @@ from sqlalchemy import update
 
 
 def create_vnet(rg_name, vnet_name, cidr, location, project, db):
-    print("Provisioning a vnet...some operations might take a minute or two.")
     ntwrk = db.query(Network).filter(Network.cidr==cidr, Network.project==project).first()
     if not ntwrk.created:
         try:
@@ -18,6 +17,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project, db):
             creds = ServicePrincipalCredentials(client_id=prjct.client_id, secret=prjct.secret, tenant=prjct.tenant_id)
             network_client = NetworkManagementClient(creds, prjct.subscription_id)
 
+            print("Provisioning a vnet...some operations might take a minute or two.")
             poller = network_client.virtual_networks.create_or_update(
                 rg_name, vnet_name, {"location": location, "address_space": {"address_prefixes": [cidr]}}
                 )
@@ -29,19 +29,31 @@ def create_vnet(rg_name, vnet_name, cidr, location, project, db):
                 try:
                     db.execute(update(Blueprint).where(
                         Blueprint.project==project and Blueprint.host==host.host
-                    ).values(
+                        ).values(
                         vpc_id=vnet_result.name, status='5'
-                    ).execution_options(synchronize_session="fetch"))
+                        ).execution_options(synchronize_session="fetch"))
                     db.commit()
                 except Exception as e:
                     db.execute(update(Blueprint).where(
                         Blueprint.project==project and Blueprint.host==host.host
-                    ).values(
+                        ).values(
                         vpc_id=vnet_result.name, status='-5'
-                    ).execution_options(synchronize_session="fetch"))
+                        ).execution_options(synchronize_session="fetch"))
                     db.commit()
-            nw_name = ntwrk.nw_name
-            Network.objects(project=project, nw_name=nw_name).update(created=True)
+
+            db.execute(update(Network).where(
+                Network.project==project and Network.cidr==cidr
+                ).values(
+                created=True, nw_name=vnet_name
+                ).execution_options(synchronize_session="fetch"))
+            db.commit()
+
+            db.execute(update(Subnet).where(
+                Subnet.project==project and Subnet.cidr==cidr and Subnet.nw_name==ntwrk.nw_name
+                ).values(
+                nw_name=vnet_name
+                ).execution_options(synchronize_session="fetch"))
+            db.commit()
         except Exception as e:
             print("Vnet creation failed to save: "+repr(e))
             logger("Vnet creation failed to save: "+repr(e),"warning")
@@ -52,15 +64,14 @@ def create_vnet(rg_name, vnet_name, cidr, location, project, db):
 
 
 def create_subnet(rg_name, vnet_name, subnet_name, cidr, project, db):
-    print("Provisioning a subnet...some operations might take a minute or two.")
-    sbnt = db.query(Subnet).filter(Subnet.project==project, Subnet.cidr==cidr).first()
+    sbnt = db.query(Subnet).filter(Subnet.project==project, Subnet.cidr==cidr, Subnet.nw_name==vnet_name).first()
     if not sbnt.created:
         prjct = db.query(Project).filter(Project.name==project).first()
         creds = ServicePrincipalCredentials(client_id=prjct.client_id, secret=prjct.secret, tenant=prjct.tenant_id)
         network_client = NetworkManagementClient(creds, prjct.subscription_id)
 
-        poller = network_client.subnets.create_or_update(
-            rg_name, vnet_name, subnet_name, {"address_prefix": cidr})
+        print("Provisioning a subnet...some operations might take a minute or two.")
+        poller = network_client.subnets.create_or_update(rg_name, vnet_name, subnet_name, {"address_prefix": cidr})
         subnet_result = poller.result()
         print(f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
         
@@ -69,18 +80,16 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project, db):
             for host in hosts:
                 db.execute(update(Blueprint).where(
                     Blueprint.project==project and Blueprint.host==host.host
-                    ).values(
-                    subnet_id=str(subnet_result.id), status='10'
-                    ).execution_options(synchronize_session="fetch"))
+                        ).values(
+                        subnet_id=str(subnet_result.id), status='10'
+                        ).execution_options(synchronize_session="fetch"))
                 db.commit()
 
-            subnet_name = sbnt.subnet_name
-
             db.execute(update(Subnet).where(
-                Subnet.project==project and Subnet.cidr==cidr and Subnet.subnet_name==subnet_name
-                ).values(
-                created=True
-                ).execution_options(synchronize_session="fetch"))
+                Subnet.project==project and Subnet.cidr==cidr and Subnet.nw_name==vnet_name
+                    ).values(
+                    created=True, subnet_name=subnet_name
+                    ).execution_options(synchronize_session="fetch"))
             db.commit()
         except Exception as e:
             print("Subnet creation failed to save: "+repr(e))
@@ -139,9 +148,9 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host, db):
         try:
             db.execute(update(Blueprint).where(
                 Blueprint.project==project and Blueprint.host==host
-                ).values(
-                nic_id=nic_result.id, ip=ip_address_result.ip_address, status='20'
-                ).execution_options(synchronize_session="fetch"))
+                    ).values(
+                    nic_id=nic_result.id, ip=ip_address_result.ip_address, status='20'
+                    ).execution_options(synchronize_session="fetch"))
             db.commit()
         except Exception as e:
             print("Nework interface creation failed:"+repr(e))
