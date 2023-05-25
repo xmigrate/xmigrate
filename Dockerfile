@@ -21,9 +21,9 @@ RUN if [ "$(uname -m)" == "x86_64" ]; then \
     elif [ "$(uname -m)" == "aarch64" ]; then \
         wget https://aka.ms/downloadazcopy-v10-linux-arm64 && \
         tar -zxf ./downloadazcopy-v10-linux-arm64 && \
-        mv ./azcopy_linux_arm64_10.18.1/azcopy /usr/bin && \
-        chmod +x /usr/bin/azcopy \
-    fi
+        mv ./azcopy_linux_arm64_10.18.1/azcopy /usr/bin \
+    fi && \
+    chmod +x /usr/bin/azcopy
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY requirements.txt requirements.txt
