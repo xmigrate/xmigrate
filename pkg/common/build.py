@@ -1,31 +1,24 @@
-import os
-from model.blueprint import *
-from model.project import *
-from model.disk import *
-from model.discover import *
+from model.blueprint import Blueprint
+from model.project import Project
 from model.storage import GcpBucket
-from utils.log_reader import *
-from utils.database import *
+from pkg.aws import ami
+from pkg.aws import disk as awsdisk
+from pkg.aws import ec2
+from pkg.aws import network as awsnw
+from pkg.azure import compute
+from pkg.azure import disk
+from pkg.azure import network
+from pkg.azure import resource_group
+from pkg.common import nodes as n
+from pkg.gcp import compute as gcp_compute
+from pkg.gcp import disk as gcpdisk
+from pkg.gcp import network as gcpnw
 from utils.logger import *
 from utils.playbook import run_playbook
-from pkg.common import nodes as n
-
-from pkg.azure import network
-from pkg.aws import disk as awsdisk
-from pkg.gcp import disk as gcpdisk
-from pkg.azure import disk
-from pkg.azure import resource_group
-from pkg.azure import compute
-from pkg.gcp import compute as gcp_compute
-
-from pkg.aws import ami
-from pkg.aws import network as awsnw
-from pkg.aws import ec2
-
-from pkg.gcp import network as gcpnw
+import asyncio
+import os
 from sqlalchemy import update
 
-import asyncio
 
 async def call_start_vm_preparation(project, hostname, db):
     await asyncio.create_task(start_vm_preparation(project, hostname, db))
@@ -204,40 +197,38 @@ async def start_network_build(project, db):
             print("Network creation failed")
             logger("Network creation failed","error")
 
-async def call_build_host(project,hostname):
-    await asyncio.create_task(start_host_build(project,hostname))
+async def call_build_host(project, hostname, db):
+    await asyncio.create_task(start_host_build(project, hostname, db))
 
+async def start_host_build(project, hostname, db):
+    provider = (db.query(Project).filter(Project.name==project).first()).provider
 
-async def start_host_build(project,hostname):
-    con = create_db_con()
-    p = Project.objects(name=project)
-    if len(p) > 0:
-        if p[0]['provider'] == "azure":
-            logger("Host build started","info")
-            print("****************Host build awaiting*****************")
-            disk_created = await disk.create_disk(project,hostname)
-            if disk_created:
-                vm_created = await compute.create_vm(project, hostname)
+    if provider == "azure":
+        logger("Host build started","info")
+        print("****************Host build awaiting*****************")
+        disk_created = await disk.create_disk(project, hostname, db)
+        if disk_created:
+            vm_created = await compute.create_vm(project, hostname, db)
+        else:
+            logger("Disk creation failed","error")
+    elif provider == "aws":
+        logger("ec2 creation started","info")
+        ec2_created = await ec2.build_ec2(project, hostname, db)
+        if ec2_created:
+            logger("ec2 creation completed","info")
+        else:
+            print("ec2 creation failed")
+            logger("ec2 creation failed","error")
+    elif provider == "gcp":
+        logger("gcp vm creation started","info")
+        disk_created = await gcpdisk.start_image_creation(project, hostname, db)
+        if disk_created:
+            vm_created = await gcp_compute.build_compute(project, hostname, db)
+            if vm_created:
+                logger("gcp vm creation completed","info")
             else:
-                logger("Disk creation failed","error")
-        elif p[0]['provider'] == "aws":
-            logger("ec2 creation started","info")
-            ec2_created = await ec2.build_ec2(project, hostname)
-            if ec2_created:
-                logger("ec2 creation completed","info")
-            else:
-                print("ec2 creation failed")
-                logger("ec2 creation failed","error")
-        elif p[0]['provider'] == "gcp":
-            logger("gcp vm creation started","info")
-            disk_created = await gcpdisk.start_image_creation(project, hostname)
-            if disk_created:
-                vm_created = await gcp_compute.build_compute(project, hostname)
-                if vm_created:
-                    logger("gcp vm creation completed","info")
-                else:
-                    print("gcp vm creation failed")
-                    logger("gcp vm creation failed","error")
-            else:
-                print("gcp disk creation failed")
-                logger("gcp disk creation failed","error")
+                print("gcp vm creation failed")
+                logger("gcp vm creation failed","error")
+        else:
+            print("gcp disk creation failed")
+            logger("gcp disk creation failed","error")

@@ -1,7 +1,6 @@
-from model.blueprint import *
-from utils.converter import *
+from model.blueprint import Blueprint
+from model.discover import Discover
 from utils.database import dbconn
-from model.discover import *
 from pkg.azure import *
 from pkg.common import network as netutils
 from pkg.common import build
@@ -192,10 +191,10 @@ async def network_build(req: NetworkBuild, db: Session = Depends(dbconn)):
     return jsonable_encoder({"msg": "Build started", "status":200})
 
 @router.post('/blueprint/host/build')
-async def host_build(data: BlueprintHost):
+async def host_build(data: BlueprintHost, db: Session = Depends(dbconn)):
     project = data.project
     hostname = data.hostname
 
-    asyncio.create_task(build.call_build_host(project,hostname))
+    asyncio.create_task(build.call_build_host(project, hostname, db))
 
     return jsonable_encoder({"msg": "Build started", "status":200})
