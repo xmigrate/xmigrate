@@ -14,9 +14,17 @@ WORKDIR /app
 
 RUN apt update
 RUN apt install -y sshpass python3.7 python3-pip qemu-utils wget nginx
-RUN wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
-    tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
-    mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin  
+RUN if [ "$(uname -m)" == "x86_64" ]; then \
+        wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
+        tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
+        mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin && \
+        chmod +x /usr/bin/azcopy; \
+    elif [ "$(uname -m)" == "aarch64" ]; then \
+        wget https://aka.ms/downloadazcopy-v10-linux-arm64 && \
+        tar -zxf ./downloadazcopy-v10-linux-arm64 && \
+        mv ./azcopy_linux_arm64_10.18.1/azcopy /usr/bin && \
+        chmod +x /usr/bin/azcopy; \
+    fi
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY requirements.txt requirements.txt
