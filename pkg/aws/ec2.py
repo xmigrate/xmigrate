@@ -12,7 +12,7 @@ async def create_machine(project,subnet_id,ami_id,machine_type,hostname):
     access_key = Project.objects(name=project).allow_filtering()[0]['access_key']
     secret_key = Project.objects(name=project).allow_filtering()[0]['secret_key']
     location = Project.objects(name=project).allow_filtering()[0]['location']
-    public_route = True if BluePrint.objects(project=project, image_id=ami_id).allow_filtering()[0]['public_route'] == "true" else False
+    public_route = True if BluePrint.objects(project=project, image_id=ami_id).allow_filtering()[0]['public_route'] == True else False
     con.shutdown()
     session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=location)
     ec2 = session.resource('ec2')
