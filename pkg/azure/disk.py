@@ -58,7 +58,7 @@ async def start_cloning(project, hostname, db):
     public_ip = (db.query(Discover).filter(Discover.project==project, Discover.host==hostname).first()).public_ip
     sas_token = sas.generate_sas_token(strg.storage, strg.access_key)
     url = f'https://{strg.storage}.blob.core.windows.net/{strg.container}/'
-    mongodb = os.getenv('BASE_URL')
+    server = os.getenv('BASE_URL')
     current_dir = os.getcwd()
     os.popen('echo null > ./logs/ansible/migration_log.txt')
 
@@ -67,7 +67,7 @@ async def start_cloning(project, hostname, db):
     extravars = {
         'url': url,
         'sas': sas_token,
-        'mongodb': mongodb,
+        'server': server,
         'project': project,
         'hostname': hostname,
         'ansible_user': prjct.username

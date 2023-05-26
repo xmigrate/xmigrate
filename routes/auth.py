@@ -1,5 +1,5 @@
-from utils.database import dbconn
 from pkg.common import user
+from utils.database import dbconn
 from functools import lru_cache
 from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -12,29 +12,25 @@ from typing import Union
 router = APIRouter()
 
 class UsernamePassword(BaseModel):
-    username: Union[str,None] = None
-    password: Union[str,None] = None
+    username: Union[str, None] = None
+    password: Union[str, None] = None
 
 class TokenData(BaseModel):
     username: str
 
 class Settings(BaseSettings):
-    MONGO_DB: str = "mongodb://root:example@mongo:27017/"
     JWT_SECRET_KEY: str = "try2h@ckT415"
-    JWT_ACCESS_TOKEN_EXPIRES: int = 3600
     ALGORITHM: str = "HS256"
-    class Config:
-        env_file = ".env"
 
 @lru_cache()
 def get_settings():
     return Settings()
 
-async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl='login'))):
+async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl='login')), settings = Depends(get_settings)):
     try:
         payload = jwt.decode(
             token,
-            get_settings().JWT_SECRET_KEY, algorithms=[get_settings().ALGORITHM])
+            settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except:
         raise HTTPException(
@@ -42,9 +38,8 @@ async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl='l
             detail='invalid username or password')
 
 
-
 @router.post('/login')
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(dbconn)):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), settings = Depends(get_settings), db: Session = Depends(dbconn)):
     '''
     Authentication endpoint
     '''
@@ -66,7 +61,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     token_data = {
         'username': username
     }
-    access_token = jwt.encode(token_data, get_settings().JWT_SECRET_KEY)
+    access_token = jwt.encode(token_data, settings.JWT_SECRET_KEY)
     response_object = {
         'access_token': access_token
     }

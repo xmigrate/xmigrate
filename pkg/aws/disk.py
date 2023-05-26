@@ -9,7 +9,7 @@ async def start_cloning(project, hostname, db):
     bkt = db.query(Bucket).filter(Bucket.project==project).first()
     prjct = db.query(Project).filter(Project.name==project).first()
     public_ip = (db.query(Discover).filter(Discover.project==project, Discover.host==hostname).first()).public_ip
-    mongodb = os.getenv('BASE_URL')
+    server = os.getenv('BASE_URL')
     current_dir = os.getcwd()
 
     playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, prjct.provider)
@@ -18,7 +18,7 @@ async def start_cloning(project, hostname, db):
         'bucket': bkt.bucket,
         'access_key': bkt.access_key,
         'secret_key': bkt.secret_key,
-        'mongodb': mongodb,
+        'server': server,
         'project': project,
         'ansible_user': prjct.username
     }
