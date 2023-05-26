@@ -10,7 +10,7 @@ from sqlalchemy import update
 
 
 def create_vnet(rg_name, vnet_name, cidr, location, project, db):
-    ntwrk = db.query(Network).filter(Network.cidr==cidr, Network.project==project).first()
+    ntwrk = db.query(Network).filter(Network.cidr==cidr, Network.project==project, Network.nw_name==vnet_name).first()
     if not ntwrk.created:
         try:
             prjct = db.query(Project).filter(Project.name==project).first()
@@ -24,7 +24,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project, db):
             vnet_result = poller.result()
             print(f"Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
 
-            hosts = db.query(Blueprint).filter(Blueprint.network==cidr,Blueprint.project==project).all()
+            hosts = db.query(Blueprint).join(Network).filter(Network.cidr==cidr, Blueprint.project==project).all()
             for host in hosts:
                 try:
                     db.execute(update(Blueprint).where(
@@ -42,16 +42,9 @@ def create_vnet(rg_name, vnet_name, cidr, location, project, db):
                     db.commit()
 
             db.execute(update(Network).where(
-                Network.project==project and Network.cidr==cidr
+                Network.project==project and Network.cidr==cidr and Network.nw_name==vnet_name
                 ).values(
-                created=True, nw_name=vnet_name
-                ).execution_options(synchronize_session="fetch"))
-            db.commit()
-
-            db.execute(update(Subnet).where(
-                Subnet.project==project and Subnet.cidr==cidr and Subnet.nw_name==ntwrk.nw_name
-                ).values(
-                nw_name=vnet_name
+                created=True
                 ).execution_options(synchronize_session="fetch"))
             db.commit()
         except Exception as e:
@@ -64,7 +57,7 @@ def create_vnet(rg_name, vnet_name, cidr, location, project, db):
 
 
 def create_subnet(rg_name, vnet_name, subnet_name, cidr, project, db):
-    sbnt = db.query(Subnet).filter(Subnet.project==project, Subnet.cidr==cidr, Subnet.nw_name==vnet_name).first()
+    sbnt = db.query(Subnet).filter(Subnet.project==project, Subnet.cidr==cidr, Subnet.nw_name==vnet_name, Subnet.subnet_name==subnet_name).first()
     if not sbnt.created:
         prjct = db.query(Project).filter(Project.name==project).first()
         creds = ServicePrincipalCredentials(client_id=prjct.client_id, secret=prjct.secret, tenant=prjct.tenant_id)
@@ -76,7 +69,7 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project, db):
         print(f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
         
         try:
-            hosts = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.subnet==cidr).all()
+            hosts = db.query(Blueprint).join(Subnet).filter(Blueprint.project==project, Subnet.cidr==cidr).all()
             for host in hosts:
                 db.execute(update(Blueprint).where(
                     Blueprint.project==project and Blueprint.host==host.host
@@ -86,9 +79,9 @@ def create_subnet(rg_name, vnet_name, subnet_name, cidr, project, db):
                 db.commit()
 
             db.execute(update(Subnet).where(
-                Subnet.project==project and Subnet.cidr==cidr and Subnet.nw_name==vnet_name
+                Subnet.project==project and Subnet.cidr==cidr and Subnet.nw_name==vnet_name and Subnet.subnet_name==subnet_name
                     ).values(
-                    created=True, subnet_name=subnet_name
+                    created=True
                     ).execution_options(synchronize_session="fetch"))
             db.commit()
         except Exception as e:
@@ -159,33 +152,71 @@ def create_publicIP(project, rg_name, ip_name, location, subnet_id, host, db):
    
 
 async def create_nw(project, db):
-    prjct = db.query(Project).filter(Project.name==project).first()
-    machines = db.query(Blueprint).filter(Blueprint.project==project).all()
-    cidr = []
-    subnet = []
-    for machine in machines:
-        cidr.append(machine.network)
-        subnet.append(machine.subnet)
-    cidr = list(set(cidr))
-    vnet_created = []
-    c = 0
-    for i in cidr:
-        vnet_name = project+"vnet"+str(c)
-        vnet_created.append(create_vnet(prjct.resource_group, vnet_name, i, prjct.location, project, db))
-        c = c+1
-    c = 0
-    if True in vnet_created:
-        subnet = list(set(subnet))
-        subnet_created = []
-        for i in subnet:
-            subnet_name = project+"subnet"+str(c)
-            subnet_created = create_subnet(prjct.resource_group, vnet_name, subnet_name, i, project, db)
-        if subnet_created:
-            for machine in machines:
-                ip_name = machine.host
-                subnet_id = machine.subnet_id
-                create_publicIP(project, prjct.resource_group, ip_name, prjct.location, subnet_id, machine.host, db)
-        else:
-            return False
-    return True
+    try:
+        prjct = db.query(Project).filter(Project.name==project).first()
+        machines = db.query(Blueprint).filter(Blueprint.project==project).all()
 
+        for machine in machines:
+            all_networks = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.network==machine.network).all()
+            network = []
+
+            for i in all_networks:
+                if i.vpc_id is not None:
+                    network.append(i)
+
+            if len(network) > 0:
+                db.execute(update(Blueprint).where(
+                    Blueprint.project==project and Blueprint.network==machine.network
+                    ).values(
+                    vpc_id=(network[0]).vpc_id, status='5'
+                    ).execution_options(synchronize_session="fetch"))
+                db.commit()
+            
+                all_subnet = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.network==machine.network, Blueprint.subnet==machine.subnet).all()
+                subnet = []
+
+                for i in all_subnet:
+                    if  i.subnet_id is not None:
+                        subnet.append(i)
+
+                if len(subnet) > 0:
+                    db.execute(update(Blueprint).where(
+                        Blueprint.project==project and Blueprint.network==machine.network and Blueprint.subnet==machine.subnet
+                        ).values(
+                        subnet_id=(subnet[0]).subnet_id, status='10'
+                        ).execution_options(synchronize_session="fetch"))
+                    db.commit()
+
+                    all_nic = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.network==machine.network, Blueprint.subnet==machine.subnet, Blueprint.ip_created==True).all()
+                    nic = []
+
+                    for i in all_nic:
+                        if i.nic_id is not None:
+                            nic.append(i)
+
+                    if len(nic) > 0:
+                        db.execute(update(Blueprint).where(
+                            Blueprint.project==project and Blueprint.network==machine.network and Blueprint.subnet==machine.subnet and Blueprint.ip_created==True
+                            ).values(
+                            nic_id=(nic[0]).nic_id,status='20'
+                            ).execution_options(synchronize_session="fetch"))
+                        db.commit()
+                    else:
+                        create_publicIP(project, prjct.resource_group, machine.host, prjct.location, machine.subnet_id, machine.host, db)
+                else:
+                    sbnt = db.qeury(Subnet).filter(Subnet.project==project).first()
+                    sbnt_created = create_subnet(prjct.resource_group, sbnt.nw_name, sbnt.subnet_name, sbnt.cidr, project, db)
+                    if sbnt_created:
+                        create_publicIP(project, prjct.resource_group, machine.host, prjct.location, machine.subnet_id, machine.host, db)
+            else:
+                ntwrk = db.qeury(Subnet).filter(Network.project==Network).first()
+                ntwrk_created = create_vnet(prjct.resource_group, ntwrk.nw_name, ntwrk.cidr, prjct.location, project, db)
+                sbnt = db.qeury(Subnet).filter(Subnet.project==project, Subnet.nw_name==ntwrk.nw_name).first()
+                if ntwrk_created:
+                    sbnt_created = create_subnet(prjct.resource_group, sbnt.nw_name, sbnt.subnet_name, sbnt.cidr, project, db)
+                    if sbnt_created:
+                        create_publicIP(project, prjct.resource_group, machine.host, prjct.location, machine.subnet_id, machine.host, db)
+    except Exception as e:
+        print(repr(e))
+        return False
+    return True

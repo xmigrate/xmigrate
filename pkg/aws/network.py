@@ -25,16 +25,18 @@ def build_vpc(cidr, public_route, project, db):
                         ).execution_options(synchronize_session="fetch"))
                 db.commit()
 
+                nw_name = (db.query(Network).filter(Network.project==project, Network.cidr==cidr).first()).nw_name
+
+                db.execute(update(Network).where(
+                    Network.project==project and Network.nw_name==nw_name and Network.cidr==cidr
+                    ).values(
+                    vpc_id=vpc.id, created=True
+                    ).execution_options(synchronize_session="fetch"))
+                db.commit()
+
                 if public_route:
                     ig = ec2.create_internet_gateway()
                     vpc.attach_internet_gateway(InternetGatewayId=ig.id)
-
-                    db.execute(update(Blueprint).where(
-                        Blueprint.project==project and Blueprint.host==host
-                        ).values(
-                        ig_id=ig.id
-                        ).execution_options(synchronize_session="fetch"))
-                    db.commit()
 
                     route_table = vpc.create_route_table()
                     route_table.create_route(DestinationCidrBlock='0.0.0.0/0', GatewayId=ig.id)
@@ -42,16 +44,14 @@ def build_vpc(cidr, public_route, project, db):
                     db.execute(update(Blueprint).where(
                         Blueprint.project==project and Blueprint.host==host
                         ).values(
-                        route_table=route_table.id
+                        ig_id=ig.id, route_table=route_table.id
                         ).execution_options(synchronize_session="fetch"))
                     db.commit()
 
-                    nw_name = (db.query(Network).filter(Network.project==project, Network.cidr==cidr).first()).nw_name
-
                     db.execute(update(Network).where(
-                        Network.project==project and Network.nw_name==nw_name
+                        Network.project==project and Network.nw_name==nw_name and Network.cidr==cidr
                         ).values(
-                        created=True
+                        ig_id=ig.id, route_table=route_table.id
                         ).execution_options(synchronize_session="fetch"))
                     db.commit()
         except Exception as e:
@@ -127,7 +127,7 @@ async def create_nw(project, db):
                     subnet = []
 
                     for i in all_subnet:
-                        if subnet.subnet_id is not None:
+                        if i.subnet_id is not None:
                             subnet.append(i)
 
                     if len(subnet) > 0:
