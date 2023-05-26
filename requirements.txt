@@ -1,11 +1,6 @@
 setuptools
 wheel
-mongoengine==0.23.1
-flask
-ansible==3.0.0
-pygtail
 boto3==1.17.22
-python-dotenv==0.15.0
 azure-common==1.1.25
 azure-core==1.7.0
 Jinja2==3.0.3
@@ -19,7 +14,6 @@ azure-mgmt-subscription==0.6.0
 azure-storage-common==1.4.2
 azure-storage-blob==12.5.0
 azure-cli-core
-flask_cors==3.0.10
 keyrings.alt==3.0
 PyJWT==v1.7.1
 quart==0.16.3
@@ -33,7 +27,6 @@ google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.6
 gsutil==5.7
 Werkzeug~=2.0.0
-cassandra-driver==3.25.0
 ansible-runner==2.3.1
 netaddr==0.8.0
 
@@ -46,3 +39,7 @@ passlib==1.7.4
 bcrypt==3.2.2
 # PyJWT==2.3.0
 authlib==1.0.1
+
+# postgres
+sqlalchemy==2.0.12
+psycopg2-binary==2.9.6
