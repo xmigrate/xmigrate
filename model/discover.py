@@ -1,20 +1,24 @@
 from utils.database import Base
-from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.dialects.postgresql import ARRAY, JSON
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 
 
 class Discover(Base):
     
     __tablename__ = 'discover'
-    
-    project = Column(String, ForeignKey("project.name", onupdate='CASCADE', ondelete='CASCADE'), primary_key=True, unique=True)
-    host = Column(String, primary_key=True)
-    ip = Column(String, nullable=False)
-    subnet = Column(String, nullable=False)
-    network = Column(String, nullable=False)
-    ports = Column(ARRAY(String))
-    cores = Column(String)
-    cpu_model = Column(String, nullable=False)
-    ram = Column(String, nullable=False)
-    disk_details = Column(ARRAY(JSON(String)))
-    public_ip = Column(String, nullable=False)
+
+    id = Column(String(40), primary_key=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    is_locked = Column(Boolean, nullable=False, default=False)
+    is_enabled = Column(Boolean, nullable=False, default=True)
+    project = Column(String(40), ForeignKey("project.id"), nullable=False)
+    hostname = Column(String(256))
+    network = Column(String(256))
+    subnet = Column(String(256))
+    ports = Column(String(256))
+    cpu_core = Column(Integer)
+    cpu_model = Column(String(256))
+    ram = Column(String(256))
+    disk_details = Column(String(5120))
+    ip = Column(String(256))

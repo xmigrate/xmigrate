@@ -1,26 +1,24 @@
 from utils.database import Base
-from sqlalchemy import Column, String, Boolean
-from sqlalchemy.dialects.postgresql import ARRAY, JSON
+from sqlalchemy import Boolean, Column, DateTime, String
 
 
 class Project(Base):
     
     __tablename__ = "project"
 
-    name = Column(String, primary_key=True, unique=True)
-    provider = Column(String, nullable=False)
-    location = Column(String, nullable=False)
-    resource_group = Column(String)
-    subscription_id = Column(String)
-    client_id = Column(String)
-    secret = Column(String)
-    tenant_id = Column(String)
-    users = Column(ARRAY(String), nullable=False)
-    access_key = Column(String)
-    secret_key = Column(String)
-    resource_group_created = Column(Boolean, nullable=False, default=False)
-    username = Column(String)
-    password = Column(String)
-    public_ip = Column(ARRAY(String))
-    service_account = Column(JSON(String))
-    gcp_project_id = Column(String)
+    id = Column(String(40), primary_key=True)
+    name = Column(String(256), nullable=False)
+    provider = Column(String(256), nullable=False)
+    location = Column(String(256), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    is_locked = Column(Boolean, nullable=False, default=False)
+    is_enabled = Column(Boolean, nullable=False, default=True)
+    aws_access_key = Column(String(256))
+    aws_secret_key = Column(String(256))
+    azure_client_id	= Column(String(256))
+    azure_client_secret	= Column(String(256))
+    azure_tenant_id	= Column(String(256))
+    azure_subscription_id = Column(String(256))
+    gcp_service_token = Column(String(5120))

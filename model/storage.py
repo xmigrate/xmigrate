@@ -1,33 +1,17 @@
 from utils.database import Base
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
 
 
 class Storage(Base):
     
     __tablename__ = 'storage'
 
-    project = Column(String, ForeignKey("project.name", onupdate='CASCADE', ondelete='CASCADE'), primary_key=True, unique=True)
-    storage = Column(String, primary_key=True)
-    container = Column(String, nullable=False)
-    access_key = Column(String, nullable=False)
-   
-
-class Bucket(Base):
-
-    __tablename__ = 'bucket'
-
-    project = Column(String, ForeignKey("project.name", onupdate='CASCADE', ondelete='CASCADE'), primary_key=True, unique=True)
-    bucket = Column(String, primary_key=True)
-    secret_key = Column(String, nullable=False)
-    access_key = Column(String, nullable=False)
-
-
-class GcpBucket(Base):
-    
-    __tablename__ = 'gcp_bucket'
-
-    project = Column(String, ForeignKey("project.name", onupdate='CASCADE', ondelete='CASCADE'), primary_key=True, unique=True)
-    project_id= Column(String, nullable=False)
-    bucket = Column(String, primary_key=True)
-    secret_key = Column(String, nullable=False)
-    access_key = Column(String, nullable=False)
+    id = Column(String(40), primary_key=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    bucket_name = Column(String(256))
+    access_key = Column(String(256))
+    secret_key = Column(String(256))
+    container = Column(String(256))
+    project = Column(String(40), ForeignKey("project.id"), nullable=False)
