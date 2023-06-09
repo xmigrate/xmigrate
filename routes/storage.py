@@ -1,61 +1,43 @@
-from pkg.aws import bucket as bk
-from pkg.azure import storage as st
-from pkg.gcp import bucket as gbk
+from routes.auth import TokenData, get_current_user
+from services.project import get_projectid
+from services.storage import (check_storage_exists, create_storage, get_storage, get_storageid, update_storage)
+from schemas.storage import StorageCreate, StorageUpdate
 from utils.database import dbconn
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from typing import Union
 
-
-class Storage(BaseModel):
-    provider: Union[str,None] = None
-    project: Union[str,None] = None
-    storage: Union[str,None] = None
-    storage: Union[str,None] = None
-    container: Union[str,None] = None
-    access_key: Union[str,None] = None
-    secret_key: Union[str,None] = None
-    bucket: Union[str,None] = None
 
 router = APIRouter()
 
-@router.post('/storage')
-async def storage_create(data: Storage, db: Session = Depends(dbconn)):
-    if data.provider == 'azure':
-        storage_created = st.create_storage(data.project, data.storage, data.container, data.access_key, db)
-    elif data.provider == 'aws':
-        storage_created = bk.create_bucket(data.project, data.bucket, data.secret_key, data.access_key, db)
-    elif data.provider == 'gcp':
-        storage_created = gbk.create_bucket(data.project, data.bucket, data.access_key, data.secret_key, db)
 
-    if storage_created:
-        return jsonable_encoder({'status': '200'})
-    else:
-        return jsonable_encoder({'status': '500'})
+@router.post('/storage')
+async def storage_create(data: StorageCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    print(data)
+    try:
+        project_id = get_projectid(current_user['username'], data.project, db)
+        storage_exists = check_storage_exists(project_id, db)
+        if not storage_exists:
+            return create_storage(project_id, data, db)
+        else:
+            return jsonable_encoder({"message": f"storage account for project {data.project} already exists!"})
+    except Exception as e:
+        print(str(e))
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "Couldn't save storage account details!"}))
 
 
 @router.get('/storage')
-async def storage_get(project: str, provider: str, db: Session = Depends(dbconn)):
-    if provider == "azure":
-        return jsonable_encoder(st.get_storage(project, db))
-    elif provider == "aws":
-        return jsonable_encoder(bk.get_storage(project, db))
-    elif provider == "gcp":
-        return jsonable_encoder(gbk.get_storage(project, db))
+async def storage_get(project: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    project_id = get_projectid(current_user['username'], project, db)
+    return get_storage(project_id, db)
 
 
 @router.post('/storage/update')
-async def storage_update(data: Storage, db: Session = Depends(dbconn)):
-    if data.provider == 'azure':
-        storage_updated = st.update_storage(data.project, data.storage, data.container, data.access_key, db)
-    elif data.provider == "aws":
-        storage_updated = bk.update_bucket(data.project, data.bucket, data.secret_key, data.access_key, db)
-    elif data.provider == 'gcp':
-        storage_updated = gbk.update_bucket(data.project, data.bucket, data.access_key, data.secret_key, db)
-
-    if storage_updated:
-        return jsonable_encoder({'status': '200'})
-    else:
-        return jsonable_encoder({'status': '500'})
+async def storage_update(data: StorageUpdate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    try:
+        project_id = get_projectid(current_user['username'], data.project, db)
+        storage_id = get_storageid(project_id, db)
+        return update_storage(storage_id, data, db)
+    except Exception as e:
+        print(str(e))
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "Couldn't update project!"}))
