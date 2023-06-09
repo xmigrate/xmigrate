@@ -8,37 +8,6 @@ import asyncio
 from sqlalchemy import update
 
 
-def list_machine_type(project_id, service_account_json, zone):
-    service = get_service_compute_v1(service_account_json)
-    request = service.machineTypes().list(project=project_id, zone=zone)
-    machine_types = []
-    while request is not None:
-        response = request.execute()
-
-        for machine_type in response['items']:
-            machine_types.append(machine_type['name'])
-        request = service.machineTypes().list_next(
-            previous_request=request, previous_response=response)
-    return machine_types
-
-def get_vm_types(project, db):
-    location = ''
-    machine_types = []
-    try:
-        prjct = db.query(Project).filter(Project.name==project).first()
-        location = Project.objects(name=project).allow_filtering()[0]['location']
-
-        machines = list_machine_type(prjct.gcp_project_id, prjct.service_account, f"{location}-a")
-        
-        for machine in machines:
-            machine_types.append({'vm_name': machine})
-        flag = True
-    except Exception as e:
-        print(repr(e))
-        flag = False
-    return machine_types, flag
-
-
 async def create_vm(project_id, service_account_json, vm_name, region, zone_name, os_source, machine_type, network, subnet, additional_disk=[]):
     service = get_service_compute_v1(service_account_json)
     vm_type = f"zones/{zone_name}+machineTypes/{machine_type}"

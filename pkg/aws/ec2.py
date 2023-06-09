@@ -87,35 +87,3 @@ async def build_ec2(project, hostname, db):
         print(str(e))
         print(repr(e))
         return False
-    
-
-def ec2_instance_types(ec2, region_name):
-    describe_args = {}
-    while True:
-        describe_result = ec2.describe_instance_types(**describe_args)
-        yield from [i for i in describe_result['InstanceTypes']]
-        if 'NextToken' not in describe_result:
-            break
-        describe_args['NextToken'] = describe_result['NextToken']
-
-
-
-def get_vm_types(project, db):
-    location = ''
-    machine_types = []
-    try:
-        prjct = db.query(Project).filter(Project.name==project).first()
-        location = prjct.location
-        client = boto3.client('ec2', aws_access_key_id=prjct.access_key, aws_secret_access_key=prjct.secret_key, region_name=location)
-        for ec2_type in ec2_instance_types(client, location):
-            cores = ''
-            if 'DefaultCores' in ec2_type['VCpuInfo'].keys():
-                cores = ec2_type['VCpuInfo']['DefaultCores']
-            else:
-                cores = str(ec2_type['VCpuInfo']['DefaultVCpus'])+'_vcpus'
-            machine_types.append({"vm_name": ec2_type['InstanceType'], "cores": cores, "memory": ec2_type['MemoryInfo']['SizeInMiB']})
-        flag = True
-    except Exception as e:
-        print(repr(e))
-        flag = False
-    return machine_types, flag

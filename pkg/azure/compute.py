@@ -101,34 +101,5 @@ async def create_vm(project, hostname, db):
         create_vm_worker(prjct.resource_group, machine.host, prjct.location, username, password, machine.machine_type, machine.nic_id, image_name, project, data_disks, db)
 
 
-def list_available_vm_sizes(compute_client, region = 'EastUS2', minimum_cores = 1, minimum_memory_MB = 768):
-    vm_sizes_list = compute_client.virtual_machine_sizes.list(location=region)
-    machine_types = []
-    for vm_size in vm_sizes_list:
-        if vm_size.number_of_cores >= int(minimum_cores) and vm_size.memory_in_mb >= int(minimum_memory_MB): 
-            machine_types.append({"vm_name":vm_size.name, "cores":vm_size.number_of_cores, "osdisk":vm_size.os_disk_size_in_mb, "disk":vm_size.resource_disk_size_in_mb, "memory":vm_size.memory_in_mb, "max_data_disk":vm_size.max_data_disk_count})
-    return machine_types
-
-
-def get_vm_types(project, db):
-    client = ''
-    location = ''
-    machine_types = []
-    try:
-        prjct = db.query(Project).filter(Project.name==project).first()
-        location = prjct.location
-
-        creds = ServicePrincipalCredentials(client_id=prjct.client_id, secret=prjct.secret, tenant=prjct.tenant_id)
-        client = ComputeManagementClient(creds, prjct.subscription_id)
-
-        machine_types = list_available_vm_sizes(client, region=location, minimum_cores=1, minimum_memory_MB=768)
-        flag = True
-    except Exception as e:
-        print(repr(e))
-        logger("Fetching vm details failed: "+repr(e),"warning")
-        flag = False
-    return machine_types, flag
-
-
                 
             
