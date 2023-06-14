@@ -7,6 +7,5 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    pass
     class Config:
         orm_mode = True

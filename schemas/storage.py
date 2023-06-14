@@ -11,12 +11,10 @@ class StorageBase(BaseModel):
 
 
 class StorageCreate(StorageBase):
-    pass
     class Config:
         orm_mode = True
 
 
 class StorageUpdate(StorageBase):
-    pass
     class Config:
         orm_mode = True
