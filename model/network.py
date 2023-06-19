@@ -17,6 +17,7 @@ class Network(Base):
     target_network_id = Column(String(256))
     vpc_id = Column(String(256))
     ig_id = Column(String(256))
+    route_table = Column(String(256))
 
 
 class Subnet(Base):
@@ -30,6 +31,6 @@ class Subnet(Base):
     network = Column(String(40), ForeignKey("network.id"), nullable=False)
     subnet_type = Column(String(256))
     subnet_name = Column(String(256))
+    cidr = Column(String(256))
     created = Column(Boolean, nullable=False, default=False)
     target_subnet_id = Column(String(256))
-    route_table = Column(String(256))

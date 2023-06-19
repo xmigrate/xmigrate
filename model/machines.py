@@ -1,5 +1,5 @@
 from utils.database import Base
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 
 
 class VirtualMachine(Base):
@@ -22,7 +22,8 @@ class VirtualMachine(Base):
     cpu_model = Column(String(256))
     ram = Column(String(256))
     machine_type = Column(String(256))
-    status = Column(String(256))
+    public_route = Column(Boolean, nullable=False, default=True)
+    status = Column(Integer())
     image_id = Column(String(256))
     vm_id = Column(String(256))
     disk_clone = Column(String(256))

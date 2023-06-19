@@ -21,4 +21,6 @@ class Project(Base):
     azure_client_secret	= Column(String(256))
     azure_tenant_id	= Column(String(256))
     azure_subscription_id = Column(String(256))
+    azure_resource_group = Column(String(256))
+    azure_resource_group_created = Column(Boolean, default=True)
     gcp_service_token = Column(String(5120))
