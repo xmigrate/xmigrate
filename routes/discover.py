@@ -1,4 +1,5 @@
 from pkg.aws.aws_config import write_aws_creds
+from pkg.common.nodes import add_nodes
 from routes.auth import TokenData, get_current_user
 from schemas.discover import DiscoverBase, DiscoverCreate, DiscoverUpdate
 from schemas.disk import DiskCreate, DiskUpdate
@@ -9,11 +10,10 @@ from services.discover import check_discover_exists, create_discover, get_discov
 from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
 from services.machines import check_vm_exists, create_vm, get_machineid, update_vm
 from services.node import check_node_exists, create_node, get_nodeid, update_node
-from services.project import get_projectid, get_project_by_name
+from services.project import get_projectid
 from utils.database import dbconn
 from utils.playbook import run_playbook
-from pkg.common import nodes as n
-import os, netaddr, re
+import netaddr, re, os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -25,16 +25,25 @@ router = APIRouter()
 async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     current_dir = os.getcwd()
     project = data.project
+    project_id = get_projectid(current_user['username'], project, db)
 
-    if n.add_nodes(data.hosts, data.username, data.password, project, db) == False:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
+    if add_nodes(data.hosts, data.username, data.password, project) == False:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"message": "request couldn't process"}))
+    else:
+        node_exists = check_node_exists(project_id, db)
+        if not node_exists:
+            node_data = NodeCreate(project_id=project_id, hosts=data.hosts, username=data.username, password=data.password)
+            create_node(node_data, db)
+        else:
+            node_id = get_nodeid(project_id, db)
+            node_data = NodeUpdate(node_id=node_id, hosts=data.hosts, username=data.username, password=data.password)
+            update_node(node_data, db)
 
     playbook = "gather_facts.yaml"
     stage = "gather_facts"
         
     if data.provider == "aws":
-        proj_details = get_project_by_name(current_user['username'], project, db)
-        write_aws_creds(project, proj_details.aws_access_key, proj_details.aws_secret_key, proj_details.location)
+        write_aws_creds(current_user['username'], project, db)
     try:
         finished, output = run_playbook(provider=data.provider, username=data.username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage)
         if finished:
@@ -80,7 +89,6 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
                         hashmap['dev'] = f'/dev/{hashmap["dev"]}'
                         disks.append(hashmap)
                 try:
-                    project_id = get_projectid(current_user['username'], project, db)
                     discover_exists = check_discover_exists(project_id, db)
                     if not discover_exists:
                         discover_data = DiscoverCreate(project_id=project_id, hostname=hostname, network=network, subnet=subnet, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
@@ -89,15 +97,6 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
                         discover_id = get_discoverid(project_id, db)
                         discover_data = DiscoverUpdate(discover_id=discover_id, hostname=hostname, network=network, subnet=subnet, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
                         update_discover(discover_data, db)
-
-                    node_exists = check_node_exists(project_id, db)
-                    if not node_exists:
-                        node_data = NodeCreate(project_id=project_id, hosts=data.hosts, username=data.username, password=data.password)
-                        create_node(node_data, db)
-                    else:
-                        node_id = get_nodeid(project_id, db)
-                        node_data = NodeUpdate(node_id=node_id, hosts=data.hosts, username=data.username, password=data.password)
-                        update_node(node_data, db)
 
                     blueprint_exists = check_blueprint_exists(project_id, db)
                     if not blueprint_exists:
@@ -132,4 +131,4 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
             return jsonable_encoder({'status': '400'})
     except Exception as e:
         print(str(e))
-        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "Request couldn't process"}))
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"message": "request couldn't process"}))
