@@ -16,7 +16,7 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
     if not os.path.exists(log_folder):
         os.makedirs(log_folder)
 
-    with open(log_file, 'a+'):
+    with open(log_file, 'w+'):
         try:
             runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, limit=limit, quiet=True)
             if stage == "gather_facts":

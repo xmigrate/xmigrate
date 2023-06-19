@@ -1,10 +1,15 @@
 from pkg.aws.aws_config import write_aws_creds
 from routes.auth import TokenData, get_current_user
+from schemas.discover import DiscoverBase, DiscoverCreate, DiscoverUpdate
+from schemas.disk import DiskCreate, DiskUpdate
+from schemas.machines import VMCreate, VMUpdate
+from schemas.node import NodeCreate, NodeUpdate
 from services.blueprint import check_blueprint_exists, create_blueprint, get_blueprintid
 from services.discover import check_discover_exists, create_discover, get_discoverid, update_discover
-from services.disk import check_disk_exists, create_disk
+from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
+from services.machines import check_vm_exists, create_vm, get_machineid, update_vm
+from services.node import check_node_exists, create_node, get_nodeid, update_node
 from services.project import get_projectid, get_project_by_name
-from schemas.discover import DiscoverBase
 from utils.database import dbconn
 from utils.playbook import run_playbook
 from pkg.common import nodes as n
@@ -76,25 +81,49 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
                         disks.append(hashmap)
                 try:
                     project_id = get_projectid(current_user['username'], project, db)
-                    discover_data = project_id, hostname, network, subnet, None, cores, cpu_model, ram, disks, ip_address
                     discover_exists = check_discover_exists(project_id, db)
                     if not discover_exists:
+                        discover_data = DiscoverCreate(project_id=project_id, hostname=hostname, network=network, subnet=subnet, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
                         create_discover(discover_data, db)
                     else:
                         discover_id = get_discoverid(project_id, db)
-                        update_discover(discover_id, discover_data, db)
+                        discover_data = DiscoverUpdate(discover_id=discover_id, hostname=hostname, network=network, subnet=subnet, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
+                        update_discover(discover_data, db)
+
+                    node_exists = check_node_exists(project_id, db)
+                    if not node_exists:
+                        node_data = NodeCreate(project_id=project_id, hosts=data.hosts, username=data.username, password=data.password)
+                        create_node(node_data, db)
+                    else:
+                        node_id = get_nodeid(project_id, db)
+                        node_data = NodeUpdate(node_id=node_id, hosts=data.hosts, username=data.username, password=data.password)
+                        update_node(node_data, db)
 
                     blueprint_exists = check_blueprint_exists(project_id, db)
                     if not blueprint_exists:
                         create_blueprint(project_id, db)
 
                     blueprint_id = get_blueprintid(project_id, db)
+                    vm_exists = check_vm_exists(hostname, blueprint_id, db)
+                    if not vm_exists:
+                        vm_data = VMCreate(blueprint_id=blueprint_id, hostname=hostname, network=network, cores=cores, cpu_model=cpu_model, ram=ram)
+                        create_vm(vm_data, db)
+                    else:
+                        machine_id = get_machineid(hostname, blueprint_id, db)
+                        vm_data = VMUpdate(machine_id=machine_id, network=network, cores=cores, cpu_model=cpu_model, ram=ram)
+                        update_vm(vm_data, db)
+
+                    machine_id = get_machineid(hostname, blueprint_id, db)
                     for disk in disks:
                         mnt_path = disk['mnt_path'].replace('/', 'slash')
-                        disk_exists = check_disk_exists(blueprint_id, mnt_path, db)
+                        disk_exists = check_disk_exists(machine_id, mnt_path, db)
                         if not disk_exists:
-                            disk_data = hostname, None, '0', mnt_path, None, blueprint_id
+                            disk_data = DiskCreate(hostname=hostname, mnt_path=mnt_path, machine_id=machine_id)
                             create_disk(disk_data, db)
+                        else:
+                            disk_id = get_diskid(machine_id, mnt_path, db)
+                            disk_data = DiskUpdate(disk_id=disk_id, hostname=hostname, mnt_path=mnt_path, machine_id=machine_id)
+                            update_disk(disk_data, db)
                 except Exception as e:
                     print("Error: "+str(e))
             return jsonable_encoder({'status': '200'})
