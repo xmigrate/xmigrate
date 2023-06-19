@@ -26,6 +26,7 @@ def create_storage(project_id: str, data: StorageCreate, db:Session) -> JSONResp
     :param data: storage account details
     :param db: active database session
     '''
+    
     stmt = Storage(
         id = unique_id_gen("storage"),
         bucket_name = data.bucket,
@@ -44,14 +45,14 @@ def create_storage(project_id: str, data: StorageCreate, db:Session) -> JSONResp
     return JSONResponse({"status": 201, "message": "storage created", "data": [{}]})
 
 
-def get_storage(project_id: str, db: Session) -> list:
+def get_storage(project_id: str, db: Session) -> Storage | None:
     '''
     Returns the storage account associated with the specified project.
     
     :param project_id: id of the corresponding project
     :param db: active database session
     '''
-    return(db.query(Storage).filter(Storage.project==project_id, Storage.is_deleted==False).all())
+    return(db.query(Storage).filter(Storage.project==project_id, Storage.is_deleted==False).first())
 
 
 def get_storageid(project_id: str, db: Session) -> str:
@@ -69,7 +70,7 @@ def update_storage(storage_id: str, data: StorageUpdate, db: Session) -> JSONRes
     '''
     Update the storage account details.
     
-    :param project_id: unique id of the corresponding project
+    :param storage: id of the storage
     :param data: storage account details for update
     :param db: active database session
     '''

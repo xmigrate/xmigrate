@@ -1,4 +1,5 @@
 from model.discover import Discover
+from schemas.discover import DiscoverCreate, DiscoverUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 import json
@@ -17,7 +18,7 @@ def check_discover_exists(project_id: str, db: Session) -> bool:
     return(db.query(Discover).filter(Discover.project==project_id, Discover.is_deleted==False).count() > 0)
 
 
-def create_discover(data: tuple, db: Session) -> None:
+def create_discover(data: DiscoverCreate, db: Session) -> None:
     '''
     Saves the discover data for the project.
     
@@ -25,20 +26,18 @@ def create_discover(data: tuple, db: Session) -> None:
     :param db: active database session
     '''
 
-    project_id, hostname, network, subnet, ports, cpu_core, cpu_model, ram, disk_details, ip = data
-
     stmt = Discover(
         id = unique_id_gen("discover"),
-        project = project_id,
-        hostname = hostname,
-        network = network,
-        subnet = subnet,
-        ports = ports,
-        cpu_core = cpu_core,
-        cpu_model = cpu_model,
-        ram = ram,
-        disk_details = json.dumps(disk_details),
-        ip = ip,
+        project = data.project_id,
+        hostname = data.hostname,
+        network = data.network,
+        subnet = data.subnet,
+        ports = data.ports,
+        cpu_core = data.cores,
+        cpu_model = data.cpu_model,
+        ram = data.ram,
+        disk_details = json.dumps(data.disk_details),
+        ip = data.ip,
         created_at = datetime.now(),
         updated_at = datetime.now()
     )
@@ -51,6 +50,7 @@ def create_discover(data: tuple, db: Session) -> None:
 def get_discover(project_id: str, db: Session):
     '''
     Returns the discover data for the poject.
+    A project can have only one entry for discover but it is returned as a list to avoid parsing error in frontend in case of null data.
     
     :param project_id: unique id of the project
     :param db: active database session
@@ -70,29 +70,26 @@ def get_discoverid(project_id: str, db: Session) -> str:
     return(db.query(Discover).filter(Discover.project==project_id, Discover.is_deleted==False).first().id)
 
 
-def update_discover(discover_id: str, data: tuple, db: Session) -> None:
+def update_discover(data: DiscoverUpdate, db: Session) -> None:
     '''
     Updates the discover data for the project.
     
-    :param discover_id: unique id of the existing discover data
     :param data: source vm details
     :param db: active database session
     '''
-    
-    _, hostname, network, subnet, ports, cpu_core, cpu_model, ram, disk_details, ip = data
 
     stmt = update(Discover).where(
-        Discover.id==discover_id and Discover.is_deleted==False
+        Discover.id==data.discover_id and Discover.is_deleted==False
     ).values(
-        hostname = hostname,
-        subnet = subnet,
-        network = network,
-        ports = ports,
-        cpu_core = cpu_core,
-        cpu_model = cpu_model,
-        ram = ram,
-        disk_details = json.dumps(disk_details),
-        ip = ip,
+        hostname = data.hostname,
+        network = data.network,
+        subnet = data.subnet,
+        ports = data.ports,
+        cpu_core = data.cores,
+        cpu_model = data.cpu_model,
+        ram = data.ram,
+        disk_details = json.dumps(data.disk_details),
+        ip = data.ip,
         updated_at = datetime.now()
     ).execution_options(synchronize_session="fetch")
 

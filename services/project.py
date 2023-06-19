@@ -39,6 +39,7 @@ def create_project(id: str, data: ProjectBase, db: Session) -> JSONResponse:
         azure_client_id	= data.azure_client_id,
         azure_client_secret	= data.azure_client_secret,
         azure_tenant_id	= data.azure_tenant_id,
+        azure_resource_group = data.azure_resource_group,
         gcp_service_token = json.dumps(data.gcp_service_token),
         created_at = datetime.now(),
         updated_at = datetime.now()
@@ -86,23 +87,24 @@ def get_project_by_name(user: str, project: str, db: Session) -> Project | None:
     return(db.query(Project).join(Mapper).join(User).filter(User.username==user, Project.name==project, Mapper.is_deleted==False).first())
 
 
-def update_project(project_id: str, data: ProjectUpdate, db: Session) -> JSONResponse:
+def update_project(data: ProjectUpdate, db: Session) -> JSONResponse:
     '''
-    Updates given project with curresponding data.
+    Updates given project with corresponding data.
     
-    :param project_id: unique id of the project to update
     :param data: details to update the project with
     :param db: active database session
     '''
     
     stmt = update(Project).where(
-        Project.id==project_id and Project.is_deleted==False
+        Project.id==data.project_id and Project.is_deleted==False
     ).values(
         aws_access_key = data.aws_access_key,
         aws_secret_key = data.aws_secret_key,
         azure_client_id = data.azure_client_id,
         azure_client_secret = data.azure_client_secret,
         azure_tenant_id = data.azure_tenant_id,
+        azure_resource_group = data.azure_resource_group,
+        azure_resource_group_created = data.azure_resource_group_created,
         gcp_service_token = json.dumps(data.gcp_service_token),
         updated_at = datetime.now()
     ).execution_options(synchronize_session="fetch")
