@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import socket
 import sys
 
 
@@ -8,7 +9,8 @@ url = sys.argv[1]
 sas = sys.argv[2]
 server_con_string = sys.argv[3]
 project = sys.argv[4]
-hostname = sys.argv[5]
+
+hostname = socket.gethostname()
 
 def getDisks(project, hostname):
     url = server_con_string+"/master/disks/get/" + project + "/" + hostname

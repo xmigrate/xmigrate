@@ -4,10 +4,7 @@ from model.disk import Disk
 from model.project import Project
 from model.storage import Storage
 from pkg.azure import conversion_worker as cw
-from pkg.azure import sas
 from utils.logger import *
-import os
-from ansible_runner import run_async
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
@@ -50,49 +47,6 @@ async def start_conversion(project, hostname, db):
                 logger("Here is the error: "+str(e),"warning")
                 return False
     return True
-
-
-async def start_cloning(project, hostname, db):
-    strg = db.query(Storage).filter(Storage.project==project).first()
-    prjct = db.query(Project).filter(Project.name==project).first()
-    public_ip = (db.query(Discover).filter(Discover.project==project, Discover.host==hostname).first()).public_ip
-    sas_token = sas.generate_sas_token(strg.storage, strg.access_key)
-    url = f'https://{strg.storage}.blob.core.windows.net/{strg.container}/'
-    server = os.getenv('BASE_URL')
-    current_dir = os.getcwd()
-    os.popen('echo null > ./logs/ansible/migration_log.txt')
-
-    playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, prjct.provider)
-    inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project)
-    extravars = {
-        'url': url,
-        'sas': sas_token,
-        'server': server,
-        'project': project,
-        'hostname': hostname,
-        'ansible_user': prjct.username
-    }
-    envvars = {
-        'ANSIBLE_BECOME_USER': prjct.username,
-        'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
-    }
-
-    cloned = await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
-    
-    if (not (bool(cloned[1].stats['failures']) or bool(cloned[1].stats['dark']))):
-        machines = db.query(Blueprint).filter(Blueprint.project==project).all()
-        machine_count = db.query(Blueprint).filter(Blueprint.project==project).count()
-        flag = True
-        status_count = 0
-        while flag:
-            for machine in machines:
-                if int(machine.status)>=25:
-                    status_count = status_count + 1
-            if status_count == machine_count:
-                flag = False
-        return not flag
-    else:
-        return False
 
 
 async def create_disk_worker(project, rg_name, uri, disk_name, location, mnt_path, storage_account, db):

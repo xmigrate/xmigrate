@@ -31,7 +31,7 @@
       dest: "/tmp/start.py"
 
   - name: <== Executing payload ==>
-    shell: "python3 /tmp/start.py {{ url }} '{{ sas }}' {{ server }} {{ project }} {{ hostname }}"
+    shell: "python3 /tmp/start.py {{ url }} '{{ sas }}' {{ server }} {{ project }}"
     register: st
     become: True
     
