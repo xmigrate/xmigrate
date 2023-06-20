@@ -19,7 +19,7 @@ async def project_create(data: ProjectBase, current_user: TokenData = Depends(ge
         project_exists = check_project_exists(current_user['username'], data.name, db)
         if not project_exists:
             if data.provider == "aws":
-                write_aws_creds(data.name, data.aws_access_key, data.aws_secret_key, data.location)
+                write_aws_creds(current_user['username'], data.name, db)
             
             project_id = unique_id_gen(data.name)
             project_created = create_project(project_id, data, db)
