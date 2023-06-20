@@ -4,47 +4,47 @@ from model.disk import Disk
 from model.project import Project
 from model.storage import Storage
 from pkg.azure import conversion_worker as cw
+from services.discover import get_discover
+from services.project import get_project_by_name
 from utils.logger import *
+import json
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
 from sqlalchemy import update
 
-async def start_downloading(project, hostname, db):
+async def start_downloading(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
-        disks = (db.query(Discover).filter(Discover.project==project, Discover.host==host).first()).disk_details
-        
+        disks = json.loads(get_discover(project.id, db)[0].disk_details)
         for disk in disks:
             disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
                 downloaded = await cw.download_worker(disk_raw, project, host, db)
                 if not downloaded: return False
             except Exception as e:
-                print("Download failed for "+disk_raw)
-                print(str(e))
-                logger("Download failed for "+disk_raw, "warning")
-                logger("Here is the error: "+str(e),"warning")
+                print("Download failed for "+ disk_raw + " :" + str(e))
+                logger("Download failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
     return True
     
 
-async def start_conversion(project, hostname, db):
+async def start_conversion(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
-        disks = (db.query(Discover).filter(Discover.project==project, Discover.host==host).first()).disk_details
+        disks = json.loads(get_discover(project.id, db)[0].disk_details)
         for disk in disks:
             disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                converted = await cw.conversion_worker(disk_raw, project, host, db)
+                converted = await cw.conversion_worker(disk_raw, project, disk["mnt_path"], host, db)
                 if not converted: return False
             except Exception as e:
-                print("Conversion failed for "+disk_raw)
-                print(str(e))
-                logger("Conversion failed for "+disk_raw,"warning")
-                logger("Here is the error: "+str(e),"warning")
+                print("Conversion failed for "+ disk_raw + " :" + str(e))
+                logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
     return True
 

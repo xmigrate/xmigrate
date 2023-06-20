@@ -1,22 +1,23 @@
-from model.blueprint import Blueprint
-from model.discover import Discover
-from model.disk import Disk
-from model.project import Project
-from model.storage import Bucket
-from pkg.aws import creds
+from schemas.disk import DiskUpdate
+from schemas.machines import VMUpdate
+from services.blueprint import get_blueprintid
+from services.discover import get_discover
+from services.disk import get_diskid, update_disk
+from services.machines import get_all_machines, get_machine_by_hostname, update_vm
+from services.project import get_project_by_name
+from services.storage import get_storage
 from utils.logger import *
 import asyncio
 import json
 import boto3
-from sqlalchemy import update
 
-async def start_ami_creation_worker(project, disk_containers, hostname, db):
-   prjct = db.query(Project).filter(Project.name==project).first()
+
+async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, host, db):
    import_task_id = ''
    role_id = "vmimport"
 
    try:
-      client = boto3.client('iam', aws_access_key_id=prjct.access_key, aws_secret_access_key=prjct.secret_key)
+      client = boto3.client('iam', aws_access_key_id=project.aws_access_key, aws_secret_access_key=project.aws_secret_key)
       role_list = [role['RoleName'] for role in client.list_roles()['Roles']]
 
       if role_id not in role_list:
@@ -36,7 +37,7 @@ async def start_ami_creation_worker(project, disk_containers, hostname, db):
             ]
          }
          
-         response = client.create_role(RoleName=role_id, AssumeRolePolicyDocument=json.dumps(file_trust_policy), Description='For vm migration', MaxSessionDuration=7200, Tags=[{'Key': 'app','Value': 'xmigrate'}])
+         response = client.create_role(RoleName=role_id, AssumeRolePolicyDocument=json.dumps(file_trust_policy), Description='VM Import/Export role', MaxSessionDuration=7200, Tags=[{'Key': 'app', 'Value': 'xmigrate'}])
          print(f'Created role {role_id}')
 
          file_role_policy = {
@@ -89,15 +90,11 @@ async def start_ami_creation_worker(project, disk_containers, hostname, db):
    except Exception as e:
       print(str(e))
 
-      db.execute(update(Blueprint).where(
-         Blueprint.project==project and Blueprint.host==hostname
-         ).values(
-         status='-1'
-         ).execution_options(synchronize_session="fetch"))
-      db.commit()
+      vm_data = VMUpdate(machine_id=host.id, status=-1)
+      update_vm(vm_data, db)
    try:
       print("Importing image...")
-      client = boto3.client('ec2', aws_access_key_id=prjct.access_key, aws_secret_access_key=prjct.secret_key, region_name=prjct.location)
+      client = boto3.client('ec2', aws_access_key_id=project.aws_access_key, aws_secret_access_key=project.aws_secret_key, region_name=project.location)
 
       response = client.import_image(
          DiskContainers=disk_containers,
@@ -108,7 +105,7 @@ async def start_ami_creation_worker(project, disk_containers, hostname, db):
                'Tags': [
                   {
                      'Key': 'Name',
-                     'Value': hostname
+                     'Value': host.hostname
                   },
                ]
             },
@@ -116,51 +113,31 @@ async def start_ami_creation_worker(project, disk_containers, hostname, db):
       )
       import_task_id = response['ImportTaskId']
 
-      db.execute(update(Blueprint).where(
-         Blueprint.project==project and Blueprint.host==hostname
-         ).values(
-         status='30'
-         ).execution_options(synchronize_session="fetch"))
-      db.commit()
+      vm_data = VMUpdate(machine_id=host.id, status=30)
+      update_vm(vm_data, db)
 
-      logger("AMI creation started: "+import_task_id,"info")
+      logger("AMI creation started: "+ import_task_id, "info")
 
       if len(import_task_id) > 0:
          while True:
-            response = client.describe_import_image_tasks(
-               ImportTaskIds=[
-               import_task_id,
-               ]
-            )
+            response = client.describe_import_image_tasks(ImportTaskIds=[import_task_id,])
             print(response)
             
             if response['ImportImageTasks'][0]['Status'] == "completed":
                ami_id = import_task_id
 
-               db.execute(update(Blueprint).where(
-                  Blueprint.project==project and Blueprint.host==hostname
-                  ).values(
-                  image_id=ami_id, status='35'
-                  ).execution_options(synchronize_session="fetch"))
-               db.commit()
+               vm_data = VMUpdate(machine_id=host.id, image_id=ami_id, status='35')
+               update_vm(vm_data, db)
 
                for import_task in response['ImportImageTasks']:
                   for snapshot_detail in import_task['SnapshotDetails']:
-                        db.execute(update(Disk).where(
-                           Disk.project==project and Disk.host==hostname and Disk.mnt_path==snapshot_detail['UserBucket']['S3Key'].split('-')[1].split('.')[0]
-                           ).values(
-                           file_size=str(snapshot_detail['DiskImageSize']), disk_id=snapshot_detail['SnapshotId'], vhd=snapshot_detail['UserBucket']['S3Key']
-                           ).execution_options(synchronize_session="fetch"))
-                        db.commit()
+                        disk_id = get_diskid(host.id, disk_mountpoint.replace('/', 'slash'), db)
+                        disk_data = DiskUpdate(disk_id=disk_id, file_size=str(snapshot_detail['DiskImageSize']), target_disk_id=snapshot_detail['SnapshotId'], vhd=snapshot_detail['UserBucket']['S3Key'])
+                        update_disk(disk_data, db)
                break
             elif response['ImportImageTasks'][0]['Status'] == "deleted":
-
-               db.execute(update(Blueprint).where(
-                  Blueprint.project==project and Blueprint.host==hostname
-                  ).values(
-                  status='-35'
-                  ).execution_options(synchronize_session="fetch"))
-               db.commit()
+               vm_data = VMUpdate(machine_id=host.id, status=-35)
+               update_vm(vm_data, db)
 
                logger(response['ImportImageTasks'][0]['StatusMessage'], 'error')
                print(response['ImportImageTasks'][0]['StatusMessage'])
@@ -169,38 +146,35 @@ async def start_ami_creation_worker(project, disk_containers, hostname, db):
                await asyncio.sleep(60)
    except Exception as e:
       print(str(e))
-      logger("Error while creating AMI:"+str(e),"error")
+      logger("Error while creating AMI: "+ str(e), "error")
       
-      db.execute(update(Blueprint).where(
-         Blueprint.project==project and Blueprint.host==hostname
-         ).values(
-         status='-35'
-         ).execution_options(synchronize_session="fetch"))
-      db.commit()
+      vm_data = VMUpdate(machine_id=host.id, status=-35)
+      update_vm(vm_data, db)
 
       return False
 
 
-async def start_ami_creation(project, hostname, db):
-   creds.set_aws_creds(project, db)
+async def start_ami_creation(user, project, hostname, db) -> bool:
    hosts = []
    try:
-      bucket = db.query(Bucket).filter(Bucket.project==project).first()
-      bucket_name = bucket.bucket if bucket is not None else ''
+      project = get_project_by_name(user, project, db)
+      storage = get_storage(project.id, db)
+      bucket_name = storage.bucket_name if storage is not None else ''
+      blueprint_id = get_blueprintid(project.id, db)
 
       if hostname == "all":
-         hosts = db.query(Blueprint).filter(Blueprint.project==project).all()
+         hosts = get_all_machines(blueprint_id, db)
       else:
-         hosts = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.host==hostname).all()
+         hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
    except Exception as e:
       print(repr(e))
 
    for host in hosts:
-      disks = (db.query(Discover).filter(Discover.project==project, Discover.host==host.host).first()).disk_details
+      disks = json.loads(get_discover(project.id, db)[0].disk_details)
       disk_containers = []
 
       for disk in disks:
-         image_name = f'{host.host}{disk["mnt_path"].replace("/", "-slash")}.img'
+         image_name = f'{host.hostname}{disk["mnt_path"].replace("/", "-slash")}.img'
          disk_containers.append(
             {
                'Description': 'Xmigrate',
@@ -211,7 +185,7 @@ async def start_ami_creation(project, hostname, db):
                }
             }
          )
-      worker_done = await start_ami_creation_worker(project, disk_containers, hostname, db)
+      worker_done = await start_ami_creation_worker(project, disk_containers, disk["mnt_path"], host, db)
       if worker_done == False:
          return False
    return True

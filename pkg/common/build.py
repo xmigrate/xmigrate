@@ -1,9 +1,9 @@
 from model.project import Project
-from pkg.aws import ami
+from pkg.aws import ami as awsdisk
 from pkg.aws import ec2
 from pkg.aws.network import create_nw as aws_create_nw
 from pkg.azure import compute
-from pkg.azure import disk
+from pkg.azure import disk as azuredisk
 from pkg.azure.network import create_nw as azure_create_nw
 from pkg.common.cloning import clone
 from pkg.common.vm_preparation import prepare
@@ -54,52 +54,46 @@ async def call_start_convert(user, project, hostname, db):
 async def start_convert(user, project, hostname, db):
     provider = get_project_by_name(user, project, hostname, db)
 
-    if provider == "azure":
-        logger("Download started","info")
+    if provider == "aws":
+        logger("Conversion started", "info")
+        print("****************Conversion awaiting*****************")
+        logger("AMI creation started", "info")
+        ami_created = await awsdisk.start_ami_creation(user, project, hostname, db)
+        if ami_created:
+            print("****************Conversion completed*****************")
+            logger("Conversion completed", "info")
+            logger("AMI creation completed", "info")
+        else:
+            print("Disk Conversion failed")
+            logger("Disk Conversion failed", "error")
+    if provider in ('azure', 'gcp'):
+        image_downloaded = False
+        converted = False
+        logger("Download started", "info")
         print("****************Download started*****************")
-        image_downloaded = await disk.start_downloading(project, hostname, db)
+        if provider == 'azure':
+            image_downloaded = await azuredisk.start_downloading(user, project, hostname, db)
+        elif provider == 'gcp':
+            image_downloaded = await gcpdisk.start_downloading(user, project, hostname, db)
         if image_downloaded:
             print("****************Download completed*****************")
             logger("Image Download completed","info")
             print("****************Conversion awaiting*****************")
             logger("Conversion started","info")
-            converted =  await disk.start_conversion(project, hostname, db)
+            if provider == 'azure':
+                converted =  await azuredisk.start_conversion(user, project, hostname, db)
+            elif provider == 'gcp':
+                converted =  await gcpdisk.start_conversion(user, project, hostname, db)
             if converted:
                 print("****************Conversion completed*****************")
-                logger("Disk Conversion completed","info")
+                logger("Disk Conversion completed", "info")
             else:
                 print("Disk Conversion failed")
-                logger("Disk Conversion failed","error")
+                logger("Disk Conversion failed", "error")
         else:
             print("Image Download failed\nDisk Conversion failed")
             logger("Image Download faied", "error")
             logger("Disk Conversion failed", "error")
-    elif provider == "aws":
-        logger("Conversion started","info")
-        print("****************Conversion awaiting*****************")
-        logger("AMI creation started","info")
-        ami_created = await ami.start_ami_creation(user, project, hostname, db)
-        if ami_created:
-            print("****************Conversion completed*****************")
-            logger("Conversion completed","info")
-            logger("AMI creation completed:"+str(ami_created),"info")
-        else:
-            print("Disk Conversion failed")
-            logger("Disk Conversion failed","error")
-    elif provider == "gcp":
-        logger("Download started","info")
-        print("****************Download started*****************")
-        image_downloaded = await gcpdisk.start_downloading(project, hostname, db)
-        print("****************Conversion awaiting*****************")
-        logger("Conversion started","info")
-        if image_downloaded:
-            converted =  await gcpdisk.start_conversion(project,hostname, db)
-            if converted:
-                print("****************Conversion completed*****************")
-                logger("Disk Conversion completed","info")
-            else:
-                print("Disk Conversion failed")
-                logger("Disk Conversion failed","error")
 
 
 async def call_build_network(user, project, db):

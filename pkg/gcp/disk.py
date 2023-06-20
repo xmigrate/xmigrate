@@ -4,9 +4,18 @@ from model.discover import Discover
 from model.disk import Disk
 from model.project import Project
 from model.storage import GcpBucket
+from schemas.disk import DiskUpdate
+from schemas.machines import VMUpdate
+from services.blueprint import get_blueprintid
+from services.discover import get_discover
+from services.disk import get_diskid, update_disk
+from services.machines import get_all_machines, get_machine_by_hostname, update_vm
+from services.project import get_project_by_name
+from services.storage import get_storage
 from utils.logger import *
 import asyncio
 from asyncio.subprocess import PIPE, STDOUT
+import json
 import os
 from googleapiclient.errors import HttpError
 from jinja2 import Template
@@ -165,16 +174,16 @@ async def start_image_creation(project, hostname, db):
 
 
 async def download_worker(osdisk_raw, project, host, db):
-    bkt = db.query(GcpBucket).filter(GcpBucket.project==project).first()
+    storage = get_storage(project.id, db)
     try:
         cur_path = os.getcwd()
-        path = f'{cur_path}/projects/{project}/{host}/'
+        path = f'{cur_path}/projects/{project.name}/{host.hostname}/'
 
         if not os.path.exists(path):
             os.makedirs(path)
 
         path += 'disk.raw'
-        boto_path = f'{cur_path}/ansible/projects/{project}'
+        boto_path = f'{cur_path}/ansible/projects/{project.name}'
 
         if not os.path.exists(boto_path):
             os.makedirs(boto_path)
@@ -184,185 +193,140 @@ async def download_worker(osdisk_raw, project, host, db):
         if not os.path.exists(boto_path):  
             with open(f'{cur_path}/ansible/gcp/templates/.boto.j') as file_, open(boto_path, "w") as fh:
                 template = Template(file_.read())
-                rendered_boto = template.render(project_id=bkt.project_id, gs_access_key_id=bkt.access_key, gs_secret_access_key=bkt.secret_key)
+                rendered_boto = template.render(project_id=json.loads(project.gcp_service_token)['project_id'], gs_access_key_id=storage.access_key, gs_secret_access_key=storage.secret_key)
                 fh.write(rendered_boto)
 
         if not os.path.exists(path):
-            os.popen('echo "download started"> ./logs/ansible/migration_log.txt')
+            os.popen('echo "download started" > ./logs/ansible/migration_log.txt')
 
-            command = f'BOTO_CONFIG={boto_path} gsutil cp gs://{bkt.bucket}/{osdisk_raw} {path}'
-            os.popen('echo '+command+'>> ./logs/ansible/migration_log.txt')
+            command = f'BOTO_CONFIG={boto_path} gsutil cp gs://{storage.bucket_name}/{osdisk_raw} {path}'
+            os.popen('echo ' + command + ' >> ./logs/ansible/migration_log.txt')
             process1 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
 
-            db.execute(update(Blueprint).where(
-                Blueprint.project==project and Blueprint.host==host
-                ).values(
-                status='30'
-                ).execution_options(synchronize_session="fetch"))
-            db.commit()
-
+            vm_data = VMUpdate(machine_id=host.id, status=30)
+            update_vm(vm_data, db)
             return True
         else:
             return True
     except Exception as e:
-        print(repr(e))
-        logger(str(e),"warning")
+        print(str(e))
+        logger(str(e), "warning")
         
-        db.execute(update(Blueprint).where(
-            Blueprint.project==project and Blueprint.host==host
-            ).values(
-            status='-30'
-            ).execution_options(synchronize_session="fetch"))
-        db.commit()
-        
+        vm_data = VMUpdate(machine_id=host.id, status=-30)
+        update_vm(vm_data, db)
         return False
 
 
-async def upload_worker(osdisk_raw, project, host, db):
-    bkt = db.query(GcpBucket).filter(GcpBucket.project==project).first()
+async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db):
+    storage = get_storage(project.id, db)
     file_size = '0'
     cur_path = os.getcwd()
-    boto_path = f'{cur_path}/ansible/projects/{project}/.boto'
+    boto_path = f'{cur_path}/ansible/projects/{project.name}/.boto'
 
     try:
         osdisk_tar = osdisk_raw.replace(".raw", ".tar.gz")
-        tar_path = f'{cur_path}/projects/{project}/{host}/{osdisk_tar}'
+        tar_path = f'{cur_path}/projects/{project.name}/{host.hostname}/{osdisk_tar}'
         file_size = Path(tar_path).stat().st_size
 
         os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
         os.popen('echo "tar uploading" >> ./logs/ansible/migration_log.txt')
 
-        command = f'BOTO_CONFIG={boto_path} gsutil cp {tar_path} gs://{bkt.bucket}/{osdisk_tar}'
+        command = f'BOTO_CONFIG={boto_path} gsutil cp {tar_path} gs://{storage.bucket_name}/{osdisk_tar}'
         process3 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process3.wait()
 
         os.popen('echo "tar uploaded" >> ./logs/ansible/migration_log.txt')
 
-        db.execute(update(Blueprint).where(
-            Blueprint.project==project and Blueprint.host==host
-            ).values(
-            status='36'
-            ).execution_options(synchronize_session="fetch"))
-        db.commit()
+        vm_data = VMUpdate(machine_id=host.id, status=32)
+        update_vm(vm_data, db)
 
-        db.execute(update(Disk).where(
-            Disk.project==project and Disk.host==host and Disk.mnt_path==osdisk_raw.split('.raw')[0].split('-')[-1]
-            ).values(
-            vhd=osdisk_tar, file_size=str(file_size)
-            ).execution_options(synchronize_session="fetch"))
-        db.commit()
-
+        disk_id = get_diskid(host, disk_mountpoint.replace('/', 'slash'), db)
+        disk_data = DiskUpdate(disk_id=disk_id, vhd=osdisk_tar, file_size=str(file_size))
+        update_disk(disk_data, db)
         return True
     except Exception as e:
-        print(repr(e))
-        logger(str(e),"warning")
+        print(str(e))
+        logger(str(e), "warning")
 
-        db.execute(update(Blueprint).where(
-            Blueprint.project==project and Blueprint.host==host
-            ).values(
-            status='-36'
-            ).execution_options(synchronize_session="fetch"))
-        db.commit()
+        vm_data = VMUpdate(machine_id=host.id, status=-32)
+        update_vm(vm_data, db)
 
-        os.popen('echo "'+repr(e)+'" >> ./logs/ansible/migration_log.txt')
+        os.popen('echo "' + str(e)+ '" >> ./logs/ansible/migration_log.txt')
         return False
 
 
-async def conversion_worker(osdisk_raw, project, host, db):
+async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
     downloaded = await download_worker(osdisk_raw, project, host, db)
     if downloaded:
-        db.execute(update(Blueprint).where(
-            Blueprint.project==project and Blueprint.host==host
-            ).values(
-            status='32'
-            ).execution_options(synchronize_session="fetch"))
-        db.commit()
-
         try:
             osdisk_tar = osdisk_raw.replace(".raw", ".tar.gz")
             cur_path = os.getcwd()
-            path = f'{cur_path}/projects/{project}/{host}/'
+            path = f'{cur_path}/projects/{project.name}/{host.hostname}/'
             tar_path = path + osdisk_tar
-            print("Start compressing")
+            print("Starting to compress the disk image...")
 
-            os.popen('echo "start compressing">> ./logs/ansible/migration_log.txt')
+            os.popen('echo "Starting to compress the disk image...">> ./logs/ansible/migration_log.txt')
 
             command = f'tar --format=oldgnu -Sczf {tar_path} -C {path} disk.raw'
             process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process2.wait()
 
-            uploaded = await upload_worker(osdisk_raw, project, host, db)
+            uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, host, db)
             if not uploaded: return False
 
-            db.execute(update(Blueprint).where(
-                Blueprint.project==project and Blueprint.host==host
-                ).values(
-                status='35'
-                ).execution_options(synchronize_session="fetch"))
-            db.commit()
+            vm_data = VMUpdate(machine_id=host.id, status=35)
+            update_vm(vm_data, db)
 
-            logger("Conversion completed "+osdisk_raw, "info")
+            logger("Conversion completed for "+ osdisk_raw, "info")
             return True
         except Exception as e:
             print(str(e))
+            logger(str(e), "warning")
             
-            db.execute(update(Blueprint).where(
-                Blueprint.project==project and Blueprint.host==host
-                ).values(
-                status='-35'
-                ).execution_options(synchronize_session="fetch"))
-            db.commit()
-
-            logger(str(e),"warning")
+            vm_data = VMUpdate(machine_id=host.id, status=-35)
+            update_vm(vm_data, db)
             return False
     else:
-        db.execute(update(Blueprint).where(
-            Blueprint.project==project and Blueprint.host==host
-            ).values(
-            status='-32'
-            ).execution_options(synchronize_session="fetch"))
-        db.commit()
-        logger("Downloading image failed" ,"warning")
         return False
 
 
-async def start_conversion(project, hostname, db):
+async def start_conversion(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
+    blueprint_id = get_blueprintid(project.id, db)
     if hostname == "all":
-        machines = db.query(Blueprint).filter(Blueprint.project==project).all()
+        hosts = get_all_machines(blueprint_id, db)
     else:
-        machines = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.host==hostname).all()
+        hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
 
-    for machine in machines:
-        disks = (db.query(Discover).filter(Discover.project==project, Discover.host==machine.host).first()).disk_details
+    for host in hosts:
+        disks = json.loads(get_discover(project.id, db)[0].disk_details)
 
         for disk in disks:
-            disk_raw = f'{machine.host}{disk["mnt_path"].replace("/", "-slash")}.raw'
+            disk_raw = f'{host.hostname}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                conversion_done = await conversion_worker(disk_raw, project, machine.host, db)
+                conversion_done = await conversion_worker(disk_raw, project, disk["mnt_path"], host, db)
                 if not conversion_done: return False
             except Exception as e:
-                print("Conversion failed for "+disk_raw)
-                print(str(e))
-                logger("Conversion failed for "+disk_raw,"warning")
-                logger("Here is the error: "+str(e),"warning")
+                print("Conversion failed for "+ disk_raw + " :" + str(e))
+                logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
     return True
 
-async def start_downloading(project, hostname, db):
-    machines = db.query(Blueprint).filter(Blueprint.project==project).all()
-    for machine in machines:
-        disks = (db.query(Discover).filter(Discover.project==project, Discover.host==machine.host).first()).disk_details
+async def start_downloading(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
+    blueprint_id = get_blueprintid(project.id, db)
+    hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
+    for host in hosts:
+        disks = json.loads(get_discover(project.id, db)[0].disk_details)
 
         for disk in disks:
-            disk_raw = f'{machine.host}{disk["mnt_path"].replace("/", "-slash")}.raw'
+            disk_raw = f'{host.hostname}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                downloaded = await download_worker(disk_raw, project, machine.host, db)
+                downloaded = await download_worker(disk_raw, project, host, db)
                 if not downloaded: return False
             except Exception as e:
-                print("Download failed for "+disk_raw)
-                print(str(e))
-                logger("Download failed for "+disk_raw, "warning")
-                logger("Here is the error: "+str(e), "warning")
+                print("Download failed for "+ disk_raw + " :" + str(e))
+                logger("Download failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
     return True
