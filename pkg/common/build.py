@@ -1,5 +1,4 @@
 from model.project import Project
-from model.storage import GcpBucket
 from pkg.aws import ami
 from pkg.aws import ec2
 from pkg.aws.network import create_nw as aws_create_nw
@@ -48,11 +47,12 @@ async def start_cloning(user, project, hostname, db) -> None:
         logger("Disk cloning failed", "error")
 
 
-async def call_start_convert(project, hostname, db):
-    await asyncio.create_task(start_convert(project, hostname, db))
+async def call_start_convert(user, project, hostname, db):
+    await asyncio.create_task(start_convert(user, project, hostname, db))
 
-async def start_convert(project, hostname, db):
-    provider = (db.query(Project).filter(Project.name==project).first()).provider
+
+async def start_convert(user, project, hostname, db):
+    provider = get_project_by_name(user, project, hostname, db)
 
     if provider == "azure":
         logger("Download started","info")
@@ -78,7 +78,7 @@ async def start_convert(project, hostname, db):
         logger("Conversion started","info")
         print("****************Conversion awaiting*****************")
         logger("AMI creation started","info")
-        ami_created = await ami.start_ami_creation(project, hostname, db)
+        ami_created = await ami.start_ami_creation(user, project, hostname, db)
         if ami_created:
             print("****************Conversion completed*****************")
             logger("Conversion completed","info")
@@ -105,33 +105,25 @@ async def start_convert(project, hostname, db):
 async def call_build_network(user, project, db):
     await asyncio.create_task(start_network_build(user, project, db))
 
+
 async def start_network_build(user, project, db):
     provider = get_project_by_name(user, project, db).provider
+    network_created = False
+    logger("Network build started", "info")
+    print("****************Network build awaiting*****************")
 
     if provider == "azure":
-        logger("Network build started","info")
-        print("****************Network build awaiting*****************")
         network_created = await azure_create_nw(project, db)
-        if network_created:
-            logger("Network created","info")
-        else:
-            logger("Network creation failed","error")
     elif provider == "aws":
-        logger("Network creation started","info")
         network_created = await aws_create_nw(user, project, db)
-        if network_created:
-            logger("Network creation completed","info")
-        else:
-            print("Network creation failed")
-            logger("Network creation failed","error")
     elif provider == "gcp":
-        logger("Network creation started","info")
         network_created = await gcp_create_nw(user, project, db)
-        if network_created:
-            logger("Network creation completed","info")
-        else:
-            print("Network creation failed")
-            logger("Network creation failed","error")
+    if network_created:
+        logger("Network creation completed","info")
+    else:
+        print("Network creation failed")
+        logger("Network creation failed","error")
+
 
 async def call_build_host(project, hostname, db):
     await asyncio.create_task(start_host_build(project, hostname, db))
