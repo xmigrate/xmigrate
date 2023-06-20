@@ -15,4 +15,5 @@ class Disk(Base):
     file_size = Column(String(256))
     mnt_path = Column(String(256))
     disk_clone = Column(String(256))
+    target_disk_id = Column(String(256))
     vm = Column(String(40), ForeignKey("vm.id"), nullable=False)

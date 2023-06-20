@@ -62,6 +62,7 @@ def update_disk(data: DiskUpdate, db: Session) -> None:
         vhd = data.vhd,
         file_size = data.file_size,
         disk_clone = data.disk_clone,
+        target_disk_id = data.target_disk_id,
         updated_at = datetime.now()
     ).execution_options(synchronize_session="fetch")
 
