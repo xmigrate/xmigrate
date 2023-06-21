@@ -8,7 +8,6 @@ from asyncio.subprocess import PIPE, STDOUT
 import asyncio
 from pathlib import Path
 from utils.logger import *
-import subprocess
 import json
 
 async def download_worker(osdisk_raw,project,host):
@@ -76,13 +75,13 @@ async def upload_worker(osdisk_raw,project,host):
 
 async def get_size(path):
     qemu_command = ['qemu-img', 'info', '-f', 'raw', '--output', 'json', path]
-    process = await asyncio.create_subprocess_exec(*qemu_command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    process = await asyncio.create_subprocess_exec(*qemu_command, stdout=PIPE, stderr=PIPE)
     stdout, stderr = await process.communicate()
     if process.returncode != 0:
         raise Exception(f'Error executing command: {stderr.decode()}')
     output_json = json.loads(stdout.decode())
     size = output_json['virtual-size']
-    return size
+    return int(size)
 
 async def conversion_worker(osdisk_raw,project,host):
     downloaded = await download_worker(osdisk_raw,project,host)
@@ -129,5 +128,3 @@ async def conversion_worker(osdisk_raw,project,host):
     else:
         logger("Downloading image failed","warning")
         return False
-
-
