@@ -1,7 +1,5 @@
 FROM node:18.14.2 AS stage
 
-SHELL ["/bin/bash", "-c"]
-
 WORKDIR /app
 
 COPY ./UI .
@@ -12,6 +10,8 @@ RUN npm install
 RUN npm run build
 
 FROM ubuntu:18.04
+
+SHELL ["/bin/bash", "-c"]
 
 WORKDIR /app
 
