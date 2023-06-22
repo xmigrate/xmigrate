@@ -1,8 +1,7 @@
-from model.project import Project
 from pkg.aws import ami as awsdisk
-from pkg.aws import ec2
+from pkg.aws import ec2 as aws_compute
 from pkg.aws.network import create_nw as aws_create_nw
-from pkg.azure import compute
+from pkg.azure import compute as azure_compute
 from pkg.azure import disk as azuredisk
 from pkg.azure.network import create_nw as azure_create_nw
 from pkg.common.cloning import clone
@@ -113,44 +112,41 @@ async def start_network_build(user, project, db):
     elif provider == "gcp":
         network_created = await gcp_create_nw(user, project, db)
     if network_created:
-        logger("Network creation completed","info")
+        logger("Network creation completed", "info")
     else:
         print("Network creation failed")
         logger("Network creation failed","error")
 
 
-async def call_build_host(project, hostname, db):
-    await asyncio.create_task(start_host_build(project, hostname, db))
+async def call_build_host(user, project, hostname, db):
+    await asyncio.create_task(start_host_build(user, project, hostname, db))
 
-async def start_host_build(project, hostname, db):
-    provider = (db.query(Project).filter(Project.name==project).first()).provider
 
-    if provider == "azure":
-        logger("Host build started","info")
-        print("****************Host build awaiting*****************")
-        disk_created = await disk.create_disk(project, hostname, db)
-        if disk_created:
-            vm_created = await compute.create_vm(project, hostname, db)
+async def start_host_build(user, project, hostname, db):
+    provider = get_project_by_name(user, project, db).provider
+    disk_created = True if provider == 'aws' else False
+    logger("VM build started", "info")
+
+    if provider in ('azure', 'gcp'):
+        if provider == 'azure':
+            disk_created = await azuredisk.create_disk(user, project, hostname, db)
+        elif provider == 'gcp':
+            disk_created = await gcpdisk.start_image_creation(user, project, hostname, db)
+
+        if not disk_created:
+            print("Disk creation failed!")
+            logger("Disk creation failed", "error")
+    
+    if disk_created:
+        if provider == "aws":
+            vm_created = await aws_compute.build_ec2(user, project, hostname, db)
+        elif provider == 'azure':
+            vm_created = await azure_compute.create_vm(user, project, hostname, db)
+        elif provider == 'gcp':
+            vm_created = await gcp_compute.build_compute(user, project, hostname, db)
+
+        if vm_created:
+            logger("VM creation completed", "info")
         else:
-            logger("Disk creation failed","error")
-    elif provider == "aws":
-        logger("ec2 creation started","info")
-        ec2_created = await ec2.build_ec2(project, hostname, db)
-        if ec2_created:
-            logger("ec2 creation completed","info")
-        else:
-            print("ec2 creation failed")
-            logger("ec2 creation failed","error")
-    elif provider == "gcp":
-        logger("gcp vm creation started","info")
-        disk_created = await gcpdisk.start_image_creation(project, hostname, db)
-        if disk_created:
-            vm_created = await gcp_compute.build_compute(project, hostname, db)
-            if vm_created:
-                logger("gcp vm creation completed","info")
-            else:
-                print("gcp vm creation failed")
-                logger("gcp vm creation failed","error")
-        else:
-            print("gcp disk creation failed")
-            logger("gcp disk creation failed","error")
+            print("VM creation failed!")
+            logger("VM creation failed", "error")

@@ -31,7 +31,7 @@ def create_vm(data: VMCreate, db: Session) -> JSONResponse:
         id = unique_id_gen(data.hostname),
         blueprint = data.blueprint_id,
         hostname = data.hostname,
-        network = data.network, 
+        network = data.network,
         cpu_core = data.cores,
         cpu_model = data.cpu_model,
         ram = data.ram,
@@ -56,7 +56,7 @@ def get_all_machines(blueprint_id: str, db: Session):
     return(db.query(VM).filter(VM.blueprint==blueprint_id, VM.is_deleted==False).all())
 
 
-def get_machine_by_hostname(hostname: str, blueprint_id: str, db: Session) -> list[VM] | None:
+def get_machine_by_hostname(hostname: str, blueprint_id: str, db: Session) -> VM | None:
     '''
     Returns the vm data for a single machine in the blueprint.
 
@@ -91,7 +91,7 @@ def update_vm(data: VMUpdate, db: Session) -> JSONResponse:
     stmt = update(VM).where(
         VM.id==data.machine_id and VM.is_deleted==False
     ).values(
-        network = data.network, 
+        network = data.network,
         cpu_core = data.cores,
         cpu_model = data.cpu_model,
         ram = data.ram,
@@ -107,12 +107,7 @@ def update_vm(data: VMUpdate, db: Session) -> JSONResponse:
         artifact_location = data.artifact_location,
         updated_at = datetime.now()
     ).execution_options(synchronize_session="fetch")
-    print(stmt)
 
-    for field, value in data.dict().items():
-        if value is not None:
-            stmt = stmt.values(**{field: value})
-            print(stmt)
     db.execute(stmt)
     db.commit()
 

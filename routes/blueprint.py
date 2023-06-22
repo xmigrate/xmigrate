@@ -145,14 +145,10 @@ async def image_convert(data: CommonCreate, current_user: TokenData = Depends(ge
 @router.post('/blueprint/network/build')
 async def network_build(data: CommonBase, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     asyncio.create_task(build.call_build_network(current_user['username'], data.project, db))
-    return jsonable_encoder({"message": "build started", "status": 200})
+    return jsonable_encoder({"message": "network build started", "status": 200})
 
 
 @router.post('/blueprint/host/build')
-async def host_build(data: BlueprintHost, db: Session = Depends(dbconn)):
-    project = data.project
-    hostname = data.hostname
-
-    asyncio.create_task(build.call_build_host(project, hostname, db))
-
-    return jsonable_encoder({"msg": "Build started", "status":200})
+async def host_build(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    asyncio.create_task(build.call_build_host(current_user['username'], data.project, data.hostname, db))
+    return jsonable_encoder({"msg": "build started", "status": 200})

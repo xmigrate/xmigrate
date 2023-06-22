@@ -1,9 +1,4 @@
 from .gcp import get_service_compute_v1
-from model.blueprint import Blueprint
-from model.discover import Discover
-from model.disk import Disk
-from model.project import Project
-from model.storage import GcpBucket
 from schemas.disk import DiskUpdate
 from schemas.machines import VMUpdate
 from services.blueprint import get_blueprintid
@@ -20,152 +15,127 @@ import os
 from googleapiclient.errors import HttpError
 from jinja2 import Template
 from pathlib import Path
-from sqlalchemy import update
 
 
 async def start_image_creation_worker(project, disk_containers, host, db):
-    prjct = db.query(Project).filter(Project.name==project).first()
-
-    service = get_service_compute_v1(prjct.service_account)
-
-    for disk in disk_containers:
-        if disk['os_disk']:
-            disk_body = {
-                "name": host.replace('.', '-'),
-                "description": "Disks migrated using xmigrate",
-                "rawDisk": {
-                    "source": disk['image_path']
-                },
-                
-                # "archiveSizeBytes": string,
-                # "diskSizeGb": str(disk['disk_size']),
-                # "family": string,
-                
-                "labels": {
-                    "app": "xmigrate",  
-                },
-            
-                "storageLocations": [
-                    prjct.location
-                ]
-            }
-            
-            request = service.images().insert(project=prjct.gcp_project_id, body=disk_body)
-
-            try:
-                response = request.execute()
-                print(response)
-            except HttpError as e:
-                if e.resp.status == 409:
-                    print("image already created")
-
-                    db.execute(update(Blueprint).where(
-                        Blueprint.project==project and Blueprint.host==host
-                        ).values(
-                        image_id=f"projects/{prjct.gcp_project_id}/global/images/{host.replace('.', '-')}"
-                        ).execution_options(synchronize_session="fetch"))
-                    db.commit()
-
-                    continue
-
-            while True:
-                result = service.globalOperations().get(project=prjct.gcp_project_id, operation=response['name']).execute()
-                print(result)
-
-                if result['status'] == 'DONE':
-                    print("done.")
-
-                    if 'error' in result.keys():
-                        raise Exception(result['error'])
-                    
-                    db.execute(update(Blueprint).where(
-                        Blueprint.project==project and Blueprint.host==host
-                        ).values(
-                        image_id=result['targetLink'], status='40'
-                        ).execution_options(synchronize_session="fetch"))
-                    db.commit()
-
-                    break
-                await asyncio.sleep(10)
-        else:
-            disk_body = {
-                "name": host.replace('.','-')+"-"+disk["mnt_path"],
-                "description": "Disk's migrated using xmigrate",
-                # "sizeGb": string,
-                "sourceStorageObject": disk['image_path'],
-                # "type": string,
-                "labels": {
-                    "app": "xmigrate",
-                }
-            }
-
-            request = service.disks().insert(project=prjct.gcp_project_id, zone=f"{prjct.location}-a", body=disk_body)
-            try:
-                response = request.execute()
-                print(response)
-
-            except HttpError as e:
-                if e.resp.status == 409:
-                    print("disk already created")
-                    continue
-                else:
-                    print(str(e))
-
-            while True:
-                result = service.zoneOperations().get(project=prjct.gcp_project_id, zone=prjct.location+'-a', operation=response['name']).execute()
-                print(result)
-
-                if result['status'] == 'DONE':
-                    print("done.")
-                    if 'error' in result:
-                        raise Exception(result['error'])
-                    
-                    db.execute(update(Disk).where(
-                        Disk.project==project and Disk.host==host and Disk.mnt_path==disk["mnt_path"]
-                        ).values(
-                        disk_id=result['targetLink']
-                        ).execution_options(synchronize_session="fetch"))
-                    db.commit()
-
-                    db.execute(update(Blueprint).where(
-                        Blueprint.project==project and Blueprint.host==host
-                        ).values(
-                        status='42'
-                        ).execution_options(synchronize_session="fetch"))
-                    db.commit()
-
-                    break
-                await asyncio.sleep(10)
-
-async def start_image_creation(project, hostname, db):
-    bucket_name = ''
-    hosts = []
+    service = get_service_compute_v1(json.loads(project.gcp_service_token))
+    gcp_project_id = (project.gcp_service_token)['project_id']
     try:
-        bucket = db.query(GcpBucket).filter(GcpBucket.project==project).first()
+        for disk in disk_containers:
+            if disk['os_disk']:
+                disk_body = {
+                    "name": host.replace('.', '-'),
+                    "description": "Disk migrated using xmigrate",
+                    "rawDisk": {
+                        "source": disk['image_path']
+                    },
+                    
+                    # "archiveSizeBytes": string,
+                    # "diskSizeGb": str(disk['disk_size']),
+                    # "family": string,
+                    
+                    "labels": {"app": "xmigrate",},
+                    "storageLocations": [project.location]
+                }
+                
+                request = service.images().insert(project=gcp_project_id, body=disk_body)
 
-        if hostname == "all":
-            hosts = db.query(Blueprint).filter(Blueprint.project==project).all()
+                try:
+                    response = request.execute()
+                    print(response)
+                except HttpError as e:
+                    if e.resp.status == 409:
+                        print("Image already created!")
+
+                        vm_data = VMUpdate(machine_id=host.id, image_id=f"projects/{gcp_project_id}/global/images/{(host.hostname).replace('.', '-')}")
+                        update_vm(vm_data, db)
+                        continue
+
+                while True:
+                    result = service.globalOperations().get(project=gcp_project_id, operation=response['name']).execute()
+                    print(result)
+
+                    if result['status'] == 'DONE':
+                        print("Task done.")
+
+                        if 'error' in result.keys():
+                            raise Exception(result['error'])
+                        
+                        vm_data = VMUpdate(machine_id=host.id, image_id=result['targetLink'], status='40')
+                        update_vm(vm_data, db)
+                        break
+                    await asyncio.sleep(10)
+            else:
+                disk_body = {
+                    "name": f"{(host.hostname).replace('.', '-')}-{disk['mnt_path']}",
+                    "description": "Disk migrated using xmigrate",
+                    # "sizeGb": string,
+                    "sourceStorageObject": disk['image_path'],
+                    # "type": string,
+                    "labels": {"app": "xmigrate",}
+                }
+
+                request = service.disks().insert(project=gcp_project_id, zone=f"{project.location}-a", body=disk_body)
+                try:
+                    response = request.execute()
+                    print(response)
+                except HttpError as e:
+                    if e.resp.status == 409:
+                        print("Disk already created!")
+                        continue
+                    else:
+                        print(str(e))
+
+                while True:
+                    result = service.zoneOperations().get(project=gcp_project_id, zone=f"{project.location}-a", operation=response['name']).execute()
+                    print(result)
+
+                    if result['status'] == 'DONE':
+                        print("Task done.")
+                        if 'error' in result:
+                            raise Exception(result['error'])
+                        
+                        disk_id = get_diskid(host.id, disk['mnt_path'].replace('/', 'slash'), db)
+                        disk_data = DiskUpdate(disk_id=disk_id, disk_id=result['targetLink'])
+                        update_disk(disk_data, db)
+
+                        vm_data = VMUpdate(machine_id=host.id, status='42')
+                        update_vm(vm_data, db)
+                        break
+                    await asyncio.sleep(10)
+        return True
+    except Exception as e:
+        print(str(e))
+        return False
+
+
+async def start_image_creation(user, project, hostname, db) -> bool:
+    try:
+        project = get_project_by_name(user, project, db)
+        storage = get_storage(project.id, db)
+        blueprint_id = get_blueprintid(project.id, db)
+
+        if hostname == ["all"]:
+            hosts = get_all_machines(blueprint_id, db)
         else:
-            hosts = db.query(Blueprint).filter(Blueprint.project==project, Blueprint.host==hostname).all()
-
-        bucket_name = bucket.bucket
+            hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
     
         for host in hosts:
-            disks = (db.query(Discover).filter(Discover.project==project, Discover.host==host.host).first()).disk_details
+            disks = json.loads(get_discover(project.id, db)[0].disk_details)
             disk_containers = [] 
 
             for disk in disks:
-                image_name = f'{host.host}{disk["mnt_path"].replace("/","-slash")}.tar.gz'
+                image_name = f'{host.hostname}{disk["mnt_path"].replace("/","-slash")}.tar.gz'
                 os_disk = True if disk['mnt_path'] in ['/', '/boot'] else False
                 disk_containers.append(
                     {
-                        'image_path': f'https://storage.googleapis.com/{bucket_name}/{image_name}',
+                        'image_path': f'https://storage.googleapis.com/{storage.bucket_name}/{image_name}',
                         'os_disk': os_disk,
                         'disk_size': disk['disk_size'],
                         'mnt_path': disk['mnt_path'].replace('/','slash')
                     }
                 )
-            image_created = await start_image_creation_worker(project, disk_containers, host.host, db)
+            image_created = await start_image_creation_worker(project, disk_containers, host, db)
             if not image_created: return False
         return True
     except Exception as e:
@@ -173,7 +143,7 @@ async def start_image_creation(project, hostname, db):
         return False
 
 
-async def download_worker(osdisk_raw, project, host, db):
+async def download_worker(osdisk_raw, project, host, db) -> bool:
     storage = get_storage(project.id, db)
     try:
         cur_path = os.getcwd()
@@ -218,7 +188,7 @@ async def download_worker(osdisk_raw, project, host, db):
         return False
 
 
-async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db):
+async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
     storage = get_storage(project.id, db)
     file_size = '0'
     cur_path = os.getcwd()
@@ -294,7 +264,7 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
 async def start_conversion(user, project, hostname, db) -> bool:
     project = get_project_by_name(user, project, db)
     blueprint_id = get_blueprintid(project.id, db)
-    if hostname == "all":
+    if hostname == ["all"]:
         hosts = get_all_machines(blueprint_id, db)
     else:
         hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]

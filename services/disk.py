@@ -40,6 +40,16 @@ def create_disk(data: DiskCreate, db: Session) -> None:
     db.refresh(stmt)
 
 
+def get_all_disks(vm_id: str, db: Session) -> str:
+    '''
+    Returns the disk data of all disks for the host.
+
+    :param vm_id: id of the corresponding host
+    :param db: active database session
+    '''
+    return(db.query(Disk).filter(Disk.vm==vm_id, Disk.is_deleted==False).first().id)
+
+
 def get_diskid(vm_id: str, mountpoint: str, db: Session) -> str:
     '''
     Returns the id of a partciular disk data for the host.
