@@ -132,23 +132,23 @@ async def vm_prepare(data: CommonCreate, current_user: TokenData = Depends(get_c
 
 @router.post('/blueprint/host/clone')
 async def image_clone(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.call_start_clone(current_user['username'], data.project, data.hostname, db))
+    asyncio.create_task(build.start_cloning(current_user['username'], data.project, data.hostname, db))
     return jsonable_encoder({"message": "cloning started", "status":200})
 
 
 @router.post('/blueprint/host/convert')
 async def image_convert(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.call_start_convert(current_user['username'], data.project, data.hostname, db))
+    asyncio.create_task(build.start_conversion(current_user['username'], data.project, data.hostname, db))
     return jsonable_encoder({"message": "conversion started", "status": 200})
 
 
 @router.post('/blueprint/network/build')
 async def network_build(data: CommonBase, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.call_build_network(current_user['username'], data.project, db))
+    asyncio.create_task(build.start_network_build(current_user['username'], data.project, db))
     return jsonable_encoder({"message": "network build started", "status": 200})
 
 
 @router.post('/blueprint/host/build')
 async def host_build(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.call_build_host(current_user['username'], data.project, data.hostname, db))
+    asyncio.create_task(build.start_host_build(current_user['username'], data.project, data.hostname, db))
     return jsonable_encoder({"msg": "build started", "status": 200})

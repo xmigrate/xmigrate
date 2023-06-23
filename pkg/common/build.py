@@ -11,11 +11,6 @@ from pkg.gcp import disk as gcpdisk
 from pkg.gcp.network import create_nw as gcp_create_nw
 from services.project import get_project_by_name
 from utils.logger import *
-import asyncio
-
-
-async def call_start_vm_preparation(user, project, hostname, db) -> None:
-    await asyncio.create_task(start_vm_preparation(user, project, hostname, db))
 
 
 async def start_vm_preparation(user, project, hostname, db) -> None:
@@ -30,10 +25,6 @@ async def start_vm_preparation(user, project, hostname, db) -> None:
         logger("VM preparation failed", "error")
 
 
-async def call_start_clone(user, project, hostname, db) -> None:
-    await asyncio.create_task(start_cloning(user, project,hostname, db))
-
-
 async def start_cloning(user, project, hostname, db) -> None:
     logger("Cloning started","info")
     print("****************Cloning awaiting*****************")
@@ -46,11 +37,7 @@ async def start_cloning(user, project, hostname, db) -> None:
         logger("Disk cloning failed", "error")
 
 
-async def call_start_convert(user, project, hostname, db):
-    await asyncio.create_task(start_convert(user, project, hostname, db))
-
-
-async def start_convert(user, project, hostname, db):
+async def start_conversion(user, project, hostname, db):
     provider = get_project_by_name(user, project, hostname, db)
 
     if provider == "aws":
@@ -95,10 +82,6 @@ async def start_convert(user, project, hostname, db):
             logger("Disk Conversion failed", "error")
 
 
-async def call_build_network(user, project, db):
-    await asyncio.create_task(start_network_build(user, project, db))
-
-
 async def start_network_build(user, project, db):
     provider = get_project_by_name(user, project, db).provider
     network_created = False
@@ -116,10 +99,6 @@ async def start_network_build(user, project, db):
     else:
         print("Network creation failed")
         logger("Network creation failed","error")
-
-
-async def call_build_host(user, project, hostname, db):
-    await asyncio.create_task(start_host_build(user, project, hostname, db))
 
 
 async def start_host_build(user, project, hostname, db):
