@@ -71,10 +71,10 @@ async def subnet_delete(data: SubnetDelete, current_user: TokenData = Depends(ge
 
 
 @router.get('/blueprint/subnet')
-async def subnet_get(cidr: str, project: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+async def subnet_get(nw_cidr: str, project: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     project_id = get_projectid(current_user['username'], project, db)
     blueprint_id = get_blueprintid(project_id, db)
-    network_id = get_networkid(cidr, blueprint_id, db)
+    network_id = get_networkid(nw_cidr, blueprint_id, db)
     return get_all_subnets(network_id, db)
 
 

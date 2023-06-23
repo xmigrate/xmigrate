@@ -27,7 +27,7 @@ def fetch_all_hosts(user, project, db):
         networks = get_all_networks(blueprint_id, db)
         network_objects = []
         for network in networks:
-            network_id = get_networkid(network.name, blueprint_id, db)
+            network_id = get_networkid(network.cidr, blueprint_id, db)
             subnets = get_all_subnets(network_id, db)
             network_objects.append({"nw_name": network.name, "cidr": network.cidr, 'subnets': subnets})
         return {'networks': network_objects}
