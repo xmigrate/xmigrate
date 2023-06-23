@@ -11,6 +11,7 @@ class ProjectBase(BaseModel):
     azure_client_id: Union[str, None] = None
     azure_client_secret: Union[str, None] = None
     azure_tenant_id: Union[str, None] = None
+    azure_subscription_id: Union[str, None] = None
     azure_resource_group: Union[str, None] = None
     azure_resource_group_created: bool = False
     gcp_service_token: Union[Dict, None] = None
