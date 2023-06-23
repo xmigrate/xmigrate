@@ -8,6 +8,7 @@ from services.storage import get_storage
 from utils.logger import *
 import asyncio
 from asyncio.subprocess import PIPE, STDOUT
+import json
 import os
 from pathlib import Path
 
@@ -89,6 +90,15 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, 
         os.popen('echo "'+ str(e) + '" >> ./logs/ansible/migration_log.txt')
         return False
 
+async def get_size(path) -> int:
+    qemu_command = ['qemu-img', 'info', '-f', 'raw', '--output', 'json', path]
+    process = await asyncio.create_subprocess_exec(*qemu_command, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = await process.communicate()
+    if process.returncode != 0:
+        raise Exception(f'Error executing command: {stderr.decode()}')
+    output_json = json.loads(stdout.decode())
+    size = output_json['virtual-size']
+    return int(size)
 
 async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
     downloaded = await download_worker(osdisk_raw, project, host, db)
@@ -103,10 +113,24 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
             print("Start converting")
 
             os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
+            convert_command = f"qemu-img convert -f raw -o subformat=fixed,force_size -O vpc {path} {vhd_path}"
 
-            command2 = f"qemu-img convert -f raw -o subformat=fixed,force_size -O vpc {path} {vhd_path}"
-            process2 = await asyncio.create_subprocess_shell(command2, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-            await process2.wait()
+            MB = 1024 * 1024
+            size = await get_size(path)
+            rounded_size = ((size // MB) + 1) * MB
+            if size % MB == 0:
+                logger("Size is already rounded","info")
+                process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+                await process.wait()
+            else:
+                logger("Size before conversion: "+ str(size), "info")
+                resize_command = f"qemu-img resize -f raw {path} {rounded_size}"
+                process = await asyncio.create_subprocess_shell(resize_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+                await process.wait()
+                process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+                await process.wait()
+                size = await get_size(path)
+                logger("Size after conversion: "+ str(size), "info")
 
             uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, db)
             if not uploaded: return False
@@ -126,5 +150,3 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
     else:
         logger("Downloading image failed", "warning")
         return False
-
-

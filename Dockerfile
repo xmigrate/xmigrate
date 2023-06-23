@@ -6,24 +6,34 @@ COPY ./UI .
 
 WORKDIR /app/xmigrate-ui
 
-RUN npm install && npm run build
+RUN npm install
+RUN npm run build
 
 FROM ubuntu:18.04
+
+SHELL ["/bin/bash", "-c"]
 
 WORKDIR /app
 
 RUN apt update
 RUN apt install -y sshpass python3.7 python3-pip qemu-utils wget nginx
-RUN if [ "$(uname -m)" == "x86_64" ]; then \
+RUN if [[ "$(uname -m)" == "x86_64" ]]; then \
+        echo "Attempting to download azcopy for x86_64..." && \
         wget https://azcopyvnext.azureedge.net/release20201021/azcopy_linux_amd64_10.6.1.tar.gz && \
         tar -zxf ./azcopy_linux_amd64_10.6.1.tar.gz && \
         mv ./azcopy_linux_amd64_10.6.1/azcopy /usr/bin && \
-        chmod +x /usr/bin/azcopy; \
-    elif [ "$(uname -m)" == "aarch64" ]; then \
+        chmod +x /usr/bin/azcopy && \
+        echo "azcopy installation for x86_64 succeeded." ; \
+    elif [[ "$(uname -m)" == "aarch64" ]]; then \
+        echo "Attempting to download azcopy for aarch64..." && \
         wget https://aka.ms/downloadazcopy-v10-linux-arm64 && \
         tar -zxf ./downloadazcopy-v10-linux-arm64 && \
         mv ./azcopy_linux_arm64_10.18.1/azcopy /usr/bin && \
-        chmod +x /usr/bin/azcopy; \
+        chmod +x /usr/bin/azcopy && \
+        echo "azcopy installation for aarch64 succeeded." ; \
+    else \
+        echo "Unexpected architecture; azcopy was not installed." && \
+        exit 1 ; \
     fi
 
 COPY nginx.conf /etc/nginx/nginx.conf
@@ -47,5 +57,5 @@ RUN rm -rf UI
 
 EXPOSE 80
 
-ENTRYPOINT ["/bin/sh", "./scripts/start.sh"]
+ENTRYPOINT ["/bin/bash", "./scripts/start.sh"]
 
