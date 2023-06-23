@@ -26,6 +26,4 @@ class VirtualMachine(Base):
     status = Column(Integer())
     image_id = Column(String(256))
     vm_id = Column(String(256))
-    disk_clone = Column(String(256))
     nic_id = Column(String(256))
-    artifact_location = Column(String(256))

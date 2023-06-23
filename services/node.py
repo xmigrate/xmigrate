@@ -26,11 +26,9 @@ def create_node(data: NodeCreate, db: Session) -> None:
     :param db: active database session
     '''
 
-    hosts = {'hosts': data.hosts}
-
     stmt = Nodes(
         id = unique_id_gen("node"),
-        hosts = json.dumps(hosts),
+        hosts = json.dumps(data.hosts),
         username = data.username,
         password = data.password,
         project = data.project_id,
@@ -72,13 +70,11 @@ def update_node(data: NodeUpdate, db: Session) -> None:
     :param data: ansible target node data
     :param db: active database session
     '''
-
-    hosts = {'hosts': data.hosts}
     
     stmt = update(Nodes).where(
         Nodes.id==data.node_id and Nodes.is_deleted==False
     ).values(
-        hosts = json.dumps(hosts),
+        hosts = json.dumps(data.hosts),
         username = data.username,
         password = data.password,
         updated_at = datetime.now()

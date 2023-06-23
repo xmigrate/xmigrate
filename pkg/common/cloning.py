@@ -14,7 +14,7 @@ async def clone(user: str, project: str, hostname: list, db: Session) -> bool:
     project = get_project_by_name(user, project, db)
     storage = get_storage(project.id, db)
     nodes = get_nodes(project.id, db)
-    public_ip = ','.join(json.loads(nodes.hosts)['hosts'])
+    public_ip = ','.join(json.loads(nodes.hosts))
     server = os.getenv('BASE_URL')
     current_dir = os.getcwd()
     os.popen('echo null > ./logs/ansible/migration_log.txt')
@@ -35,13 +35,13 @@ async def clone(user: str, project: str, hostname: list, db: Session) -> bool:
         }
     elif project.provider in ('aws', 'gcp'):
         extravars = {
-        'bucket': storage.bucket_name,
-        'access_key': storage.access_key,
-        'secret_key': storage.secret_key,
-        'server': server,
-        'project': project.name,
-        'ansible_user': nodes.username
-    }
+            'bucket': storage.bucket_name,
+            'access_key': storage.access_key,
+            'secret_key': storage.secret_key,
+            'server': server,
+            'project': project.name,
+            'ansible_user': nodes.username
+        }
         
     envvars = {
         'ANSIBLE_BECOME_USER': nodes.username,

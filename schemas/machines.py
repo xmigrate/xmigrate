@@ -23,7 +23,6 @@ class VMUpdate(VMCreate):
     status: Union[str, None] = None
     image_id: Union[str, None] = None
     vm_id: Union[str, None] = None
-    disk_clone: Union[str, None] = None
     nic_id: Union[str, None] = None
     artifact_location: Union[str, None] = None
 

@@ -2,6 +2,7 @@ from model.disk import Disk
 from schemas.disk import DiskCreate, DiskUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
+import json
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
@@ -40,14 +41,14 @@ def create_disk(data: DiskCreate, db: Session) -> None:
     db.refresh(stmt)
 
 
-def get_all_disks(vm_id: str, db: Session) -> str:
+def get_all_disks(vm_id: str, db: Session) -> list[Disk]:
     '''
     Returns the disk data of all disks for the host.
 
     :param vm_id: id of the corresponding host
     :param db: active database session
     '''
-    return(db.query(Disk).filter(Disk.vm==vm_id, Disk.is_deleted==False).first().id)
+    return(db.query(Disk).filter(Disk.vm==vm_id, Disk.is_deleted==False).all())
 
 
 def get_diskid(vm_id: str, mountpoint: str, db: Session) -> str:
@@ -71,7 +72,7 @@ def update_disk(data: DiskUpdate, db: Session) -> None:
         vm = data.machine_id,
         vhd = data.vhd,
         file_size = data.file_size,
-        disk_clone = data.disk_clone,
+        disk_clone = json.dumps(data.disk_clone),
         target_disk_id = data.target_disk_id,
         updated_at = datetime.now()
     ).execution_options(synchronize_session="fetch")

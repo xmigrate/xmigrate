@@ -102,7 +102,6 @@ def update_vm(data: VMUpdate, db: Session) -> JSONResponse:
         status = data.status,
         image_id = data.image_id,
         vm_id = data.vm_id,
-        disk_clone = data.disk_clone,
         nic_id = data.nic_id,
         artifact_location = data.artifact_location,
         updated_at = datetime.now()
