@@ -96,7 +96,7 @@ async def start_image_creation_worker(project, disk_containers, host, db):
                             raise Exception(result['error'])
                         
                         disk_id = get_diskid(host.id, disk['mnt_path'].replace('/', 'slash'), db)
-                        disk_data = DiskUpdate(disk_id=disk_id, disk_id=result['targetLink'])
+                        disk_data = DiskUpdate(disk_id=disk_id, target_disk_id=result['targetLink'])
                         update_disk(disk_data, db)
 
                         vm_data = VMUpdate(machine_id=host.id, status='42')
