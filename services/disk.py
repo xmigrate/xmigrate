@@ -3,7 +3,8 @@ from schemas.disk import DiskCreate, DiskUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 import json
-from sqlalchemy import update
+from fastapi.responses import JSONResponse
+from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
 
 
@@ -19,7 +20,7 @@ def check_disk_exists(vm_id: str, mountpoint: str, db: Session) -> bool:
     return(db.query(Disk).filter(Disk.vm==vm_id, Disk.mnt_path==mountpoint, Disk.is_deleted==False).count() > 0)
 
 
-def create_disk(data: DiskCreate, db: Session) -> None:
+def create_disk(data: DiskCreate, db: Session) -> JSONResponse:
     '''
     Store the disk details.
     
@@ -40,6 +41,8 @@ def create_disk(data: DiskCreate, db: Session) -> None:
     db.commit()
     db.refresh(stmt)
 
+    return JSONResponse({"status": 201, "message": "disk data created", "data": [{}]})
+
 
 def get_all_disks(vm_id: str, db: Session) -> list[Disk]:
     '''
@@ -51,7 +54,7 @@ def get_all_disks(vm_id: str, db: Session) -> list[Disk]:
     return(db.query(Disk).filter(Disk.vm==vm_id, Disk.is_deleted==False).all())
 
 
-def get_diskid(vm_id: str, mountpoint: str, db: Session) -> str:
+def get_diskid(vm_id: str, mountpoint: str, db: Session) -> Column[str]:
     '''
     Returns the id of a partciular disk data for the host.
 
@@ -63,7 +66,7 @@ def get_diskid(vm_id: str, mountpoint: str, db: Session) -> str:
     return(db.query(Disk).filter(Disk.mnt_path==mountpoint, Disk.vm==vm_id, Disk.is_deleted==False).first().id)
 
 
-def update_disk(data: DiskUpdate, db: Session) -> None:
+def update_disk(data: DiskUpdate, db: Session) -> JSONResponse:
     stmt = update(Disk).where(
         Disk.id==data.disk_id and Disk.is_deleted==False
     ).values(
@@ -79,3 +82,5 @@ def update_disk(data: DiskUpdate, db: Session) -> None:
 
     db.execute(stmt)
     db.commit()
+
+    return JSONResponse({"status": 204, "message": "disk data updated", "data": [{}]})

@@ -5,7 +5,7 @@ from schemas.project import ProjectBase, ProjectUpdate
 from datetime import datetime
 import json
 from fastapi.responses import JSONResponse
-from sqlalchemy import update
+from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
 
 
@@ -63,7 +63,7 @@ def get_all_projects(user: str, db: Session) -> list:
     return(db.query(Project).join(Mapper).join(User).filter(User.username==user, Mapper.is_deleted==False).all())
 
 
-def get_projectid(user: str, project: str, db: Session) -> str:
+def get_projectid(user: str, project: str, db: Session) -> Column[str]:
     '''
     Returns the id for the specified active project associated with the active user.
     

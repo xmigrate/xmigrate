@@ -3,7 +3,7 @@ from schemas.machines import VMCreate, VMUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from sqlalchemy import update
+from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
 
 
@@ -46,7 +46,7 @@ def create_vm(data: VMCreate, db: Session) -> JSONResponse:
     return JSONResponse({"status": 201, "message": "VM data created", "data": [{}]})
 
 
-def get_all_machines(blueprint_id: str, db: Session):
+def get_all_machines(blueprint_id: str, db: Session) -> list[VM]:
     '''
     Returns all target vms associated with the blueprint.
 
@@ -68,7 +68,7 @@ def get_machine_by_hostname(hostname: str, blueprint_id: str, db: Session) -> VM
     return(db.query(VM).filter(VM.hostname==hostname, VM.blueprint==blueprint_id, VM.is_deleted==False).first())
 
 
-def get_machineid(hostname: str, blueprint_id: str, db: Session) -> str:
+def get_machineid(hostname: str, blueprint_id: str, db: Session) -> Column[str]:
     '''
     Returns the id for the vm data for a machine in the blueprint.
 

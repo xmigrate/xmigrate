@@ -3,7 +3,7 @@ from schemas.network import NetworkCreate, NetworkUpdate, SubnetCreate, SubnetUp
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from sqlalchemy import update
+from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
 
 
@@ -53,7 +53,7 @@ def create_network(blueprint_id: str, data: NetworkCreate, db: Session) -> JSONR
     db.commit()
     db.refresh(stmt)
 
-    return JSONResponse({"status": 201, "message": "network created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "network data created", "data": [{}]})
 
 
 def create_subnet(network_id: str, data: SubnetCreate, db: Session) -> JSONResponse:
@@ -79,7 +79,7 @@ def create_subnet(network_id: str, data: SubnetCreate, db: Session) -> JSONRespo
     db.commit()
     db.refresh(stmt)
 
-    return JSONResponse({"status": 201, "message": "subnet created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "subnet data created", "data": [{}]})
 
 
 def delete_network(blueprint_id: str, cidr: str, db: Session) -> JSONResponse:
@@ -103,7 +103,7 @@ def delete_network(blueprint_id: str, cidr: str, db: Session) -> JSONResponse:
     db.execute(stmt)
     db.commit()
 
-    return JSONResponse({"status": 204, "message": "network deleted", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "network data deleted", "data": [{}]})
 
 
 def delete_subnet(network_id: str, cidr: str, db: Session) -> JSONResponse:
@@ -127,10 +127,10 @@ def delete_subnet(network_id: str, cidr: str, db: Session) -> JSONResponse:
     db.execute(stmt)
     db.commit()
 
-    return JSONResponse({"status": 204, "message": "subnet deleted", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "subnet data deleted", "data": [{}]})
 
 
-def get_all_networks(blueprint_id: str, db: Session) -> list:
+def get_all_networks(blueprint_id: str, db: Session) -> list[Network]:
     '''
     Returns all networks defined in a blueprint.
 
@@ -141,7 +141,7 @@ def get_all_networks(blueprint_id: str, db: Session) -> list:
     return(db.query(Network).filter(Network.blueprint==blueprint_id, Network.is_deleted==False).all())
 
 
-def get_all_subnets(network_id: str, db: Session) -> list:
+def get_all_subnets(network_id: str, db: Session) -> list[Subnet]:
     '''
     Returns all subnets defined in a network.
 
@@ -152,7 +152,7 @@ def get_all_subnets(network_id: str, db: Session) -> list:
     return(db.query(Subnet).filter(Subnet.network==network_id, Subnet.is_deleted==False).all())
 
 
-def get_networkid(cidr: str, blueprint_id: str, db: Session) -> str:
+def get_networkid(cidr: str, blueprint_id: str, db: Session) -> Column[str]:
     '''
     Returns the id of a network.
 
@@ -163,7 +163,7 @@ def get_networkid(cidr: str, blueprint_id: str, db: Session) -> str:
     return(db.query(Network).filter(Network.cidr==cidr, Network.blueprint==blueprint_id, Network.is_deleted==False).first().id)
 
 
-def get_network_by_cidr(cidr: str, blueprint_id: str, db: Session):
+def get_network_by_cidr(cidr: str, blueprint_id: str, db: Session) -> Network | None:
     '''
     Returns a network from the blueprint.
     
@@ -175,7 +175,7 @@ def get_network_by_cidr(cidr: str, blueprint_id: str, db: Session):
     return(db.query(Network).filter(Network.cidr==cidr, Network.blueprint==blueprint_id, Network.is_deleted==False).first())
 
 
-def get_subnet_by_cidr(cidr: str, network_id: str, db: Session):
+def get_subnet_by_cidr(cidr: str, network_id: str, db: Session) -> Subnet | None:
     '''
     Returns a subnet from the network.
     
@@ -186,7 +186,7 @@ def get_subnet_by_cidr(cidr: str, network_id: str, db: Session):
     return(db.query(Subnet).filter(Subnet.cidr==cidr, Subnet.network==network_id, Subnet.is_deleted==False).first())
 
 
-def update_network(data: NetworkUpdate, db: Session) -> None:
+def update_network(data: NetworkUpdate, db: Session) -> JSONResponse:
     '''
     Update a network data.
     
@@ -207,8 +207,10 @@ def update_network(data: NetworkUpdate, db: Session) -> None:
     db.execute(stmt)
     db.commit()
 
+    return JSONResponse({"status": 204, "message": "network data updated", "data": [{}]})
 
-def update_subnet(data: SubnetUpdate, db: Session) -> None:
+
+def update_subnet(data: SubnetUpdate, db: Session) -> JSONResponse:
     '''
     Update a subnet data.
     
@@ -226,3 +228,5 @@ def update_subnet(data: SubnetUpdate, db: Session) -> None:
 
     db.execute(stmt)
     db.commit()
+
+    return JSONResponse({"status": 204, "message": "subnet data updated", "data": [{}]})

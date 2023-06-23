@@ -3,7 +3,7 @@ from utils.id_gen import unique_id_gen
 from schemas.storage import StorageCreate, StorageUpdate
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from sqlalchemy import update
+from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
 
 
@@ -55,7 +55,7 @@ def get_storage(project_id: str, db: Session) -> Storage | None:
     return(db.query(Storage).filter(Storage.project==project_id, Storage.is_deleted==False).first())
 
 
-def get_storageid(project_id: str, db: Session) -> str:
+def get_storageid(project_id: str, db: Session) -> Column[str]:
     '''
     Returns the id for the storage account data of the given project.
 

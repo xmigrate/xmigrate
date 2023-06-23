@@ -1,6 +1,8 @@
 from model.blueprint import Blueprint
 from utils.id_gen import unique_id_gen
 from datetime import datetime
+from fastapi.responses import JSONResponse
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -15,7 +17,7 @@ def check_blueprint_exists(project_id: str, db: Session) -> bool:
     return(db.query(Blueprint).filter(Blueprint.project==project_id, Blueprint.is_deleted==False).count() > 0)
 
 
-def create_blueprint(project_id: str, db: Session) -> None:
+def create_blueprint(project_id: str, db: Session) -> JSONResponse:
     '''
     Create a blueprint for the project.
     
@@ -34,8 +36,10 @@ def create_blueprint(project_id: str, db: Session) -> None:
     db.commit()
     db.refresh(stmt)
 
+    return JSONResponse({"status": 201, "message": "blueprint created", "data": [{}]})
 
-def get_blueprint(project_id: str, db: Session):
+
+def get_blueprint(project_id: str, db: Session) -> Blueprint | None:
     '''
     Returns the blueprint data for the poject.
     
@@ -46,7 +50,7 @@ def get_blueprint(project_id: str, db: Session):
     return(db.query(Blueprint).filter(Blueprint.project==project_id, Blueprint.is_deleted==False).first())
 
 
-def get_blueprintid(project_id: str, db: Session) -> str:
+def get_blueprintid(project_id: str, db: Session) -> Column[str]:
     '''
     Returns the id of the blueprint associated with the given project.
 

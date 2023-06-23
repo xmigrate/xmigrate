@@ -3,7 +3,8 @@ from schemas.node import NodeCreate, NodeUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 import json
-from sqlalchemy import update
+from fastapi.responses import JSONResponse
+from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
 
 
@@ -18,7 +19,7 @@ def check_node_exists(project_id: str, db: Session) -> bool:
     return(db.query(Nodes).filter(Nodes.project==project_id, Nodes.is_deleted==False).count() > 0)
 
 
-def create_node(data: NodeCreate, db: Session) -> None:
+def create_node(data: NodeCreate, db: Session) -> JSONResponse:
     '''
     Creates node data for the project.
     
@@ -40,8 +41,10 @@ def create_node(data: NodeCreate, db: Session) -> None:
     db.commit()
     db.refresh(stmt)
 
+    return JSONResponse({"status": 201, "message": "node data created", "data": [{}]})
 
-def get_nodeid(project_id: str, db: Session) -> str:
+
+def get_nodeid(project_id: str, db: Session) -> Column[str]:
     '''
     Returns the id for the node data of the given project.
 
@@ -63,7 +66,7 @@ def get_nodes(project_id: str, db: Session) -> Nodes | None:
     return(db.query(Nodes).filter(Nodes.project==project_id, Nodes.is_deleted==False).first())
 
 
-def update_node(data: NodeUpdate, db: Session) -> None:
+def update_node(data: NodeUpdate, db: Session) -> JSONResponse:
     '''
     Updates the node data for the project.
     
@@ -82,3 +85,5 @@ def update_node(data: NodeUpdate, db: Session) -> None:
 
     db.execute(stmt)
     db.commit()
+
+    return JSONResponse({"status": 204, "message": "node data updated", "data": [{}]})

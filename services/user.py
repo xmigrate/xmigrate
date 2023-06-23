@@ -2,6 +2,7 @@ from model.user import User
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 from fastapi.responses import JSONResponse
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -40,7 +41,7 @@ def create_user(username: str, password: str, db: Session) -> JSONResponse:
     return JSONResponse({"status": 201, "message": "user created", "data": [{}]})
 
 
-def get_userid(username: str, db: Session) -> str:
+def get_userid(username: str, db: Session) -> Column[str]:
     '''
     Returns the id of the active user.
     
