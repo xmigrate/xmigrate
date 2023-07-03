@@ -2,10 +2,11 @@ from utils.logger import *
 import os
 
 def add_nodes(nodes, user, password, project) -> bool:
-    ansible_hosts = "./ansible/projects/"+project+"/hosts"
+    ansible_host_parent = f"./ansible/projects/{project}"
+    ansible_hosts = f"./ansible/projects/{project}/hosts"
 
-    if not os.path.exists("./ansible/projects/"+project):
-       os.makedirs("./ansible/projects/"+project)
+    if not os.path.exists(ansible_host_parent):
+       os.makedirs(ansible_host_parent)
     
     nodes = '\n'.join(nodes)
     
