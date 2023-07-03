@@ -1,5 +1,5 @@
 from services.blueprint import get_blueprintid
-from services.machines import get_machineid, update_vm
+from services.machines import get_machineid, get_all_machines, update_vm
 from services.network import get_all_networks, get_all_subnets, get_networkid
 from services.project import get_projectid
 from schemas.machines import VMUpdate
@@ -25,11 +25,16 @@ def fetch_all_hosts(user, project, db):
         project_id = get_projectid(user, project, db)
         blueprint_id = get_blueprintid(project_id, db)
         networks = get_all_networks(blueprint_id, db)
+        hosts = get_all_machines(blueprint_id, db)
         network_objects = []
         for network in networks:
             network_id = get_networkid(network.cidr, blueprint_id, db)
             subnets = get_all_subnets(network_id, db)
             network_objects.append({"nw_name": network.name, "cidr": network.cidr, 'subnets': subnets})
+            for network_object in network_objects:
+                for subnet in network_object['subnets']:
+                    hosts = [host for host in hosts if host.network == network.cidr]
+                    subnet.hosts = hosts
         return {'networks': network_objects}
     except Exception as e:
         print(str(e))

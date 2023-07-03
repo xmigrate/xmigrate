@@ -2,9 +2,12 @@ from pkg.azure import *
 from pkg.common import build
 from pkg.common import hosts as host
 from routes.auth import TokenData, get_current_user
+from schemas.blueprint import BlueprintCreate
 from schemas.common import CommonBase, CommonCreate
+from schemas.machines import VMUpdate
 from schemas.network import NetworkCreate, NetworkDelete, SubnetCreate, SubnetDelete
 from services.blueprint import get_blueprintid
+from services.machines import get_machineid, update_vm
 from services.network import (check_network_exists, check_subnet_exists, create_network, create_subnet, delete_network, delete_subnet, get_all_networks, get_all_subnets, get_networkid)
 from services.discover import get_discover
 from services.project import get_projectid
@@ -36,7 +39,11 @@ async def network_create(data: NetworkCreate, current_user: TokenData = Depends(
         if not network_exists:
             create_network(blueprint_id, data, db)
         else:
-            print(f'Network {data.name} already exists for the project!')
+            print(f'Network {data.name} already exists for the project!')     
+        networks = get_all_networks(blueprint_id, db)
+        machine_id = get_machineid(data.hostname, blueprint_id, db)
+        vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
+        update_vm(vm_data, db)
     except Exception as e:
         print(str(e))
         return jsonable_encoder({'status': '500', 'msg': 'network  creation failed'})
@@ -105,23 +112,17 @@ async def update_blueprint(request: Request, current_user: TokenData = Depends(g
         return host.update_hosts(current_user['username'], data['project'], data['machines'], db)
     except:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
+    
 
-# class BlueprintCreate(BaseModel):
-#     project: Union[str,None] = None
-#     machines: Union[list,None] = None
-
-# @router.post('/blueprint/create')
-# async def create_blueprint(data: BlueprintCreate, db: Session = Depends(dbconn)):
-#     project = data.project
-#     machines = data.machines
-#     for machine in machines:
-#         db.execute(update(Blueprint).where(
-#             Blueprint.host==machine["hostname"] and Blueprint.project==project
-#             ).values(
-#             machine_type=machine["machine_type"], public_route=bool(machine["type"])
-#             ).execution_options(synchronize_session="fetch"))
-#         db.commit()
-#         return jsonable_encoder({"msg":"Succesfully updated","status":200})
+@router.post('/blueprint/create')
+async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    project_id = get_projectid(current_user['username'], data.project, db)
+    blueprint_id = get_blueprintid(project_id, db)
+    machine_id = get_machineid(data.hostname, blueprint_id, db)
+    for machine in data.machines:
+        vm_data = VMUpdate(machine_id=machine_id, machine_type=machine['machine_type'], public_route=bool(machine["type"]))
+        update_vm(vm_data, db)
+        return jsonable_encoder({"msg": "succesfully updated", "status": 200})
 
 
 @router.post('/blueprint/host/prepare')

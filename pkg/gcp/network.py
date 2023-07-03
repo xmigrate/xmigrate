@@ -109,32 +109,29 @@ async def create_nw(user, project, db):
     machines = get_all_machines(blueprint_id, db)
     gcp_service_json = json.loads(prjct.gcp_service_token)
 
-    vpc = []
-    subnet = []
     for machine in machines:
-        vpc.append(machine.network)
-        subnet.append(machine.subnet)
         networks = get_all_networks(blueprint_id, db)
-
         for network in networks:
+            vpc_id = network.target_network_id
+            vpc_created = network.created
             subnets = get_all_subnets(network.id, db)
             update_host = True if network.cidr == machine.network else False
-            if network.target_network_id is None and not network.created:
+            if vpc_id is None and not vpc_created:
                 response, vpc_created = await create_vpc(gcp_service_json, network.name, True)
-                vpc_id = response['targetLink'] if 'targetLink' in response.keys() else network.target_network_id
-                if vpc_created:
-                    network_data = NetworkUpdate(network.id, target_network_id=vpc_id, created=True)
-                    update_network(network_data, db)
+                vpc_id = response['targetLink'] if 'targetLink' in response.keys() else vpc_id
+            if vpc_created:
+                network_data = NetworkUpdate(network.id, target_network_id=vpc_id, created=True)
+                update_network(network_data, db)
                 if update_host:
                     status = 10 if vpc_created else -10
                     vm_data = VMUpdate(blueprint_id=blueprint_id, status=status)
                     update_vm(vm_data, db)
                     if status == -10:
-                        print("Vnet creation failed to save: "+ str(e))
-                        logger("Vnet creation failed to save: "+ str(e), "warning")
+                        print("Vnet creation failed to save!")
+                        logger("Vnet creation failed to save", "warning")
                         return False
                 for subnet in subnets:
-                    if (not subnet.created) and (network.created or vpc_created):
+                    if not subnet.created and vpc_created:
                         subnet_result = create_subnet(gcp_service_json, network.name, prjct.location, subnet.subnet_name, subnet.cidr)
                         if 'targetLink' in subnet_result.keys():
                             subnet_data = SubnetUpdate(subnet.id, target_subnet_id=subnet_result['targetLink'], created=True)
@@ -144,5 +141,5 @@ async def create_nw(user, project, db):
                             vm_data = VMUpdate(blueprint_id=blueprint_id, status=status)
                             update_vm(vm_data, db)
                             if status == -10:
-                                print("Subnet creation failed to save: "+ str(e))
-                                logger("Subnet creation failed to save: "+ str(e), "warning")
+                                print("Subnet creation failed to save!")
+                                logger("Subnet creation failed to save", "warning")

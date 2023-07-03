@@ -35,7 +35,7 @@ def create_rg(resource_client, project, db):
             return False
         
 
-def create_vnet(network_client, project, network, machine, update_host, db):
+def create_vnet(network_client, project, network, machine, update_host, db) -> bool:
     try:
         print("Provisioning a vnet...some operations might take a minute or two.")
         poller = network_client.virtual_networks.create_or_update(
@@ -59,7 +59,7 @@ def create_vnet(network_client, project, network, machine, update_host, db):
     return True
 
 
-def create_subnet(network_client, project, network, subnet, machine, update_host, db):
+def create_subnet(network_client, project, network, subnet, machine, update_host, db) -> bool:
     try:
         print("Provisioning a subnet...some operations might take a minute or two.")
         poller = network_client.subnets.create_or_update(project.azure_resource_group, network.name, subnet.subnet_name, {"address_prefix": subnet.cidr})
@@ -135,12 +135,14 @@ async def create_nw(user, project, db):
             for machine in machines:
                 networks = get_all_networks(blueprint_id, db)
                 for network in networks:
+                    vnet_created = network.created
                     subnets = get_all_subnets(network.id, db)
                     update_host = True if network.cidr == machine.network else False
-                    if network.target_network_id is None and not network.created:
+                    if network.target_network_id is None and not vnet_created:
                         vnet_created = create_vnet(network_client, project, network, machine, update_host, db)
-                        if vnet_created:
-                            for subnet in subnets:
+                    if vnet_created:
+                        for subnet in subnets:
+                            if not subnet.created and vnet_created:
                                 subnet_created = create_subnet(network_client, project, network, subnet, machine, update_host, db)
                                 if subnet_created and not machine.ip_created:
                                     create_publicIP(network_client, project, subnet, machine, update_host, db)

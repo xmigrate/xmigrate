@@ -24,7 +24,6 @@ class VMUpdate(VMCreate):
     image_id: Union[str, None] = None
     vm_id: Union[str, None] = None
     nic_id: Union[str, None] = None
-    artifact_location: Union[str, None] = None
 
     class Config:
         orm_mode = True

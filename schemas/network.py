@@ -4,6 +4,7 @@ from typing import Union
 
 class NetworkBase(BaseModel):
     project: str
+    hostname: str
     name: str
     cidr: Union[str, None] = None
 
