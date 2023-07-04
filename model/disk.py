@@ -10,7 +10,7 @@ class Disk(Base):
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
-    host = Column(String(256))
+    hostname = Column(String(256))
     vhd = Column(String(256))
     file_size = Column(String(256))
     mnt_path = Column(String(256))

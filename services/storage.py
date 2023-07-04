@@ -66,6 +66,17 @@ def get_storageid(project_id: str, db: Session) -> Column[str]:
     return(db.query(Storage).filter(Storage.project==project_id, Storage.is_deleted==False).first().id)
 
 
+def get_storage_by_id(storage_id: str, db: Session) -> Storage:
+    '''
+    Returns the storage account associated with the active project.
+    
+    :param storage_id: id of the corresponding storage account data
+    :param db: active database session
+    '''
+    
+    return(db.query(Storage).filter(Storage.id==storage_id).first())
+
+
 def update_storage(storage_id: str, data: StorageUpdate, db: Session) -> JSONResponse:
     '''
     Update the storage account details.
@@ -74,12 +85,19 @@ def update_storage(storage_id: str, data: StorageUpdate, db: Session) -> JSONRes
     :param data: storage account details for update
     :param db: active database session
     '''
+
+    storage_data = get_storage_by_id(storage_id, db).__dict__
+    data_dict = dict(data)
+    for key in data_dict.keys():
+        if data_dict[key] is None:
+            data_dict[key] = storage_data[key.rstrip('_id')]
+    data = StorageUpdate.parse_obj(data_dict)
     
     stmt = update(Storage).where(
         Storage.id==storage_id and Storage.is_deleted==False
     ).values(
         id = unique_id_gen("storage"),
-        bucket_name = data.bucket,
+        bucket_name = data.bucket_name,
         access_key = data.access_key,
         secret_key = data.secret_key,
         container = data.container,

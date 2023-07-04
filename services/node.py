@@ -66,6 +66,17 @@ def get_nodes(project_id: str, db: Session) -> Nodes | None:
     return(db.query(Nodes).filter(Nodes.project==project_id, Nodes.is_deleted==False).first())
 
 
+def get_node_by_id(node_id: str, db: Session) -> Nodes:
+    '''
+    Returns the node data for the poject.
+    
+    :param node_id: unique id of the node data
+    :param db: active database session
+    '''
+
+    return(db.query(Nodes).filter(Nodes.id==node_id).first())
+
+
 def update_node(data: NodeUpdate, db: Session) -> JSONResponse:
     '''
     Updates the node data for the project.
@@ -73,6 +84,16 @@ def update_node(data: NodeUpdate, db: Session) -> JSONResponse:
     :param data: ansible target node data
     :param db: active database session
     '''
+
+    node_data = get_node_by_id(data.node_id, db).__dict__
+    data_dict = dict(data)
+    for key in data_dict.keys():
+        if data_dict[key] is None:
+            if key == 'hosts':
+                data_dict[key] = json.loads(node_data[key])
+            else:
+                data_dict[key] = node_data[key.rstrip('_id')]
+    data = NodeUpdate.parse_obj(data_dict)
     
     stmt = update(Nodes).where(
         Nodes.id==data.node_id and Nodes.is_deleted==False

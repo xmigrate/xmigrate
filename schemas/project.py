@@ -13,14 +13,14 @@ class ProjectBase(BaseModel):
     azure_tenant_id: Union[str, None] = None
     azure_subscription_id: Union[str, None] = None
     azure_resource_group: Union[str, None] = None
-    azure_resource_group_created: bool = False
+    azure_resource_group_created: Union[bool, None] = None
     gcp_service_token: Union[Dict, None] = None
 
 
 class ProjectUpdate(ProjectBase):
     project_id: str
-    name: None =  None
-    provider: None = None
-    location: None = None
+    name: Union[str, None] = None
+    provider: Union[str, None] = None
+    location: Union[str, None] = None
     class Config:
         orm_mode = True

@@ -34,7 +34,7 @@ def create_discover(data: DiscoverCreate, db: Session) -> JSONResponse:
         network = data.network,
         subnet = data.subnet,
         ports = data.ports,
-        cpu_core = data.cores,
+        cpu_core = data.cpu_core,
         cpu_model = data.cpu_model,
         ram = data.ram,
         disk_details = json.dumps(data.disk_details),
@@ -73,6 +73,17 @@ def get_discoverid(project_id: str, db: Session) -> Column[str]:
     return(db.query(Discover).filter(Discover.project==project_id, Discover.is_deleted==False).first().id)
 
 
+def get_discover_by_id(discover_id: str, db: Session) -> Discover:
+    '''
+    Returns the discover data for the poject.
+    
+    :param discover_id: unique id of the discover data
+    :param db: active database session
+    '''
+    
+    return(db.query(Discover).filter(Discover.id==discover_id).first())
+
+
 def update_discover(data: DiscoverUpdate, db: Session) -> JSONResponse:
     '''
     Updates the discover data for the project.
@@ -81,6 +92,16 @@ def update_discover(data: DiscoverUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
+    discover_data = get_discover_by_id(data.discover_id, db).__dict__
+    data_dict = dict(data)
+    for key in data_dict.keys():
+        if data_dict[key] is None:
+            if key == 'disk_details':
+                data_dict[key] = json.loads(discover_data[key])
+            else:
+                data_dict[key] = discover_data[key.rstrip('_id')]
+    data = DiscoverUpdate.parse_obj(data_dict)
+
     stmt = update(Discover).where(
         Discover.id==data.discover_id and Discover.is_deleted==False
     ).values(
@@ -88,7 +109,7 @@ def update_discover(data: DiscoverUpdate, db: Session) -> JSONResponse:
         network = data.network,
         subnet = data.subnet,
         ports = data.ports,
-        cpu_core = data.cores,
+        cpu_core = data.cpu_core,
         cpu_model = data.cpu_model,
         ram = data.ram,
         disk_details = json.dumps(data.disk_details),

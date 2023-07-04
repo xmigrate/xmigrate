@@ -91,11 +91,11 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
                 try:
                     discover_exists = check_discover_exists(project_id, db)
                     if not discover_exists:
-                        discover_data = DiscoverCreate(project_id=project_id, hostname=hostname, network=network, subnet=subnet, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
+                        discover_data = DiscoverCreate(project_id=project_id, hostname=hostname, network=network, subnet=subnet, cpu_core=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
                         create_discover(discover_data, db)
                     else:
                         discover_id = get_discoverid(project_id, db)
-                        discover_data = DiscoverUpdate(discover_id=discover_id, hostname=hostname, network=network, subnet=subnet, cores=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
+                        discover_data = DiscoverUpdate(discover_id=discover_id, hostname=hostname, network=network, subnet=subnet, cpu_core=cores, cpu_model=cpu_model, ram=ram, disk_details=disks, ip=ip_address)
                         update_discover(discover_data, db)
 
                     blueprint_exists = check_blueprint_exists(project_id, db)
@@ -105,11 +105,11 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
                     blueprint_id = get_blueprintid(project_id, db)
                     vm_exists = check_vm_exists(hostname, blueprint_id, db)
                     if not vm_exists:
-                        vm_data = VMCreate(blueprint_id=blueprint_id, hostname=hostname, network=network, cores=cores, cpu_model=cpu_model, ram=ram)
+                        vm_data = VMCreate(blueprint_id=blueprint_id, hostname=hostname, network=network, cpu_core=cores, cpu_model=cpu_model, ram=ram)
                         create_vm(vm_data, db)
                     else:
                         machine_id = get_machineid(hostname, blueprint_id, db)
-                        vm_data = VMUpdate(machine_id=machine_id, network=network, cores=cores, cpu_model=cpu_model, ram=ram)
+                        vm_data = VMUpdate(machine_id=machine_id, network=network, cpu_core=cores, cpu_model=cpu_model, ram=ram)
                         update_vm(vm_data, db)
 
                     machine_id = get_machineid(hostname, blueprint_id, db)
@@ -117,14 +117,14 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
                         mnt_path = disk['mnt_path'].replace('/', 'slash')
                         disk_exists = check_disk_exists(machine_id, mnt_path, db)
                         if not disk_exists:
-                            disk_data = DiskCreate(hostname=hostname, mnt_path=mnt_path, machine_id=machine_id)
+                            disk_data = DiskCreate(hostname=hostname, mnt_path=mnt_path, vm_id=machine_id)
                             create_disk(disk_data, db)
                         else:
                             disk_id = get_diskid(machine_id, mnt_path, db)
-                            disk_data = DiskUpdate(disk_id=disk_id, hostname=hostname, mnt_path=mnt_path, machine_id=machine_id)
+                            disk_data = DiskUpdate(disk_id=disk_id, hostname=hostname, mnt_path=mnt_path, vm_id=machine_id)
                             update_disk(disk_data, db)
                 except Exception as e:
-                    print("Error: "+str(e))
+                    print("Error: "+ str(e))
             return jsonable_encoder({'status': '200'})
         else:
             print("VM preparation failed!")

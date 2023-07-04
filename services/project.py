@@ -75,6 +75,17 @@ def get_projectid(user: str, project: str, db: Session) -> Column[str]:
     return(db.query(Project).join(Mapper).join(User).filter(User.username==user, Project.name==project, Mapper.is_deleted==False).first().id)
 
 
+def get_project_by_id(project_id: str, db: Session) -> Project:
+    '''
+    Returns the specified active project associated with the active user.
+    
+    :param project_id: id of the corresponding project
+    :param db: active database session
+    '''
+    
+    return(db.query(Project).filter(Project.id==project_id).first())
+
+
 def get_project_by_name(user: str, project: str, db: Session) -> Project | None:
     '''
     Returns the specified active project associated with the active user.
@@ -94,6 +105,16 @@ def update_project(data: ProjectUpdate, db: Session) -> JSONResponse:
     :param data: details to update the project with
     :param db: active database session
     '''
+
+    project_data = get_project_by_id(data.project_id, db).__dict__
+    data_dict = dict(data)
+    for key in data_dict.keys():
+        if data_dict[key] is None:
+            if key == 'gcp_service_token':
+                data_dict[key] = json.loads(project_data[key])
+            else:
+                data_dict[key] = project_data[key]
+    data = ProjectUpdate.parse_obj(data_dict)
     
     stmt = update(Project).where(
         Project.id==data.project_id and Project.is_deleted==False

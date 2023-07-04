@@ -16,7 +16,7 @@ class DiscoverCreate(BaseModel):
     network: str
     subnet: str
     ports: Union[str, None] = None
-    cores: int
+    cpu_core: int
     cpu_model: str
     ram: str
     disk_details: list
@@ -25,6 +25,6 @@ class DiscoverCreate(BaseModel):
 
 class DiscoverUpdate(DiscoverCreate):
     discover_id: str
-    project_id: None = None
+    project_id: Union[str, None] = None
     class Config:
         orm_mode = True

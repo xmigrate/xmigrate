@@ -15,7 +15,6 @@ class Network(Base):
     cidr = Column(String(256))
     created = Column(Boolean, nullable=False, default=False)
     target_network_id = Column(String(256))
-    vpc_id = Column(String(256))
     ig_id = Column(String(256))
     route_table = Column(String(256))
 

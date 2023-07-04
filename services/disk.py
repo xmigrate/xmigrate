@@ -30,9 +30,9 @@ def create_disk(data: DiskCreate, db: Session) -> JSONResponse:
 
     stmt = Disk(
         id = unique_id_gen("Disk"),
-        host = data.hostname,
+        hostname = data.hostname,
         mnt_path = data.mnt_path,
-        vm = data.machine_id,
+        vm = data.vm_id,
         created_at = datetime.now(),
         updated_at = datetime.now()
     )
@@ -66,13 +66,42 @@ def get_diskid(vm_id: str, mountpoint: str, db: Session) -> Column[str]:
     return(db.query(Disk).filter(Disk.mnt_path==mountpoint, Disk.vm==vm_id, Disk.is_deleted==False).first().id)
 
 
+def get_disk_by_id(disk_id: str, db: Session) -> Disk:
+    '''
+    Returns the disk data of the specified disk for the host.
+
+    :param disk_id: id of the corresponding disk
+    :param db: active database session
+    '''
+
+    return(db.query(Disk).filter(Disk.id==disk_id).first())
+
+
 def update_disk(data: DiskUpdate, db: Session) -> JSONResponse:
+    '''
+    Update the disk details.
+    
+    :param data: details of the disk
+    :param db: active database session
+    '''
+
+    disk_data = get_disk_by_id(data.disk_id, db).__dict__
+    data_dict = dict(data)
+    for key in data_dict.keys():
+        if data_dict[key] is None:
+            if key == 'disk_clone':
+                data_dict[key] = json.loads(disk_data[key])
+            else:
+                table_key = key.rstrip('_id') if 'vm' in key else key
+                data_dict[key] = disk_data[table_key]
+    data = DiskUpdate.parse_obj(data_dict)
+
     stmt = update(Disk).where(
         Disk.id==data.disk_id and Disk.is_deleted==False
     ).values(
-        host = data.hostname,
+        hostname = data.hostname,
         mnt_path = data.mnt_path,
-        vm = data.machine_id,
+        vm = data.vm_id,
         vhd = data.vhd,
         file_size = data.file_size,
         disk_clone = json.dumps(data.disk_clone),

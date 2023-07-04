@@ -31,9 +31,8 @@ def build_vpc(machine_id, network, public_route, project, update_host, db):
 
             route_table = vpc.create_route_table()
             route_table.create_route(DestinationCidrBlock='0.0.0.0/0', GatewayId=ig.id)
-
             network_data = NetworkUpdate(network_id=network.id, ig_id=ig.id, route_table=route_table.id)
-            update_subnet(network_data, db)
+            update_network(network_data, db)
 
             print(f'Internet Gateway created with id {ig.id}.')
 
@@ -50,11 +49,11 @@ def build_subnet(machine_id, subnet_data, vpc_id, route, project, update_host, d
         route_table = ec2.RouteTable(route)
         print('Provisioning subnet...')
         subnet = ec2.create_subnet(CidrBlock=subnet_data.cidr, VpcId=vpc_id)
-        subnet.create_tags(Tags=[{"Key": "Name", "Value": subnet_data.name}])
+        subnet.create_tags(Tags=[{"Key": "Name", "Value": subnet_data.subnet_name}])
         route_table.associate_with_subnet(SubnetId=subnet.id)
 
         subnet_data = SubnetUpdate(subnet_id=subnet_data.id, target_subnet_id=subnet.id, created=True)
-        update_network(subnet_data, db)
+        update_subnet(subnet_data, db)
 
         if update_host:
             vm_data = VMUpdate(machine_id=machine_id, status=20)

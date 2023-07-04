@@ -24,7 +24,7 @@ class NetworkUpdate(BaseModel):
     target_network_id: Union[str, None] = None
     ig_id: Union[str, None] = None
     route_table: Union[str, None] = None
-    created: bool = False
+    created: Union[bool, None] = None
 
 
 class SubnetCreate(BaseModel):
@@ -45,4 +45,4 @@ class SubnetDelete(NetworkDelete):
 class SubnetUpdate(BaseModel):
     subnet_id: str
     target_subnet_id: Union[str, None] = None
-    created: bool = False
+    created: Union[bool, None] = None

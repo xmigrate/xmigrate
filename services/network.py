@@ -175,6 +175,17 @@ def get_network_by_cidr(cidr: str, blueprint_id: str, db: Session) -> Network | 
     return(db.query(Network).filter(Network.cidr==cidr, Network.blueprint==blueprint_id, Network.is_deleted==False).first())
 
 
+def get_network_by_id(network_id: str, db: Session) -> Network:
+    '''
+    Returns a network from the blueprint.
+    
+    :param network_id: id of the corresponding network
+    :param db: active database session
+    '''
+
+    return(db.query(Network).filter(Network.id==network_id).first())
+
+
 def get_subnet_by_cidr(cidr: str, network_id: str, db: Session) -> Subnet | None:
     '''
     Returns a subnet from the network.
@@ -186,6 +197,17 @@ def get_subnet_by_cidr(cidr: str, network_id: str, db: Session) -> Subnet | None
     return(db.query(Subnet).filter(Subnet.cidr==cidr, Subnet.network==network_id, Subnet.is_deleted==False).first())
 
 
+def get_subnet_by_id(subnet_id: str, db: Session) -> Subnet:
+    '''
+    Returns a subnet from the network.
+    
+    :param subnet_id: id of the corresponding subnet
+    :param db: active database session
+    '''
+    
+    return(db.query(Subnet).filter(Subnet.id==subnet_id).first())
+
+
 def update_network(data: NetworkUpdate, db: Session) -> JSONResponse:
     '''
     Update a network data.
@@ -193,6 +215,13 @@ def update_network(data: NetworkUpdate, db: Session) -> JSONResponse:
     :param data: network update data
     :param db: active database session
     '''
+
+    network_data = get_network_by_id(data.network_id, db).__dict__
+    data_dict = dict(data)
+    for key in data_dict.keys():
+        if data_dict[key] is None:
+            data_dict[key] = network_data[key]
+    data = NetworkUpdate.parse_obj(data_dict)
 
     stmt = update(Network).where(
         Network.id==data.network_id and Network.is_deleted==False
@@ -217,6 +246,13 @@ def update_subnet(data: SubnetUpdate, db: Session) -> JSONResponse:
     :param data: subnet update data
     :param db: active database session
     '''
+
+    subnet_data = get_subnet_by_id(data.subnet_id, db).__dict__
+    data_dict = dict(data)
+    for key in data_dict.keys():
+        if data_dict[key] is None:
+            data_dict[key] = subnet_data[key]
+    data = SubnetUpdate.parse_obj(data_dict)
 
     stmt = update(Subnet).where(
         Subnet.id==data.subnet_id and Subnet.is_deleted==False
