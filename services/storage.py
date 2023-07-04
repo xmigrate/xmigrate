@@ -29,7 +29,7 @@ def create_storage(project_id: str, data: StorageCreate, db:Session) -> JSONResp
     
     stmt = Storage(
         id = unique_id_gen("storage"),
-        bucket_name = data.bucket,
+        bucket_name = data.bucket_name,
         access_key = data.access_key,
         secret_key = data.secret_key,
         container = data.container,

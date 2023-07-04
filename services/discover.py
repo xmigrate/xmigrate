@@ -96,7 +96,7 @@ def update_discover(data: DiscoverUpdate, db: Session) -> JSONResponse:
     data_dict = dict(data)
     for key in data_dict.keys():
         if data_dict[key] is None:
-            if key == 'disk_details':
+            if key == 'disk_details' and discover_data[key] is not None:
                 data_dict[key] = json.loads(discover_data[key])
             else:
                 data_dict[key] = discover_data[key.rstrip('_id')]

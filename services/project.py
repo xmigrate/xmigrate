@@ -110,7 +110,7 @@ def update_project(data: ProjectUpdate, db: Session) -> JSONResponse:
     data_dict = dict(data)
     for key in data_dict.keys():
         if data_dict[key] is None:
-            if key == 'gcp_service_token':
+            if key == 'gcp_service_token' and project_data[key] is not None:
                 data_dict[key] = json.loads(project_data[key])
             else:
                 data_dict[key] = project_data[key]

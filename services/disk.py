@@ -89,7 +89,7 @@ def update_disk(data: DiskUpdate, db: Session) -> JSONResponse:
     data_dict = dict(data)
     for key in data_dict.keys():
         if data_dict[key] is None:
-            if key == 'disk_clone':
+            if key == 'disk_clone' and disk_data[key] is not None:
                 data_dict[key] = json.loads(disk_data[key])
             else:
                 table_key = key.rstrip('_id') if 'vm' in key else key
