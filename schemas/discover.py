@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import Union
 
 
 class DiscoverBase(BaseModel):
@@ -15,7 +14,7 @@ class DiscoverCreate(BaseModel):
     hostname: str
     network: str
     subnet: str
-    ports: Union[str, None] = None
+    ports: str | None = None
     cpu_core: int
     cpu_model: str
     ram: str
@@ -25,6 +24,6 @@ class DiscoverCreate(BaseModel):
 
 class DiscoverUpdate(DiscoverCreate):
     discover_id: str
-    project_id: Union[str, None] = None
+    project_id: str | None = None
     class Config:
         orm_mode = True

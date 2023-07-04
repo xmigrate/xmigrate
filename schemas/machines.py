@@ -1,29 +1,28 @@
 from pydantic import BaseModel
-from typing import Union
 
 
 class VMCreate(BaseModel):
     blueprint_id: str
     hostname: str
-    network: Union[str, None] = None
-    ports: Union[str, None] = None
-    cpu_core: Union[int, None] = None
-    cpu_model: Union[str, None] = None
-    ram: Union[str, None] = None
+    network: str | None = None
+    ports: str | None = None
+    cpu_core: int | None = None
+    cpu_model: str | None = None
+    ram: str | None = None
 
 
 class VMUpdate(VMCreate):
     machine_id: str
-    blueprint_id: Union[str, None] = None
-    hostname: Union[str, None] = None
-    ip: Union[str, None] = None
-    ip_created: Union[bool, None] = None
-    machine_type: Union[str, None] = None
-    public_route: Union[bool, None] = None
-    status: Union[str, None] = None
-    image_id: Union[str, None] = None
-    vm_id: Union[str, None] = None
-    nic_id: Union[str, None] = None
+    blueprint_id: str | None = None
+    hostname: str | None = None
+    ip: str | None = None
+    ip_created: bool | None = None
+    machine_type: str | None = None
+    public_route: bool | None = None
+    status: str | None = None
+    image_id: str | None = None
+    vm_id: str | None = None
+    nic_id: str | None = None
 
     class Config:
         orm_mode = True

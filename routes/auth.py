@@ -1,3 +1,4 @@
+from schemas.auth import TokenData, Settings
 from schemas.user import UserBase
 from services.user import check_user_exists, create_user
 from utils.database import dbconn
@@ -6,21 +7,15 @@ from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.encoders import jsonable_encoder
 import jwt
-from pydantic import BaseModel, BaseSettings
 from sqlalchemy.orm import Session
+
 
 router = APIRouter()
 
-class TokenData(BaseModel):
-    username: str
-
-class Settings(BaseSettings):
-    JWT_SECRET_KEY: str = "try2h@ckT415"
-    ALGORITHM: str = "HS256"
-
 @lru_cache()
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
+
 
 async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl='login')), settings = Depends(get_settings)):
     try:

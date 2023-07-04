@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import Union
 
 
 class NodeCreate(BaseModel):
@@ -10,7 +9,7 @@ class NodeCreate(BaseModel):
 
 
 class NodeUpdate(NodeCreate):
-    project_id: Union[str, None] = None
+    project_id: str | None = None
     node_id: str
     hosts: list
     username: str
