@@ -11,7 +11,7 @@
       dest: "/tmp/start.py"
       
   - name: <== Executing payload ==>
-    shell: "python3 /tmp/start.py {{ bucket }} {{ access_key }} {{ secret_key }} '{{ server }}' {{ project }}"
+    shell: "python3 /tmp/start.py {{ bucket }} {{ access_key }} {{ secret_key }} '{{ server }}' {{ project }} {{ hostname }} {{ token }}"
     register: st
     become: True
 

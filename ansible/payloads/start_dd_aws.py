@@ -1,7 +1,6 @@
 import os
 import requests
 import json
-import socket
 import sys
 
 bucket = sys.argv[1]
@@ -9,17 +8,18 @@ access_key = sys.argv[2]
 secret_key = sys.argv[3]
 server_con_string = sys.argv[4]
 project = sys.argv[5]
+hostname = sys.argv[6]
+token = sys.argv[7]
 
-hostname = socket.gethostname()
-
-def getDisks(project, hostname):
-    url = server_con_string+"/master/disks/get/" + project + "/" + hostname
-    req = requests.get(url)
+def getDisks(project, headers):
+    url = server_con_string+"/master/disks/get/" + project
+    req = requests.get(url, headers=headers)
     return json.loads(req.text)
 
 headers = {
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "Authorization": "Bearer " + token
     }
 
 server_url = server_con_string + "/master/status/update"
@@ -37,7 +37,7 @@ def update(status=None, disk_clone=None, mountpoint=None, host=hostname, project
     
     return requests.post(url, data=json.dumps(payload), headers=headers)
 
-diskData = getDisks(project=project, hostname=hostname)
+diskData = getDisks(project=project, headers=headers)
 disks = diskData['data']
 
 update(status=22)
@@ -49,9 +49,10 @@ try:
     for disk in disks:
         try:
             mnt_path = (disk['mnt_path']).replace("/", "-slash")
+            mountpoint = mnt_path.replace("-", "")
             current_disk = {"dev": disk['dev'], "status": "10"}
             disk_clone_data.append(current_disk)
-            update(disk_clone=disk_clone_data, mountpoint=mnt_path)
+            update(disk_clone=disk_clone_data, mountpoint=mountpoint)
             
             output = os.popen('sudo dd if='+disk["dev"]+' bs=4M status=progress | aws s3 cp - s3://'+bucket+'/'+hostname+mnt_path+'.img --sse AES256 --storage-class STANDARD_IA --profile '+project).read()
             for i in disk_clone_data:
@@ -59,7 +60,7 @@ try:
                     i['status'] = "100"
                     i['status_msg'] = output
 
-            update(disk_clone=disk_clone_data, mountpoint=mnt_path)
+            update(disk_clone=disk_clone_data, mountpoint=mountpoint)
         except Exception as e:
             print(str(e))
             for i in disk_clone_data:
@@ -67,7 +68,7 @@ try:
                     i['status'] = "-1"
                     i['status_msg'] = output
             
-            update(disk_clone=disk_clone_data, mountpoint=mnt_path)
+            update(disk_clone=disk_clone_data, mountpoint=mountpoint)
     
     update(status=25)
 except:  

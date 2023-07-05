@@ -42,7 +42,7 @@ async def master_status_update(data: MasterUpdate, current_user: TokenData = Dep
     return jsonable_encoder({'status': '200'})
 
 
-@router.get("/master/disks/get/{project}/{hostname}")
+@router.get("/master/disks/get/{project}")
 async def get_disks(project, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     try:
         project_id = get_projectid(current_user['username'], project, db)

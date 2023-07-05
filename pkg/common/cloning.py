@@ -1,4 +1,5 @@
 from pkg.azure import sas
+from schemas.auth import Settings
 from services.blueprint import get_blueprintid
 from services.machines import get_machine_by_hostname
 from services.node import get_nodes
@@ -7,14 +8,20 @@ from services.storage import get_storage
 import json
 import os
 from ansible_runner import run_async
+import jwt
 from sqlalchemy.orm import Session
 
 
-async def clone(user: str, project: str, hostname: list, db: Session) -> bool:
+async def clone(user: str, project: str, hostname: list, settings: Settings, db: Session) -> bool:
     project = get_project_by_name(user, project, db)
     storage = get_storage(project.id, db)
     nodes = get_nodes(project.id, db)
     public_ip = ','.join(json.loads(nodes.hosts))
+
+    # Because all endpoints are authenticated, without this token the payloads can't make successfull api calls.
+    token_data = {'username': user}
+    access_token = jwt.encode(token_data, settings.JWT_SECRET_KEY)
+
     server = os.getenv('BASE_URL')
     current_dir = os.getcwd()
     os.popen('echo null > ./logs/ansible/migration_log.txt')
@@ -31,6 +38,8 @@ async def clone(user: str, project: str, hostname: list, db: Session) -> bool:
             'sas': sas_token,
             'server': server,
             'project': project.name,
+            'hostname': hostname[0],
+            'token': access_token,
             'ansible_user': nodes.username
         }
     elif project.provider in ('aws', 'gcp'):
@@ -40,6 +49,8 @@ async def clone(user: str, project: str, hostname: list, db: Session) -> bool:
             'secret_key': storage.secret_key,
             'server': server,
             'project': project.name,
+            'hostname': hostname[0],
+            'token': access_token,
             'ansible_user': nodes.username
         }
         

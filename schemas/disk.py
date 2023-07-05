@@ -15,7 +15,7 @@ class DiskUpdate(DiskCreate):
     vhd: str | None = None
     file_size: str | None = None
     target_disk_id: str | None = None
-    disk_clone: str | None = None
+    disk_clone: list | None = None
 
     class Config:
         orm_mode = True
