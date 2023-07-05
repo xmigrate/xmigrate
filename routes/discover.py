@@ -71,10 +71,9 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
                 dev_list=  []
                 keys = ['filesystem', 'disk_size', 'uuid', 'dev', 'mnt_path']
                 for disk in disk_details:
-                    hashmap = {}
                     diskinfo = disk.strip().split()
-                    diskinfo.pop(-1) # the final element in the list is only needed during filtering in ansible
-                    _ = list(map(lambda k, v: hashmap.update({k:v}), keys, diskinfo))
+                    del diskinfo[-1] # the final element in the list is only needed during filtering in ansible
+                    hashmap = dict(zip(keys, diskinfo))
                     hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
                     if hashmap['dev'] not in dev_list:
                         for blk in blkid:
