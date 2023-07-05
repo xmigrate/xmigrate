@@ -23,7 +23,7 @@ class VirtualMachine(Base):
     ram = Column(String(256))
     machine_type = Column(String(256))
     public_route = Column(Boolean, nullable=False, default=True)
-    status = Column(Integer())
+    status = Column(Integer(), default=0)
     image_id = Column(String(256))
     vm_id = Column(String(256))
     nic_id = Column(String(256))
