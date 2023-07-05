@@ -12,7 +12,7 @@ import jwt
 from sqlalchemy.orm import Session
 
 
-async def clone(user: str, project: str, hostname: list, settings: Settings, db: Session) -> bool:
+async def clone(user: str, project: str, hostname: list, db: Session, settings: Settings = Settings()) -> bool:
     project = get_project_by_name(user, project, db)
     storage = get_storage(project.id, db)
     nodes = get_nodes(project.id, db)
@@ -39,7 +39,7 @@ async def clone(user: str, project: str, hostname: list, settings: Settings, db:
             'server': server,
             'project': project.name,
             'hostname': hostname[0],
-            'token': access_token,
+            'token': access_token.decode(),
             'ansible_user': nodes.username
         }
     elif project.provider in ('aws', 'gcp'):
@@ -50,7 +50,7 @@ async def clone(user: str, project: str, hostname: list, settings: Settings, db:
             'server': server,
             'project': project.name,
             'hostname': hostname[0],
-            'token': access_token,
+            'token': access_token.decode(),
             'ansible_user': nodes.username
         }
         
