@@ -43,7 +43,7 @@ async def network_create(data: NetworkCreate, current_user: TokenData = Depends(
         networks = get_all_networks(blueprint_id, db)
         machine_id = get_machineid(data.hostname, blueprint_id, db)
         vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
-        update_vm(vm_data, db)
+        return update_vm(vm_data, db)
     except Exception as e:
         print(str(e))
         return jsonable_encoder({'status': '500', 'msg': 'network  creation failed'})
@@ -61,7 +61,7 @@ async def network_delete(data: NetworkDelete, current_user: TokenData = Depends(
     project_id = get_projectid(current_user['username'], data.project, db)
     blueprint_id = get_blueprintid(project_id, db)
     try:
-        delete_network(blueprint_id, data.cidr, db)
+        return delete_network(blueprint_id, data.cidr, db)
     except:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
 
@@ -72,7 +72,7 @@ async def subnet_delete(data: SubnetDelete, current_user: TokenData = Depends(ge
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
         network_id = get_networkid(data.cidr, blueprint_id, db)
-        delete_subnet(network_id, data.subnet_cidr, db)
+        return delete_subnet(network_id, data.subnet_cidr, db)
     except:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
 
@@ -93,7 +93,7 @@ async def subnet_create(data: SubnetCreate, current_user: TokenData = Depends(ge
         network_id = get_networkid(data.nw_cidr, blueprint_id, db)
         subnet_exists = check_subnet_exists(network_id, data.cidr, db)
         if not subnet_exists:
-            create_subnet(network_id, data, db)
+            return create_subnet(network_id, data, db)
         else:
             print(f'Subnet with cidr {data.cidr} already exists for the network {data.nw_cidr}!')
     except:
