@@ -74,7 +74,7 @@ async def build_ec2(user, project, hostname, db) -> bool:
         project = get_project_by_name(user, project, db)
         blueprint_id = get_blueprintid(project.id, db)
 
-        if hostname == {"all"}:
+        if hostname == ["all"]:
             hosts = get_all_machines(blueprint_id, db)
         else:
             hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
