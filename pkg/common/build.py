@@ -38,11 +38,12 @@ async def start_cloning(user, project, hostname, db) -> None:
 
 
 async def start_conversion(user, project, hostname, db):
-    provider = get_project_by_name(user, project, hostname, db)
+    provider = get_project_by_name(user, project, db).provider
+    print(provider)
+    logger("Conversion started", "info")
+    print("****************Conversion awaiting*****************")
 
     if provider == "aws":
-        logger("Conversion started", "info")
-        print("****************Conversion awaiting*****************")
         logger("AMI creation started", "info")
         ami_created = await awsdisk.start_ami_creation(user, project, hostname, db)
         if ami_created:
