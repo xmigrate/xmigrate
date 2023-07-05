@@ -39,7 +39,6 @@ async def start_cloning(user, project, hostname, db) -> None:
 
 async def start_conversion(user, project, hostname, db):
     provider = get_project_by_name(user, project, db).provider
-    print(provider)
     logger("Conversion started", "info")
     print("****************Conversion awaiting*****************")
 
@@ -90,7 +89,7 @@ async def start_network_build(user, project, db):
     print("****************Network build awaiting*****************")
 
     if provider == "azure":
-        network_created = await azure_create_nw(project, db)
+        network_created = await azure_create_nw(user, project, db)
     elif provider == "aws":
         network_created = await aws_create_nw(user, project, db)
     elif provider == "gcp":
@@ -126,6 +125,7 @@ async def start_host_build(user, project, hostname, db):
             vm_created = await gcp_compute.build_compute(user, project, hostname, db)
 
         if vm_created:
+            print("VM creation completed!")
             logger("VM creation completed", "info")
         else:
             print("VM creation failed!")

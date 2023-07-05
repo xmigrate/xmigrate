@@ -11,7 +11,7 @@ from utils.logger import *
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.resource import ResourceManagementClient
-from sqlalchemy import update
+
 
 def create_rg(resource_client, project, db):
     try:
@@ -47,11 +47,11 @@ def create_vnet(network_client, project, network, machine, update_host, db) -> b
         network_data = NetworkUpdate(network_id=network.id, target_network_id=vnet_result.name, created=True)
         update_network(network_data, db)
         if update_host:
-            vm_data = VMUpdate(machine.id, status=5)
+            vm_data = VMUpdate(machine_id=machine.id, status=5)
             update_vm(vm_data, db)
     except Exception as e:
         if update_host:
-            vm_data = VMUpdate(machine.id, status=-5)
+            vm_data = VMUpdate(machine_id=machine.id, status=-5)
             update_vm(vm_data, db)
         print("Vnet creation failed to save: "+ str(e))
         logger("Vnet creation failed to save: "+ str(e),"warning")
@@ -69,7 +69,7 @@ def create_subnet(network_client, project, network, subnet, machine, update_host
         subnet_data = SubnetUpdate(subnet_id=subnet.id, target_subnet_id=str(subnet_result.id), created=True)
         update_subnet(subnet_data, db)
         if update_host:
-            vm_data = VMUpdate(machine.id, status=10)
+            vm_data = VMUpdate(machine_id=machine.id, status=10)
             update_vm(vm_data, db)
     except Exception as e:
         print("Subnet creation failed to save: "+ str(e))
@@ -82,7 +82,7 @@ def create_publicIP(network_client, project, subnet, machine, update_host, db):
     try:
         poller = network_client.public_ip_addresses.create_or_update(project.azure_resource_group, machine.hostname,
                                                                     {
-                                                                        "location": project.loaction,
+                                                                        "location": project.location,
                                                                         "sku": {"name": "Standard"},
                                                                         "public_ip_allocation_method": "Static",
                                                                         "public_ip_address_version": "IPV4"
@@ -102,10 +102,10 @@ def create_publicIP(network_client, project, subnet, machine, update_host, db):
             print("Provisioning a public NIC ...some operations might take a minute or two.")
             poller = network_client.network_interfaces.create_or_update(project.azure_resource_group, machine.hostname,
                                                                         {
-                                                                            "location": project.loaction,
+                                                                            "location": project.location,
                                                                             "ip_configurations": [{
                                                                                 "name": machine.hostname,
-                                                                                "subnet": {"id": subnet.target_suvnet_id},
+                                                                                "subnet": {"id": subnet.target_subnet_id},
                                                                                 "public_ip_address": {"id": ip_address_result.id}
                                                                             }]
                                                                         }
@@ -142,10 +142,11 @@ async def create_nw(user, project, db):
                         vnet_created = create_vnet(network_client, project, network, machine, update_host, db)
                     if vnet_created:
                         for subnet in subnets:
-                            if not subnet.created and vnet_created:
+                            subnet_created = subnet.created
+                            if not subnet_created:
                                 subnet_created = create_subnet(network_client, project, network, subnet, machine, update_host, db)
-                                if subnet_created and not machine.ip_created:
-                                    create_publicIP(network_client, project, subnet, machine, update_host, db)
+                            if subnet_created and not machine.ip_created:
+                                create_publicIP(network_client, project, subnet, machine, update_host, db)
     except Exception as e:
         print(repr(e))
         return False
