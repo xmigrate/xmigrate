@@ -41,6 +41,7 @@ async def download_worker(osdisk_raw, project, host, db) -> bool:
             update_vm(vm_data, db)
             return True
         else:
+            print("Raw disk already downloaded!")
             return True
     except Exception as e:
         print(str(e))
@@ -76,7 +77,7 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, 
         vm_data = VMUpdate(machine_id=machine_id, status=32)
         update_vm(vm_data, db)
 
-        disk_id = get_diskid(host, disk_mountpoint.replace('/', 'slash'), db)
+        disk_id = get_diskid(machine_id, disk_mountpoint.replace('/', 'slash'), db)
         disk_data = DiskUpdate(disk_id=disk_id, vhd=osdisk_vhd, file_size=str(file_size))
         update_disk(disk_data, db)
         return True
@@ -101,52 +102,47 @@ async def get_size(path) -> int:
     return int(size)
 
 async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
-    downloaded = await download_worker(osdisk_raw, project, host, db)
     blueprint_id = get_blueprintid(project.id, db)
     machine_id = get_machineid(host, blueprint_id, db)
-    if downloaded:
-        try:
-            osdisk_vhd = osdisk_raw.replace(".raw", ".vhd")
-            cur_path = os.getcwd()
-            path = f"{cur_path}/projects/{project}/{host}/{osdisk_raw}"
-            vhd_path = f"{cur_path}/projects/{project}/{host}/{osdisk_vhd}"
-            print("Start converting")
+    try:
+        osdisk_vhd = osdisk_raw.replace(".raw", ".vhd")
+        cur_path = os.getcwd()
+        path = f"{cur_path}/projects/{project.name}/{host}/{osdisk_raw}"
+        vhd_path = f"{cur_path}/projects/{project.name}/{host}/{osdisk_vhd}"
+        print("Start converting")
 
-            os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
-            convert_command = f"qemu-img convert -f raw -o subformat=fixed,force_size -O vpc {path} {vhd_path}"
+        os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
+        convert_command = f"qemu-img convert -f raw -o subformat=fixed,force_size -O vpc {path} {vhd_path}"
 
-            MB = 1024 * 1024
+        MB = 1024 * 1024
+        size = await get_size(path)
+        rounded_size = ((size // MB) + 1) * MB
+        if size % MB == 0:
+            logger("Size is already rounded","info")
+            process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+            await process.wait()
+        else:
+            logger("Size before conversion: "+ str(size), "info")
+            resize_command = f"qemu-img resize -f raw {path} {rounded_size}"
+            process = await asyncio.create_subprocess_shell(resize_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+            await process.wait()
+            process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+            await process.wait()
             size = await get_size(path)
-            rounded_size = ((size // MB) + 1) * MB
-            if size % MB == 0:
-                logger("Size is already rounded","info")
-                process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-                await process.wait()
-            else:
-                logger("Size before conversion: "+ str(size), "info")
-                resize_command = f"qemu-img resize -f raw {path} {rounded_size}"
-                process = await asyncio.create_subprocess_shell(resize_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-                await process.wait()
-                process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-                await process.wait()
-                size = await get_size(path)
-                logger("Size after conversion: "+ str(size), "info")
+            logger("Size after conversion: "+ str(size), "info")
 
-            uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, db)
-            if not uploaded: return False
+        uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, db)
+        if not uploaded: return False
 
-            vm_data = VMUpdate(machine_id=machine_id, status=35)
-            update_vm(vm_data, db)
+        vm_data = VMUpdate(machine_id=machine_id, status=35)
+        update_vm(vm_data, db)
 
-            logger("Conversion completed "+ osdisk_raw, "info")
-            return True
-        except Exception as e:
-            print(str(e))
-            logger(str(e),"warning")
+        logger("Conversion completed "+ osdisk_raw, "info")
+        return True
+    except Exception as e:
+        print(str(e))
+        logger(str(e),"warning")
 
-            vm_data = VMUpdate(machine_id=machine_id, status=-35)
-            update_vm(vm_data, db)
-            return False
-    else:
-        logger("Downloading image failed", "warning")
+        vm_data = VMUpdate(machine_id=machine_id, status=-35)
+        update_vm(vm_data, db)
         return False
