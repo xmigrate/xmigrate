@@ -2,6 +2,7 @@ from model.network import Network, Subnet
 from schemas.network import NetworkCreate, NetworkUpdate, SubnetCreate, SubnetUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
+from typing import Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -163,7 +164,7 @@ def get_networkid(cidr: str, blueprint_id: str, db: Session) -> Column[str]:
     return(db.query(Network).filter(Network.cidr==cidr, Network.blueprint==blueprint_id, Network.is_deleted==False).first().id)
 
 
-def get_network_by_cidr(cidr: str, blueprint_id: str, db: Session) -> Network | None:
+def get_network_by_cidr(cidr: str, blueprint_id: str, db: Session) -> Union[Network, None]:
     '''
     Returns a network from the blueprint.
     
@@ -186,7 +187,7 @@ def get_network_by_id(network_id: str, db: Session) -> Network:
     return(db.query(Network).filter(Network.id==network_id).first())
 
 
-def get_subnet_by_cidr(cidr: str, network_id: str, db: Session) -> Subnet | None:
+def get_subnet_by_cidr(cidr: str, network_id: str, db: Session) -> Union[Subnet, None]:
     '''
     Returns a subnet from the network.
     

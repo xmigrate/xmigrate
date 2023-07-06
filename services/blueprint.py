@@ -1,6 +1,7 @@
 from model.blueprint import Blueprint
 from utils.id_gen import unique_id_gen
 from datetime import datetime
+from typing import Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
@@ -39,7 +40,7 @@ def create_blueprint(project_id: str, db: Session) -> JSONResponse:
     return JSONResponse({"status": 201, "message": "blueprint created", "data": [{}]})
 
 
-def get_blueprint(project_id: str, db: Session) -> Blueprint | None:
+def get_blueprint(project_id: str, db: Session) -> Union[Blueprint, None]:
     '''
     Returns the blueprint data for the poject.
     

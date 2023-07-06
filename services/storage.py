@@ -2,6 +2,7 @@ from model.storage import Storage
 from utils.id_gen import unique_id_gen
 from schemas.storage import StorageCreate, StorageUpdate
 from datetime import datetime
+from typing import Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -45,7 +46,7 @@ def create_storage(project_id: str, data: StorageCreate, db:Session) -> JSONResp
     return JSONResponse({"status": 201, "message": "storage created", "data": [{}]})
 
 
-def get_storage(project_id: str, db: Session) -> Storage | None:
+def get_storage(project_id: str, db: Session) -> Union[Storage, None]:
     '''
     Returns the storage account associated with the specified project.
     

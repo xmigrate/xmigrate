@@ -4,6 +4,7 @@ from model.user import User
 from schemas.project import ProjectBase, ProjectUpdate
 from datetime import datetime
 import json
+from typing import Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -86,7 +87,7 @@ def get_project_by_id(project_id: str, db: Session) -> Project:
     return(db.query(Project).filter(Project.id==project_id).first())
 
 
-def get_project_by_name(user: str, project: str, db: Session) -> Project | None:
+def get_project_by_name(user: str, project: str, db: Session) -> Union[Project, None]:
     '''
     Returns the specified active project associated with the active user.
     

@@ -3,6 +3,7 @@ from schemas.node import NodeCreate, NodeUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 import json
+from typing import Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -55,7 +56,7 @@ def get_nodeid(project_id: str, db: Session) -> Column[str]:
     return(db.query(Nodes).filter(Nodes.project==project_id, Nodes.is_deleted==False).first().id)
 
 
-def get_nodes(project_id: str, db: Session) -> Nodes | None:
+def get_nodes(project_id: str, db: Session) -> Union[Nodes, None]:
     '''
     Returns the node data for the poject.
     

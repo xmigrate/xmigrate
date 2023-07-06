@@ -2,6 +2,7 @@ from model.machines import VirtualMachine as VM
 from schemas.machines import VMCreate, VMUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
+from typing import Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -79,7 +80,7 @@ def get_machine_by_id(machine_id: str, db: Session) -> VM:
     return(db.query(VM).filter(VM.id==machine_id).first())
 
 
-def get_machine_by_hostname(hostname: str, blueprint_id: str, db: Session) -> VM | None:
+def get_machine_by_hostname(hostname: str, blueprint_id: str, db: Session) -> Union[VM, None]:
     '''
     Returns the vm data for a single machine in the blueprint.
 
