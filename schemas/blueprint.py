@@ -1,7 +1,8 @@
 from pydantic import BaseModel
+from typing import List
 
 
 class BlueprintCreate(BaseModel):
     project: str
     hostname: str
-    machines: list[dict]
+    machines: List[dict]

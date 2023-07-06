@@ -2,7 +2,7 @@ from model.network import Network, Subnet
 from schemas.network import NetworkCreate, NetworkUpdate, SubnetCreate, SubnetUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
-from typing import Union
+from typing import List, Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -131,7 +131,7 @@ def delete_subnet(network_id: str, cidr: str, db: Session) -> JSONResponse:
     return JSONResponse({"status": 204, "message": "subnet data deleted", "data": [{}]})
 
 
-def get_all_networks(blueprint_id: str, db: Session) -> list[Network]:
+def get_all_networks(blueprint_id: str, db: Session) -> List[Network]:
     '''
     Returns all networks defined in a blueprint.
 
@@ -142,7 +142,7 @@ def get_all_networks(blueprint_id: str, db: Session) -> list[Network]:
     return(db.query(Network).filter(Network.blueprint==blueprint_id, Network.is_deleted==False).all())
 
 
-def get_all_subnets(network_id: str, db: Session) -> list[Subnet]:
+def get_all_subnets(network_id: str, db: Session) -> List[Subnet]:
     '''
     Returns all subnets defined in a network.
 

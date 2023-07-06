@@ -3,6 +3,7 @@ from schemas.disk import DiskCreate, DiskUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 import json
+from typing import List
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -44,7 +45,7 @@ def create_disk(data: DiskCreate, db: Session) -> JSONResponse:
     return JSONResponse({"status": 201, "message": "disk data created", "data": [{}]})
 
 
-def get_all_disks(vm_id: str, db: Session) -> list[Disk]:
+def get_all_disks(vm_id: str, db: Session) -> List[Disk]:
     '''
     Returns the disk data of all disks for the host.
 

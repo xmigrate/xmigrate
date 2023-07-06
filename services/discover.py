@@ -3,6 +3,7 @@ from schemas.discover import DiscoverCreate, DiscoverUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
 import json
+from typing import List
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -50,7 +51,7 @@ def create_discover(data: DiscoverCreate, db: Session) -> JSONResponse:
     return JSONResponse({"status": 201, "message": "discover data created", "data": [{}]})
 
 
-def get_discover(project_id: str, db: Session) -> list[Discover]:
+def get_discover(project_id: str, db: Session) -> List[Discover]:
     '''
     Returns the discover data for the poject.
     A project can have only one entry for discover but it is returned as a list to avoid parsing error in frontend in case of null data.

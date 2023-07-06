@@ -2,7 +2,7 @@ from model.machines import VirtualMachine as VM
 from schemas.machines import VMCreate, VMUpdate
 from utils.id_gen import unique_id_gen
 from datetime import datetime
-from typing import Union
+from typing import List, Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column, update
 from sqlalchemy.orm import Session
@@ -47,7 +47,7 @@ def create_vm(data: VMCreate, db: Session) -> JSONResponse:
     return JSONResponse({"status": 201, "message": "VM data created", "data": [{}]})
 
 
-def get_all_machines(blueprint_id: str, db: Session) -> list[VM]:
+def get_all_machines(blueprint_id: str, db: Session) -> List[VM]:
     '''
     Returns all target vms associated with the blueprint.
 
