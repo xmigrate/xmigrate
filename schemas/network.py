@@ -1,11 +1,12 @@
 from pydantic import BaseModel
+from typing import Union
 
 
 class NetworkBase(BaseModel):
     project: str
     hostname: str
     name: str
-    cidr: str | None = None
+    cidr: Union[str, None] = None
 
 
 class NetworkCreate(NetworkBase):
@@ -20,10 +21,10 @@ class NetworkDelete(BaseModel):
 
 class NetworkUpdate(BaseModel):
     network_id: str
-    target_network_id: str | None = None
-    ig_id: str | None = None
-    route_table: str | None = None
-    created: bool | None = None
+    target_network_id: Union[str, None] = None
+    ig_id: Union[str, None] = None
+    route_table: Union[str, None] = None
+    created: Union[bool, None] = None
 
 
 class SubnetCreate(BaseModel):
@@ -43,5 +44,5 @@ class SubnetDelete(NetworkDelete):
         
 class SubnetUpdate(BaseModel):
     subnet_id: str
-    target_subnet_id: str | None = None
-    created: bool | None = None
+    target_subnet_id: Union[str, None] = None
+    created: Union[bool, None] = None

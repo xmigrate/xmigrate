@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Union
 
 
 class DiskCreate(BaseModel):
@@ -9,13 +10,13 @@ class DiskCreate(BaseModel):
 
 class DiskUpdate(DiskCreate):
     disk_id: str
-    hostname: str | None = None
-    mnt_path: str | None = None
-    vm_id: str | None = None
-    vhd: str | None = None
-    file_size: str | None = None
-    target_disk_id: str | None = None
-    disk_clone: list | None = None
+    hostname: Union[str, None] = None
+    mnt_path: Union[str, None] = None
+    vm_id: Union[str, None] = None
+    vhd: Union[str, None] = None
+    file_size: Union[str, None] = None
+    target_disk_id: Union[str, None] = None
+    disk_clone: Union[list, None] = None
 
     class Config:
         orm_mode = True
