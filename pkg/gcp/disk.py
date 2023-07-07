@@ -161,7 +161,7 @@ async def download_worker(osdisk_raw, project, host, db) -> bool:
         boto_path += "/.boto"
 
         if not os.path.exists(boto_path):  
-            with open(f'{cur_path}/ansible/gcp/templates/.boto.j') as file_, open(boto_path, "w") as fh:
+            with open(f'{cur_path}/ansible/gcp/templates/.boto.j2') as file_, open(boto_path, "w") as fh:
                 template = Template(file_.read())
                 rendered_boto = template.render(project_id=json.loads(project.gcp_service_token)['project_id'], gs_access_key_id=storage.access_key, gs_secret_access_key=storage.secret_key)
                 fh.write(rendered_boto)
@@ -211,7 +211,7 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
         vm_data = VMUpdate(machine_id=host.id, status=32)
         update_vm(vm_data, db)
 
-        disk_id = get_diskid(host, disk_mountpoint.replace('/', 'slash'), db)
+        disk_id = get_diskid(host.id, disk_mountpoint.replace('/', 'slash'), db)
         disk_data = DiskUpdate(disk_id=disk_id, vhd=osdisk_tar, file_size=str(file_size))
         update_disk(disk_data, db)
         return True
