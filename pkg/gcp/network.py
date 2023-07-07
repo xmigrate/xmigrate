@@ -88,19 +88,23 @@ def get_subnet(project_id, service_account_json, subnet_name, region):
 
 
 def create_subnet(service_account_json, network_name, region, name, cidr):
-    if region not in REGIONS:
-        raise GcpRegionNotFound(region)
-    service = get_service_compute_v1(service_account_json)
-    network = get_vpc(service_account_json, network_name)
-    subnetwork_body = {
-        "name": name,
-        "network": network["selfLink"],
-        "ipCidrRange": cidr
-    }
-    request = service.subnetworks().insert(
-        project=service_account_json["project_id"], region=region, body=subnetwork_body)
-    response = request.execute()
-    return response
+    try:
+        if region not in REGIONS:
+            raise GcpRegionNotFound(region)
+        service = get_service_compute_v1(service_account_json)
+        network = get_vpc(service_account_json, network_name)
+        subnetwork_body = {
+            "name": name,
+            "network": network["selfLink"],
+            "ipCidrRange": cidr
+        }
+        request = service.subnetworks().insert(
+            project=service_account_json["project_id"], region=region, body=subnetwork_body)
+        response = request.execute()
+        return response
+    except Exception as e:
+        print(str(e))
+        return {}
 
 
 async def create_nw(user, project, db):
@@ -109,37 +113,42 @@ async def create_nw(user, project, db):
     machines = get_all_machines(blueprint_id, db)
     gcp_service_json = json.loads(prjct.gcp_service_token)
 
-    for machine in machines:
-        networks = get_all_networks(blueprint_id, db)
-        for network in networks:
-            vpc_id = network.target_network_id
-            vpc_created = network.created
-            subnets = get_all_subnets(network.id, db)
-            update_host = True if network.cidr == machine.network else False
-            if vpc_id is None and not vpc_created:
-                response, vpc_created = await create_vpc(gcp_service_json, network.name, True)
-                vpc_id = response['targetLink'] if 'targetLink' in response.keys() else vpc_id
-            if vpc_created:
-                network_data = NetworkUpdate(network.id, target_network_id=vpc_id, created=True)
-                update_network(network_data, db)
-                if update_host:
-                    status = 10 if vpc_created else -10
-                    vm_data = VMUpdate(blueprint_id=blueprint_id, status=status)
-                    update_vm(vm_data, db)
-                    if status == -10:
-                        print("Vnet creation failed to save!")
-                        logger("Vnet creation failed to save", "warning")
-                        return False
-                for subnet in subnets:
-                    if not subnet.created and vpc_created:
-                        subnet_result = create_subnet(gcp_service_json, network.name, prjct.location, subnet.subnet_name, subnet.cidr)
-                        if 'targetLink' in subnet_result.keys():
-                            subnet_data = SubnetUpdate(subnet.id, target_subnet_id=subnet_result['targetLink'], created=True)
-                            update_subnet(subnet_data, db)
-                        if update_host:
-                            status = 20 if 'targetLink' in subnet_result.keys() else -20
-                            vm_data = VMUpdate(blueprint_id=blueprint_id, status=status)
-                            update_vm(vm_data, db)
-                            if status == -10:
-                                print("Subnet creation failed to save!")
-                                logger("Subnet creation failed to save", "warning")
+    try:
+        for machine in machines:
+            networks = get_all_networks(blueprint_id, db)
+            for network in networks:
+                vpc_id = network.target_network_id
+                vpc_created = network.created
+                subnets = get_all_subnets(network.id, db)
+                update_host = True if network.cidr == machine.network else False
+                if vpc_id is None and not vpc_created:
+                    response, vpc_created = await create_vpc(gcp_service_json, network.name, True)
+                    vpc_id = response['targetLink'] if 'targetLink' in response.keys() else vpc_id
+                if vpc_created:
+                    network_data = NetworkUpdate(network_id=network.id, target_network_id=vpc_id, created=True)
+                    update_network(network_data, db)
+                    if update_host:
+                        status = 10 if vpc_created else -10
+                        vm_data = VMUpdate(machine_id=machine.id, status=status)
+                        update_vm(vm_data, db)
+                        if status == -10:
+                            print("Vnet creation failed to save!")
+                            logger("Vnet creation failed to save", "warning")
+                            return False
+                    for subnet in subnets:
+                        if not subnet.created:
+                            subnet_result = create_subnet(gcp_service_json, network.name, prjct.location, subnet.subnet_name, subnet.cidr)
+                            if 'targetLink' in subnet_result.keys():
+                                subnet_data = SubnetUpdate(subnet_id=subnet.id, target_subnet_id=subnet_result['targetLink'], created=True)
+                                update_subnet(subnet_data, db)
+                            if update_host:
+                                status = 20 if 'targetLink' in subnet_result.keys() else -20
+                                vm_data = VMUpdate(machine_id=machine.id, status=status)
+                                update_vm(vm_data, db)
+                                if status == -20:
+                                    print("Subnet creation failed to save!")
+                                    logger("Subnet creation failed to save", "warning")
+        return True
+    except Exception as e:
+        print(str(e))
+        return False
