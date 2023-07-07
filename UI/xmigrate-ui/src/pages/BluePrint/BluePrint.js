@@ -154,9 +154,9 @@ export default class BluePrint extends Component {
             console.log("buttonProgress", host["BtProgress"]);
 
             let hostCurrent = {};
-            hostCurrent["hostname"] = host.host;
+            hostCurrent["hostname"] = host.hostname;
             hostCurrent["type"] = subnet.subnet_type;
-            hostCurrent["subnet"] = host.subnet;
+            hostCurrent["subnet"] = subnet.subnet_name;
             hostCurrent["machine_type"] = host.machine_type;
             hostCurrents.push(hostCurrent);
           
@@ -198,12 +198,12 @@ export default class BluePrint extends Component {
         this.state.hosts.push({
           id: index,
           _id: data._id,
-          hostname: data.host,
+          hostname: data.hostname,
           ip: data.ip,
           subnet: data.subnet,
           network: data.network,
           cpu: data.cpu_model,
-          core: data.cores,
+          core: data.cpu_core,
           ram: data.ram,
           disk: data.disk_details
         })
