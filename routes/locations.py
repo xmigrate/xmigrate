@@ -11,7 +11,7 @@ router = APIRouter()
 async def locations_get(data: LocationBase):
     provider = data.provider
     if provider == 'azure':
-        locations, flag = location.get_locations(data.azure_subscription_id, data.azure_client_id, data.azure_client_secret, data.azure_tenant_id)
+        locations, flag = await location.get_locations(data.azure_subscription_id, data.azure_client_id, data.azure_client_secret, data.azure_tenant_id)
 
         if flag:
             return jsonable_encoder({'status': '200', 'locations': locations})
@@ -19,7 +19,7 @@ async def locations_get(data: LocationBase):
             return jsonable_encoder({'status': '500', 'locations': locations, 'message':"wrong credentials"})
         
     elif provider == 'aws':
-        locations, flag = regions.get_locations(data.aws_access_key, data.aws_secret_key)
+        locations, flag = await regions.get_locations(data.aws_access_key, data.aws_secret_key)
 
         if flag:
             return jsonable_encoder({'status': '200', 'locations': locations})
@@ -29,7 +29,7 @@ async def locations_get(data: LocationBase):
     elif provider == 'gcp':
         service_account = data.gcp_service_token
 
-        reg, flag = gcpregions.get_regions(service_account)
+        reg, flag = await gcpregions.get_regions(service_account)
         if flag:
             return jsonable_encoder({'status': '200', 'locations': reg})
         else:
