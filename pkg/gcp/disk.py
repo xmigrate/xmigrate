@@ -19,12 +19,12 @@ from pathlib import Path
 
 async def start_image_creation_worker(project, disk_containers, host, db):
     service = get_service_compute_v1(json.loads(project.gcp_service_token))
-    gcp_project_id = (project.gcp_service_token)['project_id']
+    gcp_project_id = json.loads(project.gcp_service_token)['project_id']
     try:
         for disk in disk_containers:
             if disk['os_disk']:
                 disk_body = {
-                    "name": host.replace('.', '-'),
+                    "name": (host.hostname).replace('.', '-'),
                     "description": "Disk migrated using xmigrate",
                     "rawDisk": {
                         "source": disk['image_path']

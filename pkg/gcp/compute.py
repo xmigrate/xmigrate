@@ -1,4 +1,5 @@
 from .gcp import get_service_compute_v1
+from .location import get_zones
 from .network import get_vpc
 from .network import get_subnet
 from schemas.machines import VMUpdate
@@ -15,8 +16,9 @@ async def create_vm(project, host, network, subnet, additional_disk):
     service_account_json = json.loads(project.gcp_service_token)
     gcp_project_id = service_account_json['project_id']
     service = get_service_compute_v1(service_account_json)
-    vm_type = f"zones/{project.location}-a/machineTypes/{host.machine_type}"
-    network = get_vpc(gcp_project_id, service_account_json, network)['selfLink']
+    zones, _ = await get_zones(service_account_json)
+    vm_type = f"zones/{zones[0]}/machineTypes/{host.machine_type}"
+    network = get_vpc(service_account_json, network)['selfLink']
     subnet = get_subnet(gcp_project_id, service_account_json, subnet, project.location)['selfLink']
     
     disks = [
@@ -44,11 +46,11 @@ async def create_vm(project, host, network, subnet, additional_disk):
         }]
 
     }
-    request = service.instances().insert(project=gcp_project_id, zone=f"{project.location}-a", body=instance_body)
+    request = service.instances().insert(project=gcp_project_id, zone=zones[0], body=instance_body)
     response = request.execute()
 
     while True:
-        result = service.zoneOperations().get(project=gcp_project_id, zone=f"{project.location}-a", operation=response['name']).execute()
+        result = service.zoneOperations().get(project=gcp_project_id, zone=zones[0], operation=response['name']).execute()
         print(result)
 
         if result['status'] == 'DONE':

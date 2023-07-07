@@ -64,7 +64,7 @@ async def create_machine(project, subnet_id, host, db) -> bool:
         return True
     except Exception as e:
         print(repr(e))
-        vm_data = VMUpdate(status=-100)
+        vm_data = VMUpdate(machine_id=host.id, status=-100)
         update_vm(vm_data, db)
         return False
 
