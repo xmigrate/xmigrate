@@ -14,6 +14,7 @@ from services.project import get_projectid
 from utils.database import dbconn
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
+import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.requests import Request
@@ -26,7 +27,9 @@ executor = ProcessPoolExecutor(max_workers=5)
 @router.get('/blueprint')
 async def get_blueprint(project: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     project_id = get_projectid(current_user['username'], project, db)
-    return get_discover(project_id, db)
+    discover_data = get_discover(project_id, db)[0].__dict__
+    discover_data['disk_details'] = json.loads(discover_data['disk_details'])
+    return [discover_data]
 
 
 @router.post('/blueprint/network')
@@ -43,7 +46,7 @@ async def network_create(data: NetworkCreate, current_user: TokenData = Depends(
         networks = get_all_networks(blueprint_id, db)
         machine_id = get_machineid(data.hostname, blueprint_id, db)
         vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
-        return update_vm(vm_data, db)
+        update_vm(vm_data, db)
     except Exception as e:
         print(str(e))
         return jsonable_encoder({'status': '500', 'msg': 'network  creation failed'})
