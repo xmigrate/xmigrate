@@ -13,9 +13,8 @@ async def stream(project):
     blueprint_status = ''
     if "PLAY RECAP" in line:
         offset = "EOF"
-        if "unreachable=0" in line:
-            if "failed=0" in line:
-                blueprint_status = "success"
+        if all(word in line for word in ["unreachable=0", "failed=0"]):
+            blueprint_status = "success"
         else:
             blueprint_status = "failure" 
     return jsonable_encoder({'line': line,'offset': offset, 'blueprint_status': blueprint_status})
