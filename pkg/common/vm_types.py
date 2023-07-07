@@ -1,6 +1,7 @@
 from pkg.gcp.gcp import get_service_compute_v1
 from services.project import get_project_by_name
 from utils.logger import logger
+import json
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.compute import ComputeManagementClient
 import boto3
@@ -62,7 +63,7 @@ def get_vm_types(user: str, project: str, db: Session):
             client = ComputeManagementClient(creds, prjct.azure_subscription_id)
             machine_types = list_azure_vm_types(client, region=prjct.location, minimum_cores=1, minimum_memory_MB=768)
         elif prjct.provider == "gcp":
-            machine_types = list_gcp_vm_types(prjct.gcp_service_token, f"{prjct.location}-a")
+            machine_types = list_gcp_vm_types(json.loads(prjct.gcp_service_token), f"{prjct.location}-a")
         flag = True
     except Exception as e:
         print(repr(e))
