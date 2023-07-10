@@ -147,7 +147,7 @@ async def create_nw(user, project, db):
                                 subnet_created = create_subnet(network_client, project, network, subnet, machine, update_host, db)
                             if subnet_created and not machine.ip_created:
                                 create_publicIP(network_client, project, subnet, machine, update_host, db)
+        return True
     except Exception as e:
-        print(repr(e))
+        print(str(e))
         return False
-    return True

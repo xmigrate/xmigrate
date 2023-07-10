@@ -27,9 +27,12 @@ executor = ProcessPoolExecutor(max_workers=5)
 @router.get('/blueprint')
 async def get_blueprint(project: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     project_id = get_projectid(current_user['username'], project, db)
-    discover_data = get_discover(project_id, db)[0].__dict__
-    discover_data['disk_details'] = json.loads(discover_data['disk_details'])
-    return [discover_data]
+    discover_data = get_discover(project_id, db)
+    if discover_data != []:
+        discover_data = discover_data[0].__dict__
+        discover_data['disk_details'] = json.loads(discover_data['disk_details'])
+        discover_data = [discover_data]
+    return discover_data
 
 
 @router.post('/blueprint/network')
