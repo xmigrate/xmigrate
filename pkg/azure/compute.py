@@ -89,9 +89,9 @@ async def create_vm(user, project, hostname, db) -> bool:
         image_name = ''
         for disk in disks:
             if disk.mnt_path == 'slash':
-                image_name = disk.disk_id
+                image_name = disk.target_disk_id
             else:
-                data_disks.append(disk.disk_id)
+                data_disks.append(disk.target_disk_id)
         
         vm_created = create_vm_worker(project, machine, username, password, image_name, data_disks, db)
         if not vm_created: return False
