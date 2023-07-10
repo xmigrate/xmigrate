@@ -31,7 +31,9 @@ async def project_create(data: ProjectBase, current_user: TokenData = Depends(ge
             return jsonable_encoder({"message": f"project {data.name} already exists for the user!"})
     except Exception as e:
         print(str(e))
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "project creation failed!"}))
+        if "IntegrityError" in str(type(e)):
+            raise ValueError("Unsupported Provider")
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "project creation failed!"}))     
 
 
 @router.get('/project')

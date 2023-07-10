@@ -1,7 +1,8 @@
+from utils.constants import Provider
 from utils.database import Base
-from sqlalchemy import Boolean, Column, DateTime, String
-
-
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, String
+  
+    
 class Project(Base):
     
     __tablename__ = "project"
@@ -24,3 +25,7 @@ class Project(Base):
     azure_resource_group = Column(String(256))
     azure_resource_group_created = Column(Boolean, default=False)
     gcp_service_token = Column(String(5120))
+
+    __table_args__ = (CheckConstraint(
+        provider.in_([e.value for e in Provider]), name='enforce_providers')
+    ,) # Trailing comma necessary for assigning type tuple
