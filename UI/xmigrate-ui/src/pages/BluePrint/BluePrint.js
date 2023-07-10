@@ -493,7 +493,7 @@ export default class BluePrint extends Component {
     console.log("Network Clone", hostName);
     var data = {
       project: this.state.project,
-      hostname: hostName,
+      hostname: [hostName],
     };
     console.log(data);
     //Updating progress to load spinner
@@ -501,7 +501,7 @@ export default class BluePrint extends Component {
     NetworksData.forEach((Network, index) => {
       Network.subnets.forEach((subnet, index) => {
         subnet.hosts.forEach((host, index) => {
-          if(host.host === hostName){
+          if(host.hostname === hostName){
             host["BtProgress"] = "cloneStarted";
           }
         })
@@ -527,7 +527,7 @@ export default class BluePrint extends Component {
     NetworksData.forEach((Network, index) => {
       Network.subnets.forEach((subnet, index) => {
         subnet.hosts.forEach((host, index) => {
-          if(host.host === hostName){
+          if(host.hostname === hostName){
             host["BtProgress"] = "prepareStarted";
           }
         })
@@ -547,14 +547,14 @@ export default class BluePrint extends Component {
     console.log("Network Convert", hostName);
     var data = {
       project: this.state.project,
-      hostname: hostName,
+      hostname: [hostName],
     };
      //Updating progress to load spinner
      let NetworksData = this.state.Networks;
      NetworksData.forEach((Network, index) => {
        Network.subnets.forEach((subnet, index) => {
          subnet.hosts.forEach((host, index) => {
-           if(host.host === hostName){
+           if(host.hostname === hostName){
              host["BtProgress"] = "convertStarted";
            }
          })
@@ -574,14 +574,14 @@ export default class BluePrint extends Component {
     console.log("Network Build", hostName);
     var data = {
       project: this.state.project,
-      hostname: hostName,
+      hostname: [hostName],
     };
       //Updating progress to load spinner
       let NetworksData = this.state.Networks;
       NetworksData.forEach((Network, index) => {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
-            if(host.host === hostName){
+            if(host.hostname === hostName){
               host["BtProgress"] = "buildStarted";
             }
           })
@@ -609,7 +609,7 @@ export default class BluePrint extends Component {
         Network.subnets.forEach((subnet, index) => {
           subnet.hosts.forEach((host, index) => {
             res.data.forEach((hostRes, index) => {
-              if (host.host === hostRes.host) {
+              if (host.hostname === hostRes.hostname) {
                 
               
                 console.log("status", hostRes.status);
@@ -623,30 +623,30 @@ export default class BluePrint extends Component {
                 else {
                   flag = true;
                   if (host["BtStatus"] === "BuildNetwork") {
-                    hostAlert = host.host;
+                    hostAlert = host.hostname;
                     UpdateMessage = "Built Network Successfully!!";
                     host["BtStatus"] = "prepare"
                     console.log(host["BtStatus"]);
                   }      else if (host["BtStatus"] === "prepare") {
-                    hostAlert = host.host;
+                    hostAlert = host.hostname;
                     UpdateMessage = "Perpare Completed Successfully!!";
                     host["BtProgress"] = "PrepareCompleted";
                     host["BtStatus"] = "clone";
                   }
                   else if (host["BtStatus"] === "clone") {
-                    hostAlert = host.host;
+                    hostAlert = host.hostname;
                     UpdateMessage = "Clone Completed Successfully!!";
                     host["BtProgress"] = "cloneCompleted";
                     host["BtStatus"] = "convert";
                   }
                   else if (host["BtStatus"] === "convert") {
-                    hostAlert = host.host;
+                    hostAlert = host.hostname;
                     UpdateMessage = "Convert Completed Successfully!!";
                     host["BtProgress"] = "convertCompleted";
                     host["BtStatus"] = "build";
                   }
                   else if (host["BtStatus"] === "build") {
-                    hostAlert = host.host;
+                    hostAlert = host.hostname;
                     UpdateMessage = "Build Completed Successfully!!";
                     host["BtProgress"] = "buildCompleted";
                     host["BtStatus"] = "BuildNetwork";
