@@ -125,8 +125,8 @@ async def update_blueprint(request: Request, current_user: TokenData = Depends(g
 async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     project_id = get_projectid(current_user['username'], data.project, db)
     blueprint_id = get_blueprintid(project_id, db)
-    machine_id = get_machineid(data.hostname, blueprint_id, db)
     for machine in data.machines:
+        machine_id = get_machineid(machine["hostname"], blueprint_id, db)
         vm_data = VMUpdate(machine_id=machine_id, machine_type=machine['machine_type'], public_route=bool(machine["type"]))
         update_vm(vm_data, db)
         return jsonable_encoder({"msg": "succesfully updated", "status": 200})

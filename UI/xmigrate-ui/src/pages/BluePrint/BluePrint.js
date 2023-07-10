@@ -327,7 +327,7 @@ export default class BluePrint extends Component {
     // console.log(host);
     let hostCurrent = this.state.hostCurrents;
     hostCurrent.forEach((hostCur, index) => {
-      if (hostCur.hostname === host.host) {
+      if (hostCur.hostname === host.hostname) {
         hostCur["machine_type"] = event.target.value;
       }
     });
