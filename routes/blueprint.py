@@ -45,11 +45,12 @@ async def network_create(data: NetworkCreate, current_user: TokenData = Depends(
         if not network_exists:
             create_network(blueprint_id, data, db)
         else:
-            print(f'Network {data.name} already exists for the project!')     
-        networks = get_all_networks(blueprint_id, db)
-        machine_id = get_machineid(data.hostname, blueprint_id, db)
-        vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
-        update_vm(vm_data, db)
+            print(f'Network with cidr {data.cidr} already exists for the project!')
+        for host in data.hosts:
+            networks = get_all_networks(blueprint_id, db)
+            machine_id = get_machineid(host['hostname'], blueprint_id, db)
+            vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
+            update_vm(vm_data, db)
     except Exception as e:
         print(str(e))
         return jsonable_encoder({'status': '500', 'msg': 'network  creation failed'})

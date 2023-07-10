@@ -2,7 +2,7 @@ from utils.logger import *
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.subscription import SubscriptionClient
 
-async def get_locations(subscription_id,client_id,secret,tenant_id):
+async def get_locations(subscription_id, client_id, secret, tenant_id):
     available_locations = []
     try:
         creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)

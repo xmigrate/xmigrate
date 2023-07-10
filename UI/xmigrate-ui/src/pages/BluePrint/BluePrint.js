@@ -220,10 +220,11 @@ export default class BluePrint extends Component {
       cidr: this.state.input["NetworkCIDR"],
       project: this.state.project,
       name: this.state.input["NetworkName"],
+      hosts: this.state.hosts
     };
-    console.log("the data passsed to create network url", data);
+    console.log("the data passed to create network url", data);
     await PostService(BLUEPRINTNET_NETWORK_CREATE_URL, data).then((res) => {
-      console.log("data fot as response", res.data);
+      console.log("data got as response", res.data);
     });
     var dataGet = {
       project: this.state.project,
@@ -233,7 +234,10 @@ export default class BluePrint extends Component {
       (res) => {
         var NetworksDataServer = res.data;
         NetworksDataServer.forEach((Network) => {
-          if (this.state.input["NetworkName"] === Network.nw_name) {
+          if (this.state.provider === 'gcp') {
+            this.state.input["NetworkCIDR"] = this.state.input["NetworkName"];
+          }
+          if (this.state.input["NetworkCIDR"] === Network.cidr) {
             Network["subnets"] = [];
             NetworksData.push(Network);
           }
@@ -245,15 +249,15 @@ export default class BluePrint extends Component {
   }
 
   //Creating Subnet in Network-------------------------------------------------------------------------
-  async CreateSubnet(NameNetwork) {
+  async CreateSubnet(NetworkCIDR) {
     const indexNetwork = this.state.Networks.findIndex(
-      (Network) => Network.nw_name === NameNetwork
+      (Network) => Network.cidr === NetworkCIDR
     );
     console.log(indexNetwork);
     var data = {
       cidr: this.state.input["SubnetCidr"],
       project: this.state.project,
-      nw_name: NameNetwork,
+      nw_cidr: NetworkCIDR,
       nw_type: this.state.input["Security"] || "Public",
       name: this.state.input["SubnetName"],
     };
