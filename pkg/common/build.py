@@ -10,6 +10,7 @@ from pkg.gcp import compute as gcp_compute
 from pkg.gcp import disk as gcpdisk
 from pkg.gcp.network import create_nw as gcp_create_nw
 from services.project import get_project_by_name
+from utils.constants import Provider
 from utils.logger import *
 
 
@@ -42,7 +43,7 @@ async def start_conversion(user, project, hostname, db):
     logger("Conversion started", "info")
     print("****************Conversion awaiting*****************")
 
-    if provider == "aws":
+    if provider == Provider.AWS.value:
         logger("AMI creation started", "info")
         ami_created = await awsdisk.start_ami_creation(user, project, hostname, db)
         if ami_created:
@@ -52,23 +53,23 @@ async def start_conversion(user, project, hostname, db):
         else:
             print("Disk Conversion failed")
             logger("Disk Conversion failed", "error")
-    if provider in ('azure', 'gcp'):
+    if provider in (Provider.AZURE.value, Provider.GCP.value):
         image_downloaded = False
         converted = False
         logger("Download started", "info")
         print("****************Download started*****************")
-        if provider == 'azure':
+        if provider == Provider.AZURE.value:
             image_downloaded = await azuredisk.start_downloading(user, project, hostname, db)
-        elif provider == 'gcp':
+        elif provider == Provider.GCP.value:
             image_downloaded = await gcpdisk.start_downloading(user, project, hostname, db)
         if image_downloaded:
             print("****************Download completed*****************")
             logger("Image Download completed","info")
             print("****************Conversion awaiting*****************")
             logger("Conversion started","info")
-            if provider == 'azure':
+            if provider == Provider.AZURE.value:
                 converted =  await azuredisk.start_conversion(user, project, hostname, db)
-            elif provider == 'gcp':
+            elif provider == Provider.GCP.value:
                 converted =  await gcpdisk.start_conversion(user, project, hostname, db)
             if converted:
                 print("****************Conversion completed*****************")
@@ -88,11 +89,11 @@ async def start_network_build(user, project, db):
     logger("Network build started", "info")
     print("****************Network build awaiting*****************")
 
-    if provider == "azure":
+    if provider == Provider.AZURE.value:
         network_created = await azure_create_nw(user, project, db)
-    elif provider == "aws":
+    elif provider == Provider.AWS.value:
         network_created = await aws_create_nw(user, project, db)
-    elif provider == "gcp":
+    elif provider == Provider.GCP.value:
         network_created = await gcp_create_nw(user, project, db)
     if network_created:
         logger("Network creation completed", "info")
@@ -103,10 +104,10 @@ async def start_network_build(user, project, db):
 
 async def start_host_build(user, project, hostname, db):
     provider = get_project_by_name(user, project, db).provider
-    disk_created = True if provider == 'aws' else False
+    disk_created = True if provider == Provider.AWS.value else False
     logger("VM build started", "info")
 
-    if provider in ('azure', 'gcp'):
+    if provider in (Provider.AZURE.value, Provider.GCP.value):
         if provider == 'azure':
             disk_created = await azuredisk.create_disk(user, project, hostname, db)
         elif provider == 'gcp':
@@ -117,11 +118,11 @@ async def start_host_build(user, project, hostname, db):
             logger("Disk creation failed", "error")
     
     if disk_created:
-        if provider == "aws":
+        if provider == Provider.AWS.value:
             vm_created = await aws_compute.build_ec2(user, project, hostname, db)
-        elif provider == 'azure':
+        elif provider == Provider.AZURE.value:
             vm_created = await azure_compute.create_vm(user, project, hostname, db)
-        elif provider == 'gcp':
+        elif provider == Provider.GCP.value:
             vm_created = await gcp_compute.build_compute(user, project, hostname, db)
 
         if vm_created:

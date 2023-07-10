@@ -4,6 +4,7 @@ from schemas.project import ProjectBase, ProjectUpdate
 from services.mapper import create_mapping
 from services.project import (check_project_exists, create_project, get_all_projects, get_project_by_name, get_projectid, update_project)
 from services.user import get_userid
+from utils.constants import Provider
 from utils.database import dbconn
 from utils.id_gen import unique_id_gen
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -18,7 +19,7 @@ async def project_create(data: ProjectBase, current_user: TokenData = Depends(ge
     try:
         project_exists = check_project_exists(current_user['username'], data.name, db)
         if not project_exists:
-            if data.provider == "aws":
+            if data.provider == Provider.AWS.value:
                 write_aws_creds(current_user['username'], data.name, db, data)
             
             project_id = unique_id_gen(data.name)

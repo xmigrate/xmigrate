@@ -4,6 +4,7 @@ from services.machines import get_machineid, update_vm
 from services.node import get_nodes
 from services.project import get_project_by_name
 from services.storage import get_storage
+from utils.constants import Provider
 from utils.playbook import run_playbook
 import json
 import os
@@ -18,7 +19,7 @@ async def prepare(user: str, project: str, hostname: list, db: Session) -> None:
     stage = "vm_preparation"
     curr_dir = os.getcwd()
     extra_vars = None
-    if project.provider == "gcp":
+    if project.provider == Provider.GCP.value:
         storage = get_storage(project.id, db)
         extra_vars = {
             'project_id': json.loads(project.gcp_service_token)['project_id'],

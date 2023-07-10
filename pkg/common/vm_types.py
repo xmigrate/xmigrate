@@ -1,5 +1,6 @@
 from pkg.gcp.gcp import get_service_compute_v1
 from services.project import get_project_by_name
+from utils.constants import Provider
 from utils.logger import logger
 import json
 from azure.common.credentials import ServicePrincipalCredentials
@@ -49,7 +50,7 @@ def get_vm_types(user: str, project: str, db: Session):
     prjct = get_project_by_name(user, project, db)
     machine_types = []
     try:
-        if prjct.provider == "aws": 
+        if prjct.provider == Provider.AWS.value: 
             client = boto3.client('ec2', aws_access_key_id=prjct.aws_access_key, aws_secret_access_key=prjct.aws_secret_key, region_name=prjct.location)
             for ec2_type in ec2_instance_types(client):
                 cores = ''
@@ -58,11 +59,11 @@ def get_vm_types(user: str, project: str, db: Session):
                 else:
                     cores = str(ec2_type['VCpuInfo']['DefaultVCpus'])+'_vcpus'
                 machine_types.append({"vm_name": ec2_type['InstanceType'], "cores": cores, "memory": ec2_type['MemoryInfo']['SizeInMiB']})
-        elif prjct.provider == "azure":
+        elif prjct.provider == Provider.AZURE.value:
             creds = ServicePrincipalCredentials(client_id=prjct.azure_client_id, secret=prjct.azure_client_secret, tenant=prjct.azure_tenant_id)
             client = ComputeManagementClient(creds, prjct.azure_subscription_id)
             machine_types = list_azure_vm_types(client, region=prjct.location, minimum_cores=1, minimum_memory_MB=768)
-        elif prjct.provider == "gcp":
+        elif prjct.provider == Provider.GCP.value:
             machine_types = list_gcp_vm_types(json.loads(prjct.gcp_service_token), f"{prjct.location}-a")
         flag = True
     except Exception as e:

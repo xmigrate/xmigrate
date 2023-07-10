@@ -11,6 +11,7 @@ from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
 from services.machines import check_vm_exists, create_vm, get_machineid, update_vm
 from services.node import check_node_exists, create_node, get_nodeid, update_node
 from services.project import get_projectid
+from utils.constants import Provider
 from utils.database import dbconn
 from utils.playbook import run_playbook
 import netaddr, re, os
@@ -42,7 +43,7 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
     playbook = "gather_facts.yaml"
     stage = "gather_facts"
         
-    if data.provider == "aws":
+    if data.provider == Provider.AWS.value:
         write_aws_creds(current_user['username'], project, db)
     try:
         finished, output = run_playbook(provider=data.provider, username=data.username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage)

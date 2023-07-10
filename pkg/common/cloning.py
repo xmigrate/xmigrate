@@ -5,6 +5,7 @@ from services.machines import get_machine_by_hostname
 from services.node import get_nodes
 from services.project import get_project_by_name
 from services.storage import get_storage
+from utils.constants import Provider
 import json
 import os
 from ansible_runner import run_async
@@ -30,7 +31,7 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
     inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project.name)
     extravars = None
     
-    if project.provider == 'azure':
+    if project.provider == Provider.AZURE.value:
         sas_token = sas.generate_sas_token(storage.bucket_name, storage.access_key)
         url = f'https://{storage.bucket_name}.blob.core.windows.net/{storage.container}/'
         extravars = {
@@ -42,7 +43,7 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
             'token': access_token.decode(),
             'ansible_user': nodes.username
         }
-    elif project.provider in ('aws', 'gcp'):
+    elif project.provider in (Provider.AWS.value, Provider.GCP.value):
         extravars = {
             'bucket': storage.bucket_name,
             'access_key': storage.access_key,
