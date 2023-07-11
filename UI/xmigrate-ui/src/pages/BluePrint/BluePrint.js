@@ -275,7 +275,7 @@ export default class BluePrint extends Component {
     console.log("Delete");
     var data = {
       project: this.state.project,
-      nw_name: NameNetwork,
+      name: NameNetwork,
     };
     //Delete Network Details------------
     await DeleteService(BLUEPRINTNET_DELETE_NETWORK, data).then((res) => {
@@ -304,7 +304,7 @@ export default class BluePrint extends Component {
     var data = {
       project: this.state.project,
       subnet_name: subnetname,
-      nw_name: nw_name,
+      name: nw_name,
     };
     await DeleteService(BLUEPRINTNET_DELETE_SUBNET, data).then((res) => {
       console.log("Delete Data From Host", res.data);
@@ -460,7 +460,7 @@ export default class BluePrint extends Component {
         project: this.state.project,
         machines: [data.host]
       }
-      console.log("data passinf to the url", data1);
+      console.log("data passing to the url", data1);
       PostService(BLUEPRINT_UDATE_HOST, data1).then((res) => {
         console.log("After Drag and drop", res.data);
       });

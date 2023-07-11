@@ -22,7 +22,7 @@ export default function HostTable(props) {
         <td>{props.data.subnet}</td>
         <td>{props.data.network}</td>
         <td>{props.data.cpu}</td>
-        <td>{props.data.cpu_core}</td>
+        <td>{props.data.core}</td>
         <td>{props.data.ram}</td>
       </tr>
       <tr>

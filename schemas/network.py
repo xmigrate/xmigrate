@@ -16,7 +16,7 @@ class NetworkCreate(NetworkBase):
 
 class NetworkDelete(BaseModel):
     project: str
-    cidr: str
+    name: str
 
 
 class NetworkUpdate(BaseModel):
@@ -36,7 +36,7 @@ class SubnetCreate(BaseModel):
 
 
 class SubnetDelete(NetworkDelete):
-    subnet_cidr: str
+    subnet_name: str
     
     class Config:
         orm_mode = True

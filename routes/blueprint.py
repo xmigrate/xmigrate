@@ -8,7 +8,7 @@ from schemas.machines import VMUpdate
 from schemas.network import NetworkCreate, NetworkDelete, SubnetCreate, SubnetDelete
 from services.blueprint import get_blueprintid
 from services.machines import get_machineid, update_vm
-from services.network import (check_network_exists, check_subnet_exists, create_network, create_subnet, delete_network, delete_subnet, get_all_networks, get_all_subnets, get_networkid)
+from services.network import (check_network_exists, check_subnet_exists, create_network, create_subnet, delete_network, delete_all_subnets, delete_subnet, get_all_networks, get_all_subnets, get_networkid, get_networkid_by_name)
 from services.discover import get_discover
 from services.project import get_projectid
 from utils.database import dbconn
@@ -41,11 +41,11 @@ async def network_create(data: NetworkCreate, current_user: TokenData = Depends(
         data.cidr = data.name if data.cidr is None else data.cidr
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
-        network_exists = check_network_exists(blueprint_id, data.cidr, db)
+        network_exists = check_network_exists(blueprint_id, data.cidr, data.name, db)
         if not network_exists:
             create_network(blueprint_id, data, db)
         else:
-            print(f'Network with cidr {data.cidr} already exists for the project!')
+            print(f'Network with cidr ({data.cidr}) and/or name ({data.name}) already exists for the project!')
         for host in data.hosts:
             networks = get_all_networks(blueprint_id, db)
             machine_id = get_machineid(host['hostname'], blueprint_id, db)
@@ -68,7 +68,9 @@ async def network_delete(data: NetworkDelete, current_user: TokenData = Depends(
     project_id = get_projectid(current_user['username'], data.project, db)
     blueprint_id = get_blueprintid(project_id, db)
     try:
-        return delete_network(blueprint_id, data.cidr, db)
+        network_id = get_networkid_by_name(data.name, blueprint_id, db)
+        delete_all_subnets(network_id, db)
+        return delete_network(blueprint_id, data.name, db)
     except:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
 
@@ -78,8 +80,8 @@ async def subnet_delete(data: SubnetDelete, current_user: TokenData = Depends(ge
     try:
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
-        network_id = get_networkid(data.cidr, blueprint_id, db)
-        return delete_subnet(network_id, data.subnet_cidr, db)
+        network_id = get_networkid_by_name(data.name, blueprint_id, db)
+        return delete_subnet(network_id, data.subnet_name, db)
     except:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
 
@@ -98,11 +100,11 @@ async def subnet_create(data: SubnetCreate, current_user: TokenData = Depends(ge
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
         network_id = get_networkid(data.nw_cidr, blueprint_id, db)
-        subnet_exists = check_subnet_exists(network_id, data.cidr, db)
+        subnet_exists = check_subnet_exists(network_id, data.cidr, data.name, db)
         if not subnet_exists:
             return create_subnet(network_id, data, db)
         else:
-            print(f'Subnet with cidr {data.cidr} already exists for the network {data.nw_cidr}!')
+            print(f'Subnet with cidr ({data.cidr}) and/or name ({data.name}) already exists for the network {data.nw_cidr}!')
     except:
         return jsonable_encoder({'status': '500', 'msg': 'subnet  creation failed'})
     
@@ -116,6 +118,7 @@ async def get_hosts(project: str, current_user: TokenData = Depends(get_current_
 async def update_blueprint(request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     try:
         data = await request.body()
+        data = json.loads(data.decode())
         return host.update_hosts(current_user['username'], data['project'], data['machines'], db)
     except:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
