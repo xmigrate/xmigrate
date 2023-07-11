@@ -15,8 +15,8 @@ async def prepare(user: str, project: str, hostname: list, db: Session) -> None:
     project = get_project_by_name(user, project, db)
     node = get_nodes(project.id, db)
 
-    playbook = "xmigrate.yaml"
-    stage = "vm_preparation"
+    PLAYBOOK = "xmigrate.yaml"
+    STAGE = "vm_preparation"
     curr_dir = os.getcwd()
     extra_vars = None
     if project.provider == Provider.GCP.value:
@@ -28,7 +28,7 @@ async def prepare(user: str, project: str, hostname: list, db: Session) -> None:
         }
 
     try:
-        preparation_completed = run_playbook(project.provider, node.username, project.name, curr_dir, playbook, stage, extra_vars)
+        preparation_completed = run_playbook(project.provider, node.username, project.name, curr_dir, PLAYBOOK, STAGE, extra_vars)
     
         if preparation_completed:
             blueprint_id = get_blueprintid(project.id, db)

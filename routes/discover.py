@@ -40,13 +40,13 @@ async def discover(data: DiscoverBase, current_user: TokenData = Depends(get_cur
             node_data = NodeUpdate(node_id=node_id, hosts=data.hosts, username=data.username, password=data.password)
             update_node(node_data, db)
 
-    playbook = "gather_facts.yaml"
-    stage = "gather_facts"
+    PLAYBOOK = "gather_facts.yaml"
+    STAGE = "gather_facts"
         
     if data.provider == Provider.AWS.value:
         write_aws_creds(current_user['username'], project, db)
     try:
-        finished, output = run_playbook(provider=data.provider, username=data.username, project_name=project, curr_working_dir=current_dir, playbook=playbook, stage=stage)
+        finished, output = run_playbook(provider=data.provider, username=data.username, project_name=project, curr_working_dir=current_dir, playbook=PLAYBOOK, stage=STAGE)
         if finished:
             if 'ok' in output.stats.keys():
                 linux_host = list(output.stats['ok'].keys())[0]
