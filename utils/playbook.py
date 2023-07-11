@@ -3,10 +3,10 @@ from ansible_runner import run_async
 
 def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None, limit: str = None):
 
-    playbook_path = '{}/ansible/{}/{}'.format(curr_working_dir, provider, playbook)
-    inventory = '{}/ansible/projects/{}/hosts'.format(curr_working_dir, project_name)
-    log_folder = '{}/logs/ansible/{}'.format(curr_working_dir, project_name)
-    log_file = '{}/{}_log.txt'.format(log_folder, stage)
+    playbook_path = f'{curr_working_dir}/ansible/{provider}/{playbook}'
+    inventory = f'{curr_working_dir}/ansible/projects/{project_name}/hosts'
+    log_folder = f'{curr_working_dir}/logs/ansible/{project_name}'
+    log_file = f'{log_folder}/{stage}_log.txt'
     env_vars = {
             'ANSIBLE_REMOTE_USER': username,
             'ANSIBLE_BECOME_USER': username,

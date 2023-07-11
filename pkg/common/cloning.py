@@ -27,8 +27,8 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
     current_dir = os.getcwd()
     os.popen('echo null > ./logs/ansible/migration_log.txt')
 
-    playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, project.provider)
-    inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project.name)
+    playbook = f"{current_dir}/ansible/{project.provider}/start_migration.yaml"
+    inventory = f"{current_dir}/ansible/projects/{project.name}/hosts"
     extravars = None
     
     if project.provider == Provider.AZURE.value:
@@ -57,7 +57,7 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
         
     envvars = {
         'ANSIBLE_BECOME_USER': nodes.username,
-        'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project.name)
+        'ANSIBLE_LOG_PATH': f'{current_dir}/logs/ansible/{project.name}/cloning_log.txt'
     }
 
     cloned = run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
