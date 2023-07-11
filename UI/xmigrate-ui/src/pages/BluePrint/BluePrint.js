@@ -387,7 +387,7 @@ export default class BluePrint extends Component {
     NetworksData.forEach((Network, index) => {
       let data = {
         project: this.state.project,
-        nw_name: Network.nw_name,
+        name: Network.nw_name,
       };
       GetServiceWithData(BLUEPRINTNET_DELETE_NETWORK, data).then((res) => {
         console.log("Delete Data From Host", res.data);
