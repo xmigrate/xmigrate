@@ -10,112 +10,83 @@ from pkg.gcp import compute as gcp_compute
 from pkg.gcp import disk as gcpdisk
 from pkg.gcp.network import create_nw as gcp_create_nw
 from services.project import get_project_by_name
+from test_header_files.test_data import migration_test_data
 from utils.constants import Provider
 from utils.logger import *
-from schemas.machines import VMUpdate
-from services.blueprint import get_blueprintid
-from services.machines import update_vm,get_machineid
+
+
+async def start_network_build(user, project, hostname, db, test_header=False):
+    provider = get_project_by_name(user, project, db).provider
+    network_created = False
+    logger("Network build started", "info")
+    print("****************Network build awaiting*****************")
+
+    if test_header:
+        network_created = True
+        await migration_test_data(user, project, hostname, 20, db)
+
+    if provider == Provider.AZURE.value:
+        network_created = await azure_create_nw(user, project, db)
+    elif provider == Provider.AWS.value:
+        network_created = await aws_create_nw(user, project, db)
+    elif provider == Provider.GCP.value:
+        network_created = await gcp_create_nw(user, project, db)
+
+    if network_created:
+        logger("Network creation completed", "info")
+    else:
+        print("Network creation failed")
+        logger("Network creation failed","error")
 
 
 async def start_vm_preparation(user, project, hostname, db, test_header=False) -> None:
+    logger("VM preparation started","info")
+    print("****************VM preparation awaiting*****************")
+
+    preparation_completed = False
     if test_header:
-        logger("VM preparation started","info")
-        print("****************VM preparation awaiting*****************")
-        preparation_completed=True
-        if preparation_completed:
-            project = get_project_by_name(user, project, db)
-            blueprint_id = get_blueprintid(project.id, db)
-            machine_id = get_machineid(hostname[0], blueprint_id, db)
-            vm_data = VMUpdate(machine_id=machine_id,status=21)
-            update_vm(vm_data, db)
-            print("****************VM preparation completed*****************")
-            logger("VM preparation completed", "info")
-        else:
-            print("VM preparation failed")
-            logger("VM preparation failed", "error")
+        preparation_completed = True
+        await migration_test_data(user, project, hostname, 21, db)
     else:
-        logger("VM preparation started","info")
-        print("****************VM preparation awaiting*****************")
         preparation_completed = await prepare(user, project, hostname, db)
-        if preparation_completed:
-            print("****************VM preparation completed*****************")
-            logger("VM preparation completed", "info")
-        else:
-            print("VM preparation failed")
-            logger("VM preparation failed", "error")
+        
+    if preparation_completed:
+        print("****************VM preparation completed*****************")
+        logger("VM preparation completed", "info")
+    else:
+        print("VM preparation failed")
+        logger("VM preparation failed", "error")
 
 
 async def start_cloning(user, project, hostname, db, test_header=False) -> None:
+    logger("Cloning started","info")
+    print("****************Cloning awaiting*****************")
+
+    cloning_completed = False
     if test_header:
-        logger("Cloning started","info")
-        print("****************Cloning awaiting*****************")
-        cloning_completed=True
-        if cloning_completed:
-            project = get_project_by_name(user, project, db)
-            blueprint_id = get_blueprintid(project.id, db)
-            machine_id = get_machineid(hostname[0], blueprint_id, db)
-            vm_data = VMUpdate(machine_id=machine_id,status=25)
-            update_vm(vm_data, db)
-            print("****************Cloning completed*****************")
-            logger("Cloning completed","info")
-        else:
-            print("Disk cloning failed")
-            logger("Disk cloning failed", "error")
+        cloning_completed = True
+        await migration_test_data(user, project, hostname, 25, db)
     else:
-        logger("Cloning started","info")
-        print("****************Cloning awaiting*****************")
         cloning_completed = await clone(user, project, hostname, db)
-        if cloning_completed:
-            print("****************Cloning completed*****************")
-            logger("Cloning completed","info")
-        else:
-            print("Disk cloning failed")
-            logger("Disk cloning failed", "error")
+
+    if cloning_completed:
+        print("****************Cloning completed*****************")
+        logger("Cloning completed","info")
+    else:
+        print("Disk cloning failed")
+        logger("Disk cloning failed", "error")
 
 
 async def start_conversion(user, project, hostname, db, test_header=False):
-    if test_header:
-        provider = get_project_by_name(user, project, db).provider
-        logger("Conversion started", "info")
-        print("****************Conversion awaiting*****************")
+    logger("Conversion started", "info")
+    print("****************Conversion awaiting*****************")
 
-        if provider == Provider.AWS.value:
-            logger("AMI creation started", "info")
-            ami_created=True
-            if ami_created:
-                project = get_project_by_name(user, project, db)
-                blueprint_id = get_blueprintid(project.id, db)
-                machine_id = get_machineid(hostname[0], blueprint_id, db)
-                vm_data = VMUpdate(machine_id=machine_id,status=35)
-                update_vm(vm_data, db)
-                print("****************Conversion completed*****************")
-                logger("Conversion completed", "info")
-                logger("AMI creation completed", "info")
-            else:
-                print("Disk Conversion failed")
-                logger("Disk Conversion failed", "error")
-        if provider in (Provider.AZURE.value, Provider.GCP.value):
-            image_downloaded = False
-            converted = False
-            logger("Download started", "info")
-            print("****************Download started*****************")
-            image_downloaded=True
-            if image_downloaded:
-                print("****************Download completed*****************")
-                logger("Image Download completed","info")
-                print("****************Conversion awaiting*****************")
-                logger("Conversion started","info")
-                converted=True
-                if converted:
-                    print("****************Conversion completed*****************")
-                    logger("Disk Conversion completed", "info")
-                else:
-                    print("Disk Conversion failed")
-                    logger("Disk Conversion failed", "error")
-            else:
-                print("Image Download failed\nDisk Conversion failed")
-                logger("Image Download faied", "error")
-                logger("Disk Conversion failed", "error")
+    provider = get_project_by_name(user, project, db).provider
+
+    if test_header:
+        await migration_test_data(user, project, hostname, 35, db)
+        print("Disk Conversion failed")
+        logger("Disk Conversion failed", "error")
     else:
         provider = get_project_by_name(user, project, db).provider
         logger("Conversion started", "info")
@@ -161,43 +132,14 @@ async def start_conversion(user, project, hostname, db, test_header=False):
                 logger("Disk Conversion failed", "error")
 
 
-async def start_network_build(user, project, db):
-    provider = get_project_by_name(user, project, db).provider
-    network_created = False
-    logger("Network build started", "info")
-    print("****************Network build awaiting*****************")
-
-    if provider == Provider.AZURE.value:
-        network_created = await azure_create_nw(user, project, db)
-    elif provider == Provider.AWS.value:
-        network_created = await aws_create_nw(user, project, db)
-    elif provider == Provider.GCP.value:
-        network_created = await gcp_create_nw(user, project, db)
-    if network_created:
-        logger("Network creation completed", "info")
-    else:
-        print("Network creation failed")
-        logger("Network creation failed","error")
-
-
 async def start_host_build(user, project, hostname, db, test_header=False):
+    provider = get_project_by_name(user, project, db).provider
+
     if test_header:
-        provider = get_project_by_name(user, project, db).provider
-        vm_created=True
-        if vm_created:
-            project = get_project_by_name(user, project, db)
-            blueprint_id = get_blueprintid(project.id, db)
-            machine_id = get_machineid(hostname[0], blueprint_id, db)
-            vm_data = VMUpdate(machine_id=machine_id,status=100)
-            update_vm(vm_data, db)
-            if vm_created:
-                print("VM creation completed!")
-                logger("VM creation completed", "info")
-            else:
-                print("VM creation failed!")
-                logger("VM creation failed", "error")
+        await migration_test_data(user, project, hostname, 100, db)
+        print("VM creation completed!")
+        logger("VM creation completed", "info")
     else:
-        provider = get_project_by_name(user, project, db).provider
         disk_created = True if provider == Provider.AWS.value else False
         logger("VM build started", "info")
 

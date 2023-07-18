@@ -4,13 +4,13 @@ from schemas.project import ProjectBase, ProjectUpdate
 from services.mapper import create_mapping
 from services.project import (check_project_exists, create_project, get_all_projects, get_project_by_name, get_projectid, update_project)
 from services.user import get_userid
+from test_header_files.test_data import project_test_data
 from utils.constants import Provider
 from utils.database import dbconn
 from utils.id_gen import unique_id_gen
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
-import json, os
 
 
 router = APIRouter()
@@ -18,37 +18,9 @@ router = APIRouter()
 @router.post('/project')
 async def project_create(data: ProjectBase, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     try:
-        test_header = request.headers.get('X-test')
-        if test_header == "test" :
-            json_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'test_data.json')
-            with open(json_file_path, 'r') as json_file:
-                test_data = json.load(json_file)
-            project_exists = check_project_exists(current_user['username'], data.name, db)
-            if not project_exists:
-                if data.provider == "aws":
-                    if data.aws_access_key is None:
-                        data.aws_access_key = test_data["aws_access_key"]
-                    if data.aws_secret_key is None:
-                        data.aws_secret_key = test_data["aws_secret_key"]
-                    write_aws_creds(current_user['username'], data.name, db, data)
-                
-                if data.provider == "azure":
-                    if data.azure_client_id is None:
-                        data.azure_client_id = test_data["azure_client_id"]
-                    if data.azure_client_secret is None:
-                        data.azure_client_secret = test_data["azure_client_secret"]
-                    if data.azure_tenant_id is None:
-                        data.azure_tenant_id = test_data["azure_tenant_id"]
-                    if data.azure_subscription_id is None:
-                        data.azure_subscription_id = test_data["azure_subscription_id"]
-                    if data.azure_resource_group is None:
-                        data.azure_resource_group = test_data["azure_resource_group"]
-                    if data.azure_resource_group_created is None:
-                        data.azure_resource_group_created = test_data["azure_resource_group_created"]
-
-                if data.provider == "gcp":
-                    if data.gcp_service_token is None:
-                        data.gcp_service_token = test_data["gcp_service_token"]
+        test_header = request.headers.get('Xm-test')
+        if test_header == "test":
+            data = await project_test_data(current_user['username'], data, db)
                       
         project_exists = check_project_exists(current_user['username'], data.name, db)
         if not project_exists:

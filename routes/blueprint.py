@@ -149,8 +149,7 @@ async def vm_prepare(data: CommonCreate, request: Request, current_user: TokenDa
 @router.post('/blueprint/host/clone')
 async def image_clone(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     test_header = request.headers.get('Xm-test')
-    if test_header == "test" :  
-        
+    if test_header == "test" :
         asyncio.create_task(build.start_cloning(current_user['username'], data.project, data.hostname, db, test_header))
         return jsonable_encoder({"message": "cloning started", "status":200})
     else:
@@ -170,9 +169,14 @@ async def image_convert(data: CommonCreate, request: Request, current_user: Toke
 
 
 @router.post('/blueprint/network/build')
-async def network_build(data: CommonBase, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.start_network_build(current_user['username'], data.project, db))
-    return jsonable_encoder({"message": "network build started", "status": 200})
+async def network_build(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    test_header = request.headers.get('Xm-test')
+    if test_header == "test" :
+        asyncio.create_task(build.start_network_build(current_user['username'], data.project, data.hostname, db, test_header))
+        return jsonable_encoder({"message": "network build started", "status": 200})
+    else:
+        asyncio.create_task(build.start_network_build(current_user['username'], data.project, data.hostname, db))
+        return jsonable_encoder({"message": "network build started", "status": 200})
 
 
 @router.post('/blueprint/host/build')
