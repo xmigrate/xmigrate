@@ -6,11 +6,11 @@ class Nodes(Base):
     
     __tablename__ = 'node'
 
-    id = Column(String(40), primary_key=True)
+    id = Column(String(40), primary_key=True, unique=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
     hosts = Column(String(5120), nullable=False)
     username = Column(String(256), nullable=False)
     password = Column(String(256), nullable=False)
-    project = Column(String(40), ForeignKey("project.id"), nullable=False)
+    project = Column(String(40), ForeignKey("project.id"), primary_key=True)

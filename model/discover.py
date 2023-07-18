@@ -6,14 +6,14 @@ class Discover(Base):
     
     __tablename__ = 'discover'
 
-    id = Column(String(40), primary_key=True)
+    id = Column(String(40), primary_key=True, unique=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
     is_locked = Column(Boolean, nullable=False, default=False)
     is_enabled = Column(Boolean, nullable=False, default=True)
-    project = Column(String(40), ForeignKey("project.id"), nullable=False)
-    hostname = Column(String(256))
+    project = Column(String(40), ForeignKey("project.id"), primary_key=True)
+    hostname = Column(String(256), primary_key=True)
     network = Column(String(256))
     subnet = Column(String(256))
     ports = Column(String(256))

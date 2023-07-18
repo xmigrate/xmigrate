@@ -12,4 +12,4 @@ class Blueprint(Base):
     is_deleted = Column(Boolean, nullable=False, default=False)
     is_locked = Column(Boolean, nullable=False, default=False)
     is_enabled = Column(Boolean, nullable=False, default=True)
-    project = Column(String(40), ForeignKey("project.id"), nullable=False)
+    project = Column(String(40), ForeignKey("project.id"), primary_key=True)

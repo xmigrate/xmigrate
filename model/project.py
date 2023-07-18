@@ -7,8 +7,8 @@ class Project(Base):
     
     __tablename__ = "project"
 
-    id = Column(String(40), primary_key=True)
-    name = Column(String(256), nullable=False)
+    id = Column(String(40), primary_key=True, unique=True)
+    name = Column(String(256), primary_key=True)
     provider = Column(String(256), nullable=False)
     location = Column(String(256), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False)
