@@ -36,3 +36,7 @@ yarn-error.log*
 
 azcopy*
 import*
+
+# project files
+ansible/projects/*
+projects/*

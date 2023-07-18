@@ -78,11 +78,6 @@
           - gdisk 
           - hyperv-daemons
         state: latest
-
-    # - name: test
-    #   yum:
-    #     name: ntfs-3g
-    #     state: present
  
     - name: Download file
       shell: yum install https://rpmfind.net/linux/epel/7/x86_64/Packages/w/WALinuxAgent-2.0.18-1.el7.noarch.rpm -y

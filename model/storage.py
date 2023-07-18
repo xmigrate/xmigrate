@@ -1,59 +1,17 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Storage(Model):
-    project = columns.Text(primary_key=True, max_length=20)
-    storage = columns.Text(primary_key=True)
-    container = columns.Text(required=True)
-    access_key = columns.Text(required=True, max_length=150)
-
-class StorageMongo(Document):
-    project = StringField(required=True, max_length=20)
-    storage = StringField(required=True)
-    container = StringField(required=True)
-    access_key = StringField(required=True, max_length=150)
-    meta = {
-        'indexes': [
-            {'fields': ('storage', 'project'), 'unique': True}
-        ]
-    }
-
-class Bucket(Model):
-    project = columns.Text(primary_key=True, max_length=20)
-    bucket = columns.Text(primary_key=True)
-    secret_key = columns.Text(required=True, max_length=150)
-    access_key = columns.Text(required=True, max_length=150)
+from utils.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
 
 
-class BucketMongo(Document):
-    project = StringField(required=True, max_length=20)
-    bucket = StringField(required=True)
-    secret_key = StringField(required=True, max_length=150)
-    access_key = StringField(required=True, max_length=150)
-    meta = {
-        'indexes': [
-            {'fields': ('bucket', 'project'), 'unique': True}
-        ]
-    }
+class Storage(Base):
+    
+    __tablename__ = 'storage'
 
-
-class GcpBucket(Model):
-    project = columns.Text(primary_key=True, max_length=20)
-    project_id= columns.Text(required=True, max_length=150)
-    secret_key = columns.Text(required=True, max_length=150)
-    access_key = columns.Text(required=True, max_length=150)
-    bucket = columns.Text(primary_key=True)
-
-
-class GcpBucketMongo(Document):
-    project = StringField(required=True, max_length=20)
-    project_id= StringField(required=True, max_length=150)
-    secret_key = StringField(required=True, max_length=150)
-    access_key = StringField(required=True, max_length=150)
-    bucket = StringField(required=True)
-    meta = {
-        'indexes': [
-            {'fields': ('bucket', 'project'), 'unique': True}
-        ]
-    }
+    id = Column(String(40), primary_key=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    bucket_name = Column(String(256))
+    access_key = Column(String(256))
+    secret_key = Column(String(256))
+    container = Column(String(256))
+    project = Column(String(40), ForeignKey("project.id"), nullable=False)

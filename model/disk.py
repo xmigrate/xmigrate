@@ -1,25 +1,19 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Disk(Model):
-    host = columns.Text(primary_key=True, max_length=150)
-    vhd = columns.Text(required=True)
-    file_size = columns.Text(required=True)
-    project = columns.Text(primary_key=True, max_length=150)
-    mnt_path = columns.Text(primary_key=True, max_length=150)
-    disk_id = columns.Text(required=True, max_length=550)
+from utils.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
 
 
-class DiskMongo(Document):
-    host = StringField(required=True, max_length=150)
-    vhd = StringField(required=True)
-    file_size = StringField(required=True)
-    project = StringField(required=True, max_length=150)
-    mnt_path = StringField(required=True, max_length=150)
-    disk_id = StringField(required=True, max_length=550)
-    meta = {
-        'indexes': [
-            {'fields': ('host', 'project', 'mnt_path'), 'unique': True}
-        ]
-    }
+class Disk(Base):
+    
+    __tablename__ = 'disk'
+
+    id = Column(String(40), primary_key=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    hostname = Column(String(256))
+    vhd = Column(String(256))
+    file_size = Column(String(256))
+    mnt_path = Column(String(256))
+    disk_clone = Column(String(256))
+    target_disk_id = Column(String(256))
+    vm = Column(String(40), ForeignKey("vm.id"), nullable=False)

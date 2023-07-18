@@ -1,84 +1,45 @@
-from functools import lru_cache
-import uvicorn
+# Model imports are for fetching table contexts, they are unused here but is necessary.
+# The order of model imports needs to be preserved for proper foreign key relations.
+# The context can also be loaded from inside the imports given in routes but,
+# they needn't necessarily be ordered as required, hence the explicit import.
+from model import user, project, mapping, storage, discover, blueprint, disk
+# import routes with alias to avoid overrides
+from routes import (auth,
+                    blueprint as blueprint_r,
+                    discover as discover_r,
+                    locations, master,
+                    project as project_r,
+                    status, storage as storage_r,
+                    stream,
+                    vm_types)
+from utils.database import Base, engine
 from fastapi import FastAPI
-from pydantic import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
-from ansible.playbook import Playbook
-# import ast
-# import json
-# import os
-from pygtail import Pygtail
-from collections import defaultdict
-# import boto3
-import sys
-#from quart import Quart, g, request
-#from quart_cors import cors
-#from quart_jwt_extended import JWTManager
 
-class Settings(BaseSettings):
-    MONGO_DB: str = "mongodb://root:example@mongo:27017/"
-    JWT_SECRET_KEY: str = "try2h@ckT415"
-    JWT_ACCESS_TOKEN_EXPIRES: int = 3600
-    ALGORITHM: str = "HS256"
-    class Config:
-        env_file = ".env"
-
-@lru_cache()
-def get_settings():
-    return Settings()
-
-sys.path.append('./')
-
-#app = Quart(__name__)
+Base.metadata.create_all(bind=engine)
 app = FastAPI()
-
-origins = [
-    "*",
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# app = cors(app, allow_origin="*")
-
-# app.config['JWT_SECRET_KEY'] = 'try2h@ckT415'  # Change this!
-# app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 3600
-# jwt = JWTManager(app)
-
-
-#app.secret_key = getenv("SECRET")
-
-
-from routes.stream import *
-from routes.status import *
-from routes.server import *
-from routes.index import *
-from routes.discover import *
-from routes.build import *
-from routes.blueprint import *
-from routes.project import *
-from routes.storage import *
-from routes.auth import *
-from routes.locations import *
-from routes.vm_types import *
-from routes.master import *
-
-
-#Exception
-from exception import handler
-from exception.exception import GcpRegionNotFound
-#app.register_error_handler(404, handler.page_not_found)
-#app.register_error_handler(Exception, handler.internal_server_error)
-#app.register_error_handler(GcpRegionNotFound, handler.bad_request)
+app.include_router(auth.router)
+app.include_router(blueprint_r.router)
+app.include_router(discover_r.router)
+app.include_router(locations.router)
+app.include_router(master.router)
+app.include_router(project_r.router)
+app.include_router(status.router)
+app.include_router(storage_r.router)
+app.include_router(stream.router)
+app.include_router(vm_types.router)
 
 
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=8000, debug=True)
-    # app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

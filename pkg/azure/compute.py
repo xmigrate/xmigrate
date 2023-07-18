@@ -1,138 +1,101 @@
-# Import the needed management objects from the libraries. The azure.common library
-# is installed automatically with the other libraries.
-from azure.common.client_factory import get_client_from_cli_profile
-from azure.mgmt.compute import ComputeManagementClient
-from model.project import *
-from model.blueprint import *
-from model.disk import *
-from utils.dbconn import *
-from azure.common.credentials import ServicePrincipalCredentials
+from schemas.machines import VMUpdate
+from services.blueprint import get_blueprintid
+from services.disk import get_all_disks
+from services.machines import get_all_machines, get_machine_by_hostname, update_vm
+from services.project import get_project_by_name
 from utils.logger import *
+from azure.common.credentials import ServicePrincipalCredentials
+from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOptionTypes
 
 
-def create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks):
-    con = create_db_con()
-    client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-    secret = Project.objects(name=project).allow_filtering()[0]['secret']
-    tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
-    creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
-    compute_client = ComputeManagementClient(creds,subscription_id)
-    con.shutdown()
-    managed_disks = []
-
-    lun=1
-    for disk in data_disks:
-        disk_client = compute_client.disks.get(rg_name, disk)
-        managed_disks.append({
-            'lun': lun, 
-            'name': disk_client.name,
-            'create_option': DiskCreateOptionTypes.attach,
-            'managed_disk': {
-                'id': disk_client.id
-            }
-        })
-        lun = lun + 1
-        
-    
-    print(
-        f"Provisioning virtual machine {vm_name}; this operation might take a few minutes.")
-
-    poller = compute_client.virtual_machines.create_or_update(rg_name, vm_name,
-                                                              {
-                                                                  "location": location,
-                                                                  "storage_profile": {
-                                                                      "data_disks": managed_disks,
-                                                                      "image_reference": {
-                                                                          'id': '/subscriptions/' + subscription_id + '/resourceGroups/' + rg_name + '/providers/Microsoft.Compute/images/'+image_name
-                                                                      }
-                                                                  },
-                                                                  "hardware_profile": {
-                                                                      "vm_size": vm_type
-                                                                  },
-                                                                  "os_profile": {
-                                                                      "computer_name": vm_name,
-                                                                      "admin_username": username,
-                                                                      "admin_password": password
-                                                                  },
-                                                                  "network_profile": {
-                                                                      "network_interfaces": [{
-                                                                          "id": nic_id,
-                                                                      }]
-                                                                  }
-                                                              }
-                                                              )
-
-    vm_result = poller.result()
-    print("Provisioned virtual machine")
+def create_vm_worker(project, machine, username, password, image_name, data_disks, db) -> bool:
     try:
-        con = create_db_con()
-        BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status='100')
+        creds = ServicePrincipalCredentials(client_id=project.azure_client_id, secret=project.azure_client_secret, tenant=project.azure_tenant_id)
+        compute_client = ComputeManagementClient(creds, project.azure_subscription_id)
+        managed_disks = []
+
+        lun=1
+        for disk in data_disks:
+            disk_client = compute_client.disks.get(project.azure_resource_group, disk)
+            managed_disks.append({
+                'lun': lun, 
+                'name': disk_client.name,
+                'create_option': DiskCreateOptionTypes.attach,
+                'managed_disk': {
+                    'id': disk_client.id
+                }
+            })
+            lun += 1
+            
+        print(f"Provisioning virtual machine {machine.hostname}; this operation might take a few minutes...")
+
+        poller = compute_client.virtual_machines.create_or_update(project.azure_resource_group,
+                                                                  machine.hostname,
+                                                                  {
+                                                                    "location": project.location,
+                                                                    "storage_profile": {
+                                                                        "data_disks": managed_disks,
+                                                                        "image_reference": {
+                                                                            'id': f'/subscriptions/{project.azure_subscription_id}/resourceGroups/{project.azure_resource_group}/providers/Microsoft.Compute/images/{image_name}'
+                                                                        }
+                                                                    },
+                                                                    "hardware_profile": {
+                                                                        "vm_size": machine.machine_type
+                                                                    },
+                                                                    "os_profile": {
+                                                                        "computer_name": machine.hostname,
+                                                                        "admin_username": username,
+                                                                        "admin_password": password
+                                                                    },
+                                                                    "network_profile": {
+                                                                        "network_interfaces": [{
+                                                                            "id": machine.nic_id,
+                                                                        }]
+                                                                    }
+                                                                }
+                                                            )
+
+        vm_result = poller.result()
+        print(f"Provisioned virtual machine {machine.hostname}.")
+        
+        vm_data = VMUpdate(machine_id=machine.id, vm_id=vm_result.name, status=100)
+        update_vm(vm_data, db)
+        return True
     except Exception as e:
-        BluePrint.objects(project=project, host=vm_name).update(vm_id=vm_result.name,status='-100')
-        print("VM creation updation failed: "+repr(e))
-        logger("VM creation updation failed: "+repr(e),"warning")
-    finally:
-        con.shutdown()
+        vm_data = VMUpdate(machine_id=machine.id, vm_id=vm_result.name, status=-100)
+        update_vm(vm_data, db)
+
+        print("VM creation updation failed: "+ str(e))
+        logger("VM creation updation failed: "+ str(e), "warning")
+        return False
 
 
-async def create_vm(project, hostname):
-    con = create_db_con()
-    rg_name = Project.objects(name=project).allow_filtering()[0]['resource_group']
-    location = Project.objects(name=project).allow_filtering()[0]['location']
-    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
+async def create_vm(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
+    blueprint_id = get_blueprintid(project.id, db)
+
     username = "xmigrate"
     password = "Xmigrate@321"
-    machines = BluePrint.objects(project=project, host=hostname).allow_filtering()
+
+    if hostname == ["all"]:
+        machines = get_all_machines(blueprint_id, db)
+    else:
+        machines = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
+
     for machine in machines:
-        disks = Disk.objects(project=project, host=machine['host']).allow_filtering()
+        disks = get_all_disks(machine.id, db)
         data_disks = []
         image_name = ''
         for disk in disks:
-            if disk['mnt_path'] == 'slash':
-                image_name = disk['disk_id']
+            if disk.mnt_path == 'slash':
+                image_name = disk.target_disk_id
             else:
-                data_disks.append(disk['disk_id'])
-        vm_name = machine['host']
-        vm_type = machine['machine_type']
-        nic_id = machine['nic_id']
+                data_disks.append(disk.target_disk_id)
         
-        create_vm_worker(rg_name, vm_name, location, username, password, vm_type, nic_id, subscription_id, image_name, project, data_disks)
-    con.shutdown()
-
-
-def list_available_vm_sizes(compute_client, region = 'EastUS2', minimum_cores = 1, minimum_memory_MB = 768):
-    vm_sizes_list = compute_client.virtual_machine_sizes.list(location=region)
-    machine_types = []
-    for vm_size in vm_sizes_list:
-        if vm_size.number_of_cores >= int(minimum_cores) and vm_size.memory_in_mb >= int(minimum_memory_MB): 
-            machine_types.append({"vm_name":vm_size.name, "cores":vm_size.number_of_cores, "osdisk":vm_size.os_disk_size_in_mb, "disk":vm_size.resource_disk_size_in_mb, "memory":vm_size.memory_in_mb, "max_data_disk":vm_size.max_data_disk_count})
-    return machine_types
-
-
-def get_vm_types(project):
-    client = ''
-    location = ''
-    machine_types = []
-    try:
-        con = create_db_con()
-        subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
-        client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-        tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-        secret_id = Project.objects(name=project).allow_filtering()[0]['secret']
-        location = Project.objects(name=project).allow_filtering()[0]['location']
-        creds = ServicePrincipalCredentials(client_id=client_id, secret=secret_id, tenant=tenant_id)
-        client = ComputeManagementClient(creds, subscription_id)
-        machine_types = list_available_vm_sizes(client, region = location, minimum_cores = 1, minimum_memory_MB = 768)
-        flag = True
-    except Exception as e:
-        print(repr(e))
-        logger("Fetching vm details failed: "+repr(e),"warning")
-        flag = False
-    con.shutdown()
-    return machine_types, flag
-
+        vm_created = create_vm_worker(project, machine, username, password, image_name, data_disks, db)
+        if not vm_created: return False
+    return True
 
                 
             

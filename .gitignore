@@ -39,3 +39,7 @@ token.json
 venv
 
 request.http
+
+# project files
+ansible/projects/*
+projects/*

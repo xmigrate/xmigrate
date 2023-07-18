@@ -74,28 +74,26 @@ export default class Project extends Component {
         data = {
           name: this.state.input["name"],
           provider: this.state.input["provider"],
-          secret_key: this.state.input["secret_key"],
-          access_key: this.state.input["access_key"],
+          aws_secret_key: this.state.input["secret_key"],
+          aws_access_key: this.state.input["access_key"],
           location: this.state.input["location"]
         };
       } else if (this.state.input["provider"] === "azure") {
         data = {
           name: this.state.input["name"],
           provider: this.state.input["provider"],
-          subscription_id: this.state.input["subscription_id"],
-          secret_id: this.state.input["secret"],
-          tenant_id: this.state.input["tenant_id"],
-          client_id: this.state.input["client_id"],
+          azure_subscription_id: this.state.input["subscription_id"],
+          azure_client_secret: this.state.input["secret"],
+          azure_tenant_id: this.state.input["tenant_id"],
+          azure_client_id: this.state.input["client_id"],
           location: this.state.input["location"],
-          resource_group: this.state.input["resource_group"],
+          azure_resource_group: this.state.input["resource_group"],
         };
-      }
-      else if(this.state.input["provider"] === "gcp"){
+      } else if (this.state.input["provider"] === "gcp"){
         data = {
           name: this.state.input["name"],
           provider: this.state.input["provider"],
-          project_id: this.state.input["project_id"],
-          service_account: this.state.service_account,
+          gcp_service_token: this.state.service_account,
           location: this.state.input["location"]
         };
       }
@@ -120,7 +118,7 @@ export default class Project extends Component {
           });
         });
       } else if (this.state.status === "Create Project") {
-        console.log("Create project",data);
+        console.log("Create project", data);
         await PostService(CREATEPROJECT, data).then((res) => {
           console.log(res);
           this.setState({
@@ -135,7 +133,7 @@ export default class Project extends Component {
             //Here Make Changes
             project: this.state.input["name"],
             provider: this.state.input["provider"],
-            bucket:this.state.input["bucket"],
+            bucket_name: this.state.input["bucket"],
             secret_key: this.state.input["secret_key"],
             access_key: this.state.input["access_key"],
           };
@@ -143,22 +141,21 @@ export default class Project extends Component {
           dataProvider = {
             provider: this.state.input["provider"],
             project: this.state.input["name"],
-            storage: this.state.input["storage"],
+            bucket_name: this.state.input["storage"],
             container: this.state.input["container"],
             access_key: this.state.input["access_key"],
           };
         }else if (this.state.input["provider"] === "gcp") {
           dataProvider = {
-            project_id: this.state.input["project_id"],
             provider: this.state.input["provider"],
             project: this.state.input["name"],
-            bucket:this.state.input["bucket"],
+            bucket_name: this.state.input["bucket"],
             secret_key: this.state.input["secret_key"],
             access_key: this.state.input["access_key"],
           };
         }
    
-        console.log("data posted",dataProvider);
+        console.log("data posted", dataProvider);
         this.setState({
           loader: true,
         });
@@ -267,23 +264,6 @@ export default class Project extends Component {
                         </Card>
                       </Col> 
                     </Row>
-                    <Form.Group
-                      className="register bg-blue mb-3"
-                      style={{
-                        display:
-                          this.state.input.provider === "gcp"
-                            ? " block"
-                            : "none",
-                      }}
-                    >
-                      <Form.Label>Project Id</Form.Label>
-                      <Form.Control
-                        type="text"
-                        onChange={this.handleChange}
-                        placeholder="project Id"
-                        name="project_id"
-                      />
-                    </Form.Group>
 
                     <Form.Group
                       className="register bg-blue mb-3"

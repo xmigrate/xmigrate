@@ -1,44 +1,35 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Network(Model):
-    cidr = columns.Text(max_length=50)
-    project = columns.Text(primary_key=True, max_length=50)
-    nw_name = columns.Text(primary_key=True, max_length=50)
-    created = columns.Boolean(required=True, default=False)
+from utils.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
 
 
-class NetworkMongo(Document):
-    cidr = StringField(required=True, max_length=50)
-    project = StringField(required=True, max_length=50)
-    nw_name = StringField(required=True, max_length=50)
-    created = BooleanField(required=True, default=False)
-    meta = {
-        'indexes': [
-            {'fields': ('cidr', 'project','nw_name'), 'unique': True}
-        ]
-    }
+class Network(Base):
+    
+    __tablename__ = 'network'
+    
+    id = Column(String(40), primary_key=True, unique=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    blueprint = Column(String(40), ForeignKey("blueprint.id"), nullable=False)
+    name = Column(String(256), primary_key=True)
+    cidr = Column(String(256))
+    created = Column(Boolean, nullable=False, default=False)
+    target_network_id = Column(String(256))
+    ig_id = Column(String(256))
+    route_table = Column(String(256))
 
 
-class Subnet(Model):
-    cidr = columns.Text(primary_key=True, max_length=50)
-    nw_name = columns.Text(required=False, max_length=100)
-    project = columns.Text(primary_key=True, max_length=50)
-    subnet_name = columns.Text(primary_key=True, max_length=150)
-    subnet_type = columns.Boolean(required=True)
-    created = columns.Boolean(required=True, default=False)
+class Subnet(Base):
+    
+    __tablename__ = 'subnet'
 
-
-class SubnetMongo(Document):
-    cidr = StringField(required=True, max_length=50)
-    nw_name = StringField(required=False, max_length=100)
-    project = StringField(required=True, max_length=50)
-    subnet_name = StringField(required=True, max_length=150)
-    subnet_type = BooleanField(required=True)
-    created = BooleanField(required=True, default=False)
-    meta = {
-        'indexes': [
-            {'fields': ('cidr', 'project','subnet_name'), 'unique': True}
-        ]
-    }
+    id = Column(String(40), primary_key=True, unique=True)
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    network = Column(String(40), ForeignKey("network.id"), nullable=False)
+    subnet_type = Column(String(256))
+    subnet_name = Column(String(256), primary_key=True)
+    cidr = Column(String(256))
+    created = Column(Boolean, nullable=False, default=False)
+    target_subnet_id = Column(String(256))
