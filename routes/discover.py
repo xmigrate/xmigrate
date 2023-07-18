@@ -57,7 +57,7 @@ async def discover(data: DiscoverBase, request:Request, current_user: TokenData 
         with open(log_file_path, "w") as logfile:
             logfile.write("PLAY RECAP unreachable=0 failed=0")
 
-        json_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'test_data.json')
+        json_file_path = "./test_data.json"
         with open(json_file_path, 'r') as json_file:
             test_data = json.load(json_file)
        
