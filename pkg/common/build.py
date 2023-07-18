@@ -17,14 +17,12 @@ from services.blueprint import get_blueprintid
 from services.machines import update_vm,get_machineid
 
 
-async def start_vm_preparation(user, project, hostname, db) -> None:
-    if project == project:
+async def start_vm_preparation(user, project, hostname, db, test_header=False) -> None:
+    if test_header:
         logger("VM preparation started","info")
         print("****************VM preparation awaiting*****************")
-        # preparation_completed = await prepare(user, project, hostname, db)
         preparation_completed=True
         if preparation_completed:
-            # machine_id="94ba75fd-fad5-52fd-9813-7fa21381b759"
             project = get_project_by_name(user, project, db)
             blueprint_id = get_blueprintid(project.id, db)
             machine_id = get_machineid(hostname[0], blueprint_id, db)
@@ -47,11 +45,10 @@ async def start_vm_preparation(user, project, hostname, db) -> None:
             logger("VM preparation failed", "error")
 
 
-async def start_cloning(user, project, hostname, db) -> None:
-    if project == project:
+async def start_cloning(user, project, hostname, db, test_header=False) -> None:
+    if test_header:
         logger("Cloning started","info")
         print("****************Cloning awaiting*****************")
-        # cloning_completed = await clone(user, project, hostname, db)
         cloning_completed=True
         if cloning_completed:
             project = get_project_by_name(user, project, db)
@@ -76,15 +73,14 @@ async def start_cloning(user, project, hostname, db) -> None:
             logger("Disk cloning failed", "error")
 
 
-async def start_conversion(user, project, hostname, db):
-    if project == project:
+async def start_conversion(user, project, hostname, db, test_header=False):
+    if test_header:
         provider = get_project_by_name(user, project, db).provider
         logger("Conversion started", "info")
         print("****************Conversion awaiting*****************")
 
         if provider == Provider.AWS.value:
             logger("AMI creation started", "info")
-            # ami_created = await awsdisk.start_ami_creation(user, project, hostname, db)
             ami_created=True
             if ami_created:
                 project = get_project_by_name(user, project, db)
@@ -103,20 +99,12 @@ async def start_conversion(user, project, hostname, db):
             converted = False
             logger("Download started", "info")
             print("****************Download started*****************")
-            # if provider == Provider.AZURE.value:
-            #     image_downloaded = await azuredisk.start_downloading(user, project, hostname, db)
-            # elif provider == Provider.GCP.value:
-            #     image_downloaded = await gcpdisk.start_downloading(user, project, hostname, db)
             image_downloaded=True
             if image_downloaded:
                 print("****************Download completed*****************")
                 logger("Image Download completed","info")
                 print("****************Conversion awaiting*****************")
                 logger("Conversion started","info")
-                # if provider == Provider.AZURE.value:
-                #     converted =  await azuredisk.start_conversion(user, project, hostname, db)
-                # elif provider == Provider.GCP.value:
-                #     converted =  await gcpdisk.start_conversion(user, project, hostname, db)
                 converted=True
                 if converted:
                     print("****************Conversion completed*****************")
@@ -192,8 +180,8 @@ async def start_network_build(user, project, db):
         logger("Network creation failed","error")
 
 
-async def start_host_build(user, project, hostname, db):
-    if project == project:
+async def start_host_build(user, project, hostname, db, test_header=False):
+    if test_header:
         provider = get_project_by_name(user, project, db).provider
         vm_created=True
         if vm_created:
@@ -202,6 +190,12 @@ async def start_host_build(user, project, hostname, db):
             machine_id = get_machineid(hostname[0], blueprint_id, db)
             vm_data = VMUpdate(machine_id=machine_id,status=100)
             update_vm(vm_data, db)
+            if vm_created:
+                print("VM creation completed!")
+                logger("VM creation completed", "info")
+            else:
+                print("VM creation failed!")
+                logger("VM creation failed", "error")
     else:
         provider = get_project_by_name(user, project, db).provider
         disk_created = True if provider == Provider.AWS.value else False
