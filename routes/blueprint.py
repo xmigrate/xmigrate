@@ -136,21 +136,37 @@ async def create_blueprint(data: BlueprintCreate, current_user: TokenData = Depe
 
 
 @router.post('/blueprint/host/prepare')
-async def vm_prepare(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):    
-    asyncio.create_task(build.start_vm_preparation(current_user['username'], data.project, data.hostname, db))
-    return jsonable_encoder({"message": "vm preparation started", "status": 200})
+async def vm_prepare(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)): 
+    test_header = request.headers.get('Xm-test')
+    if test_header == "test":  
+        asyncio.create_task(build.start_vm_preparation(current_user['username'], data.project, data.hostname, db, test_header))
+        return jsonable_encoder({"message": "vm preparation started", "status": 200})
+    else:   
+        asyncio.create_task(build.start_vm_preparation(current_user['username'], data.project, data.hostname, db))
+        return jsonable_encoder({"message": "vm preparation started", "status": 200})
 
 
 @router.post('/blueprint/host/clone')
-async def image_clone(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.start_cloning(current_user['username'], data.project, data.hostname, db))
-    return jsonable_encoder({"message": "cloning started", "status":200})
+async def image_clone(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    test_header = request.headers.get('Xm-test')
+    if test_header == "test" :  
+        
+        asyncio.create_task(build.start_cloning(current_user['username'], data.project, data.hostname, db, test_header))
+        return jsonable_encoder({"message": "cloning started", "status":200})
+    else:
+        asyncio.create_task(build.start_cloning(current_user['username'], data.project, data.hostname, db))
+        return jsonable_encoder({"message": "cloning started", "status":200})
 
 
 @router.post('/blueprint/host/convert')
-async def image_convert(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.start_conversion(current_user['username'], data.project, data.hostname, db))
-    return jsonable_encoder({"message": "conversion started", "status": 200})
+async def image_convert(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    test_header = request.headers.get('Xm-test')
+    if test_header == "test" :
+        asyncio.create_task(build.start_conversion(current_user['username'], data.project, data.hostname, db, test_header))
+        return jsonable_encoder({"message": "conversion started", "status": 200})
+    else:
+        asyncio.create_task(build.start_conversion(current_user['username'], data.project, data.hostname, db))
+        return jsonable_encoder({"message": "conversion started", "status": 200})
 
 
 @router.post('/blueprint/network/build')
@@ -160,6 +176,11 @@ async def network_build(data: CommonBase, current_user: TokenData = Depends(get_
 
 
 @router.post('/blueprint/host/build')
-async def host_build(data: CommonCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    asyncio.create_task(build.start_host_build(current_user['username'], data.project, data.hostname, db))
-    return jsonable_encoder({"msg": "build started", "status": 200})
+async def host_build(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+    test_header = request.headers.get('Xm-test')
+    if test_header == "test" :
+        asyncio.create_task(build.start_host_build(current_user['username'], data.project, data.hostname, db, test_header))
+        return jsonable_encoder({"msg": "build started", "status": 200})
+    else:
+        asyncio.create_task(build.start_host_build(current_user['username'], data.project, data.hostname, db))
+        return jsonable_encoder({"msg": "build started", "status": 200})
