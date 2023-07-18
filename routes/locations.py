@@ -3,7 +3,7 @@ from pkg.azure import location
 from pkg.gcp import location as gcpregions
 from schemas.loactions import LocationBase
 from utils.constants import Provider
-from fastapi import APIRouter,Request
+from fastapi import APIRouter, Request
 from fastapi.encoders import jsonable_encoder
 import json,os
 router = APIRouter()

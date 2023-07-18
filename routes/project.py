@@ -7,7 +7,7 @@ from services.user import get_userid
 from utils.constants import Provider
 from utils.database import dbconn
 from utils.id_gen import unique_id_gen
-from fastapi import APIRouter, Depends, HTTPException, status,Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 import json, os
@@ -20,27 +20,11 @@ async def project_create(data: ProjectBase, request: Request, current_user: Toke
     try:
         test_header = request.headers.get('X-test')
         if test_header == "test" :
-
-
             json_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'test_data.json')
             with open(json_file_path, 'r') as json_file:
                 test_data = json.load(json_file)
             project_exists = check_project_exists(current_user['username'], data.name, db)
             if not project_exists:
-                
-                #filling dummy data if any field comes empty for test case
-                '''if data.provider is None:
-                    data.provider = "aws"
-                test = dict(data)
-                print(test)
-                for key in test.keys():
-                    if test[key] is None:
-                        test[key] = test_data[key]
-                
-                data=ProjectBase.parse_obj(test)
-                print(data)
-               
-               '''
                 if data.provider == "aws":
                     if data.aws_access_key is None:
                         data.aws_access_key = test_data["aws_access_key"]

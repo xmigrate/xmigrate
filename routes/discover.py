@@ -15,7 +15,7 @@ from utils.constants import Provider
 from utils.database import dbconn
 from utils.playbook import run_playbook
 import netaddr, re, os, json
-from fastapi import APIRouter, Depends, HTTPException, status,Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 router = APIRouter()
 
 @router.post('/discover')
-async def discover(data: DiscoverBase, request:Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+async def discover(data: DiscoverBase, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     test_header = request.headers.get('X-test')
     current_dir = os.getcwd()
     project = data.project
@@ -63,7 +63,6 @@ async def discover(data: DiscoverBase, request:Request, current_user: TokenData 
        
         discover_exists = check_discover_exists(project_id, db)
         if not discover_exists:
-            print(test_data)
             discover_data = DiscoverCreate(project_id=project_id, hostname=test_data["host"], network=test_data["network"], subnet=test_data["subnet"], cpu_core=test_data["cores"], cpu_model=test_data["cpu_model"], ram=test_data["ram"], disk_details=test_data["disk"], ip=test_data["ip"])
             create_discover(discover_data, db)
         else:
@@ -71,11 +70,11 @@ async def discover(data: DiscoverBase, request:Request, current_user: TokenData 
             discover_data = DiscoverUpdate(discover_id=discover_id, hostname=test_data["host"], network=test_data["network"], subnet=test_data["subnet"], cpu_core=test_data["cores"], cpu_model=test_data["cpu_model"], ram=test_data["ram"], disk_details=test_data["disk"], ip=test_data["ip"])
             update_discover(discover_data, db)
        
-        hostname = test_data["host"]
         blueprint_exists = check_blueprint_exists(project_id, db)
         if not blueprint_exists:
             create_blueprint(project_id, db)
 
+        hostname = test_data["host"]
         blueprint_id = get_blueprintid(project_id, db)         
         vm_exists = check_vm_exists(hostname, blueprint_id, db)
         if not vm_exists:
@@ -85,6 +84,7 @@ async def discover(data: DiscoverBase, request:Request, current_user: TokenData 
             machine_id = get_machineid(test_data["host"], blueprint_id, db)
             vm_data = VMUpdate(machine_id=machine_id, network=test_data["network"],  cpu_core=test_data["cores"], cpu_model=test_data["cpu_model"], ram=test_data["ram"])
             update_vm(vm_data, db)
+        
         disks=test_data["disk"]
         machine_id = get_machineid(hostname, blueprint_id, db)
         for disk in disks:
@@ -100,10 +100,8 @@ async def discover(data: DiscoverBase, request:Request, current_user: TokenData 
 
         return jsonable_encoder({'status': '200'})
     
-
     PLAYBOOK = "gather_facts.yaml"
-    STAGE = "gather_facts"
-        
+    STAGE = "gather_facts"    
     
     try:
         finished, output = run_playbook(provider=data.provider, username=data.username, project_name=project, curr_working_dir=current_dir, playbook=PLAYBOOK, stage=STAGE)
