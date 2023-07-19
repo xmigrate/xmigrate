@@ -85,8 +85,8 @@ async def start_conversion(user, project, hostname, db, test_header=False):
 
     if test_header:
         await migration_test_data(user, project, hostname, 35, db)
-        print("Disk Conversion failed")
-        logger("Disk Conversion failed", "error")
+        print("Disk Conversion completed")
+        logger("Disk Conversion completed", "error")
     else:
         provider = get_project_by_name(user, project, db).provider
         logger("Conversion started", "info")
