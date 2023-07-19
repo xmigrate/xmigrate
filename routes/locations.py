@@ -3,14 +3,14 @@ from pkg.azure import location
 from pkg.gcp import location as gcpregions
 from schemas.loactions import LocationBase
 from test_header_files.test_data import location_test_data
-from utils.constants import Provider
+from utils.constants import Provider, Test
 from fastapi import APIRouter, Request
 from fastapi.encoders import jsonable_encoder
 router = APIRouter()
 
 @router.post('/locations')
 async def locations_get(data: LocationBase, request: Request):
-    test_header = request.headers.get('Xm-test')
+    test_header = request.headers.get(Test.HEADER.value)
     
     if test_header is not None:
         locations = await location_test_data(data.provider)

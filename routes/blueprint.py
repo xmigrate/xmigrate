@@ -12,6 +12,7 @@ from services.network import (check_network_exists, check_subnet_exists, create_
 from services.discover import get_discover
 from services.project import get_projectid, get_project_by_name
 from test_header_files.test_data import blueprint_save_test_data, network_create_test_data, subnet_create_test_data
+from utils.constants import Test
 from utils.database import dbconn
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
@@ -42,7 +43,7 @@ async def network_create(data: NetworkCreate, request: Request, current_user: To
         data.cidr = data.name if data.cidr is None else data.cidr
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
-        test_header = request.headers.get('Xm-test')
+        test_header = request.headers.get(Test.HEADER.value)
         if test_header is not None:
             await network_create_test_data(blueprint_id, data, db)
             return jsonable_encoder({"msg": "network data saved", "status": 200})
@@ -106,7 +107,7 @@ async def subnet_create(data: SubnetCreate, request: Request, current_user: Toke
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
         network_id = get_networkid(data.nw_cidr, blueprint_id, db)
-        test_header = request.headers.get('Xm-test')
+        test_header = request.headers.get(Test.HEADER.value)
         if test_header is not None:
             await subnet_create_test_data(network_id, data, db)
         else:
@@ -138,7 +139,7 @@ async def update_blueprint(request: Request, current_user: TokenData = Depends(g
 async def create_blueprint(data: BlueprintCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     project = get_project_by_name(current_user['username'], data.project, db)
     blueprint_id = get_blueprintid(project.id, db)
-    test_header = request.headers.get('Xm-test')
+    test_header = request.headers.get(Test.HEADER.value)
     if test_header is not None:
         await blueprint_save_test_data(project.provider, blueprint_id, data, db)
     else:
@@ -151,8 +152,8 @@ async def create_blueprint(data: BlueprintCreate, request: Request, current_user
 
 @router.post('/blueprint/host/prepare')
 async def vm_prepare(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)): 
-    test_header = request.headers.get('Xm-test')
-    if test_header == "test":  
+    test_header = request.headers.get(Test.HEADER.value)
+    if test_header is not None:
         asyncio.create_task(build.start_vm_preparation(current_user['username'], data.project, data.hostname, db, test_header))
         return jsonable_encoder({"message": "vm preparation started", "status": 200})
     else:   
@@ -162,8 +163,8 @@ async def vm_prepare(data: CommonCreate, request: Request, current_user: TokenDa
 
 @router.post('/blueprint/host/clone')
 async def image_clone(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    test_header = request.headers.get('Xm-test')
-    if test_header == "test" :
+    test_header = request.headers.get(Test.HEADER.value)
+    if test_header is not None:
         asyncio.create_task(build.start_cloning(current_user['username'], data.project, data.hostname, db, test_header))
         return jsonable_encoder({"message": "cloning started", "status":200})
     else:
@@ -173,8 +174,8 @@ async def image_clone(data: CommonCreate, request: Request, current_user: TokenD
 
 @router.post('/blueprint/host/convert')
 async def image_convert(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    test_header = request.headers.get('Xm-test')
-    if test_header == "test" :
+    test_header = request.headers.get(Test.HEADER.value)
+    if test_header is not None:
         asyncio.create_task(build.start_conversion(current_user['username'], data.project, data.hostname, db, test_header))
         return jsonable_encoder({"message": "conversion started", "status": 200})
     else:
@@ -184,8 +185,8 @@ async def image_convert(data: CommonCreate, request: Request, current_user: Toke
 
 @router.post('/blueprint/network/build')
 async def network_build(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    test_header = request.headers.get('Xm-test')
-    if test_header == "test" :
+    test_header = request.headers.get(Test.HEADER.value)
+    if test_header is not None:
         asyncio.create_task(build.start_network_build(current_user['username'], data.project, data.hostname, db, test_header))
         return jsonable_encoder({"message": "network build started", "status": 200})
     else:
@@ -195,8 +196,8 @@ async def network_build(data: CommonCreate, request: Request, current_user: Toke
 
 @router.post('/blueprint/host/build')
 async def host_build(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    test_header = request.headers.get('Xm-test')
-    if test_header == "test" :
+    test_header = request.headers.get(Test.HEADER.value)
+    if test_header is not None:
         asyncio.create_task(build.start_host_build(current_user['username'], data.project, data.hostname, db, test_header))
         return jsonable_encoder({"msg": "build started", "status": 200})
     else:

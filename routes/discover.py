@@ -12,7 +12,7 @@ from services.machines import check_vm_exists, create_vm, get_machineid, update_
 from services.node import check_node_exists, create_node, get_nodeid, update_node
 from services.project import get_projectid
 from test_header_files.test_data import discover_test_data
-from utils.constants import Provider
+from utils.constants import Provider, Test
 from utils.database import dbconn
 from utils.playbook import run_playbook
 import netaddr, re, os
@@ -25,7 +25,7 @@ router = APIRouter()
 
 @router.post('/discover')
 async def discover(data: DiscoverBase, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    test_header = request.headers.get('Xm-test')
+    test_header = request.headers.get(Test.HEADER.value)
     current_dir = os.getcwd()
     project = data.project
     project_id = get_projectid(current_user['username'], project, db)

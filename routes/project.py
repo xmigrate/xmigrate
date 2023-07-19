@@ -5,7 +5,7 @@ from services.mapper import create_mapping
 from services.project import (check_project_exists, create_project, get_all_projects, get_project_by_name, get_projectid, update_project)
 from services.user import get_userid
 from test_header_files.test_data import project_test_data
-from utils.constants import Provider
+from utils.constants import Provider, Test
 from utils.database import dbconn
 from utils.id_gen import unique_id_gen
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -18,7 +18,7 @@ router = APIRouter()
 @router.post('/project')
 async def project_create(data: ProjectBase, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     try:
-        test_header = request.headers.get('Xm-test')
+        test_header = request.headers.get(Test.HEADER.value)
         if test_header == "test":
             data = await project_test_data(current_user['username'], data, db)
                       
