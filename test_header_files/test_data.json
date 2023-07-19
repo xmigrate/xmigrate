@@ -40,5 +40,32 @@
     "azure_subscription_id": "dummy",
     "azure_resource_group": "dummy",
     "azure_resource_group_created": true,
-    "gcp_service_token": "dummy"
+    "gcp_service_token": "dummy",
+    "aws_machine_types": [
+        "t2.micro",
+        "t2.large",
+        "c4.large",
+        "r4.large"
+    ],
+    "azure_machine_types": [
+        "Standard_B2ms",
+        "Standard_DS1_v2",
+        "Standard_A1_v2",
+        "Standard_F4s_v2"
+    ],
+    "gcp_machine_types": [
+        "e2-standard-2",
+        "e2-medium",
+        "c2-standard-4",
+        "c2-standard-8"
+    ],
+    "public_route": true,
+    "network_data": {
+        "cidr": "220.110.0.0/16",
+        "name": "testnetwork"
+    },
+    "subnet_data": {
+        "cidr": "220.110.1.0/24",
+        "name": "testsubnet"
+    }
 }

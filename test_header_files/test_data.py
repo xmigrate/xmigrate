@@ -1,19 +1,18 @@
-from schemas.project import ProjectBase
-from services.project import check_project_exists
-from utils.constants import Provider
-import json, os
-from sqlalchemy.orm import Session
-
-from schemas.discover import DiscoverBase, DiscoverCreate, DiscoverUpdate
+from schemas.blueprint import BlueprintCreate
+from schemas.discover import DiscoverCreate, DiscoverUpdate
 from schemas.disk import DiskCreate, DiskUpdate
 from schemas.machines import VMCreate, VMUpdate
-from schemas.node import NodeCreate, NodeUpdate
+from schemas.network import NetworkCreate, SubnetCreate
+from schemas.project import ProjectBase
 from services.blueprint import check_blueprint_exists, create_blueprint, get_blueprintid
 from services.discover import check_discover_exists, create_discover, get_discoverid, update_discover
 from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
 from services.machines import check_vm_exists, create_vm, get_machineid, update_vm
-from services.node import check_node_exists, create_node, get_nodeid, update_node
-from services.project import get_projectid, get_project_by_name
+from services.network import check_network_exists, check_subnet_exists, create_network, create_subnet, get_all_networks
+from services.project import check_project_exists, get_project_by_name
+from utils.constants import Provider
+import json, os
+from sqlalchemy.orm import Session
 
 
 async def get_test_data()-> dict:
@@ -122,3 +121,43 @@ async def migration_test_data(user: str, project: str, hostname: list, status: i
     machine_id = get_machineid(hostname[0], blueprint_id, db)
     vm_data = VMUpdate(machine_id=machine_id,status=status)
     update_vm(vm_data, db)
+
+
+async def blueprint_save_test_data(provider: str, blueprint_id: str, data: BlueprintCreate, db: Session):
+    test_data = await get_test_data()
+    for machine in data.machines:
+        machine_id = get_machineid(machine["hostname"], blueprint_id, db)
+        vm_data = VMUpdate(machine_id=machine_id, machine_type=test_data[f"{provider}_machine_types"][0], public_route=bool(test_data["public_route"]))
+        update_vm(vm_data, db)
+
+
+async def network_create_test_data(blueprint_id: str, data: NetworkCreate, db: Session) -> None:
+    test_data = await get_test_data()
+
+    data.cidr = test_data["network_data"]["cidr"] if data.cidr is None else data.cidr
+    data.name = test_data["network_data"]["name"] if data.name is None else data.name
+    
+    network_exists = check_network_exists(blueprint_id, data.cidr, data.name, db)
+    if not network_exists:
+        create_network(blueprint_id, data, db)
+    else:
+        print(f'Network with cidr ({data.cidr}) and/or name ({data.name}) already exists for the project!')
+
+    for host in data.hosts:
+        networks = get_all_networks(blueprint_id, db)
+        machine_id = get_machineid(host['hostname'], blueprint_id, db)
+        vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
+        update_vm(vm_data, db)
+
+
+async def subnet_create_test_data(network_id: str, data: SubnetCreate, db) -> None:
+    test_data = await get_test_data()
+
+    data.cidr = test_data["subnet_data"]["cidr"] if data.cidr is None else data.cidr
+    data.name = test_data["subnet_data"]["name"] if data.name is None else data.name
+
+    subnet_exists = check_subnet_exists(network_id, data.cidr, data.name, db)
+    if not subnet_exists:
+        return create_subnet(network_id, data, db)
+    else:
+        print(f'Subnet with cidr ({data.cidr}) and/or name ({data.name}) already exists for the network {data.nw_cidr}!')
