@@ -22,8 +22,8 @@ async def start_network_build(user, project, db, test_header=False):
     print("****************Network build awaiting*****************")
 
     if test_header:
-        network_created = True
         await migration_test_data(user, project, 20, db, None)
+        network_created = True
     else:
         if provider == Provider.AZURE.value:
             network_created = await azure_create_nw(user, project, db)
@@ -45,8 +45,8 @@ async def start_vm_preparation(user, project, hostname, db, test_header=False) -
 
     preparation_completed = False
     if test_header:
-        preparation_completed = True
         await migration_test_data(user, project, 21, db, hostname)
+        preparation_completed = True
     else:
         preparation_completed = await prepare(user, project, hostname, db)
         
@@ -64,8 +64,8 @@ async def start_cloning(user, project, hostname, db, test_header=False) -> None:
 
     cloning_completed = False
     if test_header:
-        cloning_completed = True
         await migration_test_data(user, project, 25, db, hostname)
+        cloning_completed = True
     else:
         cloning_completed = await clone(user, project, hostname, db)
 
