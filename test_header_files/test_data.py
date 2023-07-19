@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 
 
 async def get_test_data()-> dict:
+    '''Return test data json.'''
+
     base_dir = os.getcwd()
     with open(f'{base_dir}/test_header_files/test_data.json', 'r') as json_file:
         test_data = json.load(json_file)
@@ -24,6 +26,8 @@ async def get_test_data()-> dict:
 
 
 async def project_test_data(user: str, data: ProjectBase, db: Session) -> ProjectBase:
+    '''Return project test data.'''
+
     test_data = await get_test_data()
 
     project_exists = check_project_exists(user, data.name, db)
@@ -56,6 +60,8 @@ async def project_test_data(user: str, data: ProjectBase, db: Session) -> Projec
 
 
 async def location_test_data(provider: str) -> list:
+    '''Return location test data.'''
+
     test_data = await get_test_data()
 
     if provider == Provider.AZURE.value:
@@ -69,6 +75,8 @@ async def location_test_data(provider: str) -> list:
 
 
 async def discover_test_data(project: str, project_id: str, db: Session) -> None:
+    '''Simulate discover with test data.'''
+    
     log_file_dir = f"./logs/ansible/{project}"
 
     if not os.path.exists(log_file_dir):
@@ -117,6 +125,8 @@ async def discover_test_data(project: str, project_id: str, db: Session) -> None
 
 
 async def migration_test_data(user: str, project: str, status: int, db: Session, hostname: list = None) -> None:
+    '''Simlates the process and updates database for build stages.'''
+
     project = get_project_by_name(user, project, db)
     blueprint_id = get_blueprintid(project.id, db)
     if hostname is None:
@@ -131,6 +141,8 @@ async def migration_test_data(user: str, project: str, status: int, db: Session,
 
 
 async def blueprint_save_test_data(provider: str, blueprint_id: str, data: BlueprintCreate, db: Session):
+    '''Save blueprint with test data.'''
+
     test_data = await get_test_data()
     for machine in data.machines:
         machine_id = get_machineid(machine["hostname"], blueprint_id, db)
@@ -139,6 +151,8 @@ async def blueprint_save_test_data(provider: str, blueprint_id: str, data: Bluep
 
 
 async def network_create_test_data(blueprint_id: str, data: NetworkCreate, db: Session) -> None:
+    '''Save network with test data.'''
+
     test_data = await get_test_data()
 
     data.cidr = test_data["network_data"]["cidr"] if data.cidr is None else data.cidr
@@ -158,6 +172,8 @@ async def network_create_test_data(blueprint_id: str, data: NetworkCreate, db: S
 
 
 async def subnet_create_test_data(network_id: str, data: SubnetCreate, db) -> None:
+    '''Save subnet with test data.'''
+
     test_data = await get_test_data()
 
     data.cidr = test_data["subnet_data"]["cidr"] if data.cidr is None else data.cidr
