@@ -17,7 +17,10 @@ async def vms_get(project: str, request: Request, current_user: TokenData = Depe
     if test_header is not None:
         provider = get_project_by_name(current_user['username'], project, db).provider
         test_data = await get_test_data()
-        return jsonable_encoder({'status': '200', 'machine_types': test_data[f"{provider}_machine_types"]})
+        machine_types = []
+        for machine in test_data[f"{provider}_machine_types"]:
+            machine_types.append({"vm_name": machine})
+        return jsonable_encoder({'status': '200', 'machine_types': machine_types})
     else:
         machine_types, flag = get_vm_types(current_user['username'], project, db)
         if flag:

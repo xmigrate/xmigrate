@@ -7,7 +7,7 @@ from schemas.project import ProjectBase
 from services.blueprint import check_blueprint_exists, create_blueprint, get_blueprintid
 from services.discover import check_discover_exists, create_discover, get_discoverid, update_discover
 from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
-from services.machines import check_vm_exists, create_vm, get_machineid, update_vm
+from services.machines import check_vm_exists, create_vm, get_all_machines, get_machineid, update_vm
 from services.network import check_network_exists, check_subnet_exists, create_network, create_subnet, get_all_networks
 from services.project import check_project_exists, get_project_by_name
 from utils.constants import Provider
@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 
 
 async def get_test_data()-> dict:
-    with open('./test_data.json', 'r') as json_file:
+    base_dir = os.getcwd()
+    with open(f'{base_dir}/test_header_files/test_data.json', 'r') as json_file:
         test_data = json.load(json_file)
 
     return test_data
@@ -115,12 +116,18 @@ async def discover_test_data(project: str, project_id: str, db: Session) -> None
             update_disk(disk_data, db)
 
 
-async def migration_test_data(user: str, project: str, hostname: list, status: int, db: Session) -> None:
+async def migration_test_data(user: str, project: str, status: int, db: Session, hostname: list = None) -> None:
     project = get_project_by_name(user, project, db)
     blueprint_id = get_blueprintid(project.id, db)
-    machine_id = get_machineid(hostname[0], blueprint_id, db)
-    vm_data = VMUpdate(machine_id=machine_id,status=status)
-    update_vm(vm_data, db)
+    if hostname is None:
+        machines = get_all_machines(blueprint_id, db)
+        for machine in machines:
+            vm_data = VMUpdate(machine_id=machine.id,status=status)
+            update_vm(vm_data, db)
+    else:
+        machine_id = get_machineid(hostname[0], blueprint_id, db)
+        vm_data = VMUpdate(machine_id=machine_id,status=status)
+        update_vm(vm_data, db)
 
 
 async def blueprint_save_test_data(provider: str, blueprint_id: str, data: BlueprintCreate, db: Session):

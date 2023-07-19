@@ -473,11 +473,10 @@ export default class BluePrint extends Component {
   }
 
   //BluePrintNetworkBuild-------------------------------------------------------------------------
-  async _BlueprintNetworkBuild(hostName) {
+  async _BlueprintNetworkBuild() {
     console.log("Network Build");
     var data = {
       project: this.state.project,
-      hostname: [hostName],
     };
     console.log("Sending", data);
     await PostService(BLUEPRINT_NETWORK_BUILD, data).then((res) => {

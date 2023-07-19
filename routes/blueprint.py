@@ -3,7 +3,7 @@ from pkg.common import build
 from pkg.common import hosts as host
 from routes.auth import TokenData, get_current_user
 from schemas.blueprint import BlueprintCreate
-from schemas.common import CommonCreate
+from schemas.common import CommonBase, CommonCreate
 from schemas.machines import VMUpdate
 from schemas.network import NetworkCreate, NetworkDelete, SubnetCreate, SubnetDelete
 from services.blueprint import get_blueprintid
@@ -184,13 +184,13 @@ async def image_convert(data: CommonCreate, request: Request, current_user: Toke
 
 
 @router.post('/blueprint/network/build')
-async def network_build(data: CommonCreate, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
+async def network_build(data: CommonBase, request: Request, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
     test_header = request.headers.get(Test.HEADER.value)
     if test_header is not None:
-        asyncio.create_task(build.start_network_build(current_user['username'], data.project, data.hostname, db, test_header))
+        asyncio.create_task(build.start_network_build(current_user['username'], data.project, db, test_header))
         return jsonable_encoder({"message": "network build started", "status": 200})
     else:
-        asyncio.create_task(build.start_network_build(current_user['username'], data.project, data.hostname, db))
+        asyncio.create_task(build.start_network_build(current_user['username'], data.project, db))
         return jsonable_encoder({"message": "network build started", "status": 200})
 
 
