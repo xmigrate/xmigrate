@@ -11,7 +11,7 @@ from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
 from services.machines import check_vm_exists, create_vm, get_machineid, update_vm
 from services.node import check_node_exists, create_node, get_nodeid, update_node
 from services.project import get_projectid
-from test_header_files.test_data import discover_test_data
+from pkg.test_header_files.test_data import discover_test_data
 from utils.constants import Provider, Test
 from utils.database import dbconn
 from utils.playbook import run_playbook

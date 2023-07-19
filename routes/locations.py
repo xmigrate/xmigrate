@@ -2,7 +2,7 @@ from pkg.aws import location as regions
 from pkg.azure import location
 from pkg.gcp import location as gcpregions
 from schemas.loactions import LocationBase
-from test_header_files.test_data import location_test_data
+from pkg.test_header_files.test_data import location_test_data
 from utils.constants import Provider, Test
 from fastapi import APIRouter, Request
 from fastapi.encoders import jsonable_encoder

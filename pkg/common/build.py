@@ -10,7 +10,7 @@ from pkg.gcp import compute as gcp_compute
 from pkg.gcp import disk as gcpdisk
 from pkg.gcp.network import create_nw as gcp_create_nw
 from services.project import get_project_by_name
-from test_header_files.test_data import migration_test_data
+from pkg.test_header_files.test_data import migration_test_data
 from utils.constants import Provider
 from utils.logger import *
 

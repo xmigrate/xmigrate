@@ -1,7 +1,7 @@
 from pkg.common.vm_types import get_vm_types
 from routes.auth import get_current_user, TokenData
 from services.project import get_project_by_name
-from test_header_files.test_data import get_test_data
+from pkg.test_header_files.test_data import get_test_data
 from utils.constants import Test
 from utils.database import dbconn
 from fastapi import Depends, APIRouter, Request

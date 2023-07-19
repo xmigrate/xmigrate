@@ -19,7 +19,7 @@ async def get_test_data()-> dict:
     '''Return test data json.'''
 
     base_dir = os.getcwd()
-    with open(f'{base_dir}/test_header_files/test_data.json', 'r') as json_file:
+    with open(f'{base_dir}/pkg/test_header_files/test_data.json', 'r') as json_file:
         test_data = json.load(json_file)
 
     return test_data

@@ -4,7 +4,7 @@ from schemas.project import ProjectBase, ProjectUpdate
 from services.mapper import create_mapping
 from services.project import (check_project_exists, create_project, get_all_projects, get_project_by_name, get_projectid, update_project)
 from services.user import get_userid
-from test_header_files.test_data import project_test_data
+from pkg.test_header_files.test_data import project_test_data
 from utils.constants import Provider, Test
 from utils.database import dbconn
 from utils.id_gen import unique_id_gen
