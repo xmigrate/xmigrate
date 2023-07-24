@@ -177,10 +177,10 @@ async def subnet_create_test_data(data: SubnetCreate, db) -> None:
     test_data = await get_test_data()
 
     data.cidr = test_data["subnet_data"]["cidr"] if data.cidr is None else data.cidr
-    data.name = test_data["subnet_data"]["name"] if data.name is None else data.name
+    data.subnet_name = test_data["subnet_data"]["name"] if data.subnet_name is None else data.subnet_name
 
-    subnet_exists = check_subnet_exists(data.network, data.cidr, data.name, db)
+    subnet_exists = check_subnet_exists(data.network, data.cidr, data.subnet_name, db)
     if not subnet_exists:
         return create_subnet(data, db)
     else:
-        print(f'Subnet with cidr ({data.cidr}) and/or name ({data.name}) already exists for the network {data.nw_cidr}!')
+        print(f'Subnet with cidr ({data.cidr}) and/or name ({data.subnet_name}) already exists for the network {data.nw_cidr}!')

@@ -114,11 +114,11 @@ async def subnet_create(data: SubnetCreate, request: Request, current_user: Toke
         if test_header is not None:
             await subnet_create_test_data(data, db)
         else:
-            subnet_exists = check_subnet_exists(data.network, data.cidr, data.name, db)
+            subnet_exists = check_subnet_exists(data.network, data.cidr, data.subnet_name, db)
             if not subnet_exists:
                 return create_subnet(data, db)
             else:
-                print(f'Subnet with cidr ({data.cidr}) and/or name ({data.name}) already exists for the network {data.nw_cidr}!')
+                print(f'Subnet with cidr ({data.cidr}) and/or name ({data.subnet_name}) already exists for the network {data.nw_cidr}!')
     except:
         return jsonable_encoder({'status': '500', 'msg': 'subnet  creation failed'})
     
