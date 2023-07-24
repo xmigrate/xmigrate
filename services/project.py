@@ -1,8 +1,7 @@
 from model.project import Project
 from model.mapping import Mapper
 from model.user import User
-from schemas.project import ProjectBase, ProjectUpdate
-from datetime import datetime
+from schemas.project import ProjectCreate, ProjectUpdate
 import json
 from typing import Union
 from fastapi.responses import JSONResponse
@@ -22,7 +21,7 @@ def check_project_exists(user: str, project: str, db: Session) -> bool:
     return(db.query(Mapper).join(Project).join(User).filter(User.username==user, Project.name==project, Mapper.is_deleted==False).count() > 0)
 
 
-def create_project(id: str, data: ProjectBase, db: Session) -> JSONResponse:
+def create_project(data: ProjectCreate, db: Session) -> JSONResponse:
     '''
     Create a new project with the given details.
     
@@ -30,28 +29,19 @@ def create_project(id: str, data: ProjectBase, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    stmt = Project(
-        id = id,
-        name = data.name,
-        provider = data.provider,
-        location = data.location,
-        aws_access_key = data.aws_access_key,
-        aws_secret_key = data.aws_secret_key,
-        azure_client_id	= data.azure_client_id,
-        azure_client_secret	= data.azure_client_secret,
-        azure_tenant_id	= data.azure_tenant_id,
-        azure_subscription_id = data.azure_subscription_id,
-        azure_resource_group = data.azure_resource_group,
-        gcp_service_token = json.dumps(data.gcp_service_token),
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    project = Project()
+    project_data = data.dict(exclude_none=True, by_alias=False)
+    
+    for key, value in project_data.items():
+        if isinstance(value, dict):
+            value = json.dumps(value)
+        setattr(project, key, value)
 
-    db.add(stmt)
+    db.add(project)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(project)
 
-    return JSONResponse({"status": 201, "message": "project created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "project created", "data": [{}]}, status_code=201)
 
 
 def get_all_projects(user: str, db: Session) -> list:

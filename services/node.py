@@ -1,7 +1,5 @@
 from model.nodes import Nodes
 from schemas.node import NodeCreate, NodeUpdate
-from utils.id_gen import unique_id_gen
-from datetime import datetime
 import json
 from typing import Union
 from fastapi.responses import JSONResponse
@@ -28,21 +26,17 @@ def create_node(data: NodeCreate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    stmt = Nodes(
-        id = unique_id_gen("node"),
-        hosts = json.dumps(data.hosts),
-        username = data.username,
-        password = data.password,
-        project = data.project_id,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    nodes = Nodes()
+    node_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in node_data.items():
+        setattr(nodes, key, value)
+
+    db.add(nodes)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(nodes)
 
-    return JSONResponse({"status": 201, "message": "node data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "node data created", "data": [{}]}, status_code=201)
 
 
 def get_nodeid(project_id: str, db: Session) -> Column[str]:

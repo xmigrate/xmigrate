@@ -3,7 +3,7 @@ from schemas.discover import DiscoverCreate, DiscoverUpdate
 from schemas.disk import DiskCreate, DiskUpdate
 from schemas.machines import VMCreate, VMUpdate
 from schemas.network import NetworkCreate, SubnetCreate
-from schemas.project import ProjectBase
+from schemas.project import ProjectCreate
 from services.blueprint import check_blueprint_exists, create_blueprint, get_blueprintid
 from services.discover import check_discover_exists, create_discover, get_discoverid, update_discover
 from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
@@ -25,7 +25,7 @@ async def get_test_data()-> dict:
     return test_data
 
 
-async def project_test_data(user: str, data: ProjectBase, db: Session) -> ProjectBase:
+async def project_test_data(user: str, data: ProjectCreate, db: Session) -> ProjectCreate:
     '''Return project test data.'''
 
     test_data = await get_test_data()
@@ -150,7 +150,7 @@ async def blueprint_save_test_data(provider: str, blueprint_id: str, data: Bluep
         update_vm(vm_data, db)
 
 
-async def network_create_test_data(blueprint_id: str, data: NetworkCreate, db: Session) -> None:
+async def network_create_test_data(data: NetworkCreate, db: Session) -> None:
     '''Save network with test data.'''
 
     test_data = await get_test_data()
@@ -158,20 +158,20 @@ async def network_create_test_data(blueprint_id: str, data: NetworkCreate, db: S
     data.cidr = test_data["network_data"]["cidr"] if data.cidr is None else data.cidr
     data.name = test_data["network_data"]["name"] if data.name is None else data.name
     
-    network_exists = check_network_exists(blueprint_id, data.cidr, data.name, db)
+    network_exists = check_network_exists(data.blueprint, data.cidr, data.name, db)
     if not network_exists:
-        create_network(blueprint_id, data, db)
+        create_network(data, db)
     else:
         print(f'Network with cidr ({data.cidr}) and/or name ({data.name}) already exists for the project!')
 
     for host in data.hosts:
-        networks = get_all_networks(blueprint_id, db)
-        machine_id = get_machineid(host['hostname'], blueprint_id, db)
+        networks = get_all_networks(data.blueprint, db)
+        machine_id = get_machineid(host['hostname'], data.blueprint, db)
         vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
         update_vm(vm_data, db)
 
 
-async def subnet_create_test_data(network_id: str, data: SubnetCreate, db) -> None:
+async def subnet_create_test_data(data: SubnetCreate, db) -> None:
     '''Save subnet with test data.'''
 
     test_data = await get_test_data()
@@ -179,8 +179,8 @@ async def subnet_create_test_data(network_id: str, data: SubnetCreate, db) -> No
     data.cidr = test_data["subnet_data"]["cidr"] if data.cidr is None else data.cidr
     data.name = test_data["subnet_data"]["name"] if data.name is None else data.name
 
-    subnet_exists = check_subnet_exists(network_id, data.cidr, data.name, db)
+    subnet_exists = check_subnet_exists(data.network, data.cidr, data.name, db)
     if not subnet_exists:
-        return create_subnet(network_id, data, db)
+        return create_subnet(data, db)
     else:
         print(f'Subnet with cidr ({data.cidr}) and/or name ({data.name}) already exists for the network {data.nw_cidr}!')

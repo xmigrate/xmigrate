@@ -1,7 +1,5 @@
 from model.storage import Storage
-from utils.id_gen import unique_id_gen
 from schemas.storage import StorageCreate, StorageUpdate
-from datetime import datetime
 from typing import Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column
@@ -28,22 +26,19 @@ def create_storage(project_id: str, data: StorageCreate, db:Session) -> JSONResp
     :param db: active database session
     '''
     
-    stmt = Storage(
-        id = unique_id_gen("storage"),
-        bucket_name = data.bucket_name,
-        access_key = data.access_key,
-        secret_key = data.secret_key,
-        container = data.container,
-        project = project_id,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    storage = Storage()
+    storage_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in storage_data.items():
+        setattr(storage, key, value)
+
+    storage.project = project_id
+
+    db.add(storage)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(storage)
 
-    return JSONResponse({"status": 201, "message": "storage created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "storage created", "data": [{}]}, status_code=201)
 
 
 def get_storage(project_id: str, db: Session) -> Union[Storage, None]:

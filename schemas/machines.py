@@ -1,16 +1,23 @@
+from utils.id_gen import unique_id_gen
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional, Union
+from typing import Optional
 
 
 class VMCreate(BaseModel):
-    blueprint_id: str
+    id: str = Field(default_factory=unique_id_gen("VM"))
+    blueprint: str = Field(alias='blueprint_id')
     hostname: str
-    network: Union[str, None] = None
-    ports: Union[str, None] = None
-    cpu_core: Union[int, None] = None
-    cpu_model: Union[str, None] = None
-    ram: Union[str, None] = None
+    network: Optional[str] = None
+    ports: Optional[str] = None
+    cpu_core: Optional[int] = None
+    cpu_model: Optional[str] = None
+    ram: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class VMUpdate(BaseModel):

@@ -27,7 +27,7 @@ def create_blueprint(project_id: str, db: Session) -> JSONResponse:
     '''
 
     stmt = Blueprint(
-        id = unique_id_gen("blueprint"),
+        id = unique_id_gen("BP"),
         project = project_id,
         created_at = datetime.now(),
         updated_at = datetime.now()
@@ -37,7 +37,7 @@ def create_blueprint(project_id: str, db: Session) -> JSONResponse:
     db.commit()
     db.refresh(stmt)
 
-    return JSONResponse({"status": 201, "message": "blueprint created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "blueprint created", "data": [{}]}, status_code=201)
 
 
 def get_blueprint(project_id: str, db: Session) -> Union[Blueprint, None]:

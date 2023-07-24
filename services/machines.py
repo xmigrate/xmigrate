@@ -1,7 +1,5 @@
 from model.machines import VirtualMachine as VM
 from schemas.machines import VMCreate, VMUpdate
-from utils.id_gen import unique_id_gen
-from datetime import datetime
 from typing import List, Union
 from fastapi.responses import JSONResponse
 from sqlalchemy import Column
@@ -28,23 +26,17 @@ def create_vm(data: VMCreate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    stmt = VM(
-        id = unique_id_gen(data.hostname),
-        blueprint = data.blueprint_id,
-        hostname = data.hostname,
-        network = data.network,
-        cpu_core = data.cpu_core,
-        cpu_model = data.cpu_model,
-        ram = data.ram,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    vm = VM()
+    vm_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in vm_data.items():
+        setattr(vm, key, value)
+
+    db.add(vm)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(vm)
 
-    return JSONResponse({"status": 201, "message": "VM data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "VM data created", "data": [{}]}, status_code=201)
 
 
 def get_all_machines(blueprint_id: str, db: Session) -> List[VM]:

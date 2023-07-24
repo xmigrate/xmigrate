@@ -1,7 +1,5 @@
 from model.disk import Disk
 from schemas.disk import DiskCreate, DiskUpdate
-from utils.id_gen import unique_id_gen
-from datetime import datetime
 import json
 from typing import List
 from fastapi.responses import JSONResponse
@@ -29,20 +27,17 @@ def create_disk(data: DiskCreate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    stmt = Disk(
-        id = unique_id_gen("Disk"),
-        hostname = data.hostname,
-        mnt_path = data.mnt_path,
-        vm = data.vm_id,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    disk = Disk()
+    disk_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in disk_data.items():
+        setattr(disk, key, value)
+
+    db.add(disk)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(disk)
 
-    return JSONResponse({"status": 201, "message": "disk data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "disk data created", "data": [{}]}, status_code=201)
 
 
 def get_all_disks(vm_id: str, db: Session) -> List[Disk]:

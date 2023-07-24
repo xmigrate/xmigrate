@@ -27,7 +27,7 @@ def create_user(username: str, password: str, db: Session) -> JSONResponse:
     '''
     
     stmt = User(
-        id = unique_id_gen(username),
+        id = unique_id_gen("US"),
         username = username,
         password = password,
         created_at = datetime.now(),
@@ -38,7 +38,7 @@ def create_user(username: str, password: str, db: Session) -> JSONResponse:
     db.commit()
     db.refresh(stmt)
 
-    return JSONResponse({"status": 201, "message": "user created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "user created", "data": [{}]}, status_code=201)
 
 
 def get_userid(username: str, db: Session) -> Column[str]:

@@ -1,18 +1,21 @@
+from utils.id_gen import unique_id_gen
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional, Union
+from typing import Optional
 
 
-class NetworkBase(BaseModel):
+class NetworkCreate(BaseModel):
+    id: str = Field(default_factory=unique_id_gen("NW"))
+    blueprint: Optional[None] = Field(alias='blueprint_id')
     project: str
     hosts: list
     name: str
-    cidr: Union[str, None] = None
+    cidr: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
-
-class NetworkCreate(NetworkBase):
     class Config:
-        orm_mode = True
+        allow_population_by_field_name = True
 
 
 class NetworkDelete(BaseModel):
@@ -33,11 +36,18 @@ class NetworkUpdate(BaseModel):
 
 
 class SubnetCreate(BaseModel):
+    id: str = Field(default_factory=unique_id_gen("SN"))
+    network: Optional[None] = Field(alias='network_id')
     project: str
     nw_cidr: str
     cidr: str
     name: str
     nw_type: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class SubnetDelete(NetworkDelete):

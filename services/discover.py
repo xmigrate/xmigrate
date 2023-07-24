@@ -1,7 +1,5 @@
 from model.discover import Discover
 from schemas.discover import DiscoverCreate, DiscoverUpdate
-from utils.id_gen import unique_id_gen
-from datetime import datetime
 import json
 from typing import List
 from fastapi.responses import JSONResponse
@@ -28,27 +26,19 @@ def create_discover(data: DiscoverCreate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    stmt = Discover(
-        id = unique_id_gen("discover"),
-        project = data.project_id,
-        hostname = data.hostname,
-        network = data.network,
-        subnet = data.subnet,
-        ports = data.ports,
-        cpu_core = data.cpu_core,
-        cpu_model = data.cpu_model,
-        ram = data.ram,
-        disk_details = json.dumps(data.disk_details),
-        ip = data.ip,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    discover = Discover()
+    discover_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in discover_data.items():
+        if isinstance(value, list):
+            value = json.dumps(value)
+        setattr(discover, key, value)
+
+    db.add(discover)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(discover)
 
-    return JSONResponse({"status": 201, "message": "discover data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "discover data created", "data": [{}]}, status_code=201)
 
 
 def get_discover(project_id: str, db: Session) -> List[Discover]:
