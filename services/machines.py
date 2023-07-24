@@ -4,7 +4,7 @@ from utils.id_gen import unique_id_gen
 from datetime import datetime
 from typing import List, Union
 from fastapi.responses import JSONResponse
-from sqlalchemy import Column, update
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -100,33 +100,14 @@ def update_vm(data: VMUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    vm_data = get_machine_by_id(data.machine_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            table_key = key.rstrip('_id') if 'blueprint' in key else key
-            data_dict[key] = vm_data[table_key]
-    data = VMUpdate.parse_obj(data_dict)
+    db_vm = get_machine_by_id(data.id, db)
+    vm_data = data.dict(exclude_none=True, by_alias=False)
 
-    stmt = update(VM).where(
-        VM.id==data.machine_id and VM.is_deleted==False
-    ).values(
-        network = data.network,
-        cpu_core = data.cpu_core,
-        cpu_model = data.cpu_model,
-        ram = data.ram,
-        ip = data.ip,
-        ip_created = data.ip_created,
-        machine_type = data.machine_type,
-        public_route = data.public_route,
-        status = data.status,
-        image_id = data.image_id,
-        vm_id = data.vm_id,
-        nic_id = data.nic_id,
-        updated_at = datetime.now()
-    ).execution_options(synchronize_session="fetch")
+    for key, value in vm_data.items():
+        setattr(db_vm, key, value)
 
-    db.execute(stmt)
+    db.add(db_vm)
     db.commit()
+    db.refresh(db_vm)
 
-    return JSONResponse({"status": 204, "message": "VM data updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "VM data updated", "data": [{}]}, status_code=204)

@@ -1,5 +1,6 @@
-from pydantic import BaseModel
-from typing import Union
+from datetime import datetime
+from pydantic import BaseModel, Field
+from typing import Optional, Union
 
 
 class NetworkBase(BaseModel):
@@ -20,11 +21,15 @@ class NetworkDelete(BaseModel):
 
 
 class NetworkUpdate(BaseModel):
-    network_id: str
-    target_network_id: Union[str, None] = None
-    ig_id: Union[str, None] = None
-    route_table: Union[str, None] = None
-    created: Union[bool, None] = None
+    id: str = Field(alias='network_id')
+    target_network_id: Optional[str] = None
+    ig_id: Optional[str] = None
+    route_table: Optional[str] = None
+    created: Optional[bool] = None
+    updated_at: datetime = Field(default_factory=datetime.now())
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class SubnetCreate(BaseModel):
@@ -43,6 +48,10 @@ class SubnetDelete(NetworkDelete):
 
         
 class SubnetUpdate(BaseModel):
-    subnet_id: str
-    target_subnet_id: Union[str, None] = None
-    created: Union[bool, None] = None
+    id: str = Field(alias='subnet_id')
+    target_subnet_id: Optional[str] = None
+    created: Optional[bool] = None
+    updated_at: datetime = Field(default_factory=datetime.now())
+
+    class Config:
+        allow_population_by_field_name = True

@@ -6,7 +6,7 @@ from datetime import datetime
 import json
 from typing import Union
 from fastapi.responses import JSONResponse
-from sqlalchemy import Column, update
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -108,32 +108,16 @@ def update_project(data: ProjectUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    project_data = get_project_by_id(data.project_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            if key == 'gcp_service_token' and project_data[key] is not None:
-                data_dict[key] = json.loads(project_data[key])
-            else:
-                data_dict[key] = project_data[key]
-    data = ProjectUpdate.parse_obj(data_dict)
-    
-    stmt = update(Project).where(
-        Project.id==data.project_id and Project.is_deleted==False
-    ).values(
-        aws_access_key = data.aws_access_key,
-        aws_secret_key = data.aws_secret_key,
-        azure_client_id = data.azure_client_id,
-        azure_client_secret = data.azure_client_secret,
-        azure_tenant_id = data.azure_tenant_id,
-        azure_subscription_id = data.azure_subscription_id,
-        azure_resource_group = data.azure_resource_group,
-        azure_resource_group_created = data.azure_resource_group_created,
-        gcp_service_token = json.dumps(data.gcp_service_token),
-        updated_at = datetime.now()
-    ).execution_options(synchronize_session="fetch")
+    db_project = get_project_by_id(data.id, db)
+    project_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.execute(stmt)
+    for key, value in project_data.items():
+        if isinstance(value, dict):
+            value = json.dumps(value)
+        setattr(db_project, key, value)
+
+    db.add(db_project)
     db.commit()
+    db.refresh(db_project)
 
-    return JSONResponse({"status": 204, "message": "project updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "project updated", "data": [{}]}, status_code=204)

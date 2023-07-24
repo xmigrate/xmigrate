@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 from typing import Union
 from fastapi.responses import JSONResponse
-from sqlalchemy import Column, update
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -86,26 +86,16 @@ def update_node(data: NodeUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    node_data = get_node_by_id(data.node_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            if key == 'hosts' and node_data[key] is not None:
-                data_dict[key] = json.loads(node_data[key])
-            else:
-                data_dict[key] = node_data[key.rstrip('_id')]
-    data = NodeUpdate.parse_obj(data_dict)
-    
-    stmt = update(Nodes).where(
-        Nodes.id==data.node_id and Nodes.is_deleted==False
-    ).values(
-        hosts = json.dumps(data.hosts),
-        username = data.username,
-        password = data.password,
-        updated_at = datetime.now()
-    )
+    db_node = get_node_by_id(data.id, db)
+    node_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.execute(stmt)
+    for key, value in node_data.items():
+        if isinstance(value, list):
+            value = json.dumps(value)
+        setattr(db_node, key, value)
+
+    db.add(db_node)
     db.commit()
+    db.refresh(db_node)
 
-    return JSONResponse({"status": 204, "message": "node data updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "node data updated", "data": [{}]}, status_code=204)

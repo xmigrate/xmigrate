@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Union
+from datetime import datetime
+from pydantic import BaseModel, Field
 
 
 class NodeCreate(BaseModel):
@@ -9,11 +9,13 @@ class NodeCreate(BaseModel):
     password: str
 
 
-class NodeUpdate(NodeCreate):
-    project_id: Union[str, None] = None
-    node_id: str
+class NodeUpdate(BaseModel):
+    id: str = Field(alias='node_id')
     hosts: list
     username: str
     password: str
+    updated_at: datetime = Field(default_factory=datetime.now())
 
+    class Config:
+        allow_population_by_field_name = True
 

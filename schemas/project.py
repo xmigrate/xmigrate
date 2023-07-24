@@ -1,5 +1,6 @@
-from pydantic import BaseModel
-from typing import Union, Dict
+from datetime import datetime
+from pydantic import BaseModel, Field
+from typing import Optional, Union, Dict
 
 
 class ProjectBase(BaseModel):
@@ -17,10 +18,20 @@ class ProjectBase(BaseModel):
     gcp_service_token: Union[Dict, None] = None
 
 
-class ProjectUpdate(ProjectBase):
-    project_id: str
-    name: Union[str, None] = None
-    provider: Union[str, None] = None
-    location: Union[str, None] = None
+class ProjectUpdate(BaseModel):
+    id: str = Field(alias='project_id')
+    provider: Optional[str] = None
+    location: Optional[str] = None
+    aws_access_key: Optional[str] = None
+    aws_secret_key: Optional[str] = None
+    azure_client_id: Optional[str] = None
+    azure_client_secret: Optional[str] = None
+    azure_tenant_id: Optional[str] = None
+    azure_subscription_id: Optional[str] = None
+    azure_resource_group: Optional[str] = None
+    azure_resource_group_created: Optional[bool] = None
+    gcp_service_token: Optional[dict] = None
+    updated_at: datetime = Field(default_factory=datetime.now())
+
     class Config:
-        orm_mode = True
+        allow_population_by_field_name = True

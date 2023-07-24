@@ -1,5 +1,6 @@
-from pydantic import BaseModel
-from typing import Union
+from datetime import datetime
+from pydantic import BaseModel, Field
+from typing import Optional, Union
 
 
 class StorageBase(BaseModel):
@@ -16,5 +17,13 @@ class StorageCreate(StorageBase):
 
 
 class StorageUpdate(StorageBase):
+    project: str
+    bucket_name: str
+    id: Optional[str] = Field(default=None, alias='storage_id')
+    access_key: Optional[str] = None
+    secret_key: Optional[str] = None
+    container: Optional[str] = None
+    updated_at: datetime = Field(datetime.now())
+
     class Config:
-        orm_mode = True
+        allow_population_by_field_name = True
