@@ -88,10 +88,6 @@ async def start_conversion(user, project, hostname, db, test_header=False):
         print("Disk Conversion completed")
         logger("Disk Conversion completed", "error")
     else:
-        provider = get_project_by_name(user, project, db).provider
-        logger("Conversion started", "info")
-        print("****************Conversion awaiting*****************")
-
         if provider == Provider.AWS.value:
             logger("AMI creation started", "info")
             ami_created = await awsdisk.start_ami_creation(user, project, hostname, db)
