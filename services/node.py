@@ -30,6 +30,8 @@ def create_node(data: NodeCreate, db: Session) -> JSONResponse:
     node_data = data.dict(exclude_none=True, by_alias=False)
 
     for key, value in node_data.items():
+        if isinstance(value, list):
+            value = json.dumps(value)
         setattr(nodes, key, value)
 
     db.add(nodes)
