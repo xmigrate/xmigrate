@@ -22,7 +22,7 @@ class StorageUpdate(BaseModel):
     access_key: Optional[str] = None
     secret_key: Optional[str] = None
     container: Optional[str] = None
-    updated_at: datetime = Field(datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     class Config:
         allow_population_by_field_name = True

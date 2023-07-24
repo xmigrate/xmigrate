@@ -61,7 +61,7 @@ class SubnetUpdate(BaseModel):
     id: str = Field(alias='subnet_id')
     target_subnet_id: Optional[str] = None
     created: Optional[bool] = None
-    updated_at: datetime = Field(default_factory=datetime.now())
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     class Config:
         allow_population_by_field_name = True
