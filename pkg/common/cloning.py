@@ -60,7 +60,7 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
         'ANSIBLE_LOG_PATH': f'{current_dir}/logs/ansible/{project.name}/cloning_log.txt'
     }
 
-    cloned = run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
+    cloned = await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
     
     if (not (bool(cloned[1].stats['failures']) or bool(cloned[1].stats['dark']))):
         blueprint_id = get_blueprintid(project.id, db)

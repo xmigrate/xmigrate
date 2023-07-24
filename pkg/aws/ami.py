@@ -126,7 +126,7 @@ async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, h
             if response['ImportImageTasks'][0]['Status'] == "completed":
                ami_id = import_task_id
 
-               vm_data = VMUpdate(machine_id=host.id, image_id=ami_id, status='35')
+               vm_data = VMUpdate(machine_id=host.id, image_id=ami_id, status=35)
                update_vm(vm_data, db)
 
                for import_task in response['ImportImageTasks']:

@@ -6,7 +6,7 @@ class Blueprint(Base):
     
     __tablename__ = 'blueprint'
 
-    id = Column(String(40), primary_key=True)
+    id = Column(String(40), primary_key=True, unique=True)
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True), nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
