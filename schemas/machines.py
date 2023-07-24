@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class VMCreate(BaseModel):
-    id: str = Field(default_factory=unique_id_gen("VM"))
+    id: str = Field(default=unique_id_gen("VM"))
     blueprint: str = Field(alias='blueprint_id')
     hostname: str
     network: Optional[str] = None
@@ -35,7 +35,7 @@ class VMUpdate(BaseModel):
     image_id: Optional[str] = None
     vm_id: Optional[str] = None
     nic_id: Optional[str] = None
-    updated_at: datetime = Field(default_factory=datetime.now())
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     class Config:
         allow_population_by_field_name = True

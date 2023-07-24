@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class NodeCreate(BaseModel):
-    id: str = Field(default_factory=unique_id_gen("ND"))
+    id: str = Field(default=unique_id_gen("ND"))
     project: str = Field(alias='project_id')
     hosts: list
     username: str
@@ -21,7 +21,7 @@ class NodeUpdate(BaseModel):
     hosts: list
     username: str
     password: str
-    updated_at: datetime = Field(default_factory=datetime.now())
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     class Config:
         allow_population_by_field_name = True
