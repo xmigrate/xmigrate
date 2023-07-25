@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class NetworkCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("NW"))
+    id: str = Field(default_factory=unique_id_gen)
     blueprint: Optional[str] = Field(alias='blueprint_id')
     project: str
     hosts: list
@@ -36,7 +36,7 @@ class NetworkUpdate(BaseModel):
 
 
 class SubnetCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("SN"))
+    id: str = Field(default_factory=unique_id_gen)
     network: Optional[str] = Field(alias='network_id')
     project: str
     nw_cidr: str

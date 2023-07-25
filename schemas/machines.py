@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class VMCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("VM"))
+    id: str = Field(default_factory=unique_id_gen)
     blueprint: str = Field(alias='blueprint_id')
     hostname: str
     network: Optional[str] = None

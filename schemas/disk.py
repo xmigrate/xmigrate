@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class DiskCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("DK"))
+    id: str = Field(default_factory=unique_id_gen)
     hostname: str
     mnt_path: str
     vm: str = Field(alias='vm_id')

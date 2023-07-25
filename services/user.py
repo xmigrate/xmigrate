@@ -27,7 +27,7 @@ def create_user(username: str, password: str, db: Session) -> JSONResponse:
     '''
     
     stmt = User(
-        id = unique_id_gen("US"),
+        id = unique_id_gen(),
         username = username,
         password = password,
         created_at = datetime.now(),

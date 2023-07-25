@@ -13,7 +13,7 @@ class DiscoverBase(BaseModel):
 
 
 class DiscoverCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("DS"))
+    id: str = Field(default_factory=unique_id_gen)
     project: str = Field(alias='project_id')
     hostname: str
     network: str

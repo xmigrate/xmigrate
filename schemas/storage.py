@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class StorageCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("ST"))
+    id: str = Field(default_factory=unique_id_gen)
     project: str
     bucket_name: str
     access_key: Optional[str] = None

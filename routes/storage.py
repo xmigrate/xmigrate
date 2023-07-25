@@ -13,7 +13,6 @@ router = APIRouter()
 
 @router.post('/storage')
 async def storage_create(data: StorageCreate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(dbconn)):
-    print(data)
     try:
         project_id = get_projectid(current_user['username'], data.project, db)
         storage_exists = check_storage_exists(project_id, db)

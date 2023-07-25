@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class ProjectCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("PJ"))
+    id: str = Field(default_factory=unique_id_gen)
     name: str
     provider: str
     location: str

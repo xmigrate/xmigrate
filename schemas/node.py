@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class NodeCreate(BaseModel):
-    id: str = Field(default=unique_id_gen("ND"))
+    id: str = Field(default_factory=unique_id_gen)
     project: str = Field(alias='project_id')
     hosts: list
     username: str

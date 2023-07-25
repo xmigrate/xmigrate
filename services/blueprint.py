@@ -27,7 +27,7 @@ def create_blueprint(project_id: str, db: Session) -> JSONResponse:
     '''
 
     stmt = Blueprint(
-        id = unique_id_gen("BP"),
+        id = unique_id_gen(),
         project = project_id,
         created_at = datetime.now(),
         updated_at = datetime.now()

@@ -1,10 +1,9 @@
 import uuid
 
-def unique_id_gen(name: str = "DEF") -> str:
+
+def unique_id_gen() -> str:
     """
-    creates a sha-1 encoded uuid with the name and returns it as a string.
-    
-    :param name: name for uuid creation
+    creates a sha-1 encoded uuid and returns it as a string.
     """
 
-    return(name + str(uuid.uuid5(uuid.uuid1(), name)))
+    return str(uuid.uuid5(uuid.uuid1(), "DEFAULT"))
