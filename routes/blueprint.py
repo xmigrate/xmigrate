@@ -43,14 +43,15 @@ async def network_create(data: NetworkCreate, request: Request, current_user: To
         data.cidr = data.name if data.cidr is None else data.cidr
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
+        data.blueprint = blueprint_id
         test_header = request.headers.get(Test.HEADER.value)
         if test_header is not None:
-            await network_create_test_data(blueprint_id, data, db)
+            await network_create_test_data(data, db)
             return jsonable_encoder({"msg": "network data saved", "status": 200})
         else:
             network_exists = check_network_exists(blueprint_id, data.cidr, data.name, db)
             if not network_exists:
-                create_network(blueprint_id, data, db)
+                create_network(data, db)
             else:
                 print(f'Network with cidr ({data.cidr}) and/or name ({data.name}) already exists for the project!')
             for host in data.hosts:
@@ -58,9 +59,10 @@ async def network_create(data: NetworkCreate, request: Request, current_user: To
                 machine_id = get_machineid(host['hostname'], blueprint_id, db)
                 vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
                 update_vm(vm_data, db)
+        return jsonable_encoder({'status': '200', 'msg': 'network data saved successfully'})
     except Exception as e:
         print(str(e))
-        return jsonable_encoder({'status': '500', 'msg': 'network  creation failed'})
+        return jsonable_encoder({'status': '500', 'msg': 'network creation failed'})
 
 
 @router.get('/blueprint/network')
@@ -107,15 +109,16 @@ async def subnet_create(data: SubnetCreate, request: Request, current_user: Toke
         project_id = get_projectid(current_user['username'], data.project, db)
         blueprint_id = get_blueprintid(project_id, db)
         network_id = get_networkid(data.nw_cidr, blueprint_id, db)
+        data.network = network_id
         test_header = request.headers.get(Test.HEADER.value)
         if test_header is not None:
-            await subnet_create_test_data(network_id, data, db)
+            await subnet_create_test_data(data, db)
         else:
-            subnet_exists = check_subnet_exists(network_id, data.cidr, data.name, db)
+            subnet_exists = check_subnet_exists(data.network, data.cidr, data.subnet_name, db)
             if not subnet_exists:
-                return create_subnet(network_id, data, db)
+                return create_subnet(data, db)
             else:
-                print(f'Subnet with cidr ({data.cidr}) and/or name ({data.name}) already exists for the network {data.nw_cidr}!')
+                print(f'Subnet with cidr ({data.cidr}) and/or name ({data.subnet_name}) already exists for the network {data.nw_cidr}!')
     except:
         return jsonable_encoder({'status': '500', 'msg': 'subnet  creation failed'})
     

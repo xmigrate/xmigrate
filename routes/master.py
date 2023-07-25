@@ -31,8 +31,9 @@ async def master_status_update(data: MasterUpdate, current_user: TokenData = Dep
 
             if data.status is not None:
                 vm_data = VMUpdate(machine_id=machine_id, status=data.status)
-                update_vm(vm_data, db)      
-            elif data.disk_clone is not None:
+                update_vm(vm_data, db)
+
+            if all(x is not None for x in (data.disk_clone, data.mountpoint)):
                 disk_id = get_diskid(machine_id, data.mountpoint, db)
                 disk_data = DiskUpdate(disk_id=disk_id, disk_clone=data.disk_clone)
                 update_disk(disk_data, db)

@@ -1,6 +1,5 @@
 from model.network import Network, Subnet
 from schemas.network import NetworkCreate, NetworkUpdate, SubnetCreate, SubnetUpdate
-from utils.id_gen import unique_id_gen
 from datetime import datetime
 from typing import List, Union
 from fastapi.responses import JSONResponse
@@ -36,55 +35,46 @@ def check_subnet_exists(network_id: str, cidr: str, name: str, db: Session) -> b
            db.query(Subnet).filter(Subnet.network==network_id, Subnet.subnet_name==name, Subnet.is_deleted==False).count() > 0)
 
 
-def create_network(blueprint_id: str, data: NetworkCreate, db: Session) -> JSONResponse:
+def create_network(data: NetworkCreate, db: Session) -> JSONResponse:
     '''
     Saves the network data for the given blueprint.
 
-    :param blueprint_id: id of the corresponding blueprint
     :param data: network data to save
     :param db: active database session
     '''
 
-    stmt = Network(
-        id = unique_id_gen(data.cidr),
-        blueprint = blueprint_id,
-        name = data.name,
-        cidr = data.cidr,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    network = Network()
+    network_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in network_data.items():
+        setattr(network, key, value)
+
+    db.add(network)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(network)
 
-    return JSONResponse({"status": 201, "message": "network data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "network data created", "data": [{}]}, status_code=201)
 
 
-def create_subnet(network_id: str, data: SubnetCreate, db: Session) -> JSONResponse:
+def create_subnet(data: SubnetCreate, db: Session) -> JSONResponse:
     '''
     Saves the subnet data for the given network.
 
-    :param network_id: id of the corresponding network
     :param data: subnet data to save
     :param db: active database session
     '''
 
-    stmt = Subnet(
-        id = unique_id_gen(data.cidr),
-        network = network_id,
-        subnet_name = data.name,
-        cidr = data.cidr,
-        subnet_type = data.nw_type,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    subnet = Subnet()
+    subnet_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in subnet_data.items():
+        setattr(subnet, key, value)
+
+    db.add(subnet)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(subnet)
 
-    return JSONResponse({"status": 201, "message": "subnet data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "subnet data created", "data": [{}]}, status_code=201)
 
 
 def delete_network(blueprint_id: str, name: str, db: Session) -> JSONResponse:
@@ -254,27 +244,17 @@ def update_network(data: NetworkUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    network_data = get_network_by_id(data.network_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            data_dict[key] = network_data[key]
-    data = NetworkUpdate.parse_obj(data_dict)
+    db_network = get_network_by_id(data.id, db)
+    network_data = data.dict(exclude_none=True, by_alias=False)
 
-    stmt = update(Network).where(
-        Network.id==data.network_id and Network.is_deleted==False
-    ).values(
-        target_network_id = data.target_network_id,
-        ig_id = data.ig_id,
-        route_table = data.route_table,
-        created =  data.created,
-        updated_at = datetime.now()
-    ).execution_options(synchronize_session="fetch")
+    for key, value in network_data.items():
+        setattr(db_network, key, value)
 
-    db.execute(stmt)
+    db.add(db_network)
     db.commit()
+    db.refresh(db_network)
 
-    return JSONResponse({"status": 204, "message": "network data updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "network data updated", "data": [{}]}, status_code=204)
 
 
 def update_subnet(data: SubnetUpdate, db: Session) -> JSONResponse:
@@ -285,22 +265,14 @@ def update_subnet(data: SubnetUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    subnet_data = get_subnet_by_id(data.subnet_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            data_dict[key] = subnet_data[key]
-    data = SubnetUpdate.parse_obj(data_dict)
+    db_subnet = get_subnet_by_id(data.id, db)
+    subnet_data = data.dict(exclude_none=True, by_alias=False)
 
-    stmt = update(Subnet).where(
-        Subnet.id==data.subnet_id and Subnet.is_deleted==False
-    ).values(
-        target_subnet_id = data.target_subnet_id,
-        created =  data.created,
-        updated_at = datetime.now()
-    ).execution_options(synchronize_session="fetch")
+    for key, value in subnet_data.items():
+        setattr(db_subnet, key, value)
 
-    db.execute(stmt)
+    db.add(db_subnet)
     db.commit()
+    db.refresh(db_subnet)
 
-    return JSONResponse({"status": 204, "message": "subnet data updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "subnet data updated", "data": [{}]}, status_code=204)

@@ -1,10 +1,8 @@
 from model.storage import Storage
-from utils.id_gen import unique_id_gen
 from schemas.storage import StorageCreate, StorageUpdate
-from datetime import datetime
 from typing import Union
 from fastapi.responses import JSONResponse
-from sqlalchemy import Column, update
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -28,22 +26,19 @@ def create_storage(project_id: str, data: StorageCreate, db:Session) -> JSONResp
     :param db: active database session
     '''
     
-    stmt = Storage(
-        id = unique_id_gen("storage"),
-        bucket_name = data.bucket_name,
-        access_key = data.access_key,
-        secret_key = data.secret_key,
-        container = data.container,
-        project = project_id,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    storage = Storage()
+    storage_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in storage_data.items():
+        setattr(storage, key, value)
+
+    storage.project = project_id
+
+    db.add(storage)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(storage)
 
-    return JSONResponse({"status": 201, "message": "storage created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "storage created", "data": [{}]}, status_code=201)
 
 
 def get_storage(project_id: str, db: Session) -> Union[Storage, None]:
@@ -78,34 +73,22 @@ def get_storage_by_id(storage_id: str, db: Session) -> Storage:
     return(db.query(Storage).filter(Storage.id==storage_id).first())
 
 
-def update_storage(storage_id: str, data: StorageUpdate, db: Session) -> JSONResponse:
+def update_storage(data: StorageUpdate, db: Session) -> JSONResponse:
     '''
     Update the storage account details.
     
-    :param storage: id of the storage
     :param data: storage account details for update
     :param db: active database session
     '''
 
-    storage_data = get_storage_by_id(storage_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            data_dict[key] = storage_data[key.rstrip('_id')]
-    data = StorageUpdate.parse_obj(data_dict)
-    
-    stmt = update(Storage).where(
-        Storage.id==storage_id and Storage.is_deleted==False
-    ).values(
-        id = unique_id_gen("storage"),
-        bucket_name = data.bucket_name,
-        access_key = data.access_key,
-        secret_key = data.secret_key,
-        container = data.container,
-        updated_at = datetime.now()
-    ).execution_options(synchronize_session="fetch")
+    db_storage = get_storage_by_id(data.id, db)
+    storage_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.execute(stmt)
+    for key, value in storage_data.items():
+        setattr(db_storage, key, value)
+
+    db.add(db_storage)
     db.commit()
+    db.refresh(db_storage)
 
-    return JSONResponse({"status": 204, "message": "storage updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "storage updated", "data": [{}]}, status_code=204)

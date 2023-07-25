@@ -1,10 +1,10 @@
-from schemas.project import ProjectBase
+from schemas.project import ProjectCreate
 from services.project import get_project_by_name
 import os
 from sqlalchemy.orm import Session
 
 
-def write_aws_creds(user: str, project: str, db: Session, data: ProjectBase = None) -> None:
+def write_aws_creds(user: str, project: str, db: Session, data: ProjectCreate = None) -> None:
     '''
     Configure aws with the given credentials.
 

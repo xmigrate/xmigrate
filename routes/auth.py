@@ -18,7 +18,7 @@ def get_settings() -> Settings:
     return Settings()
 
 
-async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl='login')), settings = Depends(get_settings)):
+async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl='login')), settings: Settings = Depends(get_settings)):
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload

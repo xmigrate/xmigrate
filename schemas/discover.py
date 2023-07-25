@@ -1,5 +1,7 @@
-from pydantic import BaseModel
-from typing import Union
+from utils.id_gen import unique_id_gen
+from datetime import datetime
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class DiscoverBase(BaseModel):
@@ -11,20 +13,36 @@ class DiscoverBase(BaseModel):
 
 
 class DiscoverCreate(BaseModel):
-    project_id: str
+    id: str = Field(default=unique_id_gen("DS"))
+    project: str = Field(alias='project_id')
     hostname: str
     network: str
     subnet: str
-    ports: Union[str, None] = None
+    ports: Optional[None] = None
     cpu_core: int
     cpu_model: str
     ram: str
     disk_details: list
     ip: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
-
-class DiscoverUpdate(DiscoverCreate):
-    discover_id: str
-    project_id: Union[str, None] = None
     class Config:
-        orm_mode = True
+        allow_population_by_field_name = True
+
+
+class DiscoverUpdate(BaseModel):
+    id: str = Field(alias='discover_id')
+    hostname: str
+    network: str
+    subnet: str
+    ports: Optional[str] = None
+    cpu_core: int
+    cpu_model: str
+    ram: str
+    disk_details: list
+    ip: str
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        allow_population_by_field_name = True

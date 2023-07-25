@@ -1,17 +1,21 @@
-from pydantic import BaseModel
-from typing import Union
+from utils.id_gen import unique_id_gen
+from datetime import datetime
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
-class NetworkBase(BaseModel):
+class NetworkCreate(BaseModel):
+    id: str = Field(default=unique_id_gen("NW"))
+    blueprint: Optional[str] = Field(alias='blueprint_id')
     project: str
     hosts: list
     name: str
-    cidr: Union[str, None] = None
+    cidr: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
-
-class NetworkCreate(NetworkBase):
     class Config:
-        orm_mode = True
+        allow_population_by_field_name = True
 
 
 class NetworkDelete(BaseModel):
@@ -20,19 +24,30 @@ class NetworkDelete(BaseModel):
 
 
 class NetworkUpdate(BaseModel):
-    network_id: str
-    target_network_id: Union[str, None] = None
-    ig_id: Union[str, None] = None
-    route_table: Union[str, None] = None
-    created: Union[bool, None] = None
+    id: str = Field(alias='network_id')
+    target_network_id: Optional[str] = None
+    ig_id: Optional[str] = None
+    route_table: Optional[str] = None
+    created: Optional[bool] = None
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class SubnetCreate(BaseModel):
+    id: str = Field(default=unique_id_gen("SN"))
+    network: Optional[str] = Field(alias='network_id')
     project: str
     nw_cidr: str
     cidr: str
-    name: str
-    nw_type: str
+    subnet_name: str = Field(alias='name')
+    subnet_type: str = Field(alias='nw_type')
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class SubnetDelete(NetworkDelete):
@@ -43,6 +58,10 @@ class SubnetDelete(NetworkDelete):
 
         
 class SubnetUpdate(BaseModel):
-    subnet_id: str
-    target_subnet_id: Union[str, None] = None
-    created: Union[bool, None] = None
+    id: str = Field(alias='subnet_id')
+    target_subnet_id: Optional[str] = None
+    created: Optional[bool] = None
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        allow_population_by_field_name = True

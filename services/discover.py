@@ -1,11 +1,9 @@
 from model.discover import Discover
 from schemas.discover import DiscoverCreate, DiscoverUpdate
-from utils.id_gen import unique_id_gen
-from datetime import datetime
 import json
 from typing import List
 from fastapi.responses import JSONResponse
-from sqlalchemy import Column, update
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -28,27 +26,19 @@ def create_discover(data: DiscoverCreate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    stmt = Discover(
-        id = unique_id_gen("discover"),
-        project = data.project_id,
-        hostname = data.hostname,
-        network = data.network,
-        subnet = data.subnet,
-        ports = data.ports,
-        cpu_core = data.cpu_core,
-        cpu_model = data.cpu_model,
-        ram = data.ram,
-        disk_details = json.dumps(data.disk_details),
-        ip = data.ip,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    discover = Discover()
+    discover_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in discover_data.items():
+        if isinstance(value, list):
+            value = json.dumps(value)
+        setattr(discover, key, value)
+
+    db.add(discover)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(discover)
 
-    return JSONResponse({"status": 201, "message": "discover data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "discover data created", "data": [{}]}, status_code=201)
 
 
 def get_discover(project_id: str, db: Session) -> List[Discover]:
@@ -93,32 +83,16 @@ def update_discover(data: DiscoverUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    discover_data = get_discover_by_id(data.discover_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            if key == 'disk_details' and discover_data[key] is not None:
-                data_dict[key] = json.loads(discover_data[key])
-            else:
-                data_dict[key] = discover_data[key.rstrip('_id')]
-    data = DiscoverUpdate.parse_obj(data_dict)
+    db_discover = get_discover_by_id(data.id, db)
+    discover_data = data.dict(exclude_none=True, by_alias=False)
 
-    stmt = update(Discover).where(
-        Discover.id==data.discover_id and Discover.is_deleted==False
-    ).values(
-        hostname = data.hostname,
-        network = data.network,
-        subnet = data.subnet,
-        ports = data.ports,
-        cpu_core = data.cpu_core,
-        cpu_model = data.cpu_model,
-        ram = data.ram,
-        disk_details = json.dumps(data.disk_details),
-        ip = data.ip,
-        updated_at = datetime.now()
-    ).execution_options(synchronize_session="fetch")
+    for key, value in discover_data.items():
+        if isinstance(value, list):
+            value = json.dumps(value)
+        setattr(db_discover, key, value)
 
-    db.execute(stmt)
+    db.add(db_discover)
     db.commit()
+    db.refresh(db_discover)
 
-    return JSONResponse({"status": 204, "message": "discover data updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "discover data updated", "data": [{}]}, status_code=204)

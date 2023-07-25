@@ -37,7 +37,8 @@ async def storage_update(data: StorageUpdate, current_user: TokenData = Depends(
     try:
         project_id = get_projectid(current_user['username'], data.project, db)
         storage_id = get_storageid(project_id, db)
-        return update_storage(storage_id, data, db)
+        data.id = storage_id
+        return update_storage(data, db)
     except Exception as e:
         print(str(e))
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "Couldn't update project!"}))

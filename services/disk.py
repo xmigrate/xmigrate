@@ -1,11 +1,9 @@
 from model.disk import Disk
 from schemas.disk import DiskCreate, DiskUpdate
-from utils.id_gen import unique_id_gen
-from datetime import datetime
 import json
 from typing import List
 from fastapi.responses import JSONResponse
-from sqlalchemy import Column, update
+from sqlalchemy import Column
 from sqlalchemy.orm import Session
 
 
@@ -29,20 +27,17 @@ def create_disk(data: DiskCreate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    stmt = Disk(
-        id = unique_id_gen("Disk"),
-        hostname = data.hostname,
-        mnt_path = data.mnt_path,
-        vm = data.vm_id,
-        created_at = datetime.now(),
-        updated_at = datetime.now()
-    )
+    disk = Disk()
+    disk_data = data.dict(exclude_none=True, by_alias=False)
 
-    db.add(stmt)
+    for key, value in disk_data.items():
+        setattr(disk, key, value)
+
+    db.add(disk)
     db.commit()
-    db.refresh(stmt)
+    db.refresh(disk)
 
-    return JSONResponse({"status": 201, "message": "disk data created", "data": [{}]})
+    return JSONResponse({"status": 201, "message": "disk data created", "data": [{}]}, status_code=201)
 
 
 def get_all_disks(vm_id: str, db: Session) -> List[Disk]:
@@ -86,31 +81,16 @@ def update_disk(data: DiskUpdate, db: Session) -> JSONResponse:
     :param db: active database session
     '''
 
-    disk_data = get_disk_by_id(data.disk_id, db).__dict__
-    data_dict = dict(data)
-    for key in data_dict.keys():
-        if data_dict[key] is None:
-            if key == 'disk_clone' and disk_data[key] is not None:
-                data_dict[key] = json.loads(disk_data[key])
-            else:
-                table_key = key.rstrip('_id') if 'vm' in key else key
-                data_dict[key] = disk_data[table_key]
-    data = DiskUpdate.parse_obj(data_dict)
+    db_disk = get_disk_by_id(data.id, db)
+    disk_data = data.dict(exclude_none=True, by_alias=False)
 
-    stmt = update(Disk).where(
-        Disk.id==data.disk_id and Disk.is_deleted==False
-    ).values(
-        hostname = data.hostname,
-        mnt_path = data.mnt_path,
-        vm = data.vm_id,
-        vhd = data.vhd,
-        file_size = data.file_size,
-        disk_clone = json.dumps(data.disk_clone),
-        target_disk_id = data.target_disk_id,
-        updated_at = datetime.now()
-    ).execution_options(synchronize_session="fetch")
+    for key, value in disk_data.items():
+        if isinstance(value, list):
+            value = json.dumps(value)
+        setattr(db_disk, key, value)
 
-    db.execute(stmt)
+    db.add(db_disk)
     db.commit()
+    db.refresh(db_disk)
 
-    return JSONResponse({"status": 204, "message": "disk data updated", "data": [{}]})
+    return JSONResponse({"status": 204, "message": "disk data updated", "data": [{}]}, status_code=204)
