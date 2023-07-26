@@ -25,6 +25,7 @@ google-auth-oauthlib==0.4.6
 gsutil==5.7
 Werkzeug~=2.0.0
 ansible-runner==2.3.1
+ansible==3.0.0
 netaddr==0.8.0
 
 # fastapi
