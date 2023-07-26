@@ -129,6 +129,9 @@ async def start_conversion(user, project, hostname, db, test_header=False):
 
 
 async def start_host_build(user, project, hostname, db, test_header=False):
+    logger("VM build started", "info")
+    print("****************VM Build awaiting*****************")
+
     provider = get_project_by_name(user, project, db).provider
 
     if test_header:
@@ -137,7 +140,6 @@ async def start_host_build(user, project, hostname, db, test_header=False):
         logger("VM creation completed", "info")
     else:
         disk_created = True if provider == Provider.AWS.value else False
-        logger("VM build started", "info")
 
         if provider in (Provider.AZURE.value, Provider.GCP.value):
             if provider == 'azure':
