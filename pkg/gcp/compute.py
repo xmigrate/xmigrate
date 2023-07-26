@@ -17,6 +17,7 @@ async def create_vm(project, host, network, subnet, additional_disk):
     gcp_project_id = service_account_json['project_id']
     service = get_service_compute_v1(service_account_json)
     zones, _ = await get_zones(service_account_json)
+    zones = [x for x in zones if project.location in x][::-1]
     vm_type = f"zones/{zones[0]}/machineTypes/{host.machine_type}"
     network = get_vpc(service_account_json, network)['selfLink']
     subnet = get_subnet(gcp_project_id, service_account_json, subnet, project.location)['selfLink']
