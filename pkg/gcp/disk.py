@@ -227,8 +227,13 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
 
 
 async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
-    downloaded = await download_worker(osdisk_raw, project, host, db)
-    if downloaded:
+    try:
+        await download_worker(osdisk_raw, project, host, db)
+    except Exception as e:
+        print("Download failed for "+ osdisk_raw + " :" + str(e))
+        logger("Download failed for "+ osdisk_raw + " :" + str(e), "warning")
+        return False
+    else:
         try:
             osdisk_tar = osdisk_raw.replace(".raw", ".tar.gz")
             cur_path = os.getcwd()
@@ -238,9 +243,17 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
 
             os.popen('echo "Starting to compress the disk image...">> ./logs/ansible/migration_log.txt')
 
-            command = f'tar --format=oldgnu -Sczf {tar_path} -C {path} disk.raw'
-            process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-            await process2.wait()
+            try:
+                command = f'tar --format=oldgnu -Sczf {tar_path} -C {path} disk.raw'
+                process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+                await process2.wait()
+            except Exception as e:
+                print(str(e))
+                return False
+            else:
+                rm_command = f'rm -f {path}/disk.raw'
+                process3 = await asyncio.create_subprocess_shell(rm_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
+                await process3.wait()
 
             uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, host, db)
             if not uploaded: return False
@@ -257,8 +270,6 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
             vm_data = VMUpdate(machine_id=host.id, status=-35)
             update_vm(vm_data, db)
             return False
-    else:
-        return False
 
 
 async def start_conversion(user, project, hostname, db) -> bool:
@@ -280,23 +291,5 @@ async def start_conversion(user, project, hostname, db) -> bool:
             except Exception as e:
                 print("Conversion failed for "+ disk_raw + " :" + str(e))
                 logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
-                return False
-    return True
-
-async def start_downloading(user, project, hostname, db) -> bool:
-    project = get_project_by_name(user, project, db)
-    blueprint_id = get_blueprintid(project.id, db)
-    hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
-    for host in hosts:
-        disks = json.loads(get_discover(project.id, db)[0].disk_details)
-
-        for disk in disks:
-            disk_raw = f'{host.hostname}{disk["mnt_path"].replace("/", "-slash")}.raw'
-            try:
-                downloaded = await download_worker(disk_raw, project, host, db)
-                if not downloaded: return False
-            except Exception as e:
-                print("Download failed for "+ disk_raw + " :" + str(e))
-                logger("Download failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
     return True
