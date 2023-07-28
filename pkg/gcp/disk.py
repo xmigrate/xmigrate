@@ -251,9 +251,10 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
                 print(str(e))
                 return False
             else:
-                rm_command = f'rm -f {path}/disk.raw'
-                process3 = await asyncio.create_subprocess_shell(rm_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
-                await process3.wait()
+                raw_disk = f'{path}/disk.raw'
+                if os.path.exists(raw_disk):
+                    os.remove(raw_disk)
+                    print("Raw disk removed after tarball creation.")
 
             uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, host, db)
             if not uploaded: return False
