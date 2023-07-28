@@ -239,14 +239,15 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
             cur_path = os.getcwd()
             path = f'{cur_path}/projects/{project.name}/{host.hostname}/'
             tar_path = path + osdisk_tar
-            print("Starting to compress the disk image...")
+            print(f'Starting to compress the disk image {osdisk_raw.replace(".raw", "")}...')
 
-            os.popen('echo "Starting to compress the disk image...">> ./logs/ansible/migration_log.txt')
+            os.popen(f'echo "Starting to compress the disk image {osdisk_raw.replace(".raw", "")}...">> ./logs/ansible/migration_log.txt')
 
             try:
                 command = f'tar --format=oldgnu -Sczf {tar_path} -C {path} disk.raw'
                 process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
                 await process2.wait()
+                print(f"Tarball {osdisk_tar} created.")
             except Exception as e:
                 print(str(e))
                 return False
@@ -254,13 +255,10 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
                 raw_disk = f'{path}/disk.raw'
                 if os.path.exists(raw_disk):
                     os.remove(raw_disk)
-                    print("Raw disk removed after tarball creation.")
+                    print(f"Raw disk for {osdisk_tar} removed after tarball creation.")
 
             uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, host, db)
             if not uploaded: return False
-
-            vm_data = VMUpdate(machine_id=host.id, status=35)
-            update_vm(vm_data, db)
 
             logger("Conversion completed for "+ osdisk_raw, "info")
             return True
@@ -293,4 +291,6 @@ async def start_conversion(user, project, hostname, db) -> bool:
                 print("Conversion failed for "+ disk_raw + " :" + str(e))
                 logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
+        vm_data = VMUpdate(machine_id=host.id, status=35)
+        update_vm(vm_data, db)
     return True

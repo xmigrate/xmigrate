@@ -1,9 +1,8 @@
 from pkg.azure import sas
 from schemas.disk import DiskUpdate
 from schemas.machines import VMUpdate
-from services.blueprint import get_blueprintid
 from services.disk import get_diskid, update_disk
-from services.machines import get_machineid, update_vm
+from services.machines import update_vm
 from services.storage import get_storage
 from utils.logger import *
 import asyncio
@@ -12,9 +11,7 @@ import json
 import os
 from pathlib import Path
 
-async def download_worker(osdisk_raw, project, host, db) -> bool:
-    blueprint_id = get_blueprintid(project.id, db)
-    machine_id = get_machineid(host, blueprint_id, db)
+async def download_worker(osdisk_raw, project, host, machine_id, db) -> bool:
     try:
         storage = get_storage(project.id, db)
         sas_token = sas.generate_sas_token(storage.bucket_name, storage.access_key)
@@ -37,8 +34,6 @@ async def download_worker(osdisk_raw, project, host, db) -> bool:
             process1 = await asyncio.create_subprocess_shell(command1, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
 
-            vm_data = VMUpdate(machine_id=machine_id, status=30)
-            update_vm(vm_data, db)
             return True
         else:
             print("Raw disk already downloaded!")
@@ -91,6 +86,7 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, 
         os.popen('echo "'+ str(e) + '" >> ./logs/ansible/migration_log.txt')
         return False
 
+
 async def get_size(path) -> int:
     qemu_command = ['qemu-img', 'info', '-f', 'raw', '--output', 'json', path]
     process = await asyncio.create_subprocess_exec(*qemu_command, stdout=PIPE, stderr=PIPE)
@@ -101,9 +97,8 @@ async def get_size(path) -> int:
     size = output_json['virtual-size']
     return int(size)
 
-async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
-    blueprint_id = get_blueprintid(project.id, db)
-    machine_id = get_machineid(host, blueprint_id, db)
+
+async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, machine_id, db) -> bool:
     try:
         osdisk_vhd = osdisk_raw.replace(".raw", ".vhd")
         cur_path = os.getcwd()
@@ -133,9 +128,6 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
 
         uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, db)
         if not uploaded: return False
-
-        vm_data = VMUpdate(machine_id=machine_id, status=35)
-        update_vm(vm_data, db)
 
         logger("Conversion completed "+ osdisk_raw, "info")
         return True

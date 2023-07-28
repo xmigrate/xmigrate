@@ -106,15 +106,11 @@ async def start_conversion(user, project, hostname, db, test_header=False):
             if image_downloaded:
                 print("****************Download completed*****************")
                 logger("Image Download completed","info")
-                print("****************Conversion awaiting*****************")
-                logger("Conversion started","info")
                 converted =  await azuredisk.start_conversion(user, project, hostname, db)
             else:
                 print("Disk Conversion failed")
                 logger("Disk Conversion failed", "error")
         if provider == Provider.GCP.value:
-            print("****************Conversion awaiting*****************")
-            logger("Conversion started","info")
             converted =  await gcpdisk.start_conversion(user, project, hostname, db)
 
         if converted:

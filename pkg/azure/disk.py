@@ -4,7 +4,7 @@ from schemas.machines import VMUpdate
 from services.blueprint import get_blueprintid
 from services.discover import get_discover
 from services.disk import get_all_disks, update_disk
-from services.machines import get_all_machines, get_machine_by_hostname, update_vm
+from services.machines import get_all_machines, get_machineid, get_machine_by_hostname, update_vm
 from services.project import get_project_by_name
 from services.storage import get_storage
 from utils.logger import *
@@ -15,37 +15,45 @@ from azure.mgmt.compute.models import DiskCreateOption
 
 async def start_downloading(user, project, hostname, db) -> bool:
     project = get_project_by_name(user, project, db)
+    blueprint_id = get_blueprintid(project.id, db)
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
+        machine_id = get_machineid(host, blueprint_id, db)
         disks = json.loads(get_discover(project.id, db)[0].disk_details)
         for disk in disks:
             disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                downloaded = await cw.download_worker(disk_raw, project, host, db)
+                downloaded = await cw.download_worker(disk_raw, project, host, machine_id, db)
                 if not downloaded: return False
             except Exception as e:
                 print("Download failed for "+ disk_raw + " :" + str(e))
                 logger("Download failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
+        vm_data = VMUpdate(machine_id=machine_id, status=30)
+        update_vm(vm_data, db)
     return True
     
 
 async def start_conversion(user, project, hostname, db) -> bool:
     project = get_project_by_name(user, project, db)
+    blueprint_id = get_blueprintid(project.id, db)
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
+        machine_id = get_machineid(host, blueprint_id, db)
         disks = json.loads(get_discover(project.id, db)[0].disk_details)
         for disk in disks:
             disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                converted = await cw.conversion_worker(disk_raw, project, disk["mnt_path"], host, db)
+                converted = await cw.conversion_worker(disk_raw, project, disk["mnt_path"], host, machine_id, db)
                 if not converted: return False
             except Exception as e:
                 print("Conversion failed for "+ disk_raw + " :" + str(e))
                 logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
+        vm_data = VMUpdate(machine_id=machine_id, status=35)
+        update_vm(vm_data, db)
     return True
 
 
