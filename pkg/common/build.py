@@ -93,12 +93,8 @@ async def start_conversion(user, project, hostname, db, test_header=False):
             logger("AMI creation started", "info")
             ami_created = await awsdisk.start_ami_creation(user, project, hostname, db)
             if ami_created:
-                print("****************Conversion completed*****************")
-                logger("Conversion completed", "info")
+                converted = True
                 logger("AMI creation completed", "info")
-            else:
-                print("Disk Conversion failed")
-                logger("Disk Conversion failed", "error")
         if provider == Provider.AZURE.value:
             logger("Download started", "info")
             print("****************Download started*****************")
