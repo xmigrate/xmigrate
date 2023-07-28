@@ -168,6 +168,7 @@ async def download_worker(osdisk_raw, project, host, db) -> bool:
 
         if not os.path.exists(path):
             os.popen('echo "download started" > ./logs/ansible/migration_log.txt')
+            print(f'Downloading {osdisk_raw} as "disk.raw"...') # Because GCP requires the raw disk name to be disk.raw when creating the image
 
             command = f'BOTO_CONFIG={boto_path} gsutil cp gs://{storage.bucket_name}/{osdisk_raw} {path}'
             os.popen('echo ' + command + ' >> ./logs/ansible/migration_log.txt')
@@ -244,7 +245,8 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
             os.popen(f'echo "Starting to compress the disk image {osdisk_raw.replace(".raw", "")}...">> ./logs/ansible/migration_log.txt')
 
             try:
-                command = f'tar --format=oldgnu -Sczf {tar_path} -C {path} disk.raw'
+                ## TODO - use tarfile module here instead of command
+                command = f'tar --format=oldgnu -Sczf {tar_path} -C {path} disk.raw' # Changing to the directory with '-C' is important because while GCP untars this tarball, the name of the raw disk has to be disk.raw
                 process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
                 await process2.wait()
                 print(f"Tarball {osdisk_tar} created.")
