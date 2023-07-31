@@ -7,7 +7,7 @@ from schemas.common import CommonBase, CommonCreate
 from schemas.machines import VMUpdate
 from schemas.network import NetworkCreate, NetworkDelete, SubnetCreate, SubnetDelete
 from services.blueprint import get_blueprintid
-from services.machines import get_machineid, update_vm
+from services.machines import get_all_machines, get_machineid, update_vm
 from services.network import (check_network_exists, check_subnet_exists, create_network, create_subnet, delete_network, delete_all_subnets, delete_subnet, get_all_networks, get_all_subnets, get_networkid, get_networkid_by_name)
 from services.discover import get_discover
 from services.project import get_projectid, get_project_by_name
@@ -79,7 +79,12 @@ async def network_delete(data: NetworkDelete, current_user: TokenData = Depends(
     try:
         network_id = get_networkid_by_name(data.name, blueprint_id, db)
         delete_all_subnets(network_id, db)
-        return delete_network(blueprint_id, data.name, db)
+        delete_network(blueprint_id, data.name, db)
+        vms = [vm for vm in get_all_machines(blueprint_id, db) if vm.network == network_id]
+        for vm in vms:
+            vm_data = VMUpdate(machine_id=vm.id, status=0)
+            update_vm(vm_data, db)
+        return jsonable_encoder({'status': '200', 'msg': 'network data deleted successfully'})
     except:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"msg": "request couldn't process"}))
 
