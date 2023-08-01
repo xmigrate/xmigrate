@@ -57,7 +57,7 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
     STAGE = "gather_facts"    
     
     try:
-        finished, output = run_playbook(provider=data.provider, username=data.username, project_name=project, curr_working_dir=current_dir, playbook=PLAYBOOK, stage=STAGE)
+        finished, output = run_playbook(provider="common", username=data.username, project_name=project, curr_working_dir=current_dir, playbook=PLAYBOOK, stage=STAGE)
         if finished:
             if 'ok' in output.stats.keys():
                 linux_host = list(output.stats['ok'].keys())[0]
