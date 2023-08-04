@@ -1,13 +1,12 @@
-from app import app
-from quart import jsonify
 from utils.logger import *
+from fastapi.encoders import jsonable_encoder
 
 def internal_server_error(msg):
-    logger(msg,"error")
-    return jsonify({'status': '500','message': str(msg)}), 500
+    logger(msg, "error")
+    return jsonable_encoder({'status': '500', 'message': str(msg)}), 500
 
 def page_not_found(msg):
-    return jsonify({'status': '404','message': str(msg)}), 404
+    return jsonable_encoder({'status': '404', 'message': str(msg)}), 404
 
 def bad_request(msg):
-    return jsonify({'status': '400','message': str(msg)}), 400
+    return jsonable_encoder({'status': '400', 'message': str(msg)}), 400

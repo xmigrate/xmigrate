@@ -86,7 +86,7 @@ export default class NetworkTableRow extends Component {
                       size="sm"
                       type="text"
                       onChange={this.props.handleChange}
-                      placeholder="Inbut Subnet CIDR"
+                      placeholder="Input Subnet CIDR"
                       name="SubnetCidr"
                     />
                   </Col>
@@ -111,7 +111,7 @@ export default class NetworkTableRow extends Component {
                       className=" media-body"
                       variant="primary"
                       onClick={() =>
-                        this.props.CreateSubnet(this.state.Network)
+                        this.props.CreateSubnet(this.props.Network.cidr)
                       }
                       size="sm"
                     >

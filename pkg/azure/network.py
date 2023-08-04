@@ -1,178 +1,153 @@
 # Import the needed management objects from the libraries. The azure.common library
 # is installed automatically with the other libraries.
-from azure.common.client_factory import get_client_from_cli_profile
-from azure.mgmt.network import NetworkManagementClient
-from utils.dbconn import *
-from model.blueprint import BluePrint
-from model.project import Project
-from model.network import *
-import random
-from azure.common.credentials import ServicePrincipalCredentials
+from schemas.machines import VMUpdate
+from schemas.network import NetworkUpdate, SubnetUpdate
+from schemas.project import ProjectUpdate
+from services.blueprint import get_blueprintid
+from services.machines import get_all_machines, update_vm
+from services.network import get_all_networks, get_all_subnets, update_network, update_subnet
+from services.project import get_project_by_name, update_project
 from utils.logger import *
+from azure.common.credentials import ServicePrincipalCredentials
+from azure.mgmt.network import NetworkManagementClient
+from azure.mgmt.resource import ResourceManagementClient
 
-def create_vnet(rg_name, vnet_name, cidr, location, project):
-    print("Provisioning a vnet...some operations might take a minute or two.")
-    con = create_db_con()
-    created = Network.objects(cidr=cidr, project=project).allow_filtering()[0]['created']
-    if not created:
-        try:
-            client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-            secret = Project.objects(name=project).allow_filtering()[0]['secret']
-            tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-            subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
-            creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
-            network_client = NetworkManagementClient(creds,subscription_id)
-            poller = network_client.virtual_networks.create_or_update(rg_name, vnet_name, {
-                                                                    "location": location, "address_space": {"address_prefixes": [cidr]}})
-            vnet_result = poller.result()
-            print(
-                f"Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
-            hosts = [x['host'] for x in BluePrint.objects(network=cidr).filter(project=project).allow_filtering()]
-            for host in hosts:
-                try:
-                    BluePrint.objects(host=host, project=project).update(vpc_id=vnet_result.name,status='5')
-                    print(vnet_result.name)
-                except Exception as e:
-                    BluePrint.objects(host=host, project=project).update(vpc_id=vnet_result.name,status='-5')
-            nw_name = Network.objects(cidr=cidr, project=project).allow_filtering()[0]['nw_name']
-            Network.objects(project=project, nw_name=nw_name).update(created=True)
-        except Exception as e:
-            print("Vnet creation failed to save: "+repr(e))
-            logger("Vnet creation failed to save: "+repr(e),"warning")
-            return False
-        finally:
-            con.shutdown()
-        return True
+
+def create_rg(resource_client, project, db):
+    try:
+        if project.azure_resource_group is not None and project.azure_resource_group_created:
+            return True
+    except Exception as e:
+        print("Reaching Project document failed: "+ str(e))
+        logger("Reaching Project document failed: "+ str(e), "warning")
     else:
-        return True
+        try:
+            print("Provisioning a resource group...some operations might take a minute or two.")
+            rg_result = resource_client.resource_groups.create_or_update(project.azure_resource_group, {"location": project.location})
+            print(f"Provisioned resource group {rg_result.name} in the {rg_result.location} region.")
+
+            project_data = ProjectUpdate(project_id=project.id, azure_resource_group_created=True)
+            update_project(project_data, db)
+            return True
+        except Exception as e:
+            print("Resource group creation failed "+str(e))
+            logger("Resource group creation failed: "+repr(e),"warning")
+            return False
+        
+
+def create_vnet(network_client, project, network, machine, update_host, db) -> bool:
+    try:
+        print("Provisioning a vnet...some operations might take a minute or two.")
+        poller = network_client.virtual_networks.create_or_update(
+            project.azure_resource_group, network.name, {"location": project.location, "address_space": {"address_prefixes": [network.cidr]}}
+            )
+        vnet_result = poller.result()
+        print(f"Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
+
+        network_data = NetworkUpdate(network_id=network.id, target_network_id=vnet_result.name, created=True)
+        update_network(network_data, db)
+        if update_host:
+            vm_data = VMUpdate(machine_id=machine.id, status=5)
+            update_vm(vm_data, db)
+    except Exception as e:
+        if update_host:
+            vm_data = VMUpdate(machine_id=machine.id, status=-5)
+            update_vm(vm_data, db)
+        print("Vnet creation failed to save: "+ str(e))
+        logger("Vnet creation failed to save: "+ str(e),"warning")
+        return False
+    return True
 
 
-def create_subnet(rg_name, vnet_name, subnet_name, cidr, project):
-    print("Provisioning a subnet...some operations might take a minute or two.")
-    con = create_db_con()
-    created = Subnet.objects(cidr=cidr, project=project).allow_filtering()[0]['created']
-    if not created:
-        client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-        secret = Project.objects(name=project).allow_filtering()[0]['secret']
-        tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-        subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
-        creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
-        network_client = NetworkManagementClient(creds,subscription_id)
-        con.shutdown()
-        poller = network_client.subnets.create_or_update(
-            rg_name, vnet_name, subnet_name, {"address_prefix": cidr})
+def create_subnet(network_client, project, network, subnet, machine, update_host, db) -> bool:
+    try:
+        print("Provisioning a subnet...some operations might take a minute or two.")
+        poller = network_client.subnets.create_or_update(project.azure_resource_group, network.name, subnet.subnet_name, {"address_prefix": subnet.cidr})
         subnet_result = poller.result()
-        print(
-            f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
-        try:
-            con = create_db_con()
-            hosts = [x['host'] for x in BluePrint.objects(subnet=cidr).filter(project=project).allow_filtering()]
-            for host in hosts:
-                BluePrint.objects(host=host, project=project).update(subnet_id=str(subnet_result.id),status='10')
-            subnet_name = Subnet.objects(cidr=cidr, project=project).allow_filtering()[0]['subnet_name']
-            Subnet.objects(cidr=cidr, project=project, subnet_name=subnet_name).update(created=True)
-        except Exception as e:
-            print("Subnet creation failed to save: "+repr(e))
-            logger("Subnet creation failed to save: "+repr(e),"warning")
-            return False
-        finally:
-            con.shutdown()
-        return True
-    else:
-        return True
+        print(f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
+
+        subnet_data = SubnetUpdate(subnet_id=subnet.id, target_subnet_id=str(subnet_result.id), created=True)
+        update_subnet(subnet_data, db)
+        if update_host:
+            vm_data = VMUpdate(machine_id=machine.id, status=10)
+            update_vm(vm_data, db)
+    except Exception as e:
+        print("Subnet creation failed to save: "+ str(e))
+        logger("Subnet creation failed to save: "+ str(e),"warning")
+        return False
+    return True
 
 
-def create_publicIP(project, rg_name, ip_name, location, subnet_id, host):
-    print("Provisioning a public IP...some operations might take a minute or two.")
-    con = create_db_con()
-    ip_created = BluePrint.objects(project=project, host=host).allow_filtering()[0]['ip_created']
-    if not ip_created:
-        client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-        secret = Project.objects(name=project).allow_filtering()[0]['secret']
-        tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-        subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
-        creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
-        network_client = NetworkManagementClient(creds,subscription_id)
-        con.shutdown()
-        poller = network_client.public_ip_addresses.create_or_update(rg_name, ip_name,
+def create_publicIP(network_client, project, subnet, machine, update_host, db):
+    try:
+        poller = network_client.public_ip_addresses.create_or_update(project.azure_resource_group, machine.hostname,
                                                                     {
-                                                                        "location": location,
+                                                                        "location": project.location,
                                                                         "sku": {"name": "Standard"},
                                                                         "public_ip_allocation_method": "Static",
                                                                         "public_ip_address_version": "IPV4"
                                                                     }
-                                                                    )
-
+                                                                )
         ip_address_result = poller.result()
-        print(
-            f"Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
+        print(f"Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
+
+        if update_host:
+            vm_data = VMUpdate(machine_id=machine.id, ip_created=True, status=15)
+            update_vm(vm_data, db)
+    except Exception as e:
+        print("Public IP creation failed: "+ str(e))
+        logger("Public IP creation failed: "+ str(e),"warning")
+    else:
         try:
-            con = create_db_con()
-            BluePrint.objects(project=project, host=host).update(status='15', ip_created=True)
-        except Exception as e:
-            print("Public IP creation failed: "+repr(e))
-            logger("Public IP creation failed: "+repr(e),"warning")
-        finally:
-            con.shutdown()
-        print("Provisioning a public NIC ...some operations might take a minute or two.")
-        poller = network_client.network_interfaces.create_or_update(rg_name,
-                                                                    host,
-                                                                    {
-                                                                        "location": location,
-                                                                        "ip_configurations": [{
-                                                                            "name": host,
-                                                                            "subnet": {"id": subnet_id},
-                                                                            "public_ip_address": {"id": ip_address_result.id}
-                                                                        }]
-                                                                    }
+            print("Provisioning a public NIC ...some operations might take a minute or two.")
+            poller = network_client.network_interfaces.create_or_update(project.azure_resource_group, machine.hostname,
+                                                                        {
+                                                                            "location": project.location,
+                                                                            "ip_configurations": [{
+                                                                                "name": machine.hostname,
+                                                                                "subnet": {"id": subnet.target_subnet_id},
+                                                                                "public_ip_address": {"id": ip_address_result.id}
+                                                                            }]
+                                                                        }
                                                                     )
 
-        nic_result = poller.result()
-        print(f"Provisioned network interface client {nic_result.name}")
-        try:
-            con = create_db_con()
-            BluePrint.objects(project=project,host=host).update(status='20', nic_id=nic_result.id,ip=ip_address_result.ip_address)
+            nic_result = poller.result()
+            print(f"Provisioned network interface client {nic_result.name}")
+            if update_host:
+                vm_data = VMUpdate(machine_id=machine.id, nic_id=nic_result.id, ip=ip_address_result.ip_address, status=20)
+                update_vm(vm_data, db)
         except Exception as e:
-            print("Nework interface creation failed:"+repr(e))
-        finally:
-            con.shutdown()
-    else:
-        logger("Public IP was already created for this host: "+host,"info")
+            print("Nework interface creation failed:"+ str(e))
    
 
-async def create_nw(project):
-    con = create_db_con()
-    rg_name = Project.objects(name=project).allow_filtering()[0]["resource_group"]
-    location = Project.objects(name=project).allow_filtering()[0]["location"]
-    machines = BluePrint.objects(project=project).allow_filtering()
-    cidr = []
-    subnet = []
-    for machine in machines:
-        cidr.append(machine['network'])
-        subnet.append(machine['subnet'])
-    cidr = list(set(cidr))
-    vnet_created = []
-    c = 0
-    for i in cidr:
-        vnet_name = project+"vnet"+str(c)
-        vnet_created.append(create_vnet(rg_name, vnet_name, i, location, project))
-        c = c+1
-    c = 0
-    if True in vnet_created:
-        subnet = list(set(subnet))
-        subnet_created = []
-        for i in subnet:
-            subnet_name = project+"subnet"+str(c)
-            subnet_created = create_subnet(rg_name, vnet_name, subnet_name, i, project)
-        if subnet_created:
-            machines = BluePrint.objects(project=project).allow_filtering()
-            for machine in machines:
-                ip_name = machine['host']
-                subnet_id = machine['subnet_id'] 
-                create_publicIP(project, rg_name, ip_name, location, subnet_id,machine['host'])
-        else:
-            con.shutdown()
-            return False
-    con.shutdown()
-    return True
+async def create_nw(user, project, db):
+    try:
+        project = get_project_by_name(user, project, db)
+        blueprint_id = get_blueprintid(project.id, db)
+        machines = get_all_machines(blueprint_id, db)
 
+        creds = ServicePrincipalCredentials(client_id=project.azure_client_id, secret=project.azure_client_secret, tenant=project.azure_tenant_id)
+        resource_client = ResourceManagementClient(creds, project.azure_subscription_id)
+        rg_created = create_rg(resource_client, project, db)
+
+        if rg_created:
+            network_client = NetworkManagementClient(creds, project.azure_subscription_id)
+            for machine in machines:
+                networks = get_all_networks(blueprint_id, db)
+                for network in networks:
+                    vnet_created = network.created
+                    subnets = get_all_subnets(network.id, db)
+                    update_host = True if network.cidr == machine.network else False
+                    if network.target_network_id is None and not vnet_created:
+                        vnet_created = create_vnet(network_client, project, network, machine, update_host, db)
+                    if vnet_created:
+                        for subnet in subnets:
+                            subnet_created = subnet.created
+                            if not subnet_created:
+                                subnet_created = create_subnet(network_client, project, network, subnet, machine, update_host, db)
+                            if subnet_created and not machine.ip_created:
+                                create_publicIP(network_client, project, subnet, machine, update_host, db)
+        return True
+    except Exception as e:
+        print(str(e))
+        return False

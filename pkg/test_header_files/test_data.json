@@ -1,0 +1,71 @@
+{
+    "host": "localhost",
+    "network": "192.168.0.1",
+    "subnet": "192.168.1.0/24",
+    "cores": 1,
+    "cpu_model": "test-cpu",
+    "ram": "396",
+    "disk": [
+        {
+        "filesystem": "ext4",
+        "disk size": "9.9G",
+        "uuid": "53898d31-694f-4da6-be22-5f4a7875640b",
+        "dev": "/dev/sda",
+        "mnt_path": "/"
+    }],
+    "ip": "127.0.0.1",
+    "aws_locations": [
+        "us-east-1",
+        "us-west-2",
+        "eu-central-1",
+        "ap-northeast-1"
+    ],
+    "azure_locations": [
+        "eastus",
+        "westus",
+        "westeurope",
+        "japaneast"
+    ],
+    "gcp_locations": [
+        "us-central1",
+        "us-east1",
+        "europe-west1",
+        "asia-northeast1"
+    ],
+    "aws_access_key": "dummy",
+    "aws_secret_key": "dummy",
+    "azure_client_id": "dummy",
+    "azure_client_secret": "dummy",
+    "azure_tenant_id": "dummy",
+    "azure_subscription_id": "dummy",
+    "azure_resource_group": "dummy",
+    "azure_resource_group_created": true,
+    "gcp_service_token": "dummy",
+    "aws_machine_types": [
+        "t2.micro",
+        "t2.large",
+        "c4.large",
+        "r4.large"
+    ],
+    "azure_machine_types": [
+        "Standard_B2ms",
+        "Standard_DS1_v2",
+        "Standard_A1_v2",
+        "Standard_F4s_v2"
+    ],
+    "gcp_machine_types": [
+        "e2-standard-2",
+        "e2-medium",
+        "c2-standard-4",
+        "c2-standard-8"
+    ],
+    "public_route": true,
+    "network_data": {
+        "cidr": "220.110.0.0/16",
+        "name": "testnetwork"
+    },
+    "subnet_data": {
+        "cidr": "220.110.1.0/24",
+        "name": "testsubnet"
+    }
+}

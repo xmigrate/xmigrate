@@ -1,146 +1,74 @@
-from azure.mgmt.compute.models import DiskCreateOption
-from azure.mgmt.compute import ComputeManagementClient
-from azure.common.client_factory import get_client_from_cli_profile
-from utils.dbconn import *
-from utils.log_reader import *
-from utils.logger import *
-from model.project import *
-from model.disk import *
-from model.storage import *
-from model.blueprint import *
-from model.discover import *
 from pkg.azure import conversion_worker as cw
-import os, asyncio
+from schemas.disk import DiskUpdate
+from schemas.machines import VMUpdate
+from services.blueprint import get_blueprintid
+from services.discover import get_discover
+from services.disk import get_all_disks, update_disk
+from services.machines import get_all_machines, get_machineid, get_machine_by_hostname, update_vm
+from services.project import get_project_by_name
+from services.storage import get_storage
+from utils.logger import *
+import json
 from azure.common.credentials import ServicePrincipalCredentials
-from dotenv import load_dotenv
-from pkg.azure import sas
-from ansible_runner import run_async
+from azure.mgmt.compute import ComputeManagementClient
+from azure.mgmt.compute.models import DiskCreateOption
 
-async def start_downloading(project, hostname):
-    con = create_db_con()
+async def start_downloading(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
+    blueprint_id = get_blueprintid(project.id, db)
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
-        disks = Discover.objects(project=project, host=host).allow_filtering()[0]['disk_details']
+        machine_id = get_machineid(host, blueprint_id, db)
+        disks = json.loads(get_discover(project.id, db)[0].disk_details)
         for disk in disks:
-            disk_raw = host+disk['mnt_path'].replace('/','-slash')+".raw"
+            disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                downloaded = await cw.download_worker(disk_raw,project,host)
+                downloaded = await cw.download_worker(disk_raw, project, host, machine_id, db)
                 if not downloaded: return False
             except Exception as e:
-                print("Download failed for "+disk_raw)
-                print(str(e))
-                logger("Download failed for "+disk_raw,"warning")
-                logger("Here is the error: "+str(e),"warning")
+                print("Download failed for "+ disk_raw + " :" + str(e))
+                logger("Download failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
-    con.shutdown()
+        vm_data = VMUpdate(machine_id=machine_id, status=30)
+        update_vm(vm_data, db)
     return True
     
 
-async def start_conversion(project,hostname):
-    con = create_db_con()
+async def start_conversion(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
+    blueprint_id = get_blueprintid(project.id, db)
     if isinstance(hostname, str):
         hostname = [hostname]
     for host in hostname:
-        disks = Discover.objects(project=project, host=host).allow_filtering()[0]['disk_details']
+        machine_id = get_machineid(host, blueprint_id, db)
+        disks = json.loads(get_discover(project.id, db)[0].disk_details)
         for disk in disks:
-            disk_raw = host+disk['mnt_path'].replace('/','-slash')+".raw"
+            disk_raw = f'{host}{disk["mnt_path"].replace("/", "-slash")}.raw'
             try:
-                converted = await cw.conversion_worker(disk_raw,project,host)
+                converted = await cw.conversion_worker(disk_raw, project, disk["mnt_path"], host, machine_id, db)
                 if not converted: return False
             except Exception as e:
-                print("Conversion failed for "+disk_raw)
-                print(str(e))
-                logger("Conversion failed for "+disk_raw,"warning")
-                logger("Here is the error: "+str(e),"warning")
+                print("Conversion failed for "+ disk_raw + " :" + str(e))
+                logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
                 return False
-    con.shutdown()
+        vm_data = VMUpdate(machine_id=machine_id, status=35)
+        update_vm(vm_data, db)
     return True
 
-async def start_uploading(project):
-    con = create_db_con()
-    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
-        machines = BluePrint.objects(project=project).allow_filtering()
-        for machine in machines:
-            disks = Discover.objects(project=project, host=machine['host']).allow_filtering()[0]['disk_details']
-            for disk in disks:
-                disk_raw = machine['host']+disk['mnt_path'].replace('/','-slash')+".raw"
-                print(disk_raw)
-                try:
-                    await cw.upload_worker(disk_raw,project,machine['host'])  
-                except Exception as e:
-                    print("Upload failed for "+disk_raw)
-                    print(str(e))
-                    logger("Upload failed for "+disk_raw,"warning")
-                    logger("Here is the error: "+str(e),"warning")
-                    return False
-        con.shutdown()
-        return True
 
-
-async def start_cloning(project, hostname):
-    con = create_db_con()
-    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
-        public_ip = Discover.objects(project=project,host=hostname).allow_filtering()[0]['public_ip']
-        user = Project.objects(name=project).allow_filtering()[0]['username']
-        provider = Project.objects(name=project).allow_filtering()[0]['provider']
-        storage = Storage.objects(project=project).allow_filtering()[0]['storage']
-        accesskey = Storage.objects(project=project).allow_filtering()[0]['access_key']
-        container = Storage.objects(project=project).allow_filtering()[0]['container']
-        sas_token = sas.generate_sas_token(storage, accesskey)
-        url = "https://" + storage + ".blob.core.windows.net/" + container + "/"
-        load_dotenv()
-        mongodb = os.getenv('BASE_URL')
-        current_dir = os.getcwd()
-        os.popen('echo null > ./logs/ansible/migration_log.txt')
-
-        playbook = "{}/ansible/{}/start_migration.yaml".format(current_dir, provider)
-        inventory = "{}/ansible/projects/{}/hosts".format(current_dir, project)
-        extravars = {
-            'url': url,
-            'sas': sas_token,
-            'mongodb': mongodb,
-            'project': project,
-            'hostname': hostname,
-            'ansible_user': user
-        }
-        envvars = {
-            'ANSIBLE_BECOME_USER': user,
-            'ANSIBLE_LOG_PATH': '{}/logs/ansible/{}/cloning_log.txt'.format(current_dir ,project)
-        }
-
-        await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, quiet=True)
-        
-        machines = BluePrint.objects(project=project).allow_filtering()
-        machine_count = len(machines)
-        flag = True
-        status_count = 0
-        while flag:
-            for machine in machines:
-                if int(machine['status'])>=25:
-                    status_count = status_count + 1
-            if status_count == machine_count:
-                flag = False
-        con.shutdown()
-        return not flag
-
-
-async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_path, storage_account):
-    con = create_db_con()
-    client_id = Project.objects(name=project).allow_filtering()[0]['client_id']
-    secret = Project.objects(name=project).allow_filtering()[0]['secret']
-    tenant_id = Project.objects(name=project).allow_filtering()[0]['tenant_id']
-    subscription_id = Project.objects(name=project).allow_filtering()[0]['subscription_id']
-    creds = ServicePrincipalCredentials(client_id=client_id, secret=secret, tenant=tenant_id)
-    compute_client = ComputeManagementClient(creds,subscription_id)
+async def create_disk_worker(project, host, uri, disk_name, disk, storage_account, db) -> bool:
+    creds = ServicePrincipalCredentials(client_id=project.azure_client_id, secret=project.azure_client_secret, tenant=project.azure_tenant_id)
+    compute_client = ComputeManagementClient(creds, project.azure_subscription_id)
     async_creation = ''
+
     try:
-        if mnt_path in ["slash","slashboot"]:
+        if disk.mnt_path in ["slash", "slashboot"]:
             async_creation = compute_client.images.create_or_update(
-                rg_name,
+                project.azure_resource_group,
                 disk_name,
-                {
-                    'location': location,
+                    {
+                    'location': project.location,
                     'storage_profile': {
                     'os_disk': {
                         'os_type': 'Linux',
@@ -149,59 +77,57 @@ async def create_disk_worker(project, rg_name, uri, disk_name, location, f, mnt_
                         'caching': "ReadWrite",
                         'storage_account_type': 'StandardSSD_LRS'
                         
-                    }
+                        }
                     },
                     'hyper_vgeneration': 'V1'
                 }
             )
         else:
             async_creation = compute_client.disks.create_or_update(
-                rg_name,
+                project.azure_resource_group,
                 disk_name,
                 {
-                    'location': location,
+                    'location': project.location,
                     'creation_data': {
                         'create_option': DiskCreateOption.import_enum,
-                        'storageAccountId': "subscriptions/"+subscription_id+"/resourceGroups/"+rg_name+"/providers/Microsoft.Storage/storageAccounts/"+storage_account,
+                        'storageAccountId': f"subscriptions/{project.azure_subscription_id}/resourceGroups/{project.azure_resource_group}/providers/Microsoft.Storage/storageAccounts/{storage_account}",
                         'source_uri': uri
                     },
                 }
             )
         image_resource = async_creation.result()
-        print(image_resource)
-        BluePrint.objects(project=project, host="-".join(disk_name.split("-")[0:-1])).update(status='40')
-        Disk.objects(project=project, host="-".join(disk_name.split("-")[0:-1]), mnt_path=mnt_path).update(disk_id=disk_name)
-        logger("Disk created: "+ str(image_resource),"info")
-    except Exception as e:
-        logger("Disk creation failed: "+repr(e),"error")
-        BluePrint.objects(project=project, host=disk_name).update(status='-40')
-    finally:
-        con.shutdown()
-
-async def create_disk(project, hostname):
-    con = create_db_con()
-    rg_name = Project.objects(name=project).allow_filtering()[0]['resource_group']
-    location = Project.objects(name=project).allow_filtering()[0]['location']
-    disks = Disk.objects(project=project,host=hostname).allow_filtering()
-    storage_account = Storage.objects(project=project).allow_filtering()[0]['storage']
-    container = Storage.objects(project=project).allow_filtering()[0]['container']
-    for disk in disks:
-        vhd = disk['vhd']
-        uri = "https://"+storage_account+".blob.core.windows.net/"+container+"/"+vhd
-        await create_disk_worker(project,rg_name,uri,vhd.replace(".vhd",""),location,disk['file_size'],disk['mnt_path'], storage_account)
-    return True
         
+        vm_data = VMUpdate(machine_id=host.id, status=40)
+        update_vm(vm_data, db)
+
+        disk_data = DiskUpdate(disk_id=disk.id, target_disk_id=disk_name)
+        update_disk(disk_data, db)
+
+        logger("Disk created: "+ str(image_resource), "info")
+        return True
+    except Exception as e:
+        logger("Disk creation failed: "+ str(e), "error")
+        
+        vm_data = VMUpdate(machine_id=host.id, status=-40)
+        update_vm(vm_data, db)
+        return False
     
 
-async def adhoc_image_conversion(project):
-    con = create_db_con()
-    if Project.objects(name=project).allow_filtering()[0]['provider'] == "azure":
-        machines = BluePrint.objects(project=project).allow_filtering()
-        for machine in machines:
-            osdisk_raw = machine['host']+".raw"
-            try:
-                await asyncio.create_task(cw.conversion_worker(osdisk_raw,project,machine['host']))  
-            except Exception as e:
-                print("Conversion failed for "+osdisk_raw)
-                print(str(e))
-    con.shutdown()
+async def create_disk(user, project, hostname, db) -> bool:
+    project = get_project_by_name(user, project, db)
+    storage = get_storage(project.id, db)
+    blueprint_id = get_blueprintid(project.id, db)
+
+    if hostname == ["all"]:
+        hosts = get_all_machines(blueprint_id, db)
+    else:
+        hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
+
+    for host in hosts:
+        disks = get_all_disks(host.id, db)
+        for disk in disks:
+            vhd = disk.vhd
+            uri = f"https://{storage.bucket_name}.blob.core.windows.net/{storage.container}/{vhd}"
+            disk_created = await create_disk_worker(project, host, uri, vhd.replace(".vhd",""), disk, storage.bucket_name, db)
+            if not disk_created: return False
+    return True

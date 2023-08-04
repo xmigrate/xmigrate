@@ -1,37 +1,24 @@
-from mongoengine import *
-from cassandra.cqlengine.models import Model
-from cassandra.cqlengine import columns
-
-class Discover(Model):
-    host = columns.Text(primary_key=True, max_length=200 )
-    ip = columns.Text(required=True)
-    subnet = columns.Text(required=True, max_length=150)
-    network = columns.Text(required=True, max_length=150)
-    ports = columns.List(value_type=columns.Map(key_type=columns.Text(),value_type=columns.Text()))
-    cores = columns.Text(max_length=2)
-    cpu_model = columns.Text(required=True, max_length=150)
-    ram = columns.Text(required=True, max_length=150)
-    disk_details = columns.List(value_type=columns.Map(key_type=columns.Text(),value_type=columns.Text()))
-    project = columns.Text(primary_key=True, max_length=150)
-    public_ip = columns.Text(required=True, max_length=150)
-    meta = {'allow_inheritance': True}
+from utils.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 
 
-class DiscoverMongo(Document):
-    host = StringField(required=True, max_length=200 )
-    ip = StringField(required=True)
-    subnet = StringField(required=True, max_length=150)
-    network = StringField(required=True, max_length=150)
-    ports = ListField()
-    cores = StringField(max_length=2)
-    cpu_model = StringField(required=True, max_length=150)
-    ram = StringField(required=True, max_length=150)
-    disk_details = ListField()
-    project = StringField(required=True, max_length=150)
-    public_ip = StringField(required=True, max_length=150)
-    meta = {
-        'indexes': [
-            {'fields': ('host', 'project'), 'unique': True}
-        ]
-    }
+class Discover(Base):
+    
+    __tablename__ = 'discover'
 
+    id = Column(String(40), primary_key=True, unique=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    is_locked = Column(Boolean, nullable=False, default=False)
+    is_enabled = Column(Boolean, nullable=False, default=True)
+    project = Column(String(40), ForeignKey("project.id"), primary_key=True)
+    hostname = Column(String(256), primary_key=True)
+    network = Column(String(256))
+    subnet = Column(String(256))
+    ports = Column(String(256))
+    cpu_core = Column(Integer)
+    cpu_model = Column(String(256))
+    ram = Column(String(256))
+    disk_details = Column(String(5120))
+    ip = Column(String(256))

@@ -1,6 +1,6 @@
 import boto3
 
-def get_locations(access_key,secret_key):
+async def get_locations(access_key,secret_key):
     regions = []
     try:
         client = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=secret_key,region_name='us-east-1')

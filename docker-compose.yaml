@@ -1,37 +1,50 @@
 version: '3.1'
 
 services:
-  cassandra:
-    image: cassandra:4.0
-    container_name: cassandra
+  postgres:
+    container_name: postgres
+    image: postgres:14.1-alpine
+    environment:
+      - POSTGRES_USER=xmigrate
+      - POSTGRES_PASSWORD=xmigrate
+      - POSTGRES_DB=xmigrate
+    volumes:
+      - postgres:/var/lib/postgresql/data
     restart: unless-stopped
     ports:
-      - "9042:9042"
-      - "9160:9160"
-    volumes:
-      - cassandra:/var/lib/cassandra
+      - 5432:5432
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
     environment:
-      - "CASSANDRA_CLUSTER_NAME=cassandra-cluster"
-      - "CASSANDRA_DC=DC1"
-      - "CASSANDRA_RACK=Rack1"
-      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
-      # By default, Cassandra autodetects the available host memory and takes as much as it can.
-      # Configure the limits according to the needs and memory availability.
-      - "MAX_HEAP_SIZE=512M"
-      - "HEAP_NEWSIZE=50M"
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 5050
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    restart: unless-stopped
+    ports:
+      - 5050:5050
+    depends_on: 
+      - postgres
+
   app:
     image: xmigrate/xmigrate:latest
     container_name: app
+    environment:
+      DB_USER: xmigrate
+      DB_PASS: xmigrate
+      DB_NAME: xmigrate
+      DB_URL: postgres:5432
+      BASE_URL: http://<server-ip>/api
     ports:
       - 80:80
-    environment:
-      CASS_PASSWORD: "cassandra"
-      CASS_USER: "cassandra"
-      CASS_DB: "cassandra"
-      BASE_URL: http://<server-ip>/api
     depends_on:
-     - cassandra
+     - postgres
 
 volumes:
-  cassandra:
+  postgres:
+    driver: local
+  pgadmin:
     driver: local
