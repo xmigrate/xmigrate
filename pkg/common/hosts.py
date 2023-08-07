@@ -3,6 +3,7 @@ from services.machines import get_machineid, get_all_machines, update_vm
 from services.network import get_all_networks, get_all_subnets, get_networkid
 from services.project import get_projectid
 from schemas.machines import VMUpdate
+from utils.logger import Logger
 
 
 def update_hosts(user, project, machines, db):
@@ -16,7 +17,7 @@ def update_hosts(user, project, machines, db):
             update_vm(vm_data, db)
         return True
     except Exception as e:
-        print(repr(e))
+        Logger.error(str(e))
         return False
 
 
@@ -37,5 +38,5 @@ def fetch_all_hosts(user, project, db):
                     subnet.hosts = hosts
         return {'networks': network_objects}
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
 

@@ -1,7 +1,7 @@
 from pkg.gcp.gcp import get_service_compute_v1
 from services.project import get_project_by_name
 from utils.constants import Provider
-from utils.logger import logger
+from utils.logger import Logger
 import json
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.compute import ComputeManagementClient
@@ -67,7 +67,6 @@ def get_vm_types(user: str, project: str, db: Session):
             machine_types = list_gcp_vm_types(json.loads(prjct.gcp_service_token), f"{prjct.location}-a")
         flag = True
     except Exception as e:
-        print(repr(e))
-        logger("Fetching vm details failed: "+repr(e),"warning")
+        Logger.error("Fetching vm details failed: %s" %(str(e)))
         flag = False
     return machine_types, flag

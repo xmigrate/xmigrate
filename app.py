@@ -12,7 +12,7 @@ from routes import (auth,
                     status, storage as storage_r,
                     stream,
                     vm_types)
-from utils.database import Base, engine
+from utils.database import *
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn

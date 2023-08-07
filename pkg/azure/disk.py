@@ -7,7 +7,7 @@ from services.disk import get_all_disks, update_disk
 from services.machines import get_all_machines, get_machineid, get_machine_by_hostname, update_vm
 from services.project import get_project_by_name
 from services.storage import get_storage
-from utils.logger import *
+from utils.logger import Logger
 import json
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.compute import ComputeManagementClient
@@ -27,8 +27,7 @@ async def start_downloading(user, project, hostname, db) -> bool:
                 downloaded = await cw.download_worker(disk_raw, project, host, machine_id, db)
                 if not downloaded: return False
             except Exception as e:
-                print("Download failed for "+ disk_raw + " :" + str(e))
-                logger("Download failed for "+ disk_raw + " :" + str(e), "warning")
+                Logger.error("Download failed for %s: %s" %(disk_raw, str(e)))
                 return False
         vm_data = VMUpdate(machine_id=machine_id, status=30)
         update_vm(vm_data, db)
@@ -49,8 +48,7 @@ async def start_conversion(user, project, hostname, db) -> bool:
                 converted = await cw.conversion_worker(disk_raw, project, disk["mnt_path"], host, machine_id, db)
                 if not converted: return False
             except Exception as e:
-                print("Conversion failed for "+ disk_raw + " :" + str(e))
-                logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
+                Logger.error("Conversion failed for %s: %s" %(disk_raw, str(e)))
                 return False
         vm_data = VMUpdate(machine_id=machine_id, status=35)
         update_vm(vm_data, db)
@@ -103,10 +101,10 @@ async def create_disk_worker(project, host, uri, disk_name, disk, storage_accoun
         disk_data = DiskUpdate(disk_id=disk.id, target_disk_id=disk_name)
         update_disk(disk_data, db)
 
-        logger("Disk created: "+ str(image_resource), "info")
+        Logger.info("Disk %s created" %(str(image_resource)))
         return True
     except Exception as e:
-        logger("Disk creation failed: "+ str(e), "error")
+        Logger.error(str(e))
         
         vm_data = VMUpdate(machine_id=host.id, status=-40)
         update_vm(vm_data, db)

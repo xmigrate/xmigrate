@@ -14,6 +14,7 @@ from services.project import get_projectid, get_project_by_name
 from pkg.test_header_files.test_data import blueprint_save_test_data, network_create_test_data, subnet_create_test_data
 from utils.constants import Test
 from utils.database import dbconn
+from utils.logger import Logger
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 import json
@@ -53,7 +54,7 @@ async def network_create(data: NetworkCreate, request: Request, current_user: To
             if not network_exists:
                 create_network(data, db)
             else:
-                print(f'Network with cidr ({data.cidr}) and/or name ({data.name}) already exists for the project!')
+                Logger.info('Network with cidr (%s) and/or name (%s) already exists for the project!' %(data.cidr, data.name))
             for host in data.hosts:
                 networks = get_all_networks(blueprint_id, db)
                 machine_id = get_machineid(host['hostname'], blueprint_id, db)
@@ -61,7 +62,7 @@ async def network_create(data: NetworkCreate, request: Request, current_user: To
                 update_vm(vm_data, db)
         return jsonable_encoder({'status': '200', 'msg': 'network data saved successfully'})
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return jsonable_encoder({'status': '500', 'msg': 'network creation failed'})
 
 
@@ -123,7 +124,7 @@ async def subnet_create(data: SubnetCreate, request: Request, current_user: Toke
             if not subnet_exists:
                 return create_subnet(data, db)
             else:
-                print(f'Subnet with cidr ({data.cidr}) and/or name ({data.subnet_name}) already exists for the network {data.nw_cidr}!')
+                Logger.info('Subnet with cidr (%s) and/or name (%s) already exists for the network %s!' %(data.cidr, data.subnet_name, data.nw_cidr))
     except:
         return jsonable_encoder({'status': '500', 'msg': 'subnet  creation failed'})
     

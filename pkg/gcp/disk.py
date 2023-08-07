@@ -7,7 +7,7 @@ from services.disk import get_diskid, update_disk
 from services.machines import get_all_machines, get_machine_by_hostname, update_vm
 from services.project import get_project_by_name
 from services.storage import get_storage
-from utils.logger import *
+from utils.logger import Logger
 import asyncio
 from asyncio.subprocess import PIPE, STDOUT
 import json
@@ -42,10 +42,10 @@ async def start_image_creation_worker(project, disk_containers, host, db):
 
                 try:
                     response = request.execute()
-                    print(response)
+                    Logger.info(response)
                 except HttpError as e:
                     if e.resp.status == 409:
-                        print("Image already created!")
+                        Logger.info("Image already created!")
 
                         vm_data = VMUpdate(machine_id=host.id, image_id=f"projects/{gcp_project_id}/global/images/{(host.hostname).replace('.', '-')}")
                         update_vm(vm_data, db)
@@ -53,12 +53,13 @@ async def start_image_creation_worker(project, disk_containers, host, db):
 
                 while True:
                     result = service.globalOperations().get(project=gcp_project_id, operation=response['name']).execute()
-                    print(result)
+                    Logger.debug(result)
 
                     if result['status'] == 'DONE':
-                        print("Task done.")
+                        Logger.info("Image creation task done")
 
                         if 'error' in result.keys():
+                            Logger.error("Image creation task failed!")
                             raise Exception(result['error'])
                         
                         vm_data = VMUpdate(machine_id=host.id, image_id=result['targetLink'], status='40')
@@ -78,21 +79,22 @@ async def start_image_creation_worker(project, disk_containers, host, db):
                 request = service.disks().insert(project=gcp_project_id, zone=f"{project.location}-a", body=disk_body)
                 try:
                     response = request.execute()
-                    print(response)
+                    Logger.info(response)
                 except HttpError as e:
                     if e.resp.status == 409:
-                        print("Disk already created!")
+                        Logger.info("Image already created!")
                         continue
                     else:
-                        print(str(e))
+                        Logger.error(str(e))
 
                 while True:
                     result = service.zoneOperations().get(project=gcp_project_id, zone=f"{project.location}-a", operation=response['name']).execute()
-                    print(result)
+                    Logger.debug(result)
 
                     if result['status'] == 'DONE':
-                        print("Task done.")
+                        Logger.info("Image creation task done")
                         if 'error' in result:
+                            Logger.error("Image creation task failed!")
                             raise Exception(result['error'])
                         
                         disk_id = get_diskid(host.id, disk['mnt_path'].replace('/', 'slash'), db)
@@ -105,7 +107,7 @@ async def start_image_creation_worker(project, disk_containers, host, db):
                     await asyncio.sleep(10)
         return True
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return False
 
 
@@ -139,7 +141,7 @@ async def start_image_creation(user, project, hostname, db) -> bool:
             if not image_created: return False
         return True
     except Exception as e:
-        print(repr(e))
+        Logger.error(str(e))
         return False
 
 
@@ -168,7 +170,7 @@ async def download_worker(osdisk_raw, project, host, db) -> bool:
 
         if not os.path.exists(path):
             os.popen('echo "download started" > ./logs/ansible/migration_log.txt')
-            print(f'Downloading {osdisk_raw} as "disk.raw"...') # Because GCP requires the raw disk name to be disk.raw when creating the image
+            Logger.info('Downloading %s as "disk.raw"...' %osdisk_raw) # Because GCP requires the raw disk name to be disk.raw when creating the image
 
             command = f'BOTO_CONFIG={boto_path} gsutil cp gs://{storage.bucket_name}/{osdisk_raw} {path}'
             os.popen('echo ' + command + ' >> ./logs/ansible/migration_log.txt')
@@ -181,8 +183,7 @@ async def download_worker(osdisk_raw, project, host, db) -> bool:
         else:
             return True
     except Exception as e:
-        print(str(e))
-        logger(str(e), "warning")
+        Logger.info(str(e))
         
         vm_data = VMUpdate(machine_id=host.id, status=-30)
         update_vm(vm_data, db)
@@ -217,8 +218,7 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
         update_disk(disk_data, db)
         return True
     except Exception as e:
-        print(str(e))
-        logger(str(e), "warning")
+        Logger.error(str(e))
 
         vm_data = VMUpdate(machine_id=host.id, status=-32)
         update_vm(vm_data, db)
@@ -231,8 +231,7 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
     try:
         await download_worker(osdisk_raw, project, host, db)
     except Exception as e:
-        print("Download failed for "+ osdisk_raw + " :" + str(e))
-        logger("Download failed for "+ osdisk_raw + " :" + str(e), "warning")
+        Logger.error("Download failed for %s: %s" %(osdisk_raw, str(e)))
         return False
     else:
         try:
@@ -240,7 +239,7 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
             cur_path = os.getcwd()
             path = f'{cur_path}/projects/{project.name}/{host.hostname}/'
             tar_path = path + osdisk_tar
-            print(f'Starting to compress the disk image {osdisk_raw.replace(".raw", "")}...')
+            Logger.info('Starting to compress the disk image %s...' %(osdisk_raw.replace(".raw", "")))
 
             os.popen(f'echo "Starting to compress the disk image {osdisk_raw.replace(".raw", "")}...">> ./logs/ansible/migration_log.txt')
 
@@ -249,24 +248,23 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
                 command = f'tar --format=oldgnu -Sczf {tar_path} -C {path} disk.raw' # Changing to the directory with '-C' is important because while GCP untars this tarball, the name of the raw disk has to be disk.raw
                 process2 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
                 await process2.wait()
-                print(f"Tarball {osdisk_tar} created.")
+                Logger.info("Tarball %s created" %osdisk_tar)
             except Exception as e:
-                print(str(e))
+                Logger.info(str(e))
                 return False
             else:
                 raw_disk = f'{path}/disk.raw'
                 if os.path.exists(raw_disk):
                     os.remove(raw_disk)
-                    print(f"Raw disk for {osdisk_tar} removed after tarball creation.")
+                    Logger.info("Raw disk for %s removed after tarball creation" %osdisk_tar)
 
             uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, host, db)
             if not uploaded: return False
 
-            logger("Conversion completed for "+ osdisk_raw, "info")
+            Logger.info("Conversion completed for %s" %osdisk_raw)
             return True
         except Exception as e:
-            print(str(e))
-            logger(str(e), "warning")
+            Logger.error(str(e))
             
             vm_data = VMUpdate(machine_id=host.id, status=-35)
             update_vm(vm_data, db)
@@ -290,8 +288,7 @@ async def start_conversion(user, project, hostname, db) -> bool:
                 conversion_done = await conversion_worker(disk_raw, project, disk["mnt_path"], host, db)
                 if not conversion_done: return False
             except Exception as e:
-                print("Conversion failed for "+ disk_raw + " :" + str(e))
-                logger("Conversion failed for "+ disk_raw + " :" + str(e), "warning")
+                Logger.info("Conversion completed for %s" %disk_raw)
                 return False
         vm_data = VMUpdate(machine_id=host.id, status=35)
         update_vm(vm_data, db)

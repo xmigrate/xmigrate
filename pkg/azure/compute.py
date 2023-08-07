@@ -3,7 +3,7 @@ from services.blueprint import get_blueprintid
 from services.disk import get_all_disks
 from services.machines import get_all_machines, get_machine_by_hostname, update_vm
 from services.project import get_project_by_name
-from utils.logger import *
+from utils.logger import Logger
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOptionTypes
@@ -28,7 +28,7 @@ def create_vm_worker(project, machine, username, password, image_name, data_disk
             })
             lun += 1
             
-        print(f"Provisioning virtual machine {machine.hostname}; this operation might take a few minutes...")
+        Logger.info("Provisioning virtual machine %s, this operation might take a few minutes..." %(machine.hostname))
 
         poller = compute_client.virtual_machines.create_or_update(project.azure_resource_group,
                                                                   machine.hostname,
@@ -57,7 +57,7 @@ def create_vm_worker(project, machine, username, password, image_name, data_disk
                                                             )
 
         vm_result = poller.result()
-        print(f"Provisioned virtual machine {machine.hostname}.")
+        Logger.info("Provisioned virtual machine %s" %(machine.hostname))
         
         vm_data = VMUpdate(machine_id=machine.id, vm_id=vm_result.name, status=100)
         update_vm(vm_data, db)
@@ -66,8 +66,7 @@ def create_vm_worker(project, machine, username, password, image_name, data_disk
         vm_data = VMUpdate(machine_id=machine.id, vm_id=vm_result.name, status=-100)
         update_vm(vm_data, db)
 
-        print("VM creation updation failed: "+ str(e))
-        logger("VM creation updation failed: "+ str(e), "warning")
+        Logger.error(str(e))
         return False
 
 

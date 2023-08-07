@@ -11,6 +11,7 @@ from services.machines import check_vm_exists, create_vm, get_all_machines, get_
 from services.network import check_network_exists, check_subnet_exists, create_network, create_subnet, get_all_networks
 from services.project import check_project_exists, get_project_by_name
 from utils.constants import Provider
+from utils.logger import Logger
 import json, os
 from sqlalchemy.orm import Session
 
@@ -162,7 +163,7 @@ async def network_create_test_data(data: NetworkCreate, db: Session) -> None:
     if not network_exists:
         create_network(data, db)
     else:
-        print(f'Network with cidr ({data.cidr}) and/or name ({data.name}) already exists for the project!')
+        Logger.info('Network with cidr (%s) and/or name (%s) already exists for the project!' %(data.cidr, data.name))
 
     for host in data.hosts:
         networks = get_all_networks(data.blueprint, db)
@@ -183,4 +184,4 @@ async def subnet_create_test_data(data: SubnetCreate, db) -> None:
     if not subnet_exists:
         return create_subnet(data, db)
     else:
-        print(f'Subnet with cidr ({data.cidr}) and/or name ({data.subnet_name}) already exists for the network {data.nw_cidr}!')
+        Logger.info('Subnet with cidr (%s) and/or name (%s) already exists for the network %s!' %(data.cidr, data.subnet_name, data.nw_cidr))

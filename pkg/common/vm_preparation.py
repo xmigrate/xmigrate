@@ -5,6 +5,7 @@ from services.node import get_nodes
 from services.project import get_project_by_name
 from services.storage import get_storage
 from utils.constants import Provider
+from utils.logger import Logger
 from utils.playbook import run_playbook
 import json
 import os
@@ -39,5 +40,5 @@ async def prepare(user: str, project: str, hostname: list, db: Session) -> None:
         else:
             return False
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return False

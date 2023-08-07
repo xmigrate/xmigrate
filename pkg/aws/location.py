@@ -1,3 +1,4 @@
+from utils.logger import Logger
 import boto3
 
 async def get_locations(access_key,secret_key):
@@ -7,5 +8,5 @@ async def get_locations(access_key,secret_key):
         regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
         return regions,True 
     except Exception as e:
-        print(repr(e))
+        Logger.info(str(e))
         return regions, False

@@ -2,6 +2,7 @@ from schemas.auth import TokenData, Settings
 from schemas.user import UserBase
 from services.user import check_user_exists, create_user
 from utils.database import dbconn
+from utils.logger import Logger
 from functools import lru_cache
 from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -52,7 +53,7 @@ async def signup(data: UserBase, db: Session = Depends(dbconn)):
         else:
             return jsonable_encoder({"message": f"user {data.username} already exists!"})
     except Exception as e:
-        print(str(e))
+        Logger.info(str(e))
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "user creation failed!"}))
 
 @router.get('/user', response_model=TokenData)

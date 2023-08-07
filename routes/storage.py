@@ -3,6 +3,7 @@ from services.project import get_projectid
 from services.storage import (check_storage_exists, create_storage, get_storage, get_storageid, update_storage)
 from schemas.storage import StorageCreate, StorageUpdate
 from utils.database import dbconn
+from utils.logger import Logger
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -21,7 +22,7 @@ async def storage_create(data: StorageCreate, current_user: TokenData = Depends(
         else:
             return jsonable_encoder({"message": f"storage account for project {data.project} already exists!"})
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "Couldn't save storage account details!"}))
 
 
@@ -39,5 +40,5 @@ async def storage_update(data: StorageUpdate, current_user: TokenData = Depends(
         data.id = storage_id
         return update_storage(data, db)
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "Couldn't update project!"}))

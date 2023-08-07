@@ -1,4 +1,4 @@
-from utils.logger import *
+from utils.logger import Logger
 import os
 
 def add_nodes(nodes, user, password, project) -> bool:
@@ -16,5 +16,5 @@ def add_nodes(nodes, user, password, project) -> bool:
             config.write(f"[defaults]\nremote_user = {user}\ninventory = {ansible_hosts}\nsudo_user = {user}\nhost_key_checking = false\ncommand_warnings=False\ndeprecation_warnings=False\n\n[privilege_escalation]\nbecome=True\nbecome_method=sudo\nbecome_user={user}")
         return True
     except Exception as e:
-        logger("Error while creating ansible cfg: "+ str(e), "error")
+        Logger.error("Error while creating ansible configs: %s" %(str(e)))
         return False

@@ -1,5 +1,5 @@
 from .gcp import get_service_compute_v1
-from utils.logger import logger
+from utils.logger import Logger
 
 
 async def get_regions(service_account_json):
@@ -16,8 +16,7 @@ async def get_regions(service_account_json):
             request = service.regions().list_next(previous_request=request, previous_response=response)
         return regions, True
     except Exception as e:
-        print(str(e))
-        logger("Fetching available locations failed: "+ str(e), "warning")
+        Logger.warning("Fetching available locations failed: %s" %(str(e)))
         return regions, False
 
 
@@ -35,6 +34,5 @@ async def get_zones(service_account_json):
             request = service.zones().list_next(previous_request=request, previous_response=response)
         return zones, True
     except Exception as e:
-        print(str(e))
-        logger("Fetching available locations failed: "+ str(e), "warning")
+        Logger.warning("Fetching available locations failed: %s" %(str(e)))
         return zones, False
