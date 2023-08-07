@@ -40,3 +40,6 @@ authlib==1.0.1
 # postgres
 sqlalchemy==2.0.12
 psycopg2-binary==2.9.6
+
+#logging
+colorlog==6.7.0
