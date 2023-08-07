@@ -1,0 +1,75 @@
+- name : Configure aws-cli and required packages
+  become: true
+  become_method: sudo
+  become_user: root
+  hosts: all
+  gather_facts: no
+  force_handlers: True
+  tasks:
+  - name: Update packages
+    shell: apt update
+
+  - name: Ensure unzip is installed
+    apt:
+      name: unzip
+      state: latest
+
+  - name: Setup awscli
+    shell: |
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip -o awscliv2.zip
+      ./aws/install --update
+
+  - name: Remove all kernels other than the active kernel # This might install unsigned versions of some kernels
+    shell: |
+      kernel=$(uname -r)
+      dpkg -l | grep 'linux-image\|linux-headers' | grep -v $kernel | awk '{print $2}' | xargs apt purge -y
+      apt autoremove -y
+    ignore_errors: yes
+
+  - name: Remove active kernel boot files
+    shell: rm -f /boot/*
+    ignore_errors: yes
+
+  - block:
+    - name: Install aws supported generic linux kernel # AWS image build is not stable on non-generic kernals.
+      apt:
+        name: linux-generic
+        state: latest
+    rescue:
+    - name: Install the kernel via shell
+      shell: "apt install linux-generic -y"
+    tags:
+        - devel
+
+  - name: Configure new kernel boot files
+    shell: |
+      kernel=$(dpkg -l | grep -E 'linux\-image\-5\.15.*\-generic' | awk '{print $2}' | sed 's/linux-image-//')
+      update-initramfs -u -k $kernel
+
+  - name: Remove EFI entries
+    shell: mv /boot/efi/boot/grub/grub.cfg /boot/efi/boot/grub/grub.cfg.bak
+    ignore_errors: yes
+
+  - name: Update grub entries
+    shell: |
+      update-grub
+
+  - name: Create .aws directory
+    file:
+      path: "~/.aws/"
+      state: directory
+      mode: 0755
+    become: false
+
+  - name: Configure awscli credentials
+    copy:
+      src: "~/.aws/credentials"
+      dest: "~/.aws/credentials"
+    become: false
+
+  - name: Configure aws region
+    copy:
+      src: "~/.aws/config"
+      dest: "~/.aws/config"
+    become: false
