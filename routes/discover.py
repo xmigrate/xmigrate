@@ -59,7 +59,7 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
     
     try:
         finished, output = run_playbook(provider="common", username=data.username, project_name=project, curr_working_dir=current_dir, playbook=PLAYBOOK, stage=STAGE)
-        if finished:
+        if finished and output is not None:
             if 'ok' in output.stats.keys():
                 linux_host = list(output.stats['ok'].keys())[0]
                 facts = output.get_fact_cache(host=linux_host)
@@ -87,19 +87,20 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
                     diskinfo = disk.strip().split()
                     del diskinfo[-1] # the final element in the list is only needed during filtering in ansible
                     hashmap = dict(zip(keys, diskinfo))
-                    hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
-                    if hashmap['dev'] not in dev_list:
-                        for blk in blkid:
-                            if hashmap['dev'] in blk and 'uuid' in blk.lower():
-                                matches = re.findall(r'(?i)(\w+UUID)="([^"]+)"', blk)
-                                for match in matches:
-                                    _, hashmap['uuid'] = match
-                                break
-                        else:
-                            hashmap['uuid'] = ' '
-                        dev_list.append(hashmap['dev'])
-                        hashmap['dev'] = f'/dev/{hashmap["dev"]}'
-                        disks.append(hashmap)
+                    if hashmap.get('mnt_path') is not None: # only take mounted disks
+                        hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
+                        if hashmap['dev'] not in dev_list:
+                            for blk in blkid:
+                                if hashmap['dev'] in blk and 'uuid' in blk.lower():
+                                    matches = re.findall(r'(?i)(\w+UUID)="([^"]+)"', blk)
+                                    for match in matches:
+                                        _, hashmap['uuid'] = match
+                                    break
+                            else:
+                                hashmap['uuid'] = ' '
+                            dev_list.append(hashmap['dev'])
+                            hashmap['dev'] = f'/dev/{hashmap["dev"]}'
+                            disks.append(hashmap)
                 try:
                     discover_exists = check_discover_exists(project_id, db)
                     if not discover_exists:
