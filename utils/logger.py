@@ -10,14 +10,14 @@ class Logger:
     logger = logging.getLogger("xmigrate")
     logger.setLevel(logging.DEBUG)
 
-    colored_fmt = colorlog.ColoredFormatter("[%(blue)s%(name)s%(reset)s] %(white)s%(asctime)s%(reset)s [%(log_color)s%(levelname)-8s%(reset)s] %(purple)s%(filename)s:%(lineno)s%(reset)s >>> %(log_color)s%(message)s%(reset)s")
+    colored_fmt = colorlog.ColoredFormatter("%(log_color)s%(levelname)-9s%(reset)s %(white)-s%(asctime)s%(reset)s [%(blue)s%(name)s%(reset)s] %(log_color)s%(message)s%(reset)s")
     stdoutHandler = colorlog.StreamHandler(stream=sys.stdout)
     stdoutHandler.setLevel(logging.DEBUG)
     stdoutHandler.setFormatter(colored_fmt)
 
-    fmt = logging.Formatter("[%(name)s] %(asctime)s [%(levelname)s] %(filename)s:%(lineno)s >>> %(message)s")
+    fmt = logging.Formatter("[%(name)s] %(asctime)s [%(levelname)s] %(message)s")
     fileHandler = RotatingFileHandler(f"{dir}/app.log", mode='a', maxBytes=10*1024*1024, backupCount=2)
-    fileHandler.setLevel(logging.WARNING)
+    fileHandler.setLevel(logging.INFO)
     fileHandler.setFormatter(fmt)
 
     logger.addHandler(stdoutHandler)
