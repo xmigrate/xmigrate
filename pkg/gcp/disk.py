@@ -169,11 +169,9 @@ async def download_worker(osdisk_raw, project, host, db) -> bool:
                 fh.write(rendered_boto)
 
         if not os.path.exists(path):
-            os.popen('echo "download started" > ./logs/ansible/migration_log.txt')
             Logger.info('Downloading %s as "disk.raw"...' %osdisk_raw) # Because GCP requires the raw disk name to be disk.raw when creating the image
 
             command = f'BOTO_CONFIG={boto_path} gsutil cp gs://{storage.bucket_name}/{osdisk_raw} {path}'
-            os.popen('echo ' + command + ' >> ./logs/ansible/migration_log.txt')
             process1 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
 
@@ -201,14 +199,9 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
         tar_path = f'{cur_path}/projects/{project.name}/{host.hostname}/{osdisk_tar}'
         file_size = Path(tar_path).stat().st_size
 
-        os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
-        os.popen('echo "tar uploading" >> ./logs/ansible/migration_log.txt')
-
         command = f'BOTO_CONFIG={boto_path} gsutil cp {tar_path} gs://{storage.bucket_name}/{osdisk_tar}'
         process3 = await asyncio.create_subprocess_shell(command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process3.wait()
-
-        os.popen('echo "tar uploaded" >> ./logs/ansible/migration_log.txt')
 
         vm_data = VMUpdate(machine_id=host.id, status=32)
         update_vm(vm_data, db)
@@ -222,8 +215,6 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, host, db) -> bool:
 
         vm_data = VMUpdate(machine_id=host.id, status=-32)
         update_vm(vm_data, db)
-
-        os.popen('echo "' + str(e)+ '" >> ./logs/ansible/migration_log.txt')
         return False
 
 
@@ -240,8 +231,6 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, db) -> b
             path = f'{cur_path}/projects/{project.name}/{host.hostname}/'
             tar_path = path + osdisk_tar
             Logger.info('Starting to compress the disk image %s...' %(osdisk_raw.replace(".raw", "")))
-
-            os.popen(f'echo "Starting to compress the disk image {osdisk_raw.replace(".raw", "")}...">> ./logs/ansible/migration_log.txt')
 
             try:
                 ## TODO - use tarfile module here instead of command

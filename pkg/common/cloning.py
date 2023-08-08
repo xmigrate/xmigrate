@@ -25,7 +25,6 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
 
     server = os.getenv('BASE_URL')
     current_dir = os.getcwd()
-    os.popen('echo null > ./logs/ansible/migration_log.txt')
 
     playbook = f"{current_dir}/ansible/{project.provider}/start_migration.yaml"
     inventory = f"{current_dir}/ansible/projects/{project.name}/hosts"
