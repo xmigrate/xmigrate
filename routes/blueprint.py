@@ -53,15 +53,15 @@ async def network_create(data: NetworkCreate, request: Request, current_user: To
             network_exists = check_network_exists(blueprint_id, data.cidr, data.name, db)
             if not network_exists:
                 create_network(data, db)
+                for host in data.hosts:
+                    networks = get_all_networks(blueprint_id, db)
+                    machine_id = get_machineid(host['hostname'], blueprint_id, db)
+                    vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
+                    update_vm(vm_data, db)
+                    Logger.info("Succesfully saved data for the network (Name: %s, CIDR: %s)" %(data.name, data.cidr))
+                    return jsonable_encoder({'status': '200', 'msg': 'network data saved successfully'})
             else:
                 Logger.warning('Network with cidr (%s) and/or name (%s) already exists for the project!' %(data.cidr, data.name))
-            for host in data.hosts:
-                networks = get_all_networks(blueprint_id, db)
-                machine_id = get_machineid(host['hostname'], blueprint_id, db)
-                vm_data = VMUpdate(machine_id=machine_id, network=networks[0].cidr)
-                update_vm(vm_data, db)
-        Logger.info("Succesfully saved the data for Network: %s CIDR: %s" %(data.name, data.cidr))
-        return jsonable_encoder({'status': '200', 'msg': 'network data saved successfully'})
     except Exception as e:
         Logger.error(str(e))
         return jsonable_encoder({'status': '500', 'msg': 'network creation failed'})
@@ -127,10 +127,11 @@ async def subnet_create(data: SubnetCreate, request: Request, current_user: Toke
         else:
             subnet_exists = check_subnet_exists(data.network, data.cidr, data.subnet_name, db)
             if not subnet_exists:
-                return create_subnet(data, db)
+                create_subnet(data, db)
+                Logger.info("Succesfully saved data for the subnet (Name: %s, CIDR: %s)" %(data.subnet_name, data.cidr))
+                return jsonable_encoder({'status': '200', 'msg': 'network data saved successfully'})
             else:
-                Logger.info('Subnet with cidr (%s) and/or name (%s) already exists for the network %s!' %(data.cidr, data.subnet_name, data.nw_cidr))
-        Logger.info("Succesfully saved the data for Subnet: %s CIDR: %s" %(data.subnet_name, data.cidr))
+                Logger.warning('Subnet with cidr (%s) and/or name (%s) already exists for the network %s!' %(data.cidr, data.subnet_name, data.nw_cidr))
     except Exception as e:
         Logger.error(str(e))
         return jsonable_encoder({'status': '500', 'msg': 'subnet  creation failed'})
