@@ -163,7 +163,7 @@ async def network_create_test_data(data: NetworkCreate, db: Session) -> None:
     if not network_exists:
         create_network(data, db)
     else:
-        Logger.info('Network with cidr (%s) and/or name (%s) already exists for the project!' %(data.cidr, data.name))
+        Logger.warning('Network with cidr (%s) and/or name (%s) already exists for the project!' %(data.cidr, data.name))
 
     for host in data.hosts:
         networks = get_all_networks(data.blueprint, db)
@@ -184,4 +184,4 @@ async def subnet_create_test_data(data: SubnetCreate, db) -> None:
     if not subnet_exists:
         return create_subnet(data, db)
     else:
-        Logger.info('Subnet with cidr (%s) and/or name (%s) already exists for the network %s!' %(data.cidr, data.subnet_name, data.nw_cidr))
+        Logger.warning('Subnet with cidr (%s) and/or name (%s) already exists for the network %s!' %(data.cidr, data.subnet_name, data.nw_cidr))

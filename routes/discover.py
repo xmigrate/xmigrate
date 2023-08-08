@@ -138,6 +138,7 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
                             update_disk(disk_data, db)
                 except Exception as e:
                     Logger.error(str(e))
+            Logger.info("VM data discovery completed")
             return jsonable_encoder({'status': '200'})
         else:
             Logger.critical("VM data discovery failed!")
