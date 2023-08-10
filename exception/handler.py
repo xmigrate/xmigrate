@@ -1,8 +1,8 @@
-from utils.logger import *
+from utils.logger import Logger
 from fastapi.encoders import jsonable_encoder
 
 def internal_server_error(msg):
-    logger(msg, "error")
+    Logger.error(msg)
     return jsonable_encoder({'status': '500', 'message': str(msg)}), 500
 
 def page_not_found(msg):

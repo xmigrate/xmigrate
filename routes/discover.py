@@ -1,5 +1,6 @@
 from pkg.aws.aws_config import write_aws_creds
 from pkg.common.nodes import add_nodes
+from pkg.test_header_files.test_data import discover_test_data
 from routes.auth import TokenData, get_current_user
 from schemas.discover import DiscoverBase, DiscoverCreate, DiscoverUpdate
 from schemas.disk import DiskCreate, DiskUpdate
@@ -11,9 +12,9 @@ from services.disk import check_disk_exists, create_disk, get_diskid,update_disk
 from services.machines import check_vm_exists, create_vm, get_machineid, update_vm
 from services.node import check_node_exists, create_node, get_nodeid, update_node
 from services.project import get_projectid
-from pkg.test_header_files.test_data import discover_test_data
 from utils.constants import Provider, Test
 from utils.database import dbconn
+from utils.logger import Logger
 from utils.playbook import run_playbook
 import netaddr, re, os
 from fastapi import APIRouter, Depends, HTTPException, Request, status 
@@ -50,7 +51,7 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
             await discover_test_data(project, project_id, db)
             return jsonable_encoder({'status': '200'})
         except Exception as e:
-            print("Some error with adding test_data!")
+            Logger.error("Some error with adding test_data!")
             return jsonable_encoder({'status': '400'})
     
     PLAYBOOK = "gather_facts.yaml"
@@ -58,7 +59,7 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
     
     try:
         finished, output = run_playbook(provider="common", username=data.username, project_name=project, curr_working_dir=current_dir, playbook=PLAYBOOK, stage=STAGE)
-        if finished:
+        if finished and output is not None:
             if 'ok' in output.stats.keys():
                 linux_host = list(output.stats['ok'].keys())[0]
                 facts = output.get_fact_cache(host=linux_host)
@@ -86,19 +87,20 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
                     diskinfo = disk.strip().split()
                     del diskinfo[-1] # the final element in the list is only needed during filtering in ansible
                     hashmap = dict(zip(keys, diskinfo))
-                    hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
-                    if hashmap['dev'] not in dev_list:
-                        for blk in blkid:
-                            if hashmap['dev'] in blk and 'uuid' in blk.lower():
-                                matches = re.findall(r'(?i)(\w+UUID)="([^"]+)"', blk)
-                                for match in matches:
-                                    _, hashmap['uuid'] = match
-                                break
-                        else:
-                            hashmap['uuid'] = ' '
-                        dev_list.append(hashmap['dev'])
-                        hashmap['dev'] = f'/dev/{hashmap["dev"]}'
-                        disks.append(hashmap)
+                    if hashmap.get('mnt_path') is not None: # only take mounted disks
+                        hashmap['dev'] = hashmap['dev'][:-2] if 'nvme' in hashmap['dev'] else (hashmap['dev']).rstrip('1234567890')
+                        if hashmap['dev'] not in dev_list:
+                            for blk in blkid:
+                                if hashmap['dev'] in blk and 'uuid' in blk.lower():
+                                    matches = re.findall(r'(?i)(\w+UUID)="([^"]+)"', blk)
+                                    for match in matches:
+                                        _, hashmap['uuid'] = match
+                                    break
+                            else:
+                                hashmap['uuid'] = ' '
+                            dev_list.append(hashmap['dev'])
+                            hashmap['dev'] = f'/dev/{hashmap["dev"]}'
+                            disks.append(hashmap)
                 try:
                     discover_exists = check_discover_exists(project_id, db)
                     if not discover_exists:
@@ -135,11 +137,12 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
                             disk_data = DiskUpdate(disk_id=disk_id, hostname=hostname, mnt_path=mnt_path, vm_id=machine_id)
                             update_disk(disk_data, db)
                 except Exception as e:
-                    print("Error: "+ str(e))
+                    Logger.error(str(e))
+            Logger.info("VM data discovery completed")
             return jsonable_encoder({'status': '200'})
         else:
-            print("VM data discovery failed!")
+            Logger.critical("VM data discovery failed!")
             return jsonable_encoder({'status': '400'})
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=jsonable_encoder({"message": "request couldn't process"}))

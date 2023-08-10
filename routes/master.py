@@ -8,6 +8,7 @@ from services.disk import get_all_disks, get_diskid, update_disk
 from services.machines import get_machineid, update_vm
 from services.project import get_projectid
 from utils.database import dbconn
+from utils.logger import Logger
 import json
 from fastapi import Depends, APIRouter
 from fastapi.encoders import jsonable_encoder
@@ -32,13 +33,15 @@ async def master_status_update(data: MasterUpdate, current_user: TokenData = Dep
             if data.status is not None:
                 vm_data = VMUpdate(machine_id=machine_id, status=data.status)
                 update_vm(vm_data, db)
+                Logger.info("Status updated")
 
             if all(x is not None for x in (data.disk_clone, data.mountpoint)):
                 disk_id = get_diskid(machine_id, data.mountpoint, db)
                 disk_data = DiskUpdate(disk_id=disk_id, disk_clone=data.disk_clone)
                 update_disk(disk_data, db)
+                Logger.info("Disk data updated")
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return jsonable_encoder({'status': '500', 'message': str(e)})
     return jsonable_encoder({'status': '200'})
 
@@ -49,7 +52,7 @@ async def get_disks(project, current_user: TokenData = Depends(get_current_user)
         project_id = get_projectid(current_user['username'], project, db)
         disks = json.loads(get_discover(project_id, db)[0].disk_details)
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return jsonable_encoder({'status': '500', 'message': str(e)})
     return jsonable_encoder({'status': '200', 'data': disks})
 
@@ -62,6 +65,6 @@ async def get_blueprint_api(project, hostname, current_user: TokenData = Depends
         machine_id = get_machineid(hostname, blueprint_id, db)
         disks = [json.loads(host.disk_clone) for host in get_all_disks(machine_id, db)]
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return jsonable_encoder({'status': '500', 'message': str(e)})
     return jsonable_encoder({'status': '200', 'data': disks})

@@ -12,13 +12,20 @@ from routes import (auth,
                     status, storage as storage_r,
                     stream,
                     vm_types)
-from utils.database import Base, engine
+from utils.database import Base, engine, SQLALCHEMY_DATABASE_URL
+from utils.logger import Logger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except:
+    Logger.critical("Unable to establish database connection!")
+    raise ConnectionError(f"Cannot connect to {SQLALCHEMY_DATABASE_URL}")
+else:
+    Logger.info("Database connection established")
+    
 app = FastAPI()
 
 app.add_middleware(

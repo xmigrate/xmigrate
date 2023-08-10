@@ -6,7 +6,7 @@ from services.disk import get_diskid, update_disk
 from services.machines import get_all_machines, get_machine_by_hostname, update_vm
 from services.project import get_project_by_name
 from services.storage import get_storage
-from utils.logger import *
+from utils.logger import Logger
 import asyncio
 import json
 import boto3
@@ -20,6 +20,7 @@ async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, h
       client = boto3.client('iam', aws_access_key_id=project.aws_access_key, aws_secret_access_key=project.aws_secret_key)
       role_list = [role['RoleName'] for role in client.list_roles()['Roles']]
 
+      # External id has to be 'vmimport'
       if role_id not in role_list:
          file_trust_policy={
             "Version": "2012-10-17",
@@ -38,7 +39,7 @@ async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, h
          }
          
          response = client.create_role(RoleName=role_id, AssumeRolePolicyDocument=json.dumps(file_trust_policy), Description='VM Import/Export role', MaxSessionDuration=7200, Tags=[{'Key': 'app', 'Value': 'xmigrate'}])
-         print(f'Created role {role_id}')
+         Logger.info('Created role %s' %role_id)
 
          file_role_policy = {
                "Version":"2012-10-17",
@@ -71,7 +72,7 @@ async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, h
             PolicyName= 'vmimport',
             PolicyDocument= json.dumps(file_role_policy)
          )
-         print(f'Attached inline policy vmimport to role {role_id}')
+         Logger.info('Attached inline policy vmimport to role %s' %role_id)
          
          policy_names = ['AmazonEC2FullAccess', 'AmazonS3FullAccess']
 
@@ -81,19 +82,19 @@ async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, h
                RoleName=role_id,
                PolicyArn=policy_arn
             )
-            print(f'Attached managed policy {policy_name} to role {role_id}')
+            Logger.info('Attached managed policy %s to role %s' %(policy_name, role_id))
 
-         print("Waiting for the role to become available...")
+         Logger.info("Waiting for the role to become available...")
          asyncio.sleep(15)
       else:
-         print(f'Role {role_id} already exists, skipping role creation.')
+         Logger.info(f'Role {role_id} already exists, skipping role creation.')
    except Exception as e:
-      print(str(e))
+      Logger.error(str(e))
 
       vm_data = VMUpdate(machine_id=host.id, status=-1)
       update_vm(vm_data, db)
    try:
-      print("Importing image...")
+      Logger.info("Importing image...")
       client = boto3.client('ec2', aws_access_key_id=project.aws_access_key, aws_secret_access_key=project.aws_secret_key, region_name=project.location)
 
       response = client.import_image(
@@ -116,12 +117,12 @@ async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, h
       vm_data = VMUpdate(machine_id=host.id, status=30)
       update_vm(vm_data, db)
 
-      logger("AMI creation started: "+ import_task_id, "info")
+      Logger.info("AMI creation started: %s" %import_task_id)
 
       if len(import_task_id) > 0:
          while True:
             response = client.describe_import_image_tasks(ImportTaskIds=[import_task_id,])
-            print(response)
+            Logger.info(response)
             
             if response['ImportImageTasks'][0]['Status'] == "completed":
                ami_id = import_task_id
@@ -139,14 +140,12 @@ async def start_ami_creation_worker(project, disk_containers, disk_mountpoint, h
                vm_data = VMUpdate(machine_id=host.id, status=-35)
                update_vm(vm_data, db)
 
-               logger(response['ImportImageTasks'][0]['StatusMessage'], 'error')
-               print(response['ImportImageTasks'][0]['StatusMessage'])
+               Logger.error(response['ImportImageTasks'][0]['StatusMessage'])
                return False
             else:
                await asyncio.sleep(60)
    except Exception as e:
-      print(str(e))
-      logger("Error while creating AMI: "+ str(e), "error")
+      Logger.error("Error while creating AMI: %s" %(str(e)))
       
       vm_data = VMUpdate(machine_id=host.id, status=-35)
       update_vm(vm_data, db)
@@ -167,7 +166,7 @@ async def start_ami_creation(user, project, hostname, db) -> bool:
       else:
          hosts = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
    except Exception as e:
-      print(repr(e))
+      Logger.error(str(e))
 
    for host in hosts:
       disks = json.loads(get_discover(project.id, db)[0].disk_details)

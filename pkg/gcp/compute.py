@@ -8,6 +8,7 @@ from services.disk import get_all_disks
 from services.machines import get_all_machines, get_machine_by_hostname, update_vm
 from services.network import get_all_subnets, get_network_by_cidr
 from services.project import get_project_by_name
+from utils.logger import Logger
 import asyncio
 import json
 
@@ -90,7 +91,7 @@ async def build_compute(user, project, hostname, db):
                     )
 
             if len(extra_disks) > 0:
-                print("Found additional disks!")
+                Logger.info("Found additional disks")
 
             try:
                 vm_data = VMUpdate(machine_id=host.id, status=95)
@@ -98,21 +99,21 @@ async def build_compute(user, project, hostname, db):
                 vm = await create_vm(project, host, network, subnet, extra_disks)
                 
                 if 'error' not in vm.keys():
-                    print(f"vm {(host.hostname).replace('.', '-')} created.")
+                    Logger.info("vm %s created" %(host.hostname).replace('.', '-'))
                     vm_data = VMUpdate(machine_id=host.id, status=100)
                     update_vm(vm_data, db)
                 else:
-                    print(f"vm {(host.hostname).replace('.', '-')} creation failed.")
+                    Logger.info("vm %s creation failed" %(host.hostname).replace('.', '-'))
                     vm_data = VMUpdate(machine_id=host.id, status=-100)
                     update_vm(vm_data, db)
                     return False
                 ## todo watch vm status
             except Exception as e:
-                print(str(e))
+                Logger.info(str(e))
                 vm_data = VMUpdate(machine_id=host.id, status=-100)
                 update_vm(vm_data, db)
                 return False
         return True
     except Exception as e:
-        print(str(e))
+        Logger.info(str(e))
         return False

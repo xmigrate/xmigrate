@@ -1,3 +1,4 @@
+from utils.logger import Logger
 import os
 from ansible_runner import run_async
 
@@ -24,4 +25,4 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
             else:
                 return(not (bool(runner[1].stats['failures']) or bool(runner[1].stats['dark'])))
         except Exception as e:
-            print(str(e))
+            Logger.error(str(e))

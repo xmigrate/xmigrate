@@ -1,4 +1,4 @@
-from utils.logger import *
+from utils.logger import Logger
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.subscription import SubscriptionClient
 
@@ -13,6 +13,5 @@ async def get_locations(subscription_id, client_id, secret, tenant_id):
             available_locations.append(location.name)
         return available_locations, True 
     except Exception as e:
-        print(repr(e))
-        logger("Fetching available locations failed: "+str(e),"warning")
+        Logger.warning("Fetching available locations failed: %s" %(str(e)))
         return available_locations, False

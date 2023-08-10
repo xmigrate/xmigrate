@@ -4,10 +4,12 @@ from services.disk import get_all_disks
 from services.machines import get_all_machines, get_machine_by_hostname, update_vm
 from services.network import get_all_subnets, get_network_by_cidr
 from services.project import get_project_by_name
+from utils.logger import Logger
 import boto3
 
 
 async def create_machine(project, subnet_id, host, db) -> bool:
+    Logger.info("Provisioning VM for host %s..." %(host.hostname))
     try:
         public_route = host.public_route
 
@@ -63,7 +65,7 @@ async def create_machine(project, subnet_id, host, db) -> bool:
                 break
         return True
     except Exception as e:
-        print(repr(e))
+        Logger.error(str(e))
         vm_data = VMUpdate(machine_id=host.id, status=-100)
         update_vm(vm_data, db)
         return False
@@ -86,5 +88,5 @@ async def build_ec2(user, project, hostname, db) -> bool:
             if not machine_created: return False
         return True
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return False

@@ -4,12 +4,13 @@ from schemas.machines import VMUpdate
 from services.disk import get_diskid, update_disk
 from services.machines import update_vm
 from services.storage import get_storage
-from utils.logger import *
+from utils.logger import Logger
 import asyncio
 from asyncio.subprocess import PIPE, STDOUT
 import json
 import os
 from pathlib import Path
+
 
 async def download_worker(osdisk_raw, project, host, machine_id, db) -> bool:
     try:
@@ -24,23 +25,21 @@ async def download_worker(osdisk_raw, project, host, machine_id, db) -> bool:
         path = parent + osdisk_raw
 
         if not os.path.exists(path):
-            os.popen('echo "download started"> ./logs/ansible/migration_log.txt')
+            Logger.info("Downloading disk %s..." %osdisk_raw)
 
             url = f"https://{storage.bucket_name}.blob.core.windows.net/{storage.container}/{osdisk_raw}?{sas_token}"
             command1 = f"azcopy copy --recursive '{url}' '{path}'"
             
-            os.popen('echo '+command1+'>> ./logs/ansible/migration_log.txt')
 
             process1 = await asyncio.create_subprocess_shell(command1, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process1.wait()
 
             return True
         else:
-            print("Raw disk already downloaded!")
+            Logger.info("Raw disk already downloaded!")
             return True
     except Exception as e:
-        print(str(e))
-        logger(str(e), "warning")
+        Logger.error(str(e))
 
         vm_data = VMUpdate(machine_id=machine_id, status=-30)
         update_vm(vm_data, db)
@@ -58,16 +57,12 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, 
         vhd_path = f"{cur_path}/projects/{project.name}/{host}/{osdisk_vhd}"
         file_size = Path(vhd_path).stat().st_size
 
-        os.popen('echo "Filesize calculated" >> ./logs/ansible/migration_log.txt')
-        os.popen('echo "VHD uploading" >> ./logs/ansible/migration_log.txt')
 
         url = f"https://{storage.bucket_name}.blob.core.windows.net/{storage.container}/{osdisk_vhd}?{sas_token}"
 
         command3 = f"azcopy copy --recursive '{vhd_path}' '{url}'"
         process3 = await asyncio.create_subprocess_shell(command3, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
         await process3.wait()
-
-        os.popen('echo "VHD uploaded" >> ./logs/ansible/migration_log.txt')
 
         vm_data = VMUpdate(machine_id=machine_id, status=32)
         update_vm(vm_data, db)
@@ -77,13 +72,11 @@ async def upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, 
         update_disk(disk_data, db)
         return True
     except Exception as e:
-        print(str(e))
-        logger(str(e), "warning")
+        Logger.error(str(e))
 
         vm_data = VMUpdate(machine_id=machine_id, status=-32)
         update_vm(vm_data, db)
 
-        os.popen('echo "'+ str(e) + '" >> ./logs/ansible/migration_log.txt')
         return False
 
 
@@ -104,37 +97,34 @@ async def conversion_worker(osdisk_raw, project, disk_mountpoint, host, machine_
         cur_path = os.getcwd()
         path = f"{cur_path}/projects/{project.name}/{host}/{osdisk_raw}"
         vhd_path = f"{cur_path}/projects/{project.name}/{host}/{osdisk_vhd}"
-        print("Start converting")
+        Logger.info("Starting conversion...")
 
-        os.popen('echo "start converting">> ./logs/ansible/migration_log.txt')
         convert_command = f"qemu-img convert -f raw -o subformat=fixed,force_size -O vpc {path} {vhd_path}"
 
         MB = 1024 * 1024
         size = await get_size(path)
         rounded_size = ((size // MB) + 1) * MB
         if size % MB == 0:
-            logger("Size is already rounded","info")
+            Logger.info("Size is already rounded")
             process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process.wait()
         else:
-            logger("Size before conversion: "+ str(size), "info")
+            Logger.info("Size before conversion: %s" %(str(size)))
             resize_command = f"qemu-img resize -f raw {path} {rounded_size}"
             process = await asyncio.create_subprocess_shell(resize_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process.wait()
             process = await asyncio.create_subprocess_shell(convert_command, stdin = PIPE, stdout = PIPE, stderr = STDOUT)
             await process.wait()
             size = await get_size(path)
-            logger("Size after conversion: "+ str(size), "info")
+            Logger.info("Size after conversion: %s" %(str(size)))
 
         uploaded = await upload_worker(osdisk_raw, project, disk_mountpoint, machine_id, host, db)
         if not uploaded: return False
 
-        logger("Conversion completed "+ osdisk_raw, "info")
+        Logger.info("Conversion completed %s" %osdisk_raw)
         return True
     except Exception as e:
-        print(str(e))
-        logger(str(e),"warning")
-
+        Logger.error(str(e))
         vm_data = VMUpdate(machine_id=machine_id, status=-35)
         update_vm(vm_data, db)
         return False

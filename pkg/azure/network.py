@@ -7,7 +7,7 @@ from services.blueprint import get_blueprintid
 from services.machines import get_all_machines, update_vm
 from services.network import get_all_networks, get_all_subnets, update_network, update_subnet
 from services.project import get_project_by_name, update_project
-from utils.logger import *
+from utils.logger import Logger
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.resource import ResourceManagementClient
@@ -18,31 +18,29 @@ def create_rg(resource_client, project, db):
         if project.azure_resource_group is not None and project.azure_resource_group_created:
             return True
     except Exception as e:
-        print("Reaching Project document failed: "+ str(e))
-        logger("Reaching Project document failed: "+ str(e), "warning")
+        Logger.info("Reaching Project document failed: %s" %(str(e)))
     else:
         try:
-            print("Provisioning a resource group...some operations might take a minute or two.")
+            Logger.info("Provisioning resource group %s..." %(project.azure_resource_group))
             rg_result = resource_client.resource_groups.create_or_update(project.azure_resource_group, {"location": project.location})
-            print(f"Provisioned resource group {rg_result.name} in the {rg_result.location} region.")
+            Logger.info("Provisioned resource group %s in the %s region" %(rg_result.name, rg_result.location))
 
             project_data = ProjectUpdate(project_id=project.id, azure_resource_group_created=True)
             update_project(project_data, db)
             return True
         except Exception as e:
-            print("Resource group creation failed "+str(e))
-            logger("Resource group creation failed: "+repr(e),"warning")
+            Logger.error("Resource group creation failed %s" %(str(e)))
             return False
         
 
 def create_vnet(network_client, project, network, machine, update_host, db) -> bool:
     try:
-        print("Provisioning a vnet...some operations might take a minute or two.")
+        Logger.info("Provisioning vnet %s..." %(network.name))
         poller = network_client.virtual_networks.create_or_update(
             project.azure_resource_group, network.name, {"location": project.location, "address_space": {"address_prefixes": [network.cidr]}}
             )
         vnet_result = poller.result()
-        print(f"Provisioned virtual network {vnet_result.name} with address prefixes {vnet_result.address_space.address_prefixes}")
+        Logger.info("Provisioned virtual network %s with address prefixes %s" %(vnet_result.name, vnet_result.address_space.address_prefixes))
 
         network_data = NetworkUpdate(network_id=network.id, target_network_id=vnet_result.name, created=True)
         update_network(network_data, db)
@@ -53,18 +51,19 @@ def create_vnet(network_client, project, network, machine, update_host, db) -> b
         if update_host:
             vm_data = VMUpdate(machine_id=machine.id, status=-5)
             update_vm(vm_data, db)
-        print("Vnet creation failed to save: "+ str(e))
-        logger("Vnet creation failed to save: "+ str(e),"warning")
+        Logger.error("Vnet creation failed: %s" %(str(e)))
         return False
     return True
 
 
 def create_subnet(network_client, project, network, subnet, machine, update_host, db) -> bool:
     try:
-        print("Provisioning a subnet...some operations might take a minute or two.")
-        poller = network_client.subnets.create_or_update(project.azure_resource_group, network.name, subnet.subnet_name, {"address_prefix": subnet.cidr})
+        Logger.info("Provisioning subnet %s..." %(subnet.subnet_name))
+        poller = network_client.subnets.create_or_update(
+            project.azure_resource_group, network.name, subnet.subnet_name, {"address_prefix": subnet.cidr}
+            )
         subnet_result = poller.result()
-        print(f"Provisioned virtual subnet {subnet_result.name} with address prefix {subnet_result.address_prefix}")
+        Logger.info("Provisioned virtual subnet %s with address prefix %s" %(subnet_result.name, subnet_result.address_prefix))
 
         subnet_data = SubnetUpdate(subnet_id=subnet.id, target_subnet_id=str(subnet_result.id), created=True)
         update_subnet(subnet_data, db)
@@ -72,14 +71,14 @@ def create_subnet(network_client, project, network, subnet, machine, update_host
             vm_data = VMUpdate(machine_id=machine.id, status=10)
             update_vm(vm_data, db)
     except Exception as e:
-        print("Subnet creation failed to save: "+ str(e))
-        logger("Subnet creation failed to save: "+ str(e),"warning")
+        Logger.error("Subnet creation failed: %s" %(str(e)))
         return False
     return True
 
 
 def create_publicIP(network_client, project, subnet, machine, update_host, db):
     try:
+        Logger.info("Provisioning a public IP address...")
         poller = network_client.public_ip_addresses.create_or_update(project.azure_resource_group, machine.hostname,
                                                                     {
                                                                         "location": project.location,
@@ -89,17 +88,16 @@ def create_publicIP(network_client, project, subnet, machine, update_host, db):
                                                                     }
                                                                 )
         ip_address_result = poller.result()
-        print(f"Provisioned public IP address {ip_address_result.name} with address {ip_address_result.ip_address}")
+        Logger.info("Provisioned public IP address %s with address %s" %(ip_address_result.name, ip_address_result.ip_address))
 
         if update_host:
             vm_data = VMUpdate(machine_id=machine.id, ip_created=True, status=15)
             update_vm(vm_data, db)
     except Exception as e:
-        print("Public IP creation failed: "+ str(e))
-        logger("Public IP creation failed: "+ str(e),"warning")
+        Logger.error("Public IP creation failed: %s" %(str(e)))
     else:
         try:
-            print("Provisioning a public NIC ...some operations might take a minute or two.")
+            Logger.info("Provisioning a public NIC...")
             poller = network_client.network_interfaces.create_or_update(project.azure_resource_group, machine.hostname,
                                                                         {
                                                                             "location": project.location,
@@ -112,16 +110,17 @@ def create_publicIP(network_client, project, subnet, machine, update_host, db):
                                                                     )
 
             nic_result = poller.result()
-            print(f"Provisioned network interface client {nic_result.name}")
+            Logger.info("Provisioned network interface client %s" %(nic_result.name))
             if update_host:
                 vm_data = VMUpdate(machine_id=machine.id, nic_id=nic_result.id, ip=ip_address_result.ip_address, status=20)
                 update_vm(vm_data, db)
         except Exception as e:
-            print("Nework interface creation failed:"+ str(e))
+            Logger.error("Network interface creation failed: %s" %(str(e)))
    
 
 async def create_nw(user, project, db):
     try:
+        Logger.info("Starting migration, some operations might take few minutes...")
         project = get_project_by_name(user, project, db)
         blueprint_id = get_blueprintid(project.id, db)
         machines = get_all_machines(blueprint_id, db)
@@ -149,5 +148,5 @@ async def create_nw(user, project, db):
                                 create_publicIP(network_client, project, subnet, machine, update_host, db)
         return True
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return False

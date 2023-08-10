@@ -7,6 +7,7 @@ from services.user import get_userid
 from pkg.test_header_files.test_data import project_test_data
 from utils.constants import Provider, Test
 from utils.database import dbconn
+from utils.logger import Logger
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -34,7 +35,7 @@ async def project_create(data: ProjectCreate, request: Request, current_user: To
         else:
             return jsonable_encoder({"message": f"project {data.name} already exists for the user!"})
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         if "CheckViolation" in str(e):
             return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "unsupported provider!"}))
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "project creation failed!"}))     
@@ -54,5 +55,5 @@ async def project_update(data: ProjectUpdate, current_user: TokenData = Depends(
         project_id = get_projectid(current_user['username'], data.name, db)
         return update_project(project_id, data, db)
     except Exception as e:
-        print(str(e))
+        Logger.error(str(e))
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=jsonable_encoder({"message": "Couldn't update project!"})) 
