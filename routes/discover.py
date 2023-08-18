@@ -16,7 +16,7 @@ from utils.constants import Provider, Test
 from utils.database import dbconn
 from utils.logger import Logger
 from utils.playbook import run_playbook
-import netaddr, re, os
+import asyncio, netaddr, re, os
 from fastapi import APIRouter, Depends, HTTPException, Request, status 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -58,8 +58,9 @@ async def discover(data: DiscoverBase, request: Request, current_user: TokenData
     STAGE = "gather_facts"    
     
     try:
-        finished, output = run_playbook(provider="common", username=data.username, project_name=project, curr_working_dir=current_dir, playbook=PLAYBOOK, stage=STAGE)
-        if finished and output is not None:
+        loop = asyncio.get_event_loop()
+        output = await loop.run_in_executor(None, run_playbook, "common", data.username, project, current_dir, PLAYBOOK, STAGE)
+        if output:
             if 'ok' in output.stats.keys():
                 linux_host = list(output.stats['ok'].keys())[0]
                 facts = output.get_fact_cache(host=linux_host)

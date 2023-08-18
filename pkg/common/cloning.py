@@ -6,9 +6,10 @@ from services.node import get_nodes
 from services.project import get_project_by_name
 from services.storage import get_storage
 from utils.constants import Provider
+from utils.playbook import run_playbook
+import asyncio
 import json
 import os
-from ansible_runner import run_async
 import jwt
 from sqlalchemy.orm import Session
 
@@ -26,8 +27,8 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
     server = os.getenv('BASE_URL')
     current_dir = os.getcwd()
 
-    playbook = f"{current_dir}/ansible/{project.provider}/start_migration.yaml"
-    inventory = f"{current_dir}/ansible/projects/{project.name}/hosts"
+    STAGE = "cloning"
+    PLAYBOOK = "start_migration.yaml"
     extravars = None
     
     if project.provider == Provider.AZURE.value:
@@ -53,15 +54,13 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
             'token': access_token.decode(),
             'ansible_user': nodes.username
         }
-        
-    envvars = {
-        'ANSIBLE_BECOME_USER': nodes.username,
-        'ANSIBLE_LOG_PATH': f'{current_dir}/logs/ansible/{project.name}/cloning_log.txt'
-    }
 
-    cloned = await run_async(playbook=playbook, inventory=inventory, extravars=extravars, envvars=envvars, limit=public_ip, quiet=True)
-    
-    if (not (bool(cloned[1].stats['failures']) or bool(cloned[1].stats['dark']))):
+    try:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, run_playbook, project.provider, nodes.username, project.name, current_dir, PLAYBOOK, STAGE, extravars, public_ip)
+    except Exception as e:
+        raise RuntimeError(f"Error occured while trying to run the playbook: {str(e)}")
+    else:
         blueprint_id = get_blueprintid(project.id, db)
         machines = [get_machine_by_hostname(host, blueprint_id, db) for host in hostname]
         machine_count = len(machines)
@@ -74,5 +73,3 @@ async def clone(user: str, project: str, hostname: list, db: Session, settings: 
             if status_count == machine_count:
                 flag = False
         return not flag
-    else:
-        return False
