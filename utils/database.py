@@ -14,9 +14,7 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
-def dbconn():
-    db = LocalSession()
-    try:
+
+async def dbconn():
+    with LocalSession() as db:
         yield db
-    finally:
-        db.close()
