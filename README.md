@@ -55,18 +55,18 @@ docker compose up -d
 
 We currently support servers of below OS versions*;
 
-|           | Redhat 7 | Redhat 8 | CentOS 7 | Ubuntu 16.04 | Ubuntu 18.04 | Ubuntu 20.04 |
-|-----------|----------|----------|----------|--------------|--------------|--------------|
-| **AWS**   |  ✅      |   ✅    |    ✅    |     ✅       |     ✅      |      ✅        |
-| **Azure** |  ✅      |   ✅    |    ✅    |     ✅       |     ✅      |      ✅      |
-| **GCP**   |  ✅      |   ✅    |    ✅    |     ✅       |     ✅      |      ✅      |
+|           | Redhat 7 | Redhat 8 | CentOS 7 | Ubuntu 16.04 | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 |
+|-----------|----------|----------|----------|--------------|--------------|--------------| -------------|
+| **AWS**   |  ✅      |   ✅    |    ✅    |     ✅      |     ✅      |      ✅      |   ✅        |
+| **Azure** |  ✅      |   ✅    |    ✅    |     ✅      |     ✅      |      ✅      |   ❌        |
+| **GCP**   |  ✅      |   ✅    |    ✅    |     ✅      |     ✅      |      ✅      |   ❌        |
 
 > 💡 Make sure your `/etc/fstab` entries looks like this
 `UUID=d35fe619-1d06-4ace-9fe3-169baad3e421 /                       xfs     defaults,discard        1 1`
 
 We will be adding support for more OS soon.
 
-> ℹ *We are aware of and working hard to find a quick solution to some issues that prevent vm connectivity after migrations of Azure to AWS, Azure to GCP, and GCP to Azure. In the meantime, all other combinations with our supported providers can be used without issues.
+> ⚠ *We are aware of and working on finding a quick solution to some issues that prevent vm connectivity after certain migrations of Azure to AWS, Azure to GCP, and GCP to Azure. In the meantime, all other combinations with our supported providers can be used without issues.
 
 Stay tuned for more updates. Join our [community](https://xmigrate.slack.com/) and start collaborating 🎉
 
