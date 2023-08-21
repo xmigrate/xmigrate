@@ -66,7 +66,7 @@ We currently support servers of below OS versions*;
 
 We will be adding support for more OS soon.
 
-> ⚠ *We are aware of and working on finding a quick solution to some issues that prevent vm connectivity after certain migrations of Azure to AWS, Azure to GCP, and GCP to Azure. In the meantime, all other combinations with our supported providers can be used without issues.
+> ⚠ *We are aware of and working on finding a quick solution to some issues that prevent vm startup after migrations from Azure to other providers. In the meantime, all other combinations, including Azure to Azure, with our supported providers can be used without issues.
 
 Stay tuned for more updates. Join our [community](https://xmigrate.slack.com/) and start collaborating 🎉
 
