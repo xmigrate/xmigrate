@@ -1,8 +1,18 @@
-from utils.logger import Logger
 import os
 from ansible_runner import run_async
 
+
 def run_playbook(provider: str, username: str, project_name: str, curr_working_dir: str, playbook: str, stage: str, extra_vars: dict = None, limit: str = None):
+    '''
+    Function that runs ansible playbooks.
+    Blocks the thread if run directly, so use asyncio event loops to run this.
+    
+    Example:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, run_playbook, *args)
+
+    Returns an ansible runner runner object or boolean value True once playbook execution succeeds.
+    '''
 
     playbook_path = f'{curr_working_dir}/ansible/{provider}/{playbook}'
     inventory = f'{curr_working_dir}/ansible/projects/{project_name}/hosts'
@@ -11,18 +21,15 @@ def run_playbook(provider: str, username: str, project_name: str, curr_working_d
     env_vars = {
             'ANSIBLE_REMOTE_USER': username,
             'ANSIBLE_BECOME_USER': username,
-            'ANSIBLE_LOG_PATH': log_file
+            'ANSIBLE_LOG_PATH': log_file,
+            'ANSIBLE_HOST_KEY_CHECKING': False
         }
         
     if not os.path.exists(log_folder):
         os.makedirs(log_folder)
 
-    with open(log_file, 'w+'):
-        try:
-            runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, limit=limit, quiet=True)
-            if stage == "gather_facts":
-                return(not (bool(runner[1].stats['failures']) or bool(runner[1].stats['dark'])), runner[1])
-            else:
-                return(not (bool(runner[1].stats['failures']) or bool(runner[1].stats['dark'])))
-        except Exception as e:
-            Logger.error(str(e))
+    _, runner = run_async(playbook=playbook_path, inventory=inventory, envvars=env_vars, extravars=extra_vars, limit=limit, quiet=True)
+
+    if any((runner.stats['failures'], runner.stats['dark'])): 
+        raise RuntimeError("Playbook execution failed!")
+    return runner if stage == "gather_facts" else True

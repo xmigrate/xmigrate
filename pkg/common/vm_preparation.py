@@ -7,6 +7,7 @@ from services.storage import get_storage
 from utils.constants import Provider
 from utils.logger import Logger
 from utils.playbook import run_playbook
+import asyncio
 import json
 import os
 from sqlalchemy.orm import Session
@@ -18,7 +19,7 @@ async def prepare(user: str, project: str, hostname: list, db: Session) -> None:
 
     PLAYBOOK = "xmigrate.yaml"
     STAGE = "vm_preparation"
-    curr_dir = os.getcwd()
+    current_dir = os.getcwd()
     extra_vars = None
     if project.provider == Provider.GCP.value:
         storage = get_storage(project.id, db)
@@ -29,16 +30,14 @@ async def prepare(user: str, project: str, hostname: list, db: Session) -> None:
         }
 
     try:
-        preparation_completed = run_playbook(project.provider, node.username, project.name, curr_dir, PLAYBOOK, STAGE, extra_vars)
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, run_playbook, project.provider, node.username, project.name, current_dir, PLAYBOOK, STAGE, extra_vars)
     
-        if preparation_completed:
-            blueprint_id = get_blueprintid(project.id, db)
-            machine_id = get_machineid(hostname[0], blueprint_id, db)
-            vm_data = VMUpdate(machine_id=machine_id, status=21)
-            update_vm(vm_data, db)
-            return True
-        else:
-            return False
+        blueprint_id = get_blueprintid(project.id, db)
+        machine_id = get_machineid(hostname[0], blueprint_id, db)
+        vm_data = VMUpdate(machine_id=machine_id, status=21)
+        update_vm(vm_data, db)
+        return True
     except Exception as e:
         Logger.error(str(e))
         return False
