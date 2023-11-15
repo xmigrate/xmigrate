@@ -46,8 +46,11 @@ cd xmigrate
 ```
 
 After cloning the repository and entering it, open the `docker-compose.yaml` file and replace the *\<server-ip\>* placeholder in the line `BASE_URL: http://<server-ip>/api` with your server ip address.
+
 You can choose which version of the app to run by changing the version number in the image parameter of app service: `image: xmigrate/xmigrate:v0.1.6`.
+
 Alternately you can choose to build the app locally by removing the image specification and adding `build: .` in place. Be careful that this could cause the app to build with unreleased changes.
+
 Once you are satisfied with the initial setup, you can run the below command and access xmigrate on `http://localhost:80`;
 
 ```bash
