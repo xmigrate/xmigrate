@@ -30,7 +30,7 @@ services:
       - postgres
 
   app:
-    image: xmigrate/xmigrate:latest
+    image: xmigrate/xmigrate:v0.1.6
     container_name: app
     environment:
       DB_USER: xmigrate
